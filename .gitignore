@@ -1,2 +1,5 @@
 .obsidian/
 .DS_Store
+
+# Claude Code local settings (permissions etc.) - not shared project config
+.claude/settings.local.json

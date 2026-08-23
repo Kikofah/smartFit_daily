@@ -1,10 +1,9 @@
 # smartFit_daily — User Journeys
 
-เอกสารนี้อธิบาย User Journey ของแต่ละ feature ใน [feature-list.md](./feature-list.md)
-โดยยึดตาม logic เบื้องหลังจาก
-[Requirement Spec](../requirements/product-backlog.md#requirement-spec-รายละเอียดเงื่อนไขข้อกำหนดการทำงาน)
-และ
-[Decisions ที่ resolve แล้ว](../requirements/product-backlog.md#decisions-resolved-ambiguities--2026-08-23)
+เอกสารนี้อธิบาย User Journey ของแต่ละ feature ใน [backlog.md](../../01-requirements/backlog.md)
+โดยยึดตาม logic เบื้องหลังจากเอกสาร requirement ใน
+[01-spec/](../../01-requirements/01-spec/index.md) (แยกต่อ Epic) รวมทั้งส่วน
+"ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" ของแต่ละเอกสาร spec นั้น
 (ไม่ใช่แค่หน้าจอ UI) ตามวิธีการใน skill `feature-list-journey`
 
 ทุก feature เรียงเนื้อหาตามลำดับเดียวกันเสมอ: **Mermaid diagram ก่อน** → คำอธิบายเรียงตามลำดับ diagram
@@ -508,10 +507,13 @@ flowchart TD
 ## Open Questions
 
 ทุกข้อ REQ-01 ถึง REQ-13 มี feature รองรับครบแล้ว (ดู
-[REQ Traceability Matrix](./feature-list.md#req-traceability-matrix)) 4 จุดที่เคยเป็นความไม่ชัดเจนซึ่ง
+[REQ Traceability Matrix](../../01-requirements/backlog.md#req-traceability-matrix)) 4 จุดที่เคยเป็นความไม่ชัดเจนซึ่ง
 กระทบโครงสร้าง journey ของ feature ระดับ Must/Should อย่างมีนัยสำคัญ (ONB-3/REQ-02, REC-2/REQ-05,
 PLN-2/REQ-09, PLN-3-PLN-4/REQ-10) ได้ถูกนำไปถามผู้ใช้งานและ **resolve แล้ว** ตามส่วน
-["Decisions" ใน product-backlog.md](../requirements/product-backlog.md#decisions-resolved-ambiguities--2026-08-23)
+"ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" ของเอกสาร
+[Onboarding](../../01-requirements/01-spec/20260823-01-onboarding-personalization.md),
+[Daily YouTube Recommendation](../../01-requirements/01-spec/20260823-02-daily-youtube-recommendation.md) และ
+[Planner & Logging](../../01-requirements/01-spec/20260823-03-planner-logging.md)
 — ถูก bake เข้า Steps/diagram ด้านบนแล้ว ไม่ใช่ Open Question อีกต่อไป
 
 รายการที่เหลือด้านล่างเป็นรายละเอียดเชิง implementation ปลีกย่อยที่ **ไม่กระทบโครงสร้าง journey ของ
@@ -531,6 +533,6 @@ feature ระดับ Must/Should อย่างมีนัยสำคั�
 
 ---
 
-อ้างอิงต้นฉบับ: [docs/requirements/product-backlog.md](../requirements/product-backlog.md)
-(รวม [Decisions ที่ resolve แล้ว](../requirements/product-backlog.md#decisions-resolved-ambiguities--2026-08-23))
-ดู Feature List สรุปตาราง: [docs/features/feature-list.md](./feature-list.md)
+อ้างอิงต้นฉบับ: [docs/01-requirements/01-spec/](../../01-requirements/01-spec/index.md) ·
+[docs/01-requirements/backlog.md](../../01-requirements/backlog.md)
+ดู Feature List สรุปตาราง: [docs/01-requirements/backlog.md](../../01-requirements/backlog.md)

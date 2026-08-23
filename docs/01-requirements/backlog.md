@@ -1,36 +1,39 @@
-# smartFit_daily — Feature List
+# Product Backlog — smartFit_daily
 
 เอกสารนี้สรุป feature ทั้งหมดของ smartFit_daily ไว้ในตารางเดียวรวมทุก Epic พร้อมคอลัมน์
 **MoSCoW Priority** ที่เห็นชัดเจน ตามด้วยคำอธิบายแบบเต็มของแต่ละ feature ด้านล่างตาราง
 
-สร้างจาก [Product Backlog & Requirement Spec](../requirements/product-backlog.md)
+สร้างจากเอกสาร requirement ใน [01-spec/](01-spec/index.md) (แยกเป็นไฟล์ต่อ Epic:
+[Onboarding](01-spec/20260823-01-onboarding-personalization.md),
+[Daily YouTube Recommendation](01-spec/20260823-02-daily-youtube-recommendation.md),
+[Planner & Logging](01-spec/20260823-03-planner-logging.md),
+[Smart Integrations](01-spec/20260823-04-smart-integrations.md))
 ตามวิธีการใน skill `feature-list-journey`
-(`.claude/skills/feature-list-journey/SKILL.md`) — รวมข้อกำหนดจากส่วน
-["Decisions (Resolved Ambiguities — 2026-08-23)"](../requirements/product-backlog.md#decisions-resolved-ambiguities--2026-08-23)
-ที่ผูกพันเป็นข้อกำหนดจริงแล้ว
+(`.claude/skills/feature-list-journey/SKILL.md`) — รวมข้อกำหนดจากส่วน "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว"
+ของแต่ละเอกสาร spec ด้านบน ที่ผูกพันเป็นข้อกำหนดจริงแล้ว
 
-ดู User Journey ของแต่ละ feature ได้ที่ [user-journeys.md](./user-journeys.md)
+ดู User Journey ของแต่ละ feature ได้ที่ [../02-design/01-prototypes/user-journeys.md](../02-design/01-prototypes/user-journeys.md)
 
 ---
 
 ## ตารางสรุป Feature ทั้งหมด (ทุก Epic)
 
-| Feature ID | ชื่อ Feature | Epic | MoSCoW Priority | REQ ที่เกี่ยวข้อง |
-|---|---|---|---|---|
-| ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | Onboarding & Personalization | **Must** | REQ-01 |
-| ONB-2 | เลือกอุปกรณ์ที่มี | Onboarding & Personalization | **Must** | REQ-03 |
-| ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor) | Onboarding & Personalization | **Must** | REQ-02 |
-| REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | Daily YouTube Recommendation | **Must** | REQ-04 |
-| REC-2 | คำนวณแคลอรี่เผาผลาญจริง (สูตร MET) | Daily YouTube Recommendation | **Must** | REQ-05 |
-| REC-3 | เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม | Daily YouTube Recommendation | **Should** | REQ-06 |
-| REC-4 | วอร์มอัพ–คูลดาวน์อัตโนมัติ | Daily YouTube Recommendation | **Should** | REQ-07 |
-| PLN-1 | ปฏิทินวางแผนรายสัปดาห์ | Planner & Logging | **Must** | REQ-08 |
-| PLN-2 | โหมด Cheat Day / Rest Day (preserve log, completed wins) | Planner & Logging | **Must** | REQ-09 |
-| PLN-3 | บันทึกผลรายวัน (all-or-nothing) | Planner & Logging | **Must** | REQ-10 |
-| PLN-4 | ติดตาม Streak ต่อเนื่อง (strict, ไม่มี partial credit) | Planner & Logging | **Should** | REQ-09, REQ-10 |
-| INT-1 | พยากรณ์วันถึงเป้าหมายน้ำหนัก | Smart Integrations | **Could** | REQ-11 |
-| INT-2 | ซิงค์ตาชั่งอัจฉริยะ | Smart Integrations | **Could** | REQ-12 |
-| INT-3 | ซิงค์ข้อมูล Wearable | Smart Integrations | **Could** | REQ-13 |
+| Feature ID | ชื่อ Feature | Epic | MoSCoW Priority | REQ ที่เกี่ยวข้อง | Spec Doc |
+|---|---|---|---|---|---|
+| ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | Onboarding & Personalization | **Must** | REQ-01 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
+| ONB-2 | เลือกอุปกรณ์ที่มี | Onboarding & Personalization | **Must** | REQ-03 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
+| ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor) | Onboarding & Personalization | **Must** | REQ-02 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
+| REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | Daily YouTube Recommendation | **Must** | REQ-04 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
+| REC-2 | คำนวณแคลอรี่เผาผลาญจริง (สูตร MET) | Daily YouTube Recommendation | **Must** | REQ-05 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
+| REC-3 | เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม | Daily YouTube Recommendation | **Should** | REQ-06 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
+| REC-4 | วอร์มอัพ–คูลดาวน์อัตโนมัติ | Daily YouTube Recommendation | **Should** | REQ-07 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
+| PLN-1 | ปฏิทินวางแผนรายสัปดาห์ | Planner & Logging | **Must** | REQ-08 | [03-spec](01-spec/20260823-03-planner-logging.md) |
+| PLN-2 | โหมด Cheat Day / Rest Day (preserve log, completed wins) | Planner & Logging | **Must** | REQ-09 | [03-spec](01-spec/20260823-03-planner-logging.md) |
+| PLN-3 | บันทึกผลรายวัน (all-or-nothing) | Planner & Logging | **Must** | REQ-10 | [03-spec](01-spec/20260823-03-planner-logging.md) |
+| PLN-4 | ติดตาม Streak ต่อเนื่อง (strict, ไม่มี partial credit) | Planner & Logging | **Should** | REQ-09, REQ-10 | [03-spec](01-spec/20260823-03-planner-logging.md) |
+| INT-1 | พยากรณ์วันถึงเป้าหมายน้ำหนัก | Smart Integrations | **Could** | REQ-11 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
+| INT-2 | ซิงค์ตาชั่งอัจฉริยะ | Smart Integrations | **Could** | REQ-12 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
+| INT-3 | ซิงค์ข้อมูล Wearable | Smart Integrations | **Could** | REQ-13 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
 
 ตารางเรียงตามลำดับ Epic ที่ปรากฏใน backlog (Onboarding → Recommendation → Planner → Integration)
 และภายในแต่ละ Epic เรียง Must → Should → Could ตรงตาม Priority ในต้นฉบับ backlog ทุกจุด
@@ -200,10 +203,10 @@
 
 REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ที่ต้องส่งไปที่ Open Questions
 (ดูรายละเอียดสมมติฐาน/ช่องว่างที่ยังไม่ชัดเจน ซึ่งไม่ใช่ส่วนหนึ่งของ 4 decision ที่ resolve แล้ว
-ได้ใน [Open Questions ของ user-journeys.md](./user-journeys.md#open-questions))
+ได้ใน [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions)
+หรือใน section "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของแต่ละเอกสารใน [01-spec/](01-spec/index.md))
 
 ---
 
-อ้างอิงต้นฉบับ: [docs/requirements/product-backlog.md](../requirements/product-backlog.md)
-(รวม [Decisions ที่ resolve แล้ว](../requirements/product-backlog.md#decisions-resolved-ambiguities--2026-08-23))
-ดู User Journey แต่ละ feature: [docs/features/user-journeys.md](./user-journeys.md)
+อ้างอิงต้นฉบับ: [docs/01-requirements/01-spec/](01-spec/index.md)
+ดู User Journey แต่ละ feature: [docs/02-design/01-prototypes/user-journeys.md](../02-design/01-prototypes/user-journeys.md)
