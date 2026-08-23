@@ -1,62 +1,106 @@
 ---
 name: feature-list-journey
-description: Audit a requirement spec / product backlog (epics, user stories, REQ items, MoSCoW priority) for gaps, then create or update the Product Backlog and per-feature User Journey docs for smartFit_daily. Use whenever a requirement doc under docs/01-requirements/01-spec/ changes, or when asked to audit/create/update the Feature List, Product Backlog, or User Journey docs.
+description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
 ---
 
 # Feature List & User Journey Writer
 
-วิธีการตรวจสอบ (audit) Requirement Spec / Product Backlog แล้วสร้างหรืออัปเดตเอกสารสองชิ้น:
-`docs/01-requirements/backlog.md` (Feature List / Product Backlog) และ
-`docs/02-design/01-prototypes/user-journeys.md` (User Journey)
+เอกสาร 3 ชั้นที่ skill นี้ดูแลให้สอดคล้องและเป็นล่าสุดตลอดเวลา:
 
-## Input
+1. **Requirement** — `docs/01-requirements/01-spec/*.md` (ไม่รวม `index.md`) หนึ่งไฟล์ต่อ epic — เป็น
+   **source of truth**: ขอบเขต (Scope), รายละเอียด, เงื่อนไข/กติกาทางธุรกิจ (REQ-xx),
+   ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว, จุดที่ยังไม่ได้ระบุ
+2. **Product Backlog / Feature List** — `docs/01-requirements/backlog.md` (ตารางสรุปทุก epic +
+   คำอธิบายแบบเต็มต่อ feature) ที่ derive มาจาก (1)
+3. **User Journey** — `docs/02-design/01-prototypes/user-journeys.md` (diagram + คำอธิบายเรียงลำดับ +
+   REQ mapping ต่อ feature) ที่ derive มาจาก (1) เช่นกัน
 
-- `docs/01-requirements/01-spec/*.md` (ไม่รวม `index.md`) — เอกสาร requirement แยกไฟล์ต่อ Epic ซึ่งแต่ละไฟล์มี:
-  - ขอบเขต (Scope), รายละเอียด (Description)
-  - เงื่อนไข/กติกาทางธุรกิจ (Business Rules) เป็นข้อ REQ-xx ที่ระบุเงื่อนไขทำงานจริง
-  - ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว, จุดที่ยังไม่ได้ระบุ
-- เอกสารเดิม `docs/01-requirements/backlog.md` / `docs/02-design/01-prototypes/user-journeys.md` ถ้ามีอยู่แล้ว
-  (สำหรับกรณี update)
+ชั้น (2) และ (3) ต้องไม่มีข้อมูลที่ขัดแย้งหรือเก่ากว่าชั้น (1) และต้องมี Feature ID/REQ ตรงกันทั้งสามชั้นเสมอ
 
-## ขั้นตอนที่ 0 — Audit ก่อนเขียนเอกสาร
+## เมื่อไหร่ต้องรัน skill นี้
 
-ก่อนสร้าง/อัปเดตเอกสารใด ๆ ให้ตรวจสอบ requirement spec ทุกไฟล์ใน `01-spec/` ก่อนเสมอ:
+รันทุกครั้งที่ **ชั้นใดชั้นหนึ่งใน 3 ชั้นเปลี่ยนแปลง** ไม่ใช่แค่ตอนแก้ requirement spec เท่านั้น:
 
-1. ทุก user story/feature ต้อง map ไปยัง REQ-xx อย่างน้อย 1 ข้อ และทุก REQ-xx ต้อง map ไปยัง feature ได้
-2. หา requirement ที่ **ขาดรายละเอียดที่จำเป็นต่อการเขียน Steps ให้เป็นรูปธรรม** เช่น สูตรคำนวณ, ค่าคงที่,
-   เกณฑ์ tolerance, กติกา edge case ที่ spec ไม่ได้ระบุ (ไม่ใช่แค่ nice-to-have แต่เป็นสิ่งที่ถ้าไม่รู้
-   จะเขียน Steps/Success State ผิดหรือคลุมเครือ)
-3. หา feature ที่ทับซ้อนกัน หรือ REQ ที่ขัดแย้งกันเองข้าม epic
+- เอกสาร requirement ใน `01-spec/` ถูกสร้าง/แก้ไข (REQ ใหม่, กติกาทางธุรกิจเปลี่ยน, decision ใหม่/เปลี่ยน,
+  Open Point ใหม่)
+- `backlog.md` หรือ `user-journeys.md` ถูกแก้ไขโดยตรง (โดยคนหรือ tool อื่น) — กรณีนี้อาจทำให้เกิด **drift**
+  จาก spec ต้นทาง ห้ามสันนิษฐานว่ายังสอดคล้องกันอยู่ ต้อง audit ใหม่เสมอ
+- ผู้ใช้ขอให้ audit/สร้าง/อัปเดตเอกสารใดในสามชั้นนี้โดยตรง
+
+## ขั้นตอนที่ 0 — Full Consistency Audit (รันทุกครั้ง ไม่ใช่แค่ครั้งแรกที่สร้างเอกสาร)
+
+อ่านทั้งสามชั้นให้ครบ (ทุกไฟล์ใน `01-spec/`, `backlog.md`, `user-journeys.md`) แล้วตรวจสอบไขว้กันดังนี้:
+
+1. **REQ coverage** — ทุก REQ-xx ที่นิยามใน `01-spec/` ต้องปรากฏใน Feature ID อย่างน้อย 1 รายการใน
+   `backlog.md` **และ** มี Step ที่ mapping ถึงใน `user-journeys.md` — ถ้าขาดฝั่งใดฝั่งหนึ่ง ให้ระบุ
+2. **Feature ID parity** — เซตของ Feature ID ต้องตรงกันทุกจุด: ตารางสรุปใน `backlog.md`, คำอธิบายเต็มใน
+   `backlog.md`, และ entry ใน `user-journeys.md` — ถ้า Feature ID ไหนมีในที่หนึ่งแต่ขาดในอีกที่ ให้ระบุ
+3. **Fact consistency** — ตัวเลข/สูตร/กติกาที่อ้างใน `backlog.md` และ `user-journeys.md` ต้องตรงกับข้อความ
+   จริงใน section "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" หรือ "เงื่อนไข/กติกาทางธุรกิจ" ของเอกสาร spec
+   เจ้าของ REQ นั้น — ถ้าขัดแย้งกัน (เช่น spec บอกค่าคงที่หนึ่ง แต่ journey ใช้อีกค่า) ให้ระบุพร้อม quote
+   ข้อความทั้งสองฝั่ง
+4. **Priority parity** — MoSCoW priority ของแต่ละ feature ใน `backlog.md` ต้องไม่ขัดกับสิ่งที่ระบุไว้ใน
+   เอกสาร spec ของ epic นั้น (ถ้า spec มีการกล่าวถึง priority ไว้)
+5. **Freshness** — ถ้าเอกสาร spec ถูกแก้ไข (REQ, decision, scope) หลังจาก `backlog.md`/`user-journeys.md`
+   ถูกเขียนครั้งล่าสุด ให้ถือว่าทุก feature/section ที่ derive จาก REQ นั้นต้อง**เขียนใหม่ตามเนื้อหาปัจจุบัน**
+   ไม่ใช่แค่บันทึกว่ามันต่างกัน
+6. **Reverse drift** (backlog.md/user-journeys.md มีข้อมูลที่ spec ไม่มี) — ถ้า `backlog.md` หรือ
+   `user-journeys.md` มีข้อความที่ระบุข้อเท็จจริงเจาะจง (ตัวเลข, สูตร, กติกา, edge case ที่ resolve แล้ว)
+   ที่ **ไม่ปรากฏอยู่ใน 01-spec/ เลย** แปลว่ามี drift ที่เกิดจากการแก้ไข downstream โดยตรง ห้ามปล่อยผ่านเงียบ ๆ
+   ให้จัดการตาม "การ reconcile drift" ด้านล่าง
+
+## การ Reconcile Drift
+
+เมื่อ audit เจอความไม่สอดคล้องกันข้างต้น ให้เลือกวิธีจัดการตามลักษณะของความไม่สอดคล้องนั้น:
+
+- **Spec ตามหลัง** (backlog.md/user-journeys.md ระบุข้อเท็จจริงที่ยังไม่มีใน spec แต่ไม่ขัดแย้งกับสิ่งที่
+  เคย resolve ไว้แล้ว เช่น เป็นการขยายความจาก decision เดิม): เพิ่มเข้า section
+  "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" ของเอกสาร spec เจ้าของก่อน แล้วค่อยให้ backlog.md/user-journeys.md
+  อ้างอิงกลับมา
+- **Spec กับ downstream ขัดแย้งกันตรง ๆ** (คนละค่า/คนละกติกาในเรื่องเดียวกัน): **ห้ามเลือกฝั่งใดฝั่งหนึ่งเอง**
+  ให้ใช้กติกา "ถามผู้ใช้ก่อนเสมอ" ด้านล่าง โดยกรอบตัวเลือกอย่างน้อย 3 แนวทาง เช่น (ก) ยึด spec เป็นหลัก
+  แล้วแก้ backlog/journey ให้ตรง (ข) ยึด backlog/journey เป็นหลัก แล้วอัปเดต spec ย้อนกลับ (ค) ค่ากลาง/
+  ทางเลือกที่สาม พร้อมเหตุผลว่าทำไมอาจถูกต้องกว่าทั้งสองฝั่งเดิม
+- **Spec เปลี่ยนแล้ว downstream แค่ยังไม่ตาม** (ไม่มีข้อขัดแย้ง แค่ล้าหลัง): อัปเดต `backlog.md`/
+  `user-journeys.md` ให้ตรงกับ spec ปัจจุบันได้เลยโดยไม่ต้องถาม เพราะนี่คือการ apply decision ที่ resolve
+  แล้ว ไม่ใช่ความไม่ชัดเจนใหม่
+
+หลัง reconcile แล้ว เอกสาร spec ของ epic นั้นต้องเป็นแหล่งความจริงสุดท้ายของแต่ละข้อเท็จจริงเสมอ และ
+`backlog.md`/`user-journeys.md` ต้องถูก derive ใหม่จากมันให้ตรงกัน
 
 ## กติกาเมื่อไม่แน่ใจหรือข้อมูลไม่พอ — ต้องถามผู้ใช้ก่อนเสมอ
 
-**ห้ามเดาเอาเอง** เมื่อเจอจุดที่ audit แล้วพบว่าข้อมูลไม่พอต่อการเขียน Steps/Success State ให้ถูกต้อง
-ให้หยุดและถามผู้ใช้งานตามรูปแบบนี้เสมอ:
+**ห้ามเดาเอาเอง** เมื่อเจอจุดที่ audit แล้วพบว่าข้อมูลไม่พอ หรือขัดแย้งกันข้ามชั้น ให้หยุดและถามผู้ใช้งาน
+ตามรูปแบบนี้เสมอ:
 
-1. ระบุคำถามให้ชัดเจนว่าไม่แน่ใจเรื่องอะไร และกระทบ feature/REQ ไหน
+1. ระบุคำถามให้ชัดเจนว่าไม่แน่ใจ/ขัดแย้งเรื่องอะไร และกระทบ feature/REQ/เอกสารชั้นไหนบ้าง
 2. เสนอ **อย่างน้อย 3 แนวทาง** ที่เป็นไปได้
 3. อธิบาย **เหตุผล ข้อดี ข้อเสีย** ของแต่ละแนวทาง
 4. **แนะนำแนวทางที่ดีที่สุด 1 แนวทาง พร้อมเหตุผลที่แนะนำ**
 5. รอคำตอบจากผู้ใช้ก่อนเขียนส่วนที่เกี่ยวข้องในเอกสารจริง — ห้ามใส่ placeholder ที่คลุมเครือแทนการถาม
 
 หลังผู้ใช้ตอบแล้ว บันทึกคำตอบไว้ใน section "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" ของเอกสาร spec
-(`docs/01-requirements/01-spec/{...}.md`) ที่ REQ นั้นสังกัดอยู่ก่อน แล้วจึงอ้างอิงกลับมาจาก backlog.md/
-user-journeys.md — ไม่ใช่เขียน decision ไว้ที่ backlog.md/user-journeys.md เป็นที่แรก
+(`docs/01-requirements/01-spec/{...}.md`) ที่ REQ นั้นสังกัดอยู่ก่อนเสมอ แล้วจึงอ้างอิงกลับมาจาก
+backlog.md/user-journeys.md — ไม่ใช่เขียน decision ไว้ที่ backlog.md/user-journeys.md เป็นที่แรก
 
-เกณฑ์คร่าว ๆ ว่าเมื่อไหร่ต้องถาม vs. เมื่อไหร่แค่บันทึกไว้ใน "Open Questions": ถ้าความไม่ชัดเจนนั้น
+เกณฑ์คร่าว ๆ ว่าเมื่อไหร่ต้องถาม vs. เมื่อไหร่แค่บันทึกไว้ใน "Open Questions": ถ้าความไม่ชัดเจนหรือความขัดแย้งนั้น
 **เปลี่ยนแปลง Steps/Success State/Diagram ของ feature ที่เป็น Must หรือ Should อย่างมีนัยสำคัญ** ให้ถามก่อนเสมอ
 ถ้าเป็นรายละเอียด implementation ปลีกย่อยของ feature ที่ยังไม่กระทบโครงสร้าง journey (เช่น Could-priority
 integration ที่ยังไม่ต้องลง detail ระดับนั้น) ให้บันทึกไว้ใน "Open Questions" (user-journeys.md) และ
 "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" (เอกสาร spec ที่เกี่ยวข้อง) แทนได้โดยไม่ต้องถามทุกข้อ
 — แต่ต้องระบุให้ครบ ห้ามตัดทิ้งเงียบ ๆ
 
-## ขั้นตอนการเขียนเอกสาร
+## ขั้นตอนการเขียน/ปรับเอกสารให้สอดคล้องกัน
 
 1. **จัดกลุ่มตาม Epic** — รวม feature/point ทั้งหมดของแต่ละ epic (หนึ่งไฟล์ใน `01-spec/` ต่อหนึ่ง epic เช่น
    Onboarding, Recommendation, Planner, Integration) อย่าสร้าง epic ใหม่ที่ไม่มีในเอกสาร spec
-2. **ตั้ง Feature ID** — ใช้รูปแบบ `EPIC-N` เรียงตามลำดับที่ปรากฏใน spec (เช่น `ONB-1`, `REC-1`)
+2. **ตั้ง/คง Feature ID** — ใช้รูปแบบ `EPIC-N` เรียงตามลำดับที่ปรากฏใน spec (เช่น `ONB-1`, `REC-1`)
    เพื่อให้ trace กลับไปยัง REQ-xx และเอกสาร spec ต้นทางได้ (คงรหัสเดิมไว้เมื่อเป็นการ update ไม่เปลี่ยนเลขใหม่
-   สำหรับ feature ที่มีอยู่แล้ว)
+   สำหรับ feature ที่มีอยู่แล้ว — เปลี่ยน ID เดิมได้เฉพาะกรณีที่ audit พบว่า ID ปัจจุบันไม่ตรงกับลำดับใน spec
+   แล้วเท่านั้น และต้องอัปเดตทุกจุดที่อ้างถึง ID เดิมให้ตรงกันทั้งหมด)
+3. **แก้เฉพาะ feature/REQ ที่ audit พบว่าไม่สอดคล้องหรือล้าหลัง** ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น
+   แต่ feature ที่ได้รับผลกระทบต้องได้รับการแก้ไขให้ครบทั้งใน `backlog.md` และ `user-journeys.md` พร้อมกัน
+   ไม่ใช่แก้ที่เดียวแล้วปล่อยอีกที่ค้าง
 
 ### Feature List / Product Backlog (`docs/01-requirements/backlog.md`)
 
@@ -86,9 +130,14 @@ integration ที่ยังไม่ต้องลง detail ระดับ
 
 ## Output
 
+- `docs/01-requirements/01-spec/*.md` (เฉพาะไฟล์ที่ได้รับการ reconcile drift ตามด้านบน)
 - `docs/01-requirements/backlog.md`
 - `docs/02-design/01-prototypes/user-journeys.md`
 
-ทั้งสองไฟล์ต้องลิงก์กลับไปยังเอกสาร spec ที่เกี่ยวข้องใน `docs/01-requirements/01-spec/` และลิงก์ถึงกันเอง
-เมื่อเป็นการ update เอกสารเดิม ให้แก้เฉพาะส่วนที่เปลี่ยน คงเนื้อหาที่ยังถูกต้องไว้ ไม่ต้องเขียนใหม่ทั้งไฟล์
-โดยไม่จำเป็น ห้ามแก้ไข `index.md` ของแต่ละโฟลเดอร์ — เป็นคำอธิบายโครงสร้างเท่านั้น ไม่ใช่ที่เก็บเนื้อหาจริง
+ทั้งสามชั้นต้องลิงก์ถึงกันให้ครบ (backlog.md ↔ 01-spec/, user-journeys.md ↔ 01-spec/, backlog.md ↔
+user-journeys.md) เมื่อเป็นการ update เอกสารเดิม ให้แก้เฉพาะส่วนที่เปลี่ยน คงเนื้อหาที่ยังถูกต้องไว้
+ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น ห้ามแก้ไข `index.md` ของแต่ละโฟลเดอร์ — เป็นคำอธิบายโครงสร้างเท่านั้น
+ไม่ใช่ที่เก็บเนื้อหาจริง
+
+ก่อนจบงานทุกครั้ง ให้สรุปผล Consistency Audit กลับไปหาผู้เรียก: พบความไม่สอดคล้องอะไรบ้าง, แก้ไขอะไรไปแล้ว,
+และมีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง

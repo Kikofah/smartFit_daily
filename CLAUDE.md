@@ -32,26 +32,31 @@ in once the backlog is actually picked up for planning/build.
 is not where actual content goes. Add real documents as new files alongside `index.md`, never by
 overwriting it.
 
-### Creating or updating the Feature List / User Journey
+### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
-Trigger this whenever: a requirement doc under `01-spec/` is created or changed, the resolved
-decisions in a spec doc change, or the user directly asks to create/update the Feature List,
-Product Backlog, or User Journey.
+These three layers must always agree and stay current: **Requirement** (`01-spec/*.md`, the source
+of truth), **Product Backlog / Feature List** (`backlog.md`), and **User Journey**
+(`user-journeys.md`). Trigger a consistency check/update whenever *any one* of them changes — not
+just when a spec doc changes: a requirement doc is created/edited, `backlog.md` or
+`user-journeys.md` is edited directly (this can introduce drift from the spec — never assume it's
+still in sync), or the user directly asks to audit/create/update any of the three.
 
 1. If the feature being asked about has no corresponding doc yet in `docs/01-requirements/01-spec/`,
-   write that requirement doc first (see "Requirement workflow" below) — `backlog.md` and
-   `user-journeys.md` are always derived from `01-spec/`, never authored ahead of it.
+   write that requirement doc first (see "Requirement workflow" below).
 2. Invoke the `feature-list-journey` skill (`.claude/skills/feature-list-journey/SKILL.md`) or the
    `feature-journey-writer` agent (`.claude/agents/feature-journey-writer.md`) to do the actual
-   work — never hand-edit `backlog.md` or `user-journeys.md` directly, since they must both stay in
-   the exact formats below and stay in sync with `01-spec/`.
-3. The skill audits `01-spec/` for gaps before writing anything. When a gap would materially change
-   the Steps/Success State/diagram of a Must- or Should-priority feature, it must stop and ask the
-   user — with **at least 3 options**, the **reasoning/pros/cons of each**, and **one recommended
-   option with its rationale** — rather than guessing. Minor gaps that don't affect journey
-   structure go in an "Open Questions" / "จุดที่ยังไม่ได้ระบุ" section instead. Once the user answers,
-   the decision is recorded in the owning spec doc's "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" section
-   first, then referenced from `backlog.md`/`user-journeys.md` — never written there as the source.
+   work — don't hand-edit `backlog.md` or `user-journeys.md` directly outside of that workflow,
+   since it's what audits all three layers for REQ coverage, Feature ID parity, and fact
+   consistency, and reconciles whichever is out of date.
+3. When the audit finds spec and a downstream doc directly contradicting each other, it must stop
+   and ask the user — with **at least 3 options** (e.g. keep the spec's version, keep the
+   downstream version, or a third reconciling option), the **reasoning/pros/cons of each**, and
+   **one recommended option with its rationale** — rather than silently picking a side. A doc that's
+   merely stale (spec changed, downstream hasn't caught up yet) gets updated directly, no need to
+   ask. Once the user answers a real conflict, the decision is recorded in the owning spec doc's
+   "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" section first, then referenced from `backlog.md`/
+   `user-journeys.md` — never written there as the source. Minor gaps that don't affect a Must/
+   Should feature's structure go in an "Open Questions" / "จุดที่ยังไม่ได้ระบุ" section instead.
 4. Required output formats (do not deviate without updating the skill/agent too):
    - `backlog.md`: one combined summary table across **all** epics at the top (Feature ID, name,
      Epic, **MoSCoW Priority**, related `REQ-xx`, linked spec doc), followed by a full description
@@ -62,8 +67,8 @@ Product Backlog, or User Journey.
      mapping on every step, then Actor/Persona, Goal, Trigger, Preconditions, Success State,
      Alt/Edge Cases.
 5. Every `REQ-xx` across all of `01-spec/` must be traceable to at least one feature in both
-   `backlog.md` and `user-journeys.md`. Both files must cross-link to each other and to the
-   relevant doc(s) in `01-spec/`.
+   `backlog.md` and `user-journeys.md`, with the same Feature ID set in both places. All three
+   layers must cross-link to each other.
 
 ### Requirement workflow (`01-spec/`)
 
@@ -81,8 +86,8 @@ Product Backlog, or User Journey.
    in a "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" section, so it isn't silently dropped.
 4. After creating/updating a requirement doc, update `docs/01-requirements/backlog.md` and
    `docs/02-design/01-prototypes/user-journeys.md` via the `feature-list-journey` skill/agent (see
-   "Creating or updating the Feature List / User Journey" above) rather than hand-editing them out
-   of sync with the spec.
+   "Keeping Requirement, Feature List/Backlog, and User Journey consistent" above) rather than
+   hand-editing them out of sync with the spec.
 5. Summarize the work done in `docs/05-log/{YYYYMMDD}-log.md` (create if it doesn't exist for that
    date; append if it does).
 
