@@ -32,6 +32,39 @@ in once the backlog is actually picked up for planning/build.
 is not where actual content goes. Add real documents as new files alongside `index.md`, never by
 overwriting it.
 
+### Creating or updating the Feature List / User Journey
+
+Trigger this whenever: a requirement doc under `01-spec/` is created or changed, the resolved
+decisions in a spec doc change, or the user directly asks to create/update the Feature List,
+Product Backlog, or User Journey.
+
+1. If the feature being asked about has no corresponding doc yet in `docs/01-requirements/01-spec/`,
+   write that requirement doc first (see "Requirement workflow" below) — `backlog.md` and
+   `user-journeys.md` are always derived from `01-spec/`, never authored ahead of it.
+2. Invoke the `feature-list-journey` skill (`.claude/skills/feature-list-journey/SKILL.md`) or the
+   `feature-journey-writer` agent (`.claude/agents/feature-journey-writer.md`) to do the actual
+   work — never hand-edit `backlog.md` or `user-journeys.md` directly, since they must both stay in
+   the exact formats below and stay in sync with `01-spec/`.
+3. The skill audits `01-spec/` for gaps before writing anything. When a gap would materially change
+   the Steps/Success State/diagram of a Must- or Should-priority feature, it must stop and ask the
+   user — with **at least 3 options**, the **reasoning/pros/cons of each**, and **one recommended
+   option with its rationale** — rather than guessing. Minor gaps that don't affect journey
+   structure go in an "Open Questions" / "จุดที่ยังไม่ได้ระบุ" section instead. Once the user answers,
+   the decision is recorded in the owning spec doc's "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" section
+   first, then referenced from `backlog.md`/`user-journeys.md` — never written there as the source.
+4. Required output formats (do not deviate without updating the skill/agent too):
+   - `backlog.md`: one combined summary table across **all** epics at the top (Feature ID, name,
+     Epic, **MoSCoW Priority**, related `REQ-xx`, linked spec doc), followed by a full description
+     of each feature below the table (why it has its priority, what it does, how it connects to
+     other features).
+   - `user-journeys.md`: one entry per feature, always **Mermaid diagram first**, then a
+     description that walks through the diagram in the same order with an explicit `REQ-xx`
+     mapping on every step, then Actor/Persona, Goal, Trigger, Preconditions, Success State,
+     Alt/Edge Cases.
+5. Every `REQ-xx` across all of `01-spec/` must be traceable to at least one feature in both
+   `backlog.md` and `user-journeys.md`. Both files must cross-link to each other and to the
+   relevant doc(s) in `01-spec/`.
+
 ### Requirement workflow (`01-spec/`)
 
 1. File name: `{YYYYMMDD}-{RUNNING_NO}-{short-topic-slug}.md`, e.g.
@@ -48,23 +81,10 @@ overwriting it.
    in a "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" section, so it isn't silently dropped.
 4. After creating/updating a requirement doc, update `docs/01-requirements/backlog.md` and
    `docs/02-design/01-prototypes/user-journeys.md` via the `feature-list-journey` skill/agent (see
-   below) rather than hand-editing them out of sync with the spec.
+   "Creating or updating the Feature List / User Journey" above) rather than hand-editing them out
+   of sync with the spec.
 5. Summarize the work done in `docs/05-log/{YYYYMMDD}-log.md` (create if it doesn't exist for that
    date; append if it does).
-
-### Product Backlog & Feature List (`backlog.md`)
-
-A single markdown file in `docs/01-requirements/backlog.md`: one combined summary table across all
-epics (Feature ID, name, Epic, **MoSCoW Priority**, related `REQ-xx`, linked spec doc), followed by
-a full description of each feature below the table (why it has its priority, what it does, how it
-connects to other features).
-
-### User Journeys (`docs/02-design/01-prototypes/user-journeys.md`)
-
-One entry per feature, always in this order: Mermaid diagram first, then a description that walks
-through the diagram in the same order with an explicit `REQ-xx` mapping per step, then Actor/
-Persona, Goal, Trigger, Preconditions, Success State, Alt/Edge Cases. Gaps that don't affect a
-Must/Should feature's structure are listed in an "Open Questions" section rather than guessed.
 
 ### Language
 
@@ -72,19 +92,6 @@ Existing documentation content (all `index.md` files, and any requirement/backlo
 written in **Thai**, matching the project's working language. Write new content in Thai, with
 English technical terms where natural (e.g. streak, wearable, deficit, TDEE). This `CLAUDE.md` file
 itself stays in English, as instructions for Claude Code.
-
-### Automation for this workflow
-
-The requirement → backlog → user journey pipeline is automated:
-
-- Skill `feature-list-journey` (`.claude/skills/feature-list-journey/SKILL.md`) — the methodology:
-  audit `01-spec/` for gaps first (asking the user, with ≥3 options and a recommendation, whenever a
-  gap would materially change a Must/Should feature's journey), then produce/update `backlog.md` and
-  `user-journeys.md` in the formats described above.
-- Agent `feature-journey-writer` (`.claude/agents/feature-journey-writer.md`) — applies the skill.
-
-Prefer invoking this skill/agent over hand-editing `backlog.md` or `user-journeys.md` directly. If
-the conventions above change, update the skill/agent files too, not just this section.
 
 ## Documentation structure
 
