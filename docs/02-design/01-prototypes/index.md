@@ -10,3 +10,7 @@
 
 `user-journeys.md` ในโฟลเดอร์นี้คือ user flow ของทุก feature ใน smartFit_daily ในรูปแบบ Mermaid diagram
 พร้อม mapping กลับไปยัง requirement แต่ละข้อใน [[../../01-requirements/01-spec/index|01-spec]]
+
+`DESIGN.md` ในโฟลเดอร์นี้คือ Design System (Brand Identity & CI, Design Tokens, UI Components & Patterns,
+UX Guidelines & Rules) โทน Earth Tone + Minimalist + Muji-inspired — ใช้เป็นแหล่งอ้างอิงเดียวก่อนออกแบบ
+หน้าจอ/component ใหม่

@@ -23,6 +23,9 @@ Work so far has moved through the first two stages of the documentation pipeline
 - `docs/02-design/01-prototypes/user-journeys.md` — the **User Journey** for every feature: a
   Mermaid diagram first, then a step-by-step walkthrough in the same order with a `REQ-xx` mapping
   per step, then Actor/Goal/Trigger/Preconditions/Success State/Alt-Edge Cases.
+- `docs/02-design/01-prototypes/DESIGN.md` — the **Design System**: Brand Identity & CI, Design
+  Tokens (colors, typography, spacing), UI Components & Patterns, and UX Guidelines & Rules, in an
+  Earth Tone + Minimalist + Muji-inspired style. Check it before designing any new screen/component.
 
 Downstream stages (`02-plan`, `03-task`, `02-design/02-technical`, `03-testing`, `04-retrospectives`)
 are scaffolded but not the current priority — don't populate them speculatively; let them get filled
@@ -111,7 +114,8 @@ to make sure it goes in the right place:
    - `02-plan/` — currently unused (roadmap/phasing, once picked up)
    - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status, owners)
 2. `docs/02-design/` — design derived from requirements:
-   - `01-prototypes/` — UI/UX prototypes, wireframes, user flow — currently holds `user-journeys.md`
+   - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — currently holds
+     `user-journeys.md` and `DESIGN.md`
    - `02-technical/` — technical design: architecture, database schema, API design, tech choices
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — test cases/scenarios, test data, in/out of scope
