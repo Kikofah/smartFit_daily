@@ -1,11 +1,11 @@
 ---
 name: feature-list-journey
-description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
+description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by the test-suite-builder skill) have gone stale as a result, and flags that instead of rewriting them. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
 ---
 
 # Feature List & User Journey Writer
 
-เอกสาร 3 ชั้นที่ skill นี้ดูแลให้สอดคล้องและเป็นล่าสุดตลอดเวลา:
+เอกสาร 3 ชั้นที่ skill นี้ดูแล**เขียน**ให้สอดคล้องและเป็นล่าสุดตลอดเวลา:
 
 1. **Requirement** — `docs/01-requirements/01-spec/*.md` (ไม่รวม `index.md`) หนึ่งไฟล์ต่อ epic — เป็น
    **source of truth**: ขอบเขต (Scope), รายละเอียด, เงื่อนไข/กติกาทางธุรกิจ (REQ-xx),
@@ -17,9 +17,16 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
 
 ชั้น (2) และ (3) ต้องไม่มีข้อมูลที่ขัดแย้งหรือเก่ากว่าชั้น (1) และต้องมี Feature ID/REQ ตรงกันทั้งสามชั้นเสมอ
 
+นอกจาก 3 ชั้นนี้ ยังมีเอกสารดาวน์สตรีมอีก 3 ชิ้นที่ skill `test-suite-builder` เป็นเจ้าของ (ไม่ใช่ skill นี้):
+**Acceptance Criteria** (`docs/01-requirements/acceptance-criteria.md`), **Test Plan**
+(`docs/03-testing/01-test-plan/test-plan.md`), และ **Test Case**
+(`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`) — skill นี้**ตรวจสอบ (audit)**ว่าเอกสารทั้ง 3
+นี้ (ถ้ามีอยู่แล้ว) ยัง fresh/สอดคล้องกับการเปลี่ยนแปลงใน 3 ชั้นหลักหรือไม่ แต่**ไม่เขียน/แก้ไฟล์เหล่านี้เอง**
+— ดู "ขั้นตอนที่ 0.5" ด้านล่าง
+
 ## เมื่อไหร่ต้องรัน skill นี้
 
-รันทุกครั้งที่ **ชั้นใดชั้นหนึ่งใน 3 ชั้นเปลี่ยนแปลง** ไม่ใช่แค่ตอนแก้ requirement spec เท่านั้น:
+รันทุกครั้งที่ **ชั้นใดชั้นหนึ่งใน 3 ชั้นหลักเปลี่ยนแปลง** ไม่ใช่แค่ตอนแก้ requirement spec เท่านั้น:
 
 - เอกสาร requirement ใน `01-spec/` ถูกสร้าง/แก้ไข (REQ ใหม่, กติกาทางธุรกิจเปลี่ยน, decision ใหม่/เปลี่ยน,
   Open Point ใหม่)
@@ -27,7 +34,7 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
   จาก spec ต้นทาง ห้ามสันนิษฐานว่ายังสอดคล้องกันอยู่ ต้อง audit ใหม่เสมอ
 - ผู้ใช้ขอให้ audit/สร้าง/อัปเดตเอกสารใดในสามชั้นนี้โดยตรง
 
-## ขั้นตอนที่ 0 — Full Consistency Audit (รันทุกครั้ง ไม่ใช่แค่ครั้งแรกที่สร้างเอกสาร)
+## ขั้นตอนที่ 0 — Full Consistency Audit ของ 3 ชั้นหลัก (รันทุกครั้ง ไม่ใช่แค่ครั้งแรกที่สร้างเอกสาร)
 
 อ่านทั้งสามชั้นให้ครบ (ทุกไฟล์ใน `01-spec/`, `backlog.md`, `user-journeys.md`) แล้วตรวจสอบไขว้กันดังนี้:
 
@@ -49,7 +56,24 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
    ที่ **ไม่ปรากฏอยู่ใน 01-spec/ เลย** แปลว่ามี drift ที่เกิดจากการแก้ไข downstream โดยตรง ห้ามปล่อยผ่านเงียบ ๆ
    ให้จัดการตาม "การ reconcile drift" ด้านล่าง
 
-## การ Reconcile Drift
+## ขั้นตอนที่ 0.5 — ตรวจสอบว่าดาวน์สตรีม (AC/Test Plan/Test Case) หลุด fresh หรือไม่
+
+หลัง reconcile 3 ชั้นหลักเสร็จแล้ว (หรือถ้าไม่มีอะไรต้อง reconcile เลย) ให้ตรวจต่อว่า
+`docs/01-requirements/acceptance-criteria.md`, `docs/03-testing/01-test-plan/test-plan.md`, และ
+`docs/03-testing/01-test-plan/test-cases/*.md` **มีอยู่แล้วหรือยัง**:
+
+- **ถ้ายังไม่มีเอกสารเหล่านี้เลย**: ไม่ใช่ gap ที่ต้องแจ้ง — แค่ยังไม่ถูกสร้าง ไม่ต้องพูดถึงในรายงาน
+- **ถ้ามีอยู่แล้ว**: ตรวจ (ในระดับผิวเผินพอที่จะรู้ว่าต้อง regenerate หรือไม่ ไม่ต้องอ่านลึกเท่า audit หลัก):
+  - Feature ID/REQ ที่เพิ่ง reconcile ไปยังคงตรงกับที่อ้างใน `acceptance-criteria.md`/`test-cases/*.md`
+    หรือไม่ (เช่น Feature ID เปลี่ยนเลข, REQ ถูกลบ/แก้ความหมาย, decision ที่เคย resolve เปลี่ยนไป)
+  - Feature ใหม่ที่เพิ่งเพิ่มเข้า `backlog.md`/`user-journeys.md` มี AC/test case ครอบคลุมหรือยัง
+  - Scope/priority ที่เปลี่ยนใน `backlog.md` (เช่น MoSCoW เปลี่ยน) ยังตรงกับ scope ที่ระบุใน
+    `test-plan.md` หรือไม่
+- **ถ้าพบว่าหลุด fresh หรือไม่ครอบคลุมแล้ว**: **ห้ามแก้ไฟล์เหล่านี้เอง** (เป็นหน้าที่/รูปแบบเฉพาะของ
+  skill `test-suite-builder`) ให้ระบุไว้ชัดในรายงานผลว่าไฟล์ไหนหลุด fresh เพราะอะไร และแนะนำให้รัน skill
+  `test-suite-builder` (agent `test-suite-writer`) ต่อสำหรับ scope ที่กระทบ
+
+## การ Reconcile Drift (เฉพาะ 3 ชั้นหลัก)
 
 เมื่อ audit เจอความไม่สอดคล้องกันข้างต้น ให้เลือกวิธีจัดการตามลักษณะของความไม่สอดคล้องนั้น:
 
@@ -90,14 +114,15 @@ integration ที่ยังไม่ต้องลง detail ระดับ
 "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" (เอกสาร spec ที่เกี่ยวข้อง) แทนได้โดยไม่ต้องถามทุกข้อ
 — แต่ต้องระบุให้ครบ ห้ามตัดทิ้งเงียบ ๆ
 
-## ขั้นตอนการเขียน/ปรับเอกสารให้สอดคล้องกัน
+## ขั้นตอนการเขียน/ปรับเอกสารให้สอดคล้องกัน (เฉพาะ 3 ชั้นหลัก)
 
 1. **จัดกลุ่มตาม Epic** — รวม feature/point ทั้งหมดของแต่ละ epic (หนึ่งไฟล์ใน `01-spec/` ต่อหนึ่ง epic เช่น
    Onboarding, Recommendation, Planner, Integration) อย่าสร้าง epic ใหม่ที่ไม่มีในเอกสาร spec
 2. **ตั้ง/คง Feature ID** — ใช้รูปแบบ `EPIC-N` เรียงตามลำดับที่ปรากฏใน spec (เช่น `ONB-1`, `REC-1`)
    เพื่อให้ trace กลับไปยัง REQ-xx และเอกสาร spec ต้นทางได้ (คงรหัสเดิมไว้เมื่อเป็นการ update ไม่เปลี่ยนเลขใหม่
    สำหรับ feature ที่มีอยู่แล้ว — เปลี่ยน ID เดิมได้เฉพาะกรณีที่ audit พบว่า ID ปัจจุบันไม่ตรงกับลำดับใน spec
-   แล้วเท่านั้น และต้องอัปเดตทุกจุดที่อ้างถึง ID เดิมให้ตรงกันทั้งหมด)
+   แล้วเท่านั้น และต้องอัปเดตทุกจุดที่อ้างถึง ID เดิมให้ตรงกันทั้งหมด — **ถ้าเปลี่ยน Feature ID ที่มีอยู่แล้ว
+   ต้องระบุใน "ขั้นตอนที่ 0.5" ด้วยว่ากระทบ AC/Test Plan/Test Case ที่มีอยู่แล้วหรือไม่**)
 3. **แก้เฉพาะ feature/REQ ที่ audit พบว่าไม่สอดคล้องหรือล้าหลัง** ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น
    แต่ feature ที่ได้รับผลกระทบต้องได้รับการแก้ไขให้ครบทั้งใน `backlog.md` และ `user-journeys.md` พร้อมกัน
    ไม่ใช่แก้ที่เดียวแล้วปล่อยอีกที่ค้าง
@@ -137,7 +162,9 @@ integration ที่ยังไม่ต้องลง detail ระดับ
 ทั้งสามชั้นต้องลิงก์ถึงกันให้ครบ (backlog.md ↔ 01-spec/, user-journeys.md ↔ 01-spec/, backlog.md ↔
 user-journeys.md) เมื่อเป็นการ update เอกสารเดิม ให้แก้เฉพาะส่วนที่เปลี่ยน คงเนื้อหาที่ยังถูกต้องไว้
 ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น ห้ามแก้ไข `index.md` ของแต่ละโฟลเดอร์ — เป็นคำอธิบายโครงสร้างเท่านั้น
-ไม่ใช่ที่เก็บเนื้อหาจริง
+ไม่ใช่ที่เก็บเนื้อหาจริง **ห้ามแก้ไข `acceptance-criteria.md`, `test-plan.md`, หรือ `test-cases/*.md`
+เอง** ไม่ว่ากรณีใด — เป็นหน้าที่ของ skill `test-suite-builder`
 
-ก่อนจบงานทุกครั้ง ให้สรุปผล Consistency Audit กลับไปหาผู้เรียก: พบความไม่สอดคล้องอะไรบ้าง, แก้ไขอะไรไปแล้ว,
-และมีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง
+ก่อนจบงานทุกครั้ง ให้สรุปผล Consistency Audit กลับไปหาผู้เรียก: พบความไม่สอดคล้องอะไรบ้างใน 3 ชั้นหลัก,
+แก้ไขอะไรไปแล้ว, มีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และ**ผลตรวจ AC/Test Plan/Test Case ตามขั้นตอนที่ 0.5**
+(ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน `test-suite-builder` ต่อสำหรับ scope ไหน)

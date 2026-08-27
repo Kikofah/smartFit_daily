@@ -44,9 +44,15 @@ detailed in its own subsection below; use this table to find the right one first
 
 | Skill (agent) | Produces | Use when |
 |---|---|---|
-| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, or you're asked to audit/create/update any of the three (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
+| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md` went stale as a result, and tells you to run `test-suite-builder` if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype (see "Building HTML prototypes"). |
-| `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update acceptance criteria, a test plan, or test cases (see "Building the test suite"). |
+| `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
+
+Together, `feature-list-journey` and `test-suite-builder` cover the full chain — Requirement →
+Backlog/Feature List → User Journey → Acceptance Criteria → Test Plan/Test Case — end to end: a
+change anywhere in it should eventually be reflected everywhere downstream of it. Neither skill
+writes the other's files; each audits forward/backward across the seam and tells you (or the other
+agent) to run the right one.
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
@@ -63,7 +69,10 @@ still in sync), or the user directly asks to audit/create/update any of the thre
    `feature-journey-writer` agent (`.claude/agents/feature-journey-writer.md`) to do the actual
    work — don't hand-edit `backlog.md` or `user-journeys.md` directly outside of that workflow,
    since it's what audits all three layers for REQ coverage, Feature ID parity, and fact
-   consistency, and reconciles whichever is out of date.
+   consistency, and reconciles whichever is out of date. After reconciling, it also checks (lightly,
+   not a full audit) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md` already exist
+   and, if so, whether they're now stale relative to what just changed — it never edits those itself,
+   it just says so in its report so `test-suite-builder` can be run next.
 3. When the audit finds spec and a downstream doc directly contradicting each other, it must stop
    and ask the user — with **at least 3 options** (e.g. keep the spec's version, keep the
    downstream version, or a third reconciling option), the **reasoning/pros/cons of each**, and
@@ -162,6 +171,13 @@ inventing NFR numbers directly inside `test-plan.md`. The same ask-user protocol
 pros/cons, one recommendation) applies to any other gap, e.g. an edge case implied by a test case
 but not actually documented anywhere upstream — flag it, don't invent test coverage for undefined
 behavior.
+
+Re-run this whenever `01-spec/`, `backlog.md`, or `user-journeys.md` changes too — not just the
+first time these three docs are built. If any of them already exist, the skill audits them for
+staleness against current upstream *before* writing anything (Feature ID/REQ parity, new features
+with no AC/test case yet, decision values that changed since the AC/test data was written, and
+whether `test-plan.md`'s scope still matches current MoSCoW priorities) and fixes only what's
+actually stale — never assume "no one told me anything changed" means it's still fresh.
 
 ### Language
 

@@ -1,14 +1,46 @@
 ---
 name: test-suite-builder
-description: Build or update Acceptance Criteria (Given-When-Then per backlog item), the project-wide Test Plan, and step-by-step Test Cases for smartFit_daily, from Requirement (01-spec), Product Backlog/Feature List (backlog.md), User Journey (user-journeys.md), and prototypes (02-design/01-prototypes/v*/) when they exist. Defaults to full backlog coverage but accepts a narrower scope (a Feature ID, an Epic, or just one of the three outputs). Use when asked to create/update acceptance criteria, a test plan, or test cases for smartFit_daily.
+description: Build, audit, or update Acceptance Criteria (Given-When-Then per backlog item), the project-wide Test Plan, and step-by-step Test Cases for smartFit_daily, from Requirement (01-spec), Product Backlog/Feature List (backlog.md), User Journey (user-journeys.md), and prototypes (02-design/01-prototypes/v*/) when they exist. Defaults to full backlog coverage but accepts a narrower scope (a Feature ID, an Epic, or just one of the three outputs). Re-audits its own outputs for staleness against upstream every run, not just on first creation. Use when asked to create/update/audit acceptance criteria, a test plan, or test cases for smartFit_daily, or when feature-list-journey flags that one of them has gone stale.
 ---
 
 # Test Suite Builder
 
-สร้าง/อัปเดตเอกสารทดสอบ 3 ชิ้นของ smartFit_daily โดยถือว่า **Requirement (`01-spec/`), Backlog/Feature
-List (`backlog.md`), User Journey (`user-journeys.md`) เป็น upstream source ที่อ่านอย่างเดียว (read-only)**
-— skill นี้ไม่มีหน้าที่ reconcile ความไม่สอดคล้องของ 3 ชั้นนั้น (เป็นหน้าที่ของ skill `feature-list-journey`)
-ถ้าพบว่า 3 ชั้นนั้นไม่สอดคล้องกันเอง ให้แจ้งผู้ใช้ให้รัน `feature-list-journey` ก่อน แล้วค่อยกลับมาทำต่อ
+สร้าง/ตรวจสอบ/อัปเดตเอกสารทดสอบ 3 ชิ้นของ smartFit_daily โดยถือว่า **Requirement (`01-spec/`), Backlog/
+Feature List (`backlog.md`), User Journey (`user-journeys.md`) เป็น upstream source ที่อ่านอย่างเดียว
+(read-only)** — skill นี้ไม่มีหน้าที่ reconcile ความไม่สอดคล้องของ 3 ชั้นนั้น (เป็นหน้าที่ของ skill
+`feature-list-journey`) ถ้าพบว่า 3 ชั้นนั้นไม่สอดคล้องกันเอง ให้แจ้งผู้ใช้ให้รัน `feature-list-journey` ก่อน
+แล้วค่อยกลับมาทำต่อ — ในทางกลับกัน `feature-list-journey` เองก็ตรวจ (แบบผิวเผิน) ว่าเอกสารที่ skill นี้ดูแล
+ยัง fresh อยู่หรือไม่หลัง reconcile ทุกครั้ง ถ้ามันแนะนำให้รัน skill นี้ต่อ ให้ทำตามขั้นตอนด้านล่างเหมือนถูกเรียก
+ตรง ๆ จากผู้ใช้
+
+## เมื่อไหร่ต้องรัน skill นี้
+
+ไม่ใช่แค่ตอนยังไม่มีเอกสารทั้ง 3 เท่านั้น รันทุกครั้งที่:
+
+- `01-spec/`, `backlog.md`, หรือ `user-journeys.md` เปลี่ยนแปลง (feature ใหม่, REQ เปลี่ยน, decision ใหม่/
+  เปลี่ยน, Feature ID เปลี่ยนเลข) — ไม่ว่าจะรู้จากการแก้ไขตรง หรือจาก `feature-list-journey` แจ้งมาว่า
+  เอกสารของ skill นี้หลุด fresh
+- ผู้ใช้ขอให้ audit/สร้าง/อัปเดต Acceptance Criteria, Test Plan, หรือ Test Case โดยตรง
+- เอกสารเหล่านี้มีอยู่แล้วแต่ยังไม่ได้ตรวจมาสักระยะ — **ห้ามสันนิษฐานว่ายัง fresh อยู่เพราะไม่มีใครแจ้ง**
+  ให้ตรวจตามขั้นตอน "Self-freshness audit" ด้านล่างทุกครั้งที่ถูกเรียก แม้จะดูเหมือนไม่มีอะไรเปลี่ยน
+
+## ขั้นตอนที่ 0 — Self-freshness audit (รันทุกครั้งก่อนเขียนอะไร ไม่ใช่แค่ครั้งแรก)
+
+ถ้า `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md` มีอยู่แล้ว (ไม่ใช่การสร้างครั้งแรก) ให้ตรวจ
+ก่อนแก้ไขอะไร:
+
+1. **Feature ID/REQ parity** — Feature ID และ REQ-xx ที่อ้างถึงใน AC/Test Case ยังตรงกับที่มีจริงใน
+   `backlog.md`/`01-spec/` หรือไม่ (Feature ID อาจถูกเปลี่ยนเลขโดย `feature-list-journey`)
+2. **Coverage gap ใหม่** — มี Feature ID ใน `backlog.md` ที่ยังไม่มี AC หรือยังไม่มี test case หรือไม่
+   (เช่น เพิ่ง reconcile เพิ่ม feature ใหม่มา)
+3. **Fact drift** — ตัวเลข/สูตร/กติกาที่ AC หรือ test case อ้างถึง (เช่น ค่าคงที่จาก decision ที่ resolve
+   แล้ว) ยังตรงกับข้อความปัจจุบันใน `01-spec/*.md` หรือไม่ — ถ้า decision เปลี่ยนไปแล้วแต่ AC/test data ยัง
+   ใช้ค่าเดิม ถือว่าเอกสารนี้ล้าหลัง ต้องแก้ ไม่ใช่แค่บันทึกไว้
+4. **Scope drift ของ Test Plan** — scope/priority ที่ระบุใน `test-plan.md` ยังตรงกับ MoSCoW ปัจจุบันใน
+   `backlog.md` หรือไม่ (เช่น feature ที่เคย Could แล้วถูกปรับเป็น Must)
+
+ถ้าพบความล้าหลังข้อใดข้อหนึ่ง ให้แก้เฉพาะส่วนที่กระทบ (ไม่ต้องเขียนใหม่ทั้งไฟล์) ตามกติกาการเขียนในหัวข้อ
+1-3 ด้านล่าง เหมือนกับตอนสร้างใหม่
 
 ## เอกสารที่ skill นี้ดูแล
 
@@ -139,6 +171,7 @@ Skill นี้**ห้ามแก้ไข** `01-spec/*.md` ที่มีอ
 ก่อนหยุดงาน ให้สรุปกลับ:
 
 - scope ที่ทำจริง (feature/epic ไหนบ้าง, สร้างเอกสารไหนบ้างจาก 3 ชนิด)
+- ผลจาก Self-freshness audit (ขั้นตอนที่ 0): พบความล้าหลัง/ไม่ตรงกันอะไรบ้าง (ถ้ามี) และแก้ไปแล้วอย่างไร
 - ไฟล์ที่สร้าง/แก้ไข ทั้งหมด (รวมลิงก์ที่เพิ่มเข้า `01-spec/*.md` เดิม และ NFR spec doc ใหม่ถ้ามี)
 - gap ที่พบ (เช่น edge case ที่ upstream ไม่ได้ระบุ จึงยังไม่มี AC/test case ให้) แทนที่จะเงียบไป
 - คำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง
