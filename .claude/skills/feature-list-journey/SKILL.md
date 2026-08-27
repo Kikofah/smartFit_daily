@@ -1,6 +1,6 @@
 ---
 name: feature-list-journey
-description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by the test-suite-builder skill) have gone stale as a result, and flags that instead of rewriting them. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
+description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-builder) or Prototypes (owned by prototype-builder) have gone stale as a result, and flags that instead of rewriting them. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - when prototype-builder flags a discrepancy - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
 ---
 
 # Feature List & User Journey Writer
@@ -17,12 +17,13 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
 
 ชั้น (2) และ (3) ต้องไม่มีข้อมูลที่ขัดแย้งหรือเก่ากว่าชั้น (1) และต้องมี Feature ID/REQ ตรงกันทั้งสามชั้นเสมอ
 
-นอกจาก 3 ชั้นนี้ ยังมีเอกสารดาวน์สตรีมอีก 3 ชิ้นที่ skill `test-suite-builder` เป็นเจ้าของ (ไม่ใช่ skill นี้):
-**Acceptance Criteria** (`docs/01-requirements/acceptance-criteria.md`), **Test Plan**
-(`docs/03-testing/01-test-plan/test-plan.md`), และ **Test Case**
-(`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`) — skill นี้**ตรวจสอบ (audit)**ว่าเอกสารทั้ง 3
-นี้ (ถ้ามีอยู่แล้ว) ยัง fresh/สอดคล้องกับการเปลี่ยนแปลงใน 3 ชั้นหลักหรือไม่ แต่**ไม่เขียน/แก้ไฟล์เหล่านี้เอง**
-— ดู "ขั้นตอนที่ 0.5" ด้านล่าง
+นอกจาก 3 ชั้นนี้ ยังมีเอกสาร/ผลงานดาวน์สตรีมที่ skill อื่นเป็นเจ้าของ (ไม่ใช่ skill นี้): **Acceptance
+Criteria** (`docs/01-requirements/acceptance-criteria.md`), **Test Plan**
+(`docs/03-testing/01-test-plan/test-plan.md`), **Test Case**
+(`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`) — ทั้ง 3 นี้เป็นของ `test-suite-builder` —
+และ **Prototype** (`docs/02-design/01-prototypes/v*/`) ซึ่งเป็นของ `prototype-builder` — skill นี้
+**ตรวจสอบ (audit)** ว่าสิ่งเหล่านี้ (ถ้ามีอยู่แล้ว) ยัง fresh/สอดคล้องกับการเปลี่ยนแปลงใน 3 ชั้นหลักหรือไม่
+แต่**ไม่เขียน/แก้ไฟล์เหล่านี้เอง** — ดู "ขั้นตอนที่ 0.5" ด้านล่าง
 
 ## เมื่อไหร่ต้องรัน skill นี้
 
@@ -33,6 +34,8 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
 - `backlog.md` หรือ `user-journeys.md` ถูกแก้ไขโดยตรง (โดยคนหรือ tool อื่น) — กรณีนี้อาจทำให้เกิด **drift**
   จาก spec ต้นทาง ห้ามสันนิษฐานว่ายังสอดคล้องกันอยู่ ต้อง audit ใหม่เสมอ
 - ผู้ใช้ขอให้ audit/สร้าง/อัปเดตเอกสารใดในสามชั้นนี้โดยตรง
+- `prototype-builder` แจ้งมาจาก Prototype Consistency Audit ของมันว่า prototype เจอข้อมูลที่ควรทำให้
+  Requirement/Backlog/User Journey ต้องอัปเดต
 
 ## ขั้นตอนที่ 0 — Full Consistency Audit ของ 3 ชั้นหลัก (รันทุกครั้ง ไม่ใช่แค่ครั้งแรกที่สร้างเอกสาร)
 
@@ -60,18 +63,23 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
 
 หลัง reconcile 3 ชั้นหลักเสร็จแล้ว (หรือถ้าไม่มีอะไรต้อง reconcile เลย) ให้ตรวจต่อว่า
 `docs/01-requirements/acceptance-criteria.md`, `docs/03-testing/01-test-plan/test-plan.md`, และ
-`docs/03-testing/01-test-plan/test-cases/*.md` **มีอยู่แล้วหรือยัง**:
+`docs/03-testing/01-test-plan/test-cases/*.md` (เป็นเจ้าของโดย `test-suite-builder`) และ prototype
+version ล่าสุดใน `docs/02-design/01-prototypes/v*/` (เป็นเจ้าของโดย `prototype-builder`) **มีอยู่แล้วหรือยัง**:
 
-- **ถ้ายังไม่มีเอกสารเหล่านี้เลย**: ไม่ใช่ gap ที่ต้องแจ้ง — แค่ยังไม่ถูกสร้าง ไม่ต้องพูดถึงในรายงาน
+- **ถ้ายังไม่มีเอกสาร/prototype เหล่านี้เลย**: ไม่ใช่ gap ที่ต้องแจ้ง — แค่ยังไม่ถูกสร้าง ไม่ต้องพูดถึงในรายงาน
 - **ถ้ามีอยู่แล้ว**: ตรวจ (ในระดับผิวเผินพอที่จะรู้ว่าต้อง regenerate หรือไม่ ไม่ต้องอ่านลึกเท่า audit หลัก):
-  - Feature ID/REQ ที่เพิ่ง reconcile ไปยังคงตรงกับที่อ้างใน `acceptance-criteria.md`/`test-cases/*.md`
-    หรือไม่ (เช่น Feature ID เปลี่ยนเลข, REQ ถูกลบ/แก้ความหมาย, decision ที่เคย resolve เปลี่ยนไป)
-  - Feature ใหม่ที่เพิ่งเพิ่มเข้า `backlog.md`/`user-journeys.md` มี AC/test case ครอบคลุมหรือยัง
+  - Feature ID/REQ ที่เพิ่ง reconcile ไปยังคงตรงกับที่อ้างใน `acceptance-criteria.md`/`test-cases/*.md`/
+    prototype screen หรือไม่ (เช่น Feature ID เปลี่ยนเลข, REQ ถูกลบ/แก้ความหมาย, decision ที่เคย resolve
+    เปลี่ยนไป)
+  - Feature ใหม่ที่เพิ่งเพิ่มเข้า `backlog.md`/`user-journeys.md` มี AC/test case/prototype screen
+    ครอบคลุมหรือยัง
   - Scope/priority ที่เปลี่ยนใน `backlog.md` (เช่น MoSCoW เปลี่ยน) ยังตรงกับ scope ที่ระบุใน
     `test-plan.md` หรือไม่
-- **ถ้าพบว่าหลุด fresh หรือไม่ครอบคลุมแล้ว**: **ห้ามแก้ไฟล์เหล่านี้เอง** (เป็นหน้าที่/รูปแบบเฉพาะของ
-  skill `test-suite-builder`) ให้ระบุไว้ชัดในรายงานผลว่าไฟล์ไหนหลุด fresh เพราะอะไร และแนะนำให้รัน skill
-  `test-suite-builder` (agent `test-suite-writer`) ต่อสำหรับ scope ที่กระทบ
+  - Journey step/diagram ที่เพิ่งแก้ไป ยังตรงกับที่ prototype screen ปัจจุบันแสดง/สื่อถึงหรือไม่
+- **ถ้าพบว่าหลุด fresh หรือไม่ครอบคลุมแล้ว**: **ห้ามแก้ไฟล์เหล่านี้เอง** (เป็นหน้าที่/รูปแบบเฉพาะของ skill
+  เจ้าของแต่ละไฟล์) ให้ระบุไว้ชัดในรายงานผลว่าไฟล์/screen ไหนหลุด fresh เพราะอะไร และแนะนำให้รัน
+  `test-suite-builder` (agent `test-suite-writer`) และ/หรือ `prototype-builder` (agent
+  `prototype-writer`) ต่อสำหรับ scope ที่กระทบ
 
 ## การ Reconcile Drift (เฉพาะ 3 ชั้นหลัก)
 
@@ -162,9 +170,11 @@ integration ที่ยังไม่ต้องลง detail ระดับ
 ทั้งสามชั้นต้องลิงก์ถึงกันให้ครบ (backlog.md ↔ 01-spec/, user-journeys.md ↔ 01-spec/, backlog.md ↔
 user-journeys.md) เมื่อเป็นการ update เอกสารเดิม ให้แก้เฉพาะส่วนที่เปลี่ยน คงเนื้อหาที่ยังถูกต้องไว้
 ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น ห้ามแก้ไข `index.md` ของแต่ละโฟลเดอร์ — เป็นคำอธิบายโครงสร้างเท่านั้น
-ไม่ใช่ที่เก็บเนื้อหาจริง **ห้ามแก้ไข `acceptance-criteria.md`, `test-plan.md`, หรือ `test-cases/*.md`
-เอง** ไม่ว่ากรณีใด — เป็นหน้าที่ของ skill `test-suite-builder`
+ไม่ใช่ที่เก็บเนื้อหาจริง **ห้ามแก้ไข `acceptance-criteria.md`, `test-plan.md`, `test-cases/*.md`, หรือ
+prototype ใด ๆ ใน `v*/` เอง** ไม่ว่ากรณีใด — เป็นหน้าที่ของ skill `test-suite-builder` และ
+`prototype-builder` ตามลำดับ
 
 ก่อนจบงานทุกครั้ง ให้สรุปผล Consistency Audit กลับไปหาผู้เรียก: พบความไม่สอดคล้องอะไรบ้างใน 3 ชั้นหลัก,
-แก้ไขอะไรไปแล้ว, มีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และ**ผลตรวจ AC/Test Plan/Test Case ตามขั้นตอนที่ 0.5**
-(ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน `test-suite-builder` ต่อสำหรับ scope ไหน)
+แก้ไขอะไรไปแล้ว, มีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และ**ผลตรวจ AC/Test Plan/Test Case/Prototype ตาม
+ขั้นตอนที่ 0.5** (ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน `test-suite-builder` และ/หรือ
+`prototype-builder` ต่อสำหรับ scope ไหน)

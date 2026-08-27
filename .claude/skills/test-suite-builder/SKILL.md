@@ -20,6 +20,8 @@ Feature List (`backlog.md`), User Journey (`user-journeys.md`) เป็น upst
 - `01-spec/`, `backlog.md`, หรือ `user-journeys.md` เปลี่ยนแปลง (feature ใหม่, REQ เปลี่ยน, decision ใหม่/
   เปลี่ยน, Feature ID เปลี่ยนเลข) — ไม่ว่าจะรู้จากการแก้ไขตรง หรือจาก `feature-list-journey` แจ้งมาว่า
   เอกสารของ skill นี้หลุด fresh
+- `prototype-builder` แจ้งมาจาก Prototype Consistency Audit ของมันว่า screen ใน prototype มีข้อความ/ค่า
+  ที่ AC หรือ test case ควรอัปเดตให้ตรงกัน
 - ผู้ใช้ขอให้ audit/สร้าง/อัปเดต Acceptance Criteria, Test Plan, หรือ Test Case โดยตรง
 - เอกสารเหล่านี้มีอยู่แล้วแต่ยังไม่ได้ตรวจมาสักระยะ — **ห้ามสันนิษฐานว่ายัง fresh อยู่เพราะไม่มีใครแจ้ง**
   ให้ตรวจตามขั้นตอน "Self-freshness audit" ด้านล่างทุกครั้งที่ถูกเรียก แม้จะดูเหมือนไม่มีอะไรเปลี่ยน
