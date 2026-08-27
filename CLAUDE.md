@@ -117,6 +117,39 @@ Screen-level prototypes live in versioned folders `docs/02-design/01-prototypes/
    e.g. a layout the User Journey doesn't specify in enough detail, or a component/token `DESIGN.md`
    doesn't have yet.
 
+### Building the test suite (Acceptance Criteria, Test Plan, Test Cases)
+
+Three test artifacts, invoke the `test-suite-builder` skill (`.claude/skills/test-suite-builder/SKILL.md`)
+or `test-suite-writer` agent (`.claude/agents/test-suite-writer.md`) to create/update them — never
+hand-write them:
+
+- `docs/01-requirements/acceptance-criteria.md` — Given-When-Then per backlog item (Feature ID),
+  grouped by Epic. ID format `AC-{FeatureID}-{2-digit}`.
+- `docs/03-testing/01-test-plan/test-plan.md` — one file for the whole project: scope, test types,
+  environment, risk management, entry/exit criteria.
+- `docs/03-testing/01-test-plan/test-cases/{epic-slug}.md` — one file per epic (slug matches the
+  corresponding `01-spec/` file), step-by-step cases grouped by Feature ID, each with at minimum
+  Test ID (`TC-{FeatureID}-{3-digit}`), name, pre-condition, steps, expected result, test data, and
+  references (REQ-xx, AC ID, user journey section).
+
+This skill/agent treats `01-spec/`, `backlog.md`, and `user-journeys.md` as **read-only upstream** —
+if they're inconsistent with each other, that's `feature-list-journey`'s job to fix first, not this
+one's. Its only two allowed writes to upstream are: a one-line link added to each `01-spec/*.md`'s
+existing (checklist-style) "Acceptance Criteria" section pointing at the new
+`acceptance-criteria.md` (kept as an informal summary, not removed), and creating a **new**
+Non-Functional Requirement doc in `01-spec/` when one doesn't exist yet (see below) — never editing
+an existing `01-spec/*.md`'s substantive content, `backlog.md`, or `user-journeys.md` otherwise.
+
+Default scope is the entire backlog; it can be narrowed to a Feature ID, an Epic, or just one of the
+three output documents. Because `test-plan.md` needs Non-Functional Requirements and none exist yet
+in `01-spec/`, the first time it's built the skill must stop and ask the user (≥3 NFR-framing
+options with pros/cons and a recommendation) before authoring a new
+`01-spec/{YYYYMMDD}-{RUNNING_NO}-non-functional-requirements.md` doc to derive from — never
+inventing NFR numbers directly inside `test-plan.md`. The same ask-user protocol (≥3 options,
+pros/cons, one recommendation) applies to any other gap, e.g. an edge case implied by a test case
+but not actually documented anywhere upstream — flag it, don't invent test coverage for undefined
+behavior.
+
 ### Language
 
 Existing documentation content (all `index.md` files, and any requirement/backlog/journey files) is
@@ -132,8 +165,11 @@ links to its upstream/downstream neighbors — read the relevant `index.md` befo
 to make sure it goes in the right place:
 
 1. `docs/01-requirements/` — requirements:
-   - `01-spec/` — **Requirements** (see above), one file per epic
+   - `01-spec/` — **Requirements** (see above), one file per epic (plus, once bootstrapped, a
+     Non-Functional Requirements doc — see "Building the test suite" below)
    - `backlog.md` — **Product Backlog / Feature List** (see above; not a subfolder, a single file)
+   - `acceptance-criteria.md` — **Acceptance Criteria**, Given-When-Then per backlog item (see
+     "Building the test suite" below; not a subfolder, a single file)
    - `02-plan/` — currently unused (roadmap/phasing, once picked up)
    - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status, owners)
 2. `docs/02-design/` — design derived from requirements:
@@ -141,7 +177,8 @@ to make sure it goes in the right place:
      `user-journeys.md`, `DESIGN.md`, and versioned HTML prototype folders `v1/`, `v2/`, ...
    - `02-technical/` — technical design: architecture, database schema, API design, tech choices
 3. `docs/03-testing/` — testing derived from design:
-   - `01-test-plan/` — test cases/scenarios, test data, in/out of scope
+   - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
+     `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below
    - `02-test-result/` — actual pass/fail results and bugs found
 4. `docs/04-retrospectives/` — retrospectives per phase/sprint/milestone (what went well, what to
    improve, action items), informed by test results and the log

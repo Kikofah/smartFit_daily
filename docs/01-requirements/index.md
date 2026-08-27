@@ -7,3 +7,7 @@
 - [[03-task/index|03-task]] — งานย่อยที่แตกออกมาให้ลงมือทำได้จริง (ทำทีละอย่างอย่างไร)
 
 โฟลเดอร์นี้คือจุดเริ่มต้นของทุกโปรเจกต์ ก่อนจะต่อยอดไปสู่การออกแบบใน [[../02-design/index|02-design]]
+
+`backlog.md` และ `acceptance-criteria.md` ในโฟลเดอร์นี้เป็นไฟล์เดี่ยว (ไม่ใช่โฟลเดอร์ย่อย) —
+`acceptance-criteria.md` คือ Acceptance Criteria แบบ Given-When-Then ต่อ backlog item สร้าง/อัปเดตโดย
+skill `test-suite-builder` (`.claude/skills/test-suite-builder/SKILL.md`) เท่านั้น
