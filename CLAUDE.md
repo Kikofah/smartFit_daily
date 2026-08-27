@@ -27,13 +27,26 @@ Work so far has moved through the first two stages of the documentation pipeline
   Tokens (colors, typography, spacing), UI Components & Patterns, and UX Guidelines & Rules, in an
   Earth Tone + Minimalist + Muji-inspired style. Check it before designing any new screen/component.
 
-Downstream stages (`02-plan`, `03-task`, `02-design/02-technical`, `03-testing`, `04-retrospectives`)
-are scaffolded but not the current priority — don't populate them speculatively; let them get filled
-in once the backlog is actually picked up for planning/build.
+Downstream stages `02-plan`, `03-task`, `02-design/02-technical`, and `04-retrospectives` are
+scaffolded but not the current priority — don't populate them speculatively; let them get filled in
+once the backlog is actually picked up for planning/build. `03-testing` is empty of actual content
+too, but unlike those it already has a dedicated skill/agent ready to populate it (see "Building the
+test suite" below) — build into it when actually asked, it just hasn't been exercised yet.
 
 `index.md` in each `docs/` folder is a **structural description of the folder's purpose only** — it
 is not where actual content goes. Add real documents as new files alongside `index.md`, never by
 overwriting it.
+
+### Skills & agents at a glance
+
+Three skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+detailed in its own subsection below; use this table to find the right one first.
+
+| Skill (agent) | Produces | Use when |
+|---|---|---|
+| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, or you're asked to audit/create/update any of the three (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
+| `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype (see "Building HTML prototypes"). |
+| `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update acceptance criteria, a test plan, or test cases (see "Building the test suite"). |
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
