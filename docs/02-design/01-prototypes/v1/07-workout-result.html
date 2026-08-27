@@ -1,0 +1,208 @@
+<!-- Feature: REC-2, PLN-3 | REQ: REQ-05, REQ-10 -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>สรุปผล - smartFit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; padding-bottom: 88px; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+.card { background:var(--color-paper-alt); border-radius:var(--radius-lg); overflow:hidden; }
+.bottom-nav { position:fixed; bottom:0; left:0; right:0; max-width:420px; margin:0 auto; display:flex; background:var(--color-paper); border-top:var(--border-width) solid var(--color-border); padding: var(--space-2) 0; }
+.nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:var(--space-1); min-height:44px; justify-content:center; text-decoration:none; color:var(--color-ink-muted); font-size:12px; }
+.nav-item.active { color:var(--color-clay); }
+</style>
+<style>
+  /* Result screen: no bottom tab nav, still part of the session flow */
+  .device-frame { padding-bottom: var(--space-8); }
+
+  .example-toggle { display:flex; gap: var(--space-2); margin-bottom: var(--space-8); background: var(--color-paper-sunken); border-radius: var(--radius-md); padding: var(--space-1); }
+  .example-toggle button { flex:1; min-height:40px; border:none; border-radius: var(--radius-sm); background:transparent; font-family:inherit; font-size:12px; font-weight:500; color: var(--color-ink-muted); cursor:pointer; padding: 0 var(--space-2); }
+  .example-toggle button.active { background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-float); }
+
+  .ring-section { display:flex; flex-direction:column; align-items:center; gap: var(--space-2); margin-bottom: var(--space-6); }
+  .result-ring text.ring-value { font-size: 28px; font-weight:600; fill: var(--color-ink); font-family: var(--font-family-base); }
+  .result-ring text.ring-label { font-size: 11px; font-weight:400; fill: var(--color-ink-muted); font-family: var(--font-family-base); }
+
+  .status-panel { text-align:center; padding: var(--space-6); border-radius: var(--radius-lg); margin-bottom: var(--space-6); transition: background-color 200ms ease-out; }
+  .status-panel.state-success { background: var(--color-paper-alt); }
+  /* "ไม่ครบเป้าหมาย" state kept visually quiet: paper-alt/ink-faint only, no danger/red, no negative icon */
+  .status-panel.state-neutral { background: var(--color-paper-alt); }
+  .status-panel svg.icon-success { color: var(--color-sage); }
+  .status-panel svg.icon-neutral { color: var(--color-ink-faint); }
+  .status-panel h2.state-success { color: var(--color-ink); }
+  .status-panel h2.state-neutral { color: var(--color-ink-muted); }
+
+  .kcal-detail { display:flex; justify-content:space-between; align-items:baseline; padding: var(--space-4) 0; border-top: var(--border-width) solid var(--color-border); border-bottom: var(--border-width) solid var(--color-border); margin-bottom: var(--space-2); }
+  .kcal-detail .label { color: var(--color-ink-muted); }
+  .kcal-source-note { text-align:right; margin-bottom: var(--space-8); }
+
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="screen-content">
+
+    <!-- Toggle between the two PLN-3 all-or-nothing outcomes, swapped via inline script -->
+    <div class="example-toggle">
+      <button type="button" class="active" id="btnSuccess" onclick="setOutcome('success')">ตัวอย่าง: ครบเป้าหมาย</button>
+      <button type="button" id="btnMiss" onclick="setOutcome('miss')">ตัวอย่าง: ไม่ครบเป้าหมาย</button>
+    </div>
+
+    <div class="ring-section">
+      <!-- Shared Calorie Ring: below target stays unfilled clay (never red/warning), at/above target flips fully to sage -->
+      <svg class="result-ring" width="160" height="160" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--color-paper-sunken)" stroke-width="8"></circle>
+        <circle id="resultRingProgress" cx="60" cy="60" r="52" fill="none" stroke="var(--color-sage)" stroke-width="8"
+          stroke-linecap="round" transform="rotate(-90 60 60)"
+          stroke-dasharray="326.7" stroke-dashoffset="0"></circle>
+        <text x="60" y="56" text-anchor="middle" class="ring-value" id="ringKcalValue">620</text>
+        <text x="60" y="74" text-anchor="middle" class="ring-label" id="ringKcalLabel">/ 620 kcal</text>
+      </svg>
+    </div>
+
+    <!-- ครบเป้าหมาย state: neutral positive copy, sage -->
+    <div class="status-panel state-success" id="statusPanel">
+      <svg class="icon-success" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" id="statusIcon">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M8 12.5l2.5 2.5L16 9.5"></path>
+      </svg>
+      <h2 class="text-h3 state-success" id="statusHeading">ครบเป้าหมายวันนี้แล้ว</h2>
+      <p class="text-body-sm" id="statusCopy">เก็บสถิติวันนี้ไว้แล้ว ทำต่อพรุ่งนี้ได้เลย</p>
+    </div>
+
+    <!--
+      Illustrative kcal figures only — not live-calculated. In the real app this comes from
+      REC-2's formula kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.), using the actual elapsed session time.
+    -->
+    <div class="kcal-detail">
+      <span class="text-body label">แคลอรี่ที่เผาผลาญเซสชันนี้</span>
+      <span class="text-h2" id="kcalBurned">620 kcal</span>
+    </div>
+    <!--
+      Composed pattern, not a named DESIGN.md component: small caption-style label noting whether
+      the value came from a wearable device (INT-3) or the MET-formula estimate. Wearable chosen
+      as the example source here.
+    -->
+    <p class="text-caption kcal-source-note" id="kcalSourceNote">จากข้อมูล wearable</p>
+
+    <button type="button" class="btn btn-primary" onclick="location.href='05-daily-dashboard.html'">เสร็จสิ้น</button>
+
+  </div>
+</div>
+
+<script>
+  var CIRC = 326.7; // 2 * PI * 52, matches the shared ring's stroke-dasharray
+
+  var outcomes = {
+    success: {
+      kcalValue: '620',
+      kcalLabel: '/ 620 kcal',
+      dashoffset: 0,
+      ringColor: 'var(--color-sage)',
+      panelClass: 'state-success',
+      headingClass: 'state-success',
+      icon: 'success',
+      heading: 'ครบเป้าหมายวันนี้แล้ว',
+      copy: 'เก็บสถิติวันนี้ไว้แล้ว ทำต่อพรุ่งนี้ได้เลย',
+      kcalBurned: '620 kcal',
+      sourceNote: 'จากข้อมูล wearable'
+    },
+    miss: {
+      // 95% of target — still strictly "ไม่ครบเป้าหมาย" per PLN-3's all-or-nothing rule, no partial credit
+      kcalValue: '589',
+      kcalLabel: '/ 620 kcal',
+      dashoffset: CIRC * 0.05,
+      ringColor: 'var(--color-clay)',
+      panelClass: 'state-neutral',
+      headingClass: 'state-neutral',
+      icon: 'neutral',
+      heading: 'วันนี้ยังไม่ครบเป้า',
+      copy: 'พรุ่งนี้เริ่มนับใหม่ได้',
+      kcalBurned: '589 kcal',
+      sourceNote: 'ประมาณจากสูตร MET'
+    }
+  };
+
+  function setOutcome(key) {
+    var o = outcomes[key];
+    document.getElementById('btnSuccess').classList.toggle('active', key === 'success');
+    document.getElementById('btnMiss').classList.toggle('active', key === 'miss');
+
+    document.getElementById('ringKcalValue').textContent = o.kcalValue;
+    document.getElementById('ringKcalLabel').textContent = o.kcalLabel;
+    var ring = document.getElementById('resultRingProgress');
+    ring.style.stroke = o.ringColor;
+    ring.setAttribute('stroke-dashoffset', o.dashoffset);
+
+    var panel = document.getElementById('statusPanel');
+    panel.classList.remove('state-success', 'state-neutral');
+    panel.classList.add(o.panelClass);
+
+    var heading = document.getElementById('statusHeading');
+    heading.classList.remove('state-success', 'state-neutral');
+    heading.classList.add(o.headingClass);
+    heading.textContent = o.heading;
+
+    document.getElementById('statusCopy').textContent = o.copy;
+    document.getElementById('kcalBurned').textContent = o.kcalBurned;
+    document.getElementById('kcalSourceNote').textContent = o.sourceNote;
+
+    var icon = document.getElementById('statusIcon');
+    icon.classList.remove('icon-success', 'icon-neutral');
+    if (o.icon === 'success') {
+      icon.classList.add('icon-success');
+      // checkmark
+      icon.innerHTML = '<circle cx="12" cy="12" r="9"></circle><path d="M8 12.5l2.5 2.5L16 9.5"></path>';
+    } else {
+      icon.classList.add('icon-neutral');
+      // neutral state renders NO negative icon (no cross/sad-face) — a plain quiet outline circle only
+      icon.innerHTML = '<circle cx="12" cy="12" r="9"></circle>';
+    }
+  }
+</script>
+</body>
+</html>

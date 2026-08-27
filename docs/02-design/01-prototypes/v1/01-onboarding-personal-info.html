@@ -1,0 +1,269 @@
+<!-- Feature: ONB-1 | REQ: REQ-01 -->
+<!-- Step 1 of 4 in the linear Onboarding flow. On valid submit, saves form data to
+     localStorage (key: smartfit_onb_personal) as a lightweight illustrative hand-off to the
+     next screen, then navigates to 02-onboarding-equipment.html. No backend exists yet, so no
+     real BMR/TDEE calculation happens on this screen — that is illustrated later in
+     04-onboarding-goal-confirm.html with example values (see comment there). -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ข้อมูลส่วนตัว — smartfit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+.progress-dots { display:flex; gap:var(--space-2); padding: var(--space-8) var(--space-8) 0; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--color-paper-sunken); }
+.dot.active { background:var(--color-clay); }
+.dot.done { background:var(--color-sand); }
+
+/* --- page-specific additions (shared pattern across the 4 onboarding screens) --- */
+strong, b { font-weight: 600; }
+.wordmark-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6); }
+.back-link { padding:0 var(--space-2); margin-left:calc(var(--space-2) * -1); }
+.field-group { margin-bottom:var(--space-6); }
+.field-group label { display:block; margin-bottom:var(--space-2); }
+.stepper { display:flex; align-items:center; gap:var(--space-1); background:var(--color-paper-sunken); border-radius:var(--radius-md); padding:var(--space-1); }
+.stepper:focus-within { box-shadow: inset 0 0 0 var(--border-width) var(--color-clay); }
+.stepper.error { box-shadow: inset 0 0 0 var(--border-width) var(--color-danger); }
+.stepper-btn { width:44px; height:44px; flex-shrink:0; border-radius:var(--radius-sm); border:none; background:transparent; color:var(--color-ink); font-size:20px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+.stepper-btn:active { background:var(--color-paper-alt); }
+.stepper-input { flex:1; min-width:0; border:none; background:transparent; text-align:center; font-size:18px; font-family:inherit; color:var(--color-ink); min-height:44px; -moz-appearance:textfield; }
+.stepper-input:focus { outline:none; }
+.stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.error-text { color:var(--color-danger); margin-top:var(--space-1); display:block; }
+.error-text[hidden] { display:none; }
+.option-list { display:flex; flex-direction:column; gap:var(--space-2); }
+.option-row-group { display:flex; gap:var(--space-2); }
+.option-row { display:flex; align-items:center; gap:var(--space-3); min-height:44px; padding:var(--space-3) var(--space-4); border-radius:var(--radius-md); background:var(--color-paper-alt); border:var(--border-width) solid transparent; cursor:pointer; flex:1; box-sizing:border-box; }
+.option-row.selected { border-color:var(--color-clay); }
+.option-row input[type=radio] { accent-color:var(--color-clay); width:18px; height:18px; flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="progress-dots">
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div class="screen-content">
+    <div class="wordmark-row">
+      <span class="text-caption" style="color:var(--color-ink)">smartfit daily</span>
+      <span class="text-caption">ขั้นตอนที่ 1 จาก 4</span>
+    </div>
+
+    <h1 class="text-h1">ข้อมูลส่วนตัวของคุณ</h1>
+    <p class="text-body" style="color:var(--color-ink-muted); margin-top:var(--space-2)">
+      บอกข้อมูลพื้นฐานของร่างกาย เพื่อให้เราคำนวณเป้าหมายแคลอรี่ที่พอดีกับคุณ
+    </p>
+
+    <form id="onbForm" novalidate style="margin-top:var(--space-8)">
+      <div class="field-group">
+        <label class="text-h3" for="age">อายุ (ปี)</label>
+        <div class="stepper">
+          <button type="button" class="stepper-btn" data-target="age" data-step="-1" aria-label="ลดอายุลง 1 ปี">−</button>
+          <input type="number" id="age" name="age" class="stepper-input" value="25" min="10" max="100" step="1" inputmode="numeric" aria-describedby="age-error">
+          <button type="button" class="stepper-btn" data-target="age" data-step="1" aria-label="เพิ่มอายุขึ้น 1 ปี">+</button>
+        </div>
+        <span class="text-caption error-text" id="age-error" hidden>กรุณากรอกอายุระหว่าง 10–100 ปี</span>
+      </div>
+
+      <div class="field-group">
+        <label class="text-h3">เพศ</label>
+        <p class="text-body-sm" style="margin-bottom:var(--space-2)">ใช้ในสูตรคำนวณ BMR (Mifflin-St Jeor) เท่านั้น</p>
+        <div class="option-row-group">
+          <label class="option-row" data-name="gender">
+            <input type="radio" name="gender" value="female">
+            <span class="text-body">หญิง</span>
+          </label>
+          <label class="option-row" data-name="gender">
+            <input type="radio" name="gender" value="male">
+            <span class="text-body">ชาย</span>
+          </label>
+        </div>
+        <span class="text-caption error-text" id="gender-error" hidden>กรุณาเลือกเพศ เพื่อใช้ในการคำนวณ BMR</span>
+      </div>
+
+      <div class="field-group">
+        <label class="text-h3" for="weight">น้ำหนัก (กก.)</label>
+        <div class="stepper">
+          <button type="button" class="stepper-btn" data-target="weight" data-step="-0.5" aria-label="ลดน้ำหนักลง 0.5 กก.">−</button>
+          <input type="number" id="weight" name="weight" class="stepper-input" value="60" min="20" max="250" step="0.5" inputmode="decimal" aria-describedby="weight-error">
+          <button type="button" class="stepper-btn" data-target="weight" data-step="0.5" aria-label="เพิ่มน้ำหนักขึ้น 0.5 กก.">+</button>
+        </div>
+        <span class="text-caption error-text" id="weight-error" hidden>กรุณากรอกน้ำหนักระหว่าง 20–250 กก. (ห้ามติดลบ)</span>
+      </div>
+
+      <div class="field-group">
+        <label class="text-h3" for="height">ส่วนสูง (ซม.)</label>
+        <div class="stepper">
+          <button type="button" class="stepper-btn" data-target="height" data-step="-1" aria-label="ลดส่วนสูงลง 1 ซม.">−</button>
+          <input type="number" id="height" name="height" class="stepper-input" value="165" min="100" max="220" step="1" inputmode="numeric" aria-describedby="height-error">
+          <button type="button" class="stepper-btn" data-target="height" data-step="1" aria-label="เพิ่มส่วนสูงขึ้น 1 ซม.">+</button>
+        </div>
+        <span class="text-caption error-text" id="height-error" hidden>กรุณากรอกส่วนสูงระหว่าง 100–220 ซม.</span>
+      </div>
+
+      <div class="field-group">
+        <label class="text-h3">ระดับกิจกรรม</label>
+        <div class="option-list">
+          <label class="option-row" data-name="activity">
+            <input type="radio" name="activity" value="sedentary">
+            <span class="text-body">น้อยมาก — แทบไม่ออกกำลังกาย</span>
+          </label>
+          <label class="option-row" data-name="activity">
+            <input type="radio" name="activity" value="light">
+            <span class="text-body">น้อย — ออกกำลังกาย 1–3 วัน/สัปดาห์</span>
+          </label>
+          <label class="option-row" data-name="activity">
+            <input type="radio" name="activity" value="moderate">
+            <span class="text-body">ปานกลาง — ออกกำลังกาย 3–5 วัน/สัปดาห์</span>
+          </label>
+          <label class="option-row" data-name="activity">
+            <input type="radio" name="activity" value="active">
+            <span class="text-body">มาก — ออกกำลังกาย 6–7 วัน/สัปดาห์</span>
+          </label>
+          <label class="option-row" data-name="activity">
+            <input type="radio" name="activity" value="very_active">
+            <span class="text-body">มากที่สุด — ออกกำลังกายหนัก หรืองานใช้แรงกายมาก</span>
+          </label>
+        </div>
+        <span class="text-caption error-text" id="activity-error" hidden>กรุณาเลือกระดับกิจกรรมของคุณ</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:var(--space-4)">ถัดไป</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  function validateNumeric(input){
+    var val = parseFloat(input.value);
+    var min = parseFloat(input.min);
+    var max = parseFloat(input.max);
+    var stepperEl = input.closest('.stepper');
+    var errorEl = byId(input.id + '-error');
+    var valid = input.value !== '' && !isNaN(val) && val >= min && val <= max;
+    if (!valid) {
+      stepperEl.classList.add('error');
+      if (errorEl) errorEl.hidden = false;
+    } else {
+      stepperEl.classList.remove('error');
+      if (errorEl) errorEl.hidden = true;
+    }
+    return valid;
+  }
+
+  document.querySelectorAll('.stepper-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var input = byId(btn.getAttribute('data-target'));
+      var step = parseFloat(btn.getAttribute('data-step'));
+      var val = parseFloat(input.value);
+      if (isNaN(val)) val = parseFloat(input.min) || 0;
+      val = Math.round((val + step) * 10) / 10;
+      input.value = val;
+      validateNumeric(input);
+    });
+  });
+
+  ['age', 'weight', 'height'].forEach(function(id){
+    byId(id).addEventListener('input', function(){ validateNumeric(byId(id)); });
+  });
+
+  function setupRadioGroup(name){
+    var rows = document.querySelectorAll('.option-row[data-name="' + name + '"]');
+    rows.forEach(function(row){
+      var radio = row.querySelector('input[type=radio]');
+      radio.addEventListener('change', function(){
+        rows.forEach(function(r){ r.classList.toggle('selected', r.querySelector('input').checked); });
+        byId(name + '-error').hidden = true;
+      });
+    });
+  }
+  setupRadioGroup('gender');
+  setupRadioGroup('activity');
+
+  function radioValue(name){
+    var checked = document.querySelector('input[name="' + name + '"]:checked');
+    return checked ? checked.value : null;
+  }
+
+  byId('onbForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var validAge = validateNumeric(byId('age'));
+    var validWeight = validateNumeric(byId('weight'));
+    var validHeight = validateNumeric(byId('height'));
+    var gender = radioValue('gender');
+    var activity = radioValue('activity');
+    var validGender = !!gender;
+    var validActivity = !!activity;
+    byId('gender-error').hidden = validGender;
+    byId('activity-error').hidden = validActivity;
+
+    if (!(validAge && validWeight && validHeight && validGender && validActivity)) {
+      var firstInvalid = document.querySelector('.stepper.error, .error-text:not([hidden])');
+      if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    var data = {
+      age: byId('age').value,
+      gender: gender,
+      weight: byId('weight').value,
+      height: byId('height').value,
+      activity: activity
+    };
+    try { localStorage.setItem('smartfit_onb_personal', JSON.stringify(data)); } catch (err) {}
+    window.location.href = '02-onboarding-equipment.html';
+  });
+})();
+</script>
+</body>
+</html>

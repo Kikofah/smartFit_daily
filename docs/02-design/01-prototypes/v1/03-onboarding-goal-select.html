@@ -1,0 +1,153 @@
+<!-- Feature: ONB-3 (part a: goal selection) | REQ: REQ-02 -->
+<!-- Step 3 of 4. Single-select of 1 of 3 goals. The kcal/day formula subtext under each card
+     (e.g. "ลดพลังงานลง 500 kcal ต่อวันจาก TDEE") previews the already-resolved decision from
+     ONB-3/REQ-02 in the spec — shown here for transparency/honesty (per DESIGN.md 1.2, "Honest"
+     brand trait), not as a new decision. On valid submit, saves the chosen goal key
+     ("lose" | "maintain" | "endurance") to localStorage (key: smartfit_onb_goal) and navigates
+     to 04-onboarding-goal-confirm.html, which reads it back to render the computed target. -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ตั้งเป้าหมายหลัก — smartfit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+.progress-dots { display:flex; gap:var(--space-2); padding: var(--space-8) var(--space-8) 0; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--color-paper-sunken); }
+.dot.active { background:var(--color-clay); }
+.dot.done { background:var(--color-sand); }
+
+/* --- page-specific additions (shared pattern across the 4 onboarding screens) --- */
+strong, b { font-weight: 600; }
+.wordmark-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6); }
+.back-link { padding:0 var(--space-2); margin-left:calc(var(--space-2) * -1); }
+.option-list { display:flex; flex-direction:column; gap:var(--space-3); }
+.goal-card { display:flex; align-items:flex-start; gap:var(--space-3); padding:var(--space-4); border-radius:var(--radius-lg); background:var(--color-paper-alt); border:var(--border-width) solid transparent; cursor:pointer; box-sizing:border-box; }
+.goal-card.selected { border-color:var(--color-clay); }
+.goal-card input[type=radio] { accent-color:var(--color-clay); width:18px; height:18px; margin-top:3px; flex-shrink:0; }
+.goal-card-body { flex:1; }
+.error-text { color:var(--color-danger); margin-top:var(--space-1); display:block; }
+.error-text[hidden] { display:none; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity:0.45; cursor:not-allowed; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="progress-dots">
+    <div class="dot done"></div>
+    <div class="dot done"></div>
+    <div class="dot active"></div>
+    <div class="dot"></div>
+  </div>
+  <div class="screen-content">
+    <div class="wordmark-row">
+      <a href="02-onboarding-equipment.html" class="btn btn-ghost back-link" aria-label="ย้อนกลับไปหน้าเลือกอุปกรณ์">‹ ย้อนกลับ</a>
+      <span class="text-caption">ขั้นตอนที่ 3 จาก 4</span>
+    </div>
+
+    <h1 class="text-h1">ตั้งเป้าหมายหลักของคุณ</h1>
+    <p class="text-body" style="color:var(--color-ink-muted); margin-top:var(--space-2)">
+      เลือกเป้าหมายที่ตรงกับสิ่งที่คุณอยากได้มากที่สุดตอนนี้ เปลี่ยนภายหลังได้เสมอ
+    </p>
+
+    <div class="option-list" id="goal-group" style="margin-top:var(--space-8)">
+      <label class="goal-card" data-name="goal">
+        <input type="radio" name="goal" value="lose">
+        <span class="goal-card-body">
+          <span class="text-h3" style="display:block">ลดน้ำหนัก</span>
+          <span class="text-body-sm" style="display:block; margin-top:var(--space-1)">ลดพลังงานลง 500 kcal ต่อวันจาก TDEE อย่างค่อยเป็นค่อยไป</span>
+        </span>
+      </label>
+      <label class="goal-card" data-name="goal">
+        <input type="radio" name="goal" value="maintain">
+        <span class="goal-card-body">
+          <span class="text-h3" style="display:block">กระชับสัดส่วน</span>
+          <span class="text-body-sm" style="display:block; margin-top:var(--space-1)">คงพลังงานเท่าที่ใช้จริง (maintenance) เน้นสร้างความฟิตและกล้ามเนื้อ</span>
+        </span>
+      </label>
+      <label class="goal-card" data-name="goal">
+        <input type="radio" name="goal" value="endurance">
+        <span class="goal-card-body">
+          <span class="text-h3" style="display:block">เพิ่มความอึด</span>
+          <span class="text-body-sm" style="display:block; margin-top:var(--space-1)">เพิ่มพลังงานขึ้น 300 kcal ต่อวันจาก TDEE เพื่อรองรับการฝึกที่มากขึ้น</span>
+        </span>
+      </label>
+    </div>
+    <span class="text-caption error-text" id="goal-error" hidden>กรุณาเลือกเป้าหมาย 1 ใน 3 แบบ</span>
+
+    <button type="button" id="nextBtn" class="btn btn-primary" style="margin-top:var(--space-8)" disabled aria-disabled="true">ถัดไป</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var cards = document.querySelectorAll('.goal-card[data-name="goal"]');
+  var nextBtn = document.getElementById('nextBtn');
+  var errorEl = document.getElementById('goal-error');
+
+  cards.forEach(function(card){
+    var radio = card.querySelector('input[type=radio]');
+    radio.addEventListener('change', function(){
+      cards.forEach(function(c){ c.classList.toggle('selected', c.querySelector('input').checked); });
+      nextBtn.disabled = false;
+      nextBtn.setAttribute('aria-disabled', 'false');
+      errorEl.hidden = true;
+    });
+  });
+
+  nextBtn.addEventListener('click', function(){
+    var checked = document.querySelector('input[name="goal"]:checked');
+    if (!checked) {
+      errorEl.hidden = false;
+      return;
+    }
+    try { localStorage.setItem('smartfit_onb_goal', JSON.stringify(checked.value)); } catch (err) {}
+    window.location.href = '04-onboarding-goal-confirm.html';
+  });
+})();
+</script>
+</body>
+</html>

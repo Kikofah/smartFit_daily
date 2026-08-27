@@ -1,0 +1,87 @@
+<!-- smartFit_daily Prototype v1 — สารบัญ -->
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>smartFit_daily — Prototype v1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sand: #C9A26B;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.wrap { max-width: 760px; margin: 0 auto; padding: var(--space-12) var(--space-8) var(--space-12); }
+h1 { font-size:28px; line-height:36px; font-weight:600; margin:0 0 var(--space-2); }
+.sub { font-size:15px; color:var(--color-ink-muted); margin:0 0 var(--space-8); }
+.epic { font-size:13px; font-weight:500; letter-spacing:.02em; color:var(--color-ink-muted); text-transform:uppercase; margin: var(--space-8) 0 var(--space-3); }
+.epic:first-of-type { margin-top: 0; }
+.grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
+a.card { display:block; background:var(--color-paper-alt); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding: var(--space-4); text-decoration:none; color:var(--color-ink); }
+a.card:hover { border-color:var(--color-border-strong); }
+.num { font-size:12px; color:var(--color-ink-faint); }
+.name { font-size:15px; font-weight:500; margin: var(--space-2) 0 var(--space-2); }
+.meta { font-size:12px; color:var(--color-ink-muted); }
+.meta b { color: var(--color-clay); font-weight:500; }
+footer { margin-top: var(--space-12); font-size:13px; color:var(--color-ink-muted); }
+footer a { color: var(--color-clay); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>smartfit daily — Prototype v1</h1>
+  <p class="sub">รวม 12 หน้าจอ ครอบคลุมทั้ง 13 Feature ใน 4 Epic ตาม <a href="../../../01-requirements/backlog.md">backlog.md</a></p>
+
+  <div class="epic">Epic 1 · Onboarding &amp; Personalization</div>
+  <div class="grid">
+    <a class="card" href="01-onboarding-personal-info.html"><span class="num">01</span><div class="name">กรอกข้อมูลส่วนตัว</div><div class="meta"><b>ONB-1</b> · REQ-01</div></a>
+    <a class="card" href="02-onboarding-equipment.html"><span class="num">02</span><div class="name">เลือกอุปกรณ์ที่มี</div><div class="meta"><b>ONB-2</b> · REQ-03</div></a>
+    <a class="card" href="03-onboarding-goal-select.html"><span class="num">03</span><div class="name">เลือกเป้าหมายหลัก</div><div class="meta"><b>ONB-3</b> · REQ-02</div></a>
+    <a class="card" href="04-onboarding-goal-confirm.html"><span class="num">04</span><div class="name">ยืนยันเป้าหมาย (kcal/วัน)</div><div class="meta"><b>ONB-3</b> · REQ-02</div></a>
+  </div>
+
+  <div class="epic">Epic 2 · Daily YouTube Recommendation</div>
+  <div class="grid">
+    <a class="card" href="05-daily-dashboard.html"><span class="num">05</span><div class="name">Daily Dashboard (วันนี้)</div><div class="meta"><b>REC-1, REC-3, PLN-2, PLN-4</b> · REQ-04, REQ-06, REQ-09</div></a>
+    <a class="card" href="06-workout-session.html"><span class="num">06</span><div class="name">Workout Session / Video Player</div><div class="meta"><b>REC-2, REC-4</b> · REQ-05, REQ-07</div></a>
+    <a class="card" href="07-workout-result.html"><span class="num">07</span><div class="name">Workout Result / Log Confirmation</div><div class="meta"><b>REC-2, PLN-3</b> · REQ-05, REQ-10</div></a>
+  </div>
+
+  <div class="epic">Epic 3 · Planner &amp; Logging</div>
+  <div class="grid">
+    <a class="card" href="08-weekly-planner.html"><span class="num">08</span><div class="name">ปฏิทินวางแผนรายสัปดาห์ (แผน)</div><div class="meta"><b>PLN-1, PLN-2</b> · REQ-08, REQ-09</div></a>
+    <a class="card" href="09-log-history.html"><span class="num">09</span><div class="name">ประวัติย้อนหลัง (ความคืบหน้า)</div><div class="meta"><b>PLN-3</b> · REQ-10</div></a>
+  </div>
+
+  <div class="epic">Epic 4 · Smart Integrations</div>
+  <div class="grid">
+    <a class="card" href="10-progress-insights.html"><span class="num">10</span><div class="name">ภาพรวม / พยากรณ์เป้าหมาย</div><div class="meta"><b>INT-1</b> · REQ-11</div></a>
+    <a class="card" href="11-device-integrations.html"><span class="num">11</span><div class="name">อุปกรณ์ที่เชื่อมต่อ (โปรไฟล์)</div><div class="meta"><b>INT-2, INT-3</b> · REQ-12, REQ-13</div></a>
+    <a class="card" href="12-device-pairing.html"><span class="num">12</span><div class="name">เชื่อมต่ออุปกรณ์ / ผลการซิงค์</div><div class="meta"><b>INT-2, INT-3</b> · REQ-12, REQ-13</div></a>
+  </div>
+
+  <footer>
+    อ้างอิง: <a href="../DESIGN.md">DESIGN.md</a> ·
+    <a href="../user-journeys.md">user-journeys.md</a> ·
+    <a href="../../../01-requirements/backlog.md">backlog.md</a> ·
+    <a href="../../../01-requirements/01-spec/index.md">01-spec/</a> ·
+    รายละเอียดของ version นี้ดูที่ <a href="README.md">README.md</a>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!-- Feature: ONB-2 | REQ: REQ-03 -->
+<!-- Step 2 of 4. Multi-select equipment chips. Content decision: selecting "ไม่มีอุปกรณ์"
+     clears "ดัมเบล"/"ยิมครบชุด" and vice versa, since a user cannot logically have both "no
+     equipment" and specific equipment at once — the source docs allow multi-select in general
+     ("เลือกได้มากกว่า 1 ถ้าจำเป็น") but don't spell out this specific mutual-exclusion rule.
+     On valid submit (>=1 selected), saves to localStorage (key: smartfit_onb_equipment) and
+     navigates to 03-onboarding-goal-select.html. -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เลือกอุปกรณ์ — smartfit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+.progress-dots { display:flex; gap:var(--space-2); padding: var(--space-8) var(--space-8) 0; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--color-paper-sunken); }
+.dot.active { background:var(--color-clay); }
+.dot.done { background:var(--color-sand); }
+
+/* --- page-specific additions (shared pattern across the 4 onboarding screens) --- */
+strong, b { font-weight: 600; }
+.wordmark-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--space-6); }
+.back-link { padding:0 var(--space-2); margin-left:calc(var(--space-2) * -1); }
+.chip-group { display:flex; flex-wrap:wrap; gap:var(--space-3); }
+.chip { display:inline-flex; align-items:center; gap:var(--space-1); min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-lg); background:var(--color-paper-alt); border:var(--border-width) solid transparent; color:var(--color-ink); font-size:15px; font-family:inherit; cursor:pointer; box-sizing:border-box; }
+.chip.selected { background:var(--color-sand); }
+.chip .checkmark { display:none; width:16px; height:16px; flex-shrink:0; color:var(--color-ink); }
+.chip.selected .checkmark { display:inline-flex; }
+.btn[disabled], .btn[aria-disabled="true"] { opacity:0.45; cursor:not-allowed; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="progress-dots">
+    <div class="dot done"></div>
+    <div class="dot active"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+  <div class="screen-content">
+    <div class="wordmark-row">
+      <a href="01-onboarding-personal-info.html" class="btn btn-ghost back-link" aria-label="ย้อนกลับไปหน้าข้อมูลส่วนตัว">‹ ย้อนกลับ</a>
+      <span class="text-caption">ขั้นตอนที่ 2 จาก 4</span>
+    </div>
+
+    <h1 class="text-h1">เลือกอุปกรณ์ที่คุณมี</h1>
+    <p class="text-body" style="color:var(--color-ink-muted); margin-top:var(--space-2)">
+      เราจะแนะนำวิดีโอที่คุณทำได้จริงตามอุปกรณ์นี้เท่านั้น
+    </p>
+
+    <div class="chip-group" id="equipment-group" role="group" aria-label="เลือกอุปกรณ์ที่มี เลือกได้มากกว่า 1 อย่าง" style="margin-top:var(--space-8)">
+      <button type="button" class="chip" data-value="none" aria-pressed="false">
+        <svg class="checkmark" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>ไม่มีอุปกรณ์</span>
+      </button>
+      <button type="button" class="chip" data-value="dumbbell" aria-pressed="false">
+        <svg class="checkmark" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>ดัมเบล</span>
+      </button>
+      <button type="button" class="chip" data-value="full_gym" aria-pressed="false">
+        <svg class="checkmark" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>ยิมครบชุด</span>
+      </button>
+    </div>
+
+    <p class="text-body-sm" style="margin-top:var(--space-4)">
+      เลือกได้มากกว่า 1 อย่าง — หากเลือก "ไม่มีอุปกรณ์" ระบบจะแนะนำเฉพาะท่าที่ใช้น้ำหนักตัว (bodyweight) เท่านั้น
+    </p>
+    <p class="text-caption error-text" id="equipment-error" style="color:var(--color-danger); margin-top:var(--space-2)" hidden>
+      กรุณาเลือกอุปกรณ์อย่างน้อย 1 อย่าง (เลือก "ไม่มีอุปกรณ์" ได้ถ้าไม่มีอุปกรณ์เลย)
+    </p>
+
+    <button type="button" id="nextBtn" class="btn btn-primary" style="margin-top:var(--space-8)" disabled aria-disabled="true">ถัดไป</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var selected = new Set();
+  var chips = document.querySelectorAll('.chip');
+  var nextBtn = document.getElementById('nextBtn');
+  var errorEl = document.getElementById('equipment-error');
+
+  function updateNextState(){
+    var hasSelection = selected.size > 0;
+    nextBtn.disabled = !hasSelection;
+    nextBtn.setAttribute('aria-disabled', String(!hasSelection));
+    if (hasSelection) errorEl.hidden = true;
+  }
+
+  chips.forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var val = chip.getAttribute('data-value');
+      var isSelected = chip.classList.contains('selected');
+
+      if (!isSelected) {
+        if (val === 'none') {
+          selected.clear();
+          chips.forEach(function(c){ c.classList.remove('selected'); c.setAttribute('aria-pressed', 'false'); });
+        } else {
+          var noneChip = document.querySelector('.chip[data-value="none"]');
+          if (noneChip.classList.contains('selected')) {
+            noneChip.classList.remove('selected');
+            noneChip.setAttribute('aria-pressed', 'false');
+            selected.delete('none');
+          }
+        }
+        chip.classList.add('selected');
+        chip.setAttribute('aria-pressed', 'true');
+        selected.add(val);
+      } else {
+        chip.classList.remove('selected');
+        chip.setAttribute('aria-pressed', 'false');
+        selected.delete(val);
+      }
+      updateNextState();
+    });
+  });
+
+  updateNextState();
+
+  nextBtn.addEventListener('click', function(){
+    if (selected.size === 0) {
+      errorEl.hidden = false;
+      return;
+    }
+    try { localStorage.setItem('smartfit_onb_equipment', JSON.stringify(Array.from(selected))); } catch (err) {}
+    window.location.href = '03-onboarding-goal-select.html';
+  });
+})();
+</script>
+</body>
+</html>
