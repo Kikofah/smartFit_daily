@@ -39,7 +39,7 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Three skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Four skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
@@ -47,13 +47,16 @@ detailed in its own subsection below; use this table to find the right one first
 | `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype, or to check whether an existing prototype is still consistent with the other six docs. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Acceptance Criteria/Test Case/Test Plan for drift, and hands any needed fix to whichever skill owns that file (see "Building HTML prototypes"). |
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
+| `pipeline-orchestrator` (`pipeline-runner`) | Chains the three rows above for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype. |
 
-Together these three cover the full chain end to end — Requirement → Backlog/Feature List → User
-Journey → Prototype → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between
+Together the first three cover the full chain end to end — Requirement → Backlog/Feature List →
+User Journey → Prototype → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between
 Prototype and every other layer (a prototype can reveal something no doc captured yet, not just go
 stale from one). A change anywhere in it should eventually be reflected everywhere connected to it.
 No skill writes another's files; each audits across the seams it touches and tells you (or the
-right agent) which one to run next.
+right agent) which one to run next. `pipeline-orchestrator` doesn't add new rules of its own — it
+just runs `feature-list-journey` then `test-suite-builder` back to back for a given requirement so
+the user doesn't have to invoke each stage by hand.
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
@@ -116,6 +119,28 @@ still in sync), or the user directly asks to audit/create/update any of the thre
    hand-editing them out of sync with the spec.
 5. Summarize the work done in `docs/05-log/{YYYYMMDD}-log.md` (create if it doesn't exist for that
    date; append if it does).
+
+### Running the full pipeline in one go
+
+The three steps above — write the Requirement doc, then run `feature-list-journey`, then run
+`test-suite-builder` — are normally invoked one at a time. When the user wants a requirement (new or
+changed) to flow all the way through to Backlog/Feature List/User Journey **and**
+Acceptance Criteria/Test Plan/Test Case without asking for each stage separately, invoke the
+`pipeline-orchestrator` skill (`.claude/skills/pipeline-orchestrator/SKILL.md`) or `pipeline-runner`
+agent (`.claude/agents/pipeline-runner.md`) instead of doing the three steps manually.
+
+`pipeline-orchestrator` has no rules of its own — it's a sequencer that re-reads `CLAUDE.md`'s
+Requirement workflow (above) and the two skills' own files each time it runs, then does Stage 1
+(Requirement) → Stage 2 (`feature-list-journey`'s full methodology) → Stage 3
+(`test-suite-builder`'s full methodology) back to back for one requirement. It does not skip or
+soften any stage's ask-user protocol — a stage that needs to stop and ask (ambiguous requirement,
+spec/downstream contradiction, NFR bootstrap) still stops and asks, with the same ≥3-options/pros-
+cons/recommendation format; the orchestrator only removes the need to manually invoke each stage.
+It explicitly excludes Prototype — if Stage 2's freshness check finds a prototype has gone stale, it
+says so in its report and recommends running `prototype-builder` separately, rather than doing that
+work itself. For more than one distinct requirement in the same request, it runs one
+`pipeline-runner` per requirement, sequentially (never in parallel, to avoid `RUNNING_NO`/Feature ID
+collisions), and logs the whole run as one entry in `docs/05-log/{YYYYMMDD}-log.md`.
 
 ### Building HTML prototypes
 
