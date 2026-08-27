@@ -94,6 +94,29 @@ still in sync), or the user directly asks to audit/create/update any of the thre
 5. Summarize the work done in `docs/05-log/{YYYYMMDD}-log.md` (create if it doesn't exist for that
    date; append if it does).
 
+### Building HTML prototypes
+
+Screen-level prototypes live in versioned folders `docs/02-design/01-prototypes/v{N}/` (`v1`, `v2`,
+...), each a self-contained set of HTML files. Never hand-build these — invoke the
+`prototype-builder` skill (`.claude/skills/prototype-builder/SKILL.md`) or `prototype-writer` agent
+(`.claude/agents/prototype-writer.md`), which:
+
+1. Combines all four sources for whatever's in scope (default: every feature; can be narrowed to a
+   Feature ID/Epic/screen) — `01-spec/`, `backlog.md`, `user-journeys.md`, and `DESIGN.md` — never
+   just one of them.
+2. Refuses to guess styling: if `DESIGN.md` doesn't exist yet, it stops and asks the user to help
+   create it (color tone, style direction, reference images/logo) before building anything.
+3. Always proposes the screen list/plan and waits for the user to confirm (or request changes)
+   before creating any file.
+4. On every re-run where a version folder already exists, always asks the user whether to create a
+   new version (`v{N+1}`) or edit the latest one (`v{N}`) — with a recommendation and its
+   reasoning (new version for a new/changed requirement or a change worth comparing against the
+   old one; edit-in-place for a small fix to a not-yet-reviewed version) — never decides this
+   silently, even when it has a clear recommendation.
+5. Uses the ask-user protocol (≥3 options, pros/cons, one recommendation) for any other ambiguity —
+   e.g. a layout the User Journey doesn't specify in enough detail, or a component/token `DESIGN.md`
+   doesn't have yet.
+
 ### Language
 
 Existing documentation content (all `index.md` files, and any requirement/backlog/journey files) is
@@ -114,8 +137,8 @@ to make sure it goes in the right place:
    - `02-plan/` — currently unused (roadmap/phasing, once picked up)
    - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status, owners)
 2. `docs/02-design/` — design derived from requirements:
-   - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — currently holds
-     `user-journeys.md` and `DESIGN.md`
+   - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — holds
+     `user-journeys.md`, `DESIGN.md`, and versioned HTML prototype folders `v1/`, `v2/`, ...
    - `02-technical/` — technical design: architecture, database schema, API design, tech choices
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — test cases/scenarios, test data, in/out of scope

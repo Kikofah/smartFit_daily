@@ -14,3 +14,8 @@
 `DESIGN.md` ในโฟลเดอร์นี้คือ Design System (Brand Identity & CI, Design Tokens, UI Components & Patterns,
 UX Guidelines & Rules) โทน Earth Tone + Minimalist + Muji-inspired — ใช้เป็นแหล่งอ้างอิงเดียวก่อนออกแบบ
 หน้าจอ/component ใหม่
+
+โฟลเดอร์ย่อย `v1/`, `v2/`, ... ในโฟลเดอร์นี้คือ HTML prototype แบบมีเวอร์ชัน สร้าง/อัปเดตโดย skill
+`prototype-builder` (`.claude/skills/prototype-builder/SKILL.md`) เท่านั้น — แต่ละ version รวม
+Requirement + Backlog/Feature List + User Journey + DESIGN.md เข้าด้วยกัน อย่าสร้าง/แก้ไฟล์ในโฟลเดอร์
+เหล่านี้ด้วยมือโดยตรง
