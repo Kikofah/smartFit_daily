@@ -93,7 +93,7 @@ sequenceDiagram
 sequenceDiagram
     participant EC as Exertion & Calorie Calculation
     participant LS as Logging & Streak
-    EC->>LS: ส่งแคลอรี่ที่เผาผลาญจริง (จาก REC-2 — ดู daily-youtube-recommendation.md)
+    EC->>LS: ส่งแคลอรี่ที่เผาผลาญจริง (จาก REC-2 — ดู 02-daily-youtube-recommendation.md)
     LS->>LS: อ่านเป้าหมายแคลอรี่รายวัน (goal_selection.daily_calorie_target_kcal)
     alt แคลอรี่จริง อย่างน้อย 100% ของเป้าหมาย
         LS->>LS: completion_status = ครบเป้าหมาย

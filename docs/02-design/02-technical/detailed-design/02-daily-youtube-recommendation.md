@@ -96,7 +96,7 @@ sequenceDiagram
         EC->>EC: คำนวณ kcal = MET x น้ำหนักตัว x เวลาที่ใช้จริง (source = สูตร MET)
     end
     EC->>EC: บันทึกผลลัพธ์ลง actual_calorie_burn
-    EC->>LS: ส่งต่อแคลอรี่ที่เผาผลาญจริง (trigger สร้าง Daily Log - ดู planner-logging.md/PLN-3)
+    EC->>LS: ส่งต่อแคลอรี่ที่เผาผลาญจริง (trigger สร้าง Daily Log - ดู 03-planner-logging.md/PLN-3)
     EC-->>U: 200 OK (Actual Calorie Burn)
 ```
 
@@ -110,7 +110,7 @@ sequenceDiagram
    ประเภทยังไม่ resolve เป็นทางการ — ดู "จุดที่ยังไม่ได้ระบุ") แล้วคำนวณ
    `kcal = MET × น้ำหนักตัว(kg) × เวลาที่ใช้จริง(ชม.)`
 5. บันทึกผลลัพธ์สุดท้ายลง `actual_calorie_burn`
-6. ส่งต่อค่านี้ให้ Logging & Streak เพื่อประเมิน Daily Log (ดู `planner-logging.md` § PLN-3)
+6. ส่งต่อค่านี้ให้ Logging & Streak เพื่อประเมิน Daily Log (ดู `03-planner-logging.md` § PLN-3)
 
 ## REC-3 — เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม (REQ-06)
 

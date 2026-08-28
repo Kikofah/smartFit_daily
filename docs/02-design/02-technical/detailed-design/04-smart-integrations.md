@@ -91,7 +91,7 @@ sequenceDiagram
         IG-->>U: 200 OK
         SC->>IG: POST /integrations/smart-scale/sync (น้ำหนัก/องค์ประกอบร่างกาย)
         IG->>IG: บันทึกลง weight_record (source = ซิงค์จากตาชั่ง)
-        IG->>PP: trigger คำนวณ TDEE ใหม่ (ดู onboarding-personalization.md/ONB-1)
+        IG->>PP: trigger คำนวณ TDEE ใหม่ (ดู 01-onboarding-personalization.md/ONB-1)
     else เชื่อมต่อไม่สำเร็จ
         IG-->>U: fallback — แสดงฟอร์มกรอกน้ำหนักเอง (ไม่ใช่ error)
         U->>IG: POST /integrations/smart-scale/sync (กรอกเอง, source = กรอกเอง)
@@ -123,7 +123,7 @@ sequenceDiagram
     alt มีข้อมูลจาก wearable สำหรับ session นี้
         HA->>IG: POST /integrations/wearable/readings (แคลอรี่จาก wearable)
         IG->>IG: บันทึกลง wearable_reading
-        IG->>EC: ส่งค่านี้ให้ REC-2 ใช้แทนค่าประมาณ MET (ดู daily-youtube-recommendation.md/REC-2)
+        IG->>EC: ส่งค่านี้ให้ REC-2 ใช้แทนค่าประมาณ MET (ดู 02-daily-youtube-recommendation.md/REC-2)
     else ไม่มีข้อมูล (ยังไม่เชื่อมต่อ หรือ Health API ไม่ตอบสนอง)
         EC->>EC: ใช้ค่าประมาณ MET ตามเดิม (fallback ที่คาดหวังไว้ ไม่ใช่ error)
     end

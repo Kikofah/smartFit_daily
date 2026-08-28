@@ -22,7 +22,8 @@ provider) ยกเว้น REST convention และ logical data type ที�
 skill `api-db-spec-builder` (`.claude/skills/api-db-spec-builder/SKILL.md`) เท่านั้น — ต้องมี
 `high-level-architecture.md` อยู่ก่อนเสมอ
 
-`detailed-design/{epic-slug}.md` (หนึ่งไฟล์ต่อ epic) ในโฟลเดอร์นี้คือชั้นถัดจาก `api-spec.md`/
+`detailed-design/{NN}-{epic-slug}.md` (หนึ่งไฟล์ต่อ epic, เลข 2 หลักนำหน้าเรียงตามลำดับ Epic เดียวกับ
+`01-spec/`) ในโฟลเดอร์นี้คือชั้นถัดจาก `api-spec.md`/
 `database-schema.md` หนึ่งระดับ — **Detailed Design** เชิง conceptual: Sequence Diagram (บังคับทุก
 feature), State Diagram (สำหรับ entity ที่มี state transition มีความหมาย), และอัลกอริทึมหลัก (สำหรับ
 feature ที่มีการคำนวณ) — ยังคง**ไม่ผูกมัดกับ technical stack จริง** (ไม่ต้องมีข้อยกเว้นเพิ่มเพราะ sequence/
