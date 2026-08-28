@@ -31,8 +31,10 @@ chain ทั้งหมดให้เป็นทางเลือกที�
 | Offline support | ไม่จำเป็นต้อง support offline |
 
 **การตัดสินใจเพิ่มเติมที่ถามแยก** (เพราะมีทางเลือกสำคัญมากกว่า 1 ทาง ตามกติกาของ skill):
-- Mobile/Client framework → **React Native + Expo** (แนะนำ, เทียบกับ Flutter และ Native+เว็บแยก)
-- Backend & Database (BaaS provider) → **Supabase** (แนะนำ, เทียบกับ Firebase และ AWS Amplify)
+- Mobile/Client framework → **React Native + Expo** (แนะนำ — เทียบกับ 5 ทางเลือกอื่นด้วย Weighted Scoring
+  Model เต็มรูปแบบ ดูหัวข้อ 5)
+- Backend & Database (BaaS provider) → **Supabase** (แนะนำ — เทียบกับ 6 ทางเลือกอื่นด้วย Weighted Scoring
+  Model เต็มรูปแบบ ดูหัวข้อ 5)
 
 ## 3. Recommended Tech Stack
 
@@ -73,21 +75,92 @@ chain ทั้งหมดให้เป็นทางเลือกที�
 
 ## 5. ทางเลือกอื่นที่พิจารณาแล้ว (Alternatives Considered)
 
-### Mobile/Client Framework
+> **เพิ่มเติม 2026-08-28**: ขยายจากตารางข้อดี/ข้อเสีย 3 ทางเลือกเดิม เป็น **Weighted Scoring Model**
+> (เกณฑ์เชิงปริมาณถ่วงน้ำหนัก) ครอบคลุม ≥5 ทางเลือกต่อจุดตัดสินใจ ตามคำขอให้ทำการวิเคราะห์เชิงเปรียบเทียบที่
+> เข้มงวดขึ้นสำหรับใช้เป็นเอกสารประกอบวิชา/โครงงาน — เกณฑ์และน้ำหนัก derive จาก Discovery Questionnaire
+> (หัวข้อ 2), NFR-01/03/04/05/06/11, และ `database-schema.md`'s relational model ที่ยืนยันแล้วทั้งหมด
+> ไม่ใช่การตัดสินใจใหม่ — **ผลลัพธ์ยืนยันตัวเลือกเดิมทั้งสองจุด (React Native + Expo, Supabase) ไม่มีการ
+> เปลี่ยนแปลงคำแนะนำใดๆ ในหัวข้อ 3/4/6**
 
-| ทางเลือก | ข้อดี | ข้อเสีย | เลือกหรือไม่ |
-|---|---|---|---|
-| **React Native + Expo** | ตรงกับทีม JS/TS, โค้ดเดียวคุม 3 แพลตฟอร์ม, EAS Build ไม่ต้องมี Mac, ระบบนิเวศ library ใหญ่ | native module (HealthKit/Health Connect/BLE) ต้องพึ่ง library ภายนอกหรือเขียน custom native module เอง, ต้องใช้ EAS Development Build แทน Expo Go | **เลือก** |
-| Flutter | Performance/UI ดีมาก โค้ดเดียวคุม 3 แพลตฟอร์มเช่นกัน | ใช้ภาษา Dart ที่ทีมไม่มีพื้นฐานมาก่อน เพิ่ม learning curve ที่ขัดกับ timeline 3-6 เดือน | ไม่เลือก |
-| Native (Swift + Kotlin) + เว็บแยก | เข้าถึง native capability ได้เต็มที่ไม่ต้องพึ่ง wrapper library | ต้องเขียน 3 codebase แยกกัน (iOS/Android/Web) ใช้เวลาและงบมากกว่ามาก ขัดกับงบจำกัด+ทีม JS/TS | ไม่เลือก |
+### Mobile/Client Framework — Weighted Scoring Model
 
-### Backend & Database (BaaS provider)
+**เกณฑ์และน้ำหนัก** (รวม 100%):
 
-| ทางเลือก | ข้อดี | ข้อเสีย | เลือกหรือไม่ |
-|---|---|---|---|
-| **Supabase** | PostgreSQL จริง ตรงกับ relational model ของ `database-schema.md` ทันที, มี Auth/Storage/ Realtime/Edge Functions ในตัว, open-source | ecosystem/plugin เล็กกว่า Firebase | **เลือก** |
-| Firebase | Ecosystem/community ใหญ่ที่สุด เอกสารเยอะ | ใช้ Firestore (NoSQL) ต้องออกแบบ schema ใหม่ทั้งหมดจาก relational model ที่มีอยู่แล้ว เสี่ยง denormalize ข้อมูลซับซ้อน (เช่น ความสัมพันธ์ 15 ตารางที่มี FK ชัดเจน) | ไม่เลือก |
-| AWS Amplify | ยืดหยุ่น scale ได้ดีมากในระยะยาว | Setup/learning curve สูงกว่า ไม่เหมาะกับงบ MVP จำกัด+timeline 3-6 เดือน | ไม่เลือก |
+| เกณฑ์ | น้ำหนัก | เหตุผล |
+|---|---|---|
+| Team fit / Learning curve | 20% | ทีมถนัด JS/TS (Discovery Questionnaire หัวข้อ 2) |
+| Time-to-MVP | 20% | Timeline 3-6 เดือน + งบจำกัดมาก (Discovery Questionnaire) |
+| Native capability (BLE/HealthKit/Health Connect) | 20% | INT-2/INT-3 เป็น hard requirement ของ backlog |
+| Cross-platform code reuse (iOS+Android+Web) | 15% | ลดต้นทุน dev ต่อแพลตฟอร์ม |
+| Cost (tooling/build service) | 10% | งบจำกัดมาก |
+| Ecosystem/community maturity | 10% | ลดความเสี่ยงติดขัดกลางทาง |
+| Scalability ระยะยาว | 5% | สำคัญน้อยสุดในบริบท MVP นี้ |
+
+**คะแนนต่อทางเลือก** (1-5 ต่อเกณฑ์, คะแนนรวมถ่วงน้ำหนักเต็ม 5):
+
+| ทางเลือก | Team fit (20%) | Time-to-MVP (20%) | Native cap. (20%) | Reuse (15%) | Cost (10%) | Ecosystem (10%) | Scalability (5%) | **รวม** |
+|---|---|---|---|---|---|---|---|---|
+| **React Native + Expo** | 5 | 5 | 3 | 4 | 5 | 5 | 4 | **4.40** |
+| Ionic + Capacitor | 5 | 4 | 2 | 5 | 5 | 3 | 3 | **3.90** |
+| Flutter | 2 | 3 | 4 | 5 | 5 | 4 | 5 | **3.70** |
+| Kotlin Multiplatform + Compose Multiplatform | 1 | 2 | 5 | 3 | 5 | 2 | 5 | **3.00** |
+| Native แยก 3 codebase (Swift+Kotlin+เว็บแยก) | 2 | 1 | 5 | 1 | 2 | 5 | 5 | **2.70** |
+| .NET MAUI | 1 | 2 | 3 | 3 | 4 | 3 | 4 | **2.55** |
+
+**ข้อดี/ข้อเสียต่อทางเลือก**:
+
+| ทางเลือก | ข้อดี | ข้อเสีย |
+|---|---|---|
+| **React Native + Expo (เลือก)** | ตรงกับทีม JS/TS, ecosystem/community ใหญ่ที่สุด, EAS Build ไม่ต้องมี Mac, ต้นทุนต่ำ | native module (BLE/HealthKit/Health Connect) พึ่ง library บุคคลที่สาม — ความเสี่ยง maintenance (ดูหัวข้อ 7 ข้อ 2) |
+| Ionic + Capacitor | ทีมถนัดที่สุด (web tech ล้วน), reuse code สูงสุด, ต้นทุนต่ำ | native BLE/HealthKit integration อ่อนกว่า React Native/Flutter ชัดเจน — เสี่ยงต่อ INT-2/INT-3 โดยตรง |
+| Flutter | native module (health/BLE) เสถียร/ดูแลดีกว่าบางตัวใน React Native, performance ดี, reuse สูง | ทีมต้องเรียน Dart ใหม่ทั้งหมด — เสี่ยงกิน timeline 3-6 เดือน |
+| Kotlin Multiplatform + Compose Multiplatform | native capability ดีที่สุดในกลุ่ม cross-platform | Compose Multiplatform Web ยังไม่ mature เท่าตัวอื่น, ทีมต้องเรียน Kotlin, community เล็ก |
+| Native แยก 3 codebase | native capability เต็มร้อย ไม่มีข้อจำกัดจาก wrapper library | ต้นทุนพัฒนา 3 เท่า ขัดกับงบ/timeline โดยตรง แทบไม่มี code reuse |
+| .NET MAUI | enterprise backing จาก Microsoft, native compiled | ทีมไม่มีพื้นฐาน C#/.NET เลย, web story อ่อนกว่ากลุ่มอื่น |
+
+**ผลลัพธ์**: React Native + Expo ชนะชัดเจน (4.40/5) — ยืนยันตัวเลือกเดิม ไม่เปลี่ยนแปลง จุดอ่อนเดียวที่คะแนน
+สะท้อนตรงกับ open point เดิมในหัวข้อ 7 ข้อ 2 (HealthKit/Health Connect library maturity)
+
+### Backend & Database — Weighted Scoring Model
+
+**เกณฑ์และน้ำหนัก** (รวม 100%):
+
+| เกณฑ์ | น้ำหนัก | เหตุผล |
+|---|---|---|
+| Relational/DB fit กับ schema ที่มีอยู่แล้ว | 20% | `database-schema.md` เป็น relational 15 ตาราง + FK ชัดเจนแล้ว |
+| Time-to-MVP (auto-generated API ฯลฯ) | 20% | งบจำกัดมาก + timeline 3-6 เดือน |
+| Security/Compliance | 15% | NFR-04/05/06/11 (encryption, consent, PDPA) |
+| Cost/free-tier | 15% | งบจำกัดมาก |
+| Team fit | 15% | ทีม JS/TS |
+| Ecosystem maturity | 10% | ลดความเสี่ยงติดขัดกลางทาง |
+| Vendor lock-in / portability | 5% | สำคัญน้อยสุดในบริบท MVP นี้ |
+
+**คะแนนต่อทางเลือก**:
+
+| ทางเลือก | DB fit (20%) | Time-to-MVP (20%) | Security (15%) | Cost (15%) | Team fit (15%) | Ecosystem (10%) | Lock-in (5%) | **รวม** |
+|---|---|---|---|---|---|---|---|---|
+| **Supabase** | 5 | 5 | 5 | 5 | 4 | 3 | 5 | **4.65** |
+| Custom Node.js/NestJS + PostgreSQL | 5 | 2 | 3 | 3 | 5 | 5 | 5 | **3.80** |
+| Custom Django + PostgreSQL | 5 | 3 | 4 | 3 | 2 | 5 | 5 | **3.70** |
+| Appwrite | 2 | 4 | 3 | 4 | 4 | 2 | 4 | **3.25** |
+| PocketBase | 2 | 4 | 2 | 5 | 4 | 2 | 4 | **3.25** |
+| Firebase | 1 | 4 | 3 | 4 | 4 | 5 | 1 | **3.20** |
+| AWS Amplify | 3 | 2 | 4 | 3 | 2 | 5 | 2 | **2.95** |
+
+**ข้อดี/ข้อเสียต่อทางเลือก**:
+
+| ทางเลือก | ข้อดี | ข้อเสีย |
+|---|---|---|
+| **Supabase (เลือก)** | PostgreSQL จริง ตรงกับ relational model ของ `database-schema.md` ทันที, PostgREST auto-generate API ตรงกับ REST convention ของ `api-spec.md` โดยตรง, RLS ตรงกับ NFR-04/06, open-source (ไม่ lock-in) | ecosystem/plugin เล็กกว่า Firebase, ยังใหม่กว่า |
+| Custom Node.js/NestJS + PostgreSQL | ทีมถนัดที่สุด, control เต็มที่, ไม่ lock-in | ต้องสร้าง auth/API/RLS-equivalent เองทั้งหมด — กิน timeline มากที่สุดในกลุ่มที่พิจารณา |
+| Custom Django + PostgreSQL | security default แข็งแรง, ORM ดีกับ PostgreSQL | ทีมต้องเรียน Python ใหม่ |
+| Appwrite | open-source เหมือน Supabase, มี auto-generate API/SDK | database เป็น document-style ไม่ใช่ relational แท้ — ต้องปรับ schema ใหม่ |
+| PocketBase | เริ่มได้เร็วที่สุด, ฟรีเกือบเต็ม (single binary self-host) | SQLite ไม่เหมาะ production ที่มี concurrent write ทุกวัน, security/encryption ต้อง implement เอง |
+| Firebase | Ecosystem/community ใหญ่ที่สุด เอกสารเยอะ | ใช้ Firestore (NoSQL) ต้องออกแบบ schema ใหม่ทั้งหมดจาก relational model ที่มีอยู่แล้ว เสี่ยง denormalize ข้อมูลซับซ้อน (15 ตารางที่มี FK ชัดเจน), vendor lock-in สูงสุด |
+| AWS Amplify | ยืดหยุ่น scale ได้ดีมากในระยะยาว, enterprise-grade | Setup/learning curve สูงกว่า, ทีมไม่มีพื้นฐาน AWS, billing คาดเดายากสำหรับทีมเล็ก — ไม่เหมาะกับงบ MVP จำกัด+timeline 3-6 เดือน |
+
+**ผลลัพธ์**: Supabase ชนะชัดเจนที่สุด (4.65/5) — ยืนยันตัวเลือกเดิม ไม่เปลี่ยนแปลง คู่แข่งอันดับ 2 คือ Custom
+Node.js/NestJS + PostgreSQL (3.80) หากทีมต้องการ control เต็มที่และยอมแลกกับเวลาพัฒนาที่นานขึ้น
 
 ## 6. Mapping จาก Conceptual Docs → Concrete Stack
 
