@@ -223,10 +223,11 @@ REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ท�
 
 ## Non-Functional Requirements (NFR) Traceability
 
-[Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) (NFR-01–NFR-08,
-สร้างขึ้น 2026-08-27 โดย `test-suite-builder` เพื่อเป็นฐานของ `test-plan.md`) เป็นคุณภาพเชิงระบบที่
-**ตัดขวางทุก Epic** ไม่ใช่ business rule ของ feature ใดโดยเฉพาะ จึงไม่มี Feature ID ของตัวเองและไม่อยู่ใน
-ตารางสรุปด้านบน — แต่ยังต้อง trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
+[Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) (NFR-01–NFR-11 —
+NFR-01–08 สร้างขึ้น 2026-08-27 โดย `test-suite-builder` เพื่อเป็นฐานของ `test-plan.md`, NFR-09–11 เพิ่ม
+2026-08-28 หลัง NFR gap analysis เทียบทั้ง pipeline) เป็นคุณภาพเชิงระบบที่ **ตัดขวางทุก Epic** ไม่ใช่
+business rule ของ feature ใดโดยเฉพาะ จึงไม่มี Feature ID ของตัวเองและไม่อยู่ในตารางสรุปด้านบน — แต่ยังต้อง
+trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
 
 | NFR | หมวด | Feature ID ที่เกี่ยวข้อง |
 |---|---|---|
@@ -238,6 +239,9 @@ REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ท�
 | NFR-06 | Security/Privacy | ทุก Feature ที่เก็บข้อมูลผู้ใช้ (data deletion) |
 | NFR-07 | Reliability | ONB-1→REC-1→PLN-3 (core loop), INT-1, INT-2, INT-3 (fallback เมื่อ integration ล่ม) |
 | NFR-08 | Reliability | PLN-3, PLN-4 (log/streak ไม่หายเมื่อ network ไม่เสถียร) |
+| NFR-09 | Usability (Accessibility) | ทุก Feature ID (UI-level cross-cutting — touch target, contrast, font scaling ของทุกหน้าจอ) |
+| NFR-10 | Usability (Localization) | ทุก Feature ID (UI-level cross-cutting — ภาษาไทยเป็นหลักของทุกหน้าจอ) |
+| NFR-11 | Legal/Regulatory Compliance | ONB-1, ONB-2, ONB-3, INT-2, INT-3 (เก็บ/เชื่อมต่อข้อมูลส่วนบุคคล — PDPA consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) |
 
 รายละเอียดแบบเต็มของแต่ละ NFR (threshold, เหตุผล, จุดที่ยังไม่ได้ระบุ) อยู่ใน
 [01-spec/20260827-05-non-functional-requirements.md](01-spec/20260827-05-non-functional-requirements.md)

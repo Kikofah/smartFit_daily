@@ -8,7 +8,8 @@
 เอกสารนี้อ้างอิงจาก [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) (MoSCoW priority
 และ Feature ID ทั้ง 13 ตัว) และ
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
-(NFR-01–NFR-08) เป็นหลัก ร่วมกับ "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของเอกสาร spec ทั้ง 4 ไฟล์ใน
+(NFR-01–NFR-11 — ขยายจาก NFR-01–08 เมื่อ 2026-08-28 ด้วย NFR-09/10 Usability และ NFR-11 Legal/Regulatory
+Compliance) เป็นหลัก ร่วมกับ "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของเอกสาร spec ทั้ง 4 ไฟล์ใน
 [01-spec/](../../01-requirements/01-spec/index.md) สำหรับส่วน Risk Management ด้านล่าง
 
 > **หมายเหตุสถานะโปรเจกต์**: ตาม `CLAUDE.md` — โปรเจกต์นี้ยังเป็น Obsidian vault เอกสารล้วน ยังไม่มี
@@ -63,7 +64,7 @@ Risk Management และ §5 Entry/Exit Criteria
 | **Integration Testing** | YouTube API (REC-1 การค้นหา/กรองวิดีโอ, REC-2 metadata ที่ใช้คำนวณ MET), Health API/wearable (INT-3), Bluetooth สมาร์ตสเกล (INT-2) | เป็นจุดที่แอปพึ่งพาระบบภายนอกที่ควบคุมไม่ได้เต็มที่ — REC-1/REC-2 อยู่ใน scope Must จึงต้อง integration-test แม้จะยังไม่มี backend จริง (ผ่าน mock ดู §3); INT-2/INT-3 เตรียม test case ไว้แต่ไม่ execute รอบนี้ (Could, นอกขอบเขต) |
 | **Usability Testing** | Onboarding flow ทั้งหมด (ONB-1 → ONB-2 → ONB-3) | เป็น first-run linear flow ที่ผู้ใช้ใหม่ทุกคนต้องผ่านโดยไม่มีทางย้อนกลับแก้ไขระหว่างทางที่ระบุไว้ชัดเจน (ดู Preconditions/flow ใน [user-journeys.md](../../02-design/01-prototypes/user-journeys.md)) — ถ้าขั้นตอนใดทำให้ผู้ใช้สับสนหรือติดขัด ผู้ใช้จะเข้าแอปไม่ได้เลยตั้งแต่ต้น ต่างจากหน้าจออื่นที่พลาดแล้วยังกลับมาแก้ได้ |
 | **Regression Testing** | กติกา all-or-nothing ของ streak (PLN-3 การสร้าง log และ PLN-4 การนับ/ตัด streak) | เป็นกติกาที่ "เข้มงวด ไม่มี partial credit" ตาม decision ที่ resolve แล้ว ซึ่งเป็นกฎที่ผิดพลาดง่ายเวลามีการแก้โค้ดในอนาคต (เช่น เผลอใส่ grace period หรือ partial credit) — ต้องมี regression suite ที่รันซ้ำทุกครั้งที่โค้ดส่วน logging/streak หรือ Cheat/Rest Day (PLN-2) ถูกแก้ |
-| **NFR-driven Testing** (Performance/Security/Reliability) | ตรงตาม NFR-01–NFR-08 ใน [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | เอกสาร NFR ถูกสร้างขึ้นมาโดยเฉพาะเพื่อเป็นฐานของแผนนี้ (ดู "ความสัมพันธ์กับเอกสารอื่น" ของเอกสารนั้น) — ทดสอบเท่าที่ execute ได้จริงในสถานะปัจจุบันของโปรเจกต์ (ดู §5 Entry/Exit Criteria สำหรับ NFR ที่ยัง block อยู่) |
+| **NFR-driven Testing** (Performance/Security/Reliability/Usability/Legal Compliance) | ตรงตาม NFR-01–NFR-11 ใน [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) — NFR-09/NFR-10 (Usability: accessibility, ภาษา) ตรวจสอบได้จริงจาก prototype HTML โดยตรง ต่างจาก NFR อื่นส่วนใหญ่ที่รอ backend | เอกสาร NFR ถูกสร้างขึ้นมาโดยเฉพาะเพื่อเป็นฐานของแผนนี้ (ดู "ความสัมพันธ์กับเอกสารอื่น" ของเอกสารนั้น) — ทดสอบเท่าที่ execute ได้จริงในสถานะปัจจุบันของโปรเจกต์ (ดู §5 Entry/Exit Criteria สำหรับ NFR ที่ยัง block อยู่) |
 
 ---
 
@@ -94,7 +95,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | YouTube Data API | REC-1, REC-2 | ชุดวิดีโอจำลองพร้อม metadata ครบ (ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา) ให้ REC-1 จับคู่แคลอรี่เป้าหมายได้ และ REC-2 คำนวณ MET ได้โดยไม่ต้องเรียก API จริง — ควรมีชุดที่ "ไม่มีวิดีโอตรงเป้าเป๊ะ" ด้วย เพื่อทดสอบ tolerance (ดู Risk R1 ใน §4) |
 | Health API / wearable (Apple Health, Google Health Connect) | INT-3 | payload จำลองของแคลอรี่เผาผลาญจากอัตราการเต้นหัวใจ รวมถึงกรณีค่าที่ต่างจากค่าประมาณ MET มาก (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
 | ตาชั่งอัจฉริยะผ่าน Bluetooth | INT-2 | payload น้ำหนัก/องค์ประกอบร่างกายจำลอง รวมกรณีชั่งหลายครั้งในวันเดียว (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
-| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync) | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR ที่ "not testable" ในรอบนี้ (ดู §5) |
+| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification) | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR ที่ "not testable" ในรอบนี้ (ดู §5) |
 
 ---
 
@@ -115,6 +116,8 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | R7 | NFR-04 (encryption at rest) และ NFR-06 (data deletion) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบ ไม่ใช่ skip เงียบ ๆ — บันทึกเป็นรายการที่ต้องกลับมาทดสอบเมื่อมี backend |
 | R8 | NFR-07 ยังไม่มีตัวเลข uptime/SLA เฉพาะสำหรับ YouTube/Health API เพราะเป็น third-party service ที่ทีมไม่ได้ควบคุม SLA เอง | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Medium | Medium | ทดสอบพฤติกรรม fallback ด้วยการ inject timeout/error ปลอมใน mock (ดู §3) แทนการอิงตัวเลข SLA จริง — ยืนยันแค่ว่า "core loop ยังใช้งานได้เมื่อ external API ล่ม" ตรงตาม NFR-07 |
 | R9 | Data retention period ของ log ประวัติย้อนหลัง (PLN-3) ยังไม่ได้ระบุ เกี่ยวโยงกับ NFR-06 | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Low (ยังไม่ใช่เงื่อนไข Must ของรอบนี้) | Low ตอนนี้ | นอกขอบเขตการทดสอบรอบนี้ — บันทึกเป็น open question รอ resolve ก่อนเขียน test case เรื่อง log purge/retention |
+| R10 | NFR-10 ยังไม่ระบุรูปแบบวันที่/ตัวเลขตาม locale ไทยที่แน่นอน (ค.ศ. หรือ พ.ศ.) — DESIGN.md §4.5 เองก็ทิ้ง open point นี้ไว้เช่นกัน | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Low (ไม่กระทบ core loop) | Low | ทดสอบเฉพาะกติกาที่ตายตัวแล้วไปก่อน (ภาษาไทยเป็นหลัก, ทับศัพท์คำเทคนิคได้) ส่วนรูปแบบวันที่ยังไม่ lock ค่าใดจนกว่าจะยืนยัน |
+| R11 | NFR-11 (PDPA — consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบเหมือน R7 — บันทึกเป็นรายการที่ต้องกลับมาทดสอบเมื่อมี backend/ระบบบัญชีผู้ใช้จริง |
 
 ---
 
@@ -143,9 +146,10 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
    Critical/High) บันทึกไว้ใน `docs/03-testing/02-test-result/` ได้โดยไม่ block การ exit
 3. Feature ระดับ **Could** (Epic 4 ทั้งหมด) ถูกยืนยันชัดเจนว่า **ไม่ execute ในรอบนี้** ตาม §1 Scope —
    ไม่ถือเป็นเงื่อนไข exit ของรอบนี้
-4. NFR ที่ **execute ได้จริง** ในสถานะปัจจุบัน (NFR-01, NFR-02, NFR-03, NFR-05, NFR-07 บางส่วนผ่าน mock)
-   ผ่านเกณฑ์เชิงคุณภาพตาม §4 (R6, R8) — ส่วน NFR-04/NFR-06/NFR-08 (พึ่ง backend จริง) ถูก mark ว่า
-   **"not testable in this round"** อย่างชัดแจ้งใน test result ไม่ใช่ถูกละไว้เฉย ๆ
+4. NFR ที่ **execute ได้จริง** ในสถานะปัจจุบัน (NFR-01, NFR-02, NFR-03, NFR-05, NFR-07 บางส่วนผ่าน mock,
+   NFR-09/NFR-10 ผ่านการตรวจสอบ prototype โดยตรง) ผ่านเกณฑ์เชิงคุณภาพตาม §4 (R6, R8, R10) — ส่วน
+   NFR-04/NFR-06/NFR-08/NFR-11 (พึ่ง backend จริง) ถูก mark ว่า **"not testable in this round"** อย่างชัด
+   แจ้งใน test result ไม่ใช่ถูกละไว้เฉย ๆ
 5. ความเสี่ยงทั้งหมดใน §4 ถูกบันทึกสถานะ (resolved / accepted-as-is / deferred พร้อมเหตุผล) ก่อนปิดรอบ
    — ไม่จำเป็นต้อง resolve ทุกข้อ แต่ต้องมีการตัดสินใจที่ชัดเจนต่อแต่ละข้อ ไม่ใช่ถูกลืม
 6. ผลการทดสอบถูกบันทึกไว้ใน `docs/03-testing/02-test-result/` และสรุปไว้ใน
@@ -157,8 +161,8 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 
 - [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) — ที่มาของ MoSCoW Priority และ
   ขอบเขตในหัวข้อ 1
-- [Non-Functional Requirements (NFR-01–NFR-08)](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
-  — ที่มาของหัวข้อ 2 (NFR-driven Testing) และความเสี่ยง R6–R9 ในหัวข้อ 4
+- [Non-Functional Requirements (NFR-01–NFR-11)](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
+  — ที่มาของหัวข้อ 2 (NFR-driven Testing) และความเสี่ยง R6–R11 ในหัวข้อ 4
 - [docs/02-design/01-prototypes/user-journeys.md](../../02-design/01-prototypes/user-journeys.md) —
   อ้างอิง flow/Preconditions ที่ใช้ในการออกแบบ Usability Testing ของ onboarding
 - `docs/01-requirements/01-spec/` ทั้ง 4 ไฟล์ — ที่มาของความเสี่ยง R1–R5 ในหัวข้อ 4 (ดูลิงก์ต่อแถวในตาราง)
