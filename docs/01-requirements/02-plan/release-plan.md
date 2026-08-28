@@ -41,6 +41,14 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   รายวันแบบ all-or-nothing ได้ถูกต้อง
 - **Feature ID**: ONB-1 (REQ-01), ONB-2 (REQ-03), ONB-3 (REQ-02), REC-1 (REQ-04), REC-2 (REQ-05),
   PLN-1 (REQ-08), PLN-2 (REQ-09), PLN-3 (REQ-10) — ทั้งหมด MoSCoW = Must
+- **Infrastructure Prerequisite** (เพิ่ม 2026-08-28, ยืนยันจากผู้ใช้): ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง
+  (ตาม stack ที่เลือกใน [tech-stack.md](../../02-design/02-technical/tech-stack.md) — Supabase) — ไม่ใช่
+  Feature ID จาก `backlog.md` แต่เป็น prerequisite ที่จำเป็นเพื่อให้ **NFR-04/NFR-06/NFR-08/NFR-11**
+  (ปัจจุบัน mark "not testable in this round" ใน [test-plan.md](../../03-testing/01-test-plan/test-plan.md)
+  เพราะ *"ยังไม่มีระบบบัญชีผู้ใช้ (authentication) หรือ backend storage จริงในโปรเจกต์นี้"* ตาม
+  [NFR doc § จุดที่ยังไม่ได้ระบุ](../01-spec/20260827-05-non-functional-requirements.md)) กลายเป็นสิ่งที่
+  ตรวจสอบได้จริงภายใน MVP Phase แทนที่จะรอไปเรื่อยๆ — ดู task `TASK-INFRA-01` ใน
+  [phase-1-mvp-core-loop.md](../03-task/phase-1-mvp-core-loop.md)
 - **Dependency Notes** (แหล่งที่มา: HLA §3 "คุยกับ" + กติกาธุรกิจใน `01-spec/`):
   - ONB-1 (TDEE) → ONB-3 ("อ่านค่า TDEE ปัจจุบันจาก user_profile" ตาม algorithm ของ ONB-3 ใน
     [detailed-design/onboarding-personalization.md](../../02-design/02-technical/detailed-design/onboarding-personalization.md))
@@ -57,7 +65,13 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   [acceptance-criteria.md](../acceptance-criteria.md) ของทั้ง 8 Feature ID ต้องมีอยู่แล้ว (มีอยู่แล้ว)
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 1 —
   test case ของทุก Feature ID ระดับ Must ถูก execute ครบและไม่มี defect ระดับ Critical/High ค้างอยู่โดยไม่
-  มีแผนแก้ไข
+  มีแผนแก้ไข — บวก **NFR checklist ของ phase นี้** (เพิ่ม 2026-08-28 ตามตาราง NFR Traceability ใน
+  [backlog.md](../backlog.md#non-functional-requirements-nfr-traceability), ยืนยันจากผู้ใช้ให้เพิ่มเข้า
+  Exit Criteria แทนการสร้าง task แยก): NFR-01/02/03 (Performance — ONB-1/REC-1/REC-2/PLN-2/PLN-3),
+  NFR-09/10 (Usability — ทุกหน้าจอ) ต้องผ่านแล้ว และหลัง `TASK-INFRA-01` เสร็จ ต้องตรวจ **NFR-04/06/08/11
+  เพิ่มด้วย** (ไม่ mark "not testable" อีกต่อไปเมื่อมี backend จริงแล้ว — ควรแจ้ง `test-suite-builder` ให้
+  อัปเดต `test-plan.md` ตามเมื่อถึงจุดนี้จริง) NFR-07 (core loop fallback เมื่อ YouTube API ล่ม) ต้องผ่าน
+  เช่นกัน — ส่วน NFR-05 ยังคง Future Phase-scoped ล้วนๆ (ผูกกับ INT-2/INT-3 เท่านั้น)
 
 ### 3.2 Next Phase
 
@@ -72,7 +86,10 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
     ไล่ประวัติ `daily_log` ที่ PLN-3 เป็นผู้สร้างย้อนหลัง
 - **Entry Criteria**: MVP Phase ผ่าน Exit Criteria แล้ว
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 2 —
-  test case ของ REC-3/REC-4/PLN-4 ถูก execute ครบ (defect ที่ไม่ใช่ Critical/High ไม่ block การ exit)
+  test case ของ REC-3/REC-4/PLN-4 ถูก execute ครบ (defect ที่ไม่ใช่ Critical/High ไม่ block การ exit) —
+  บวก **NFR checklist ของ phase นี้**: NFR-08 (log/streak ไม่หายจาก network ไม่เสถียร — ผูกกับ PLN-4
+  โดยตรง) และคง NFR-09/10 (Usability, cross-cutting) ให้ผ่านต่อเนื่องจาก MVP Phase สำหรับหน้าจอใหม่ของ
+  REC-3/REC-4
 
 ### 3.3 Future Phase
 
@@ -89,7 +106,10 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   ทำงานได้แม้ไม่มี Epic 4) ต้องยืนยันแล้วว่าใช้งานได้จริง
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 3 —
   ปัจจุบัน Epic 4 อยู่นอกขอบเขตการ execute ของรอบทดสอบปัจจุบัน (test case เตรียมไว้ล่วงหน้าแล้ว) — Exit
-  Criteria ของ phase นี้จะเกิดขึ้นเมื่อทีมตัดสินใจหยิบ Epic 4 ขึ้นมา implement จริง
+  Criteria ของ phase นี้จะเกิดขึ้นเมื่อทีมตัดสินใจหยิบ Epic 4 ขึ้นมา implement จริง — บวก **NFR checklist
+  ของ phase นี้** เมื่อถึงเวลานั้น: NFR-04/05/06/11 (Security/Compliance เต็มรูปแบบ รวม consent ของ
+  INT-2/INT-3), NFR-07 ส่วนที่เหลือ (fallback เมื่อ Health API/Bluetooth ล่ม) และ NFR-09/10 สำหรับหน้าจอ
+  ใหม่ของ Epic นี้
 
 ## 4. Dependency Map
 
@@ -150,7 +170,10 @@ flowchart TD
 - [High Level Architecture](../../02-design/02-technical/high-level-architecture.md) §3 — แหล่งที่มาหลัก
   ของความสัมพันธ์ "คุยกับ" ระหว่าง component ที่ใช้ derive dependency ในหัวข้อ 3/4
 - [Test Plan](../../03-testing/01-test-plan/test-plan.md) — แหล่งที่มาของรูปแบบ Entry/Exit Criteria ที่
-  mirror มาใช้ต่อ phase
+  mirror มาใช้ต่อ phase และของ NFR testability status (not testable in this round) ที่อ้างถึงใน
+  `TASK-INFRA-01`
+- [Tech Stack](../../02-design/02-technical/tech-stack.md) — ที่มาของ stack ที่ `TASK-INFRA-01` ต้อง
+  provision จริง
 - Task Breakdown ต่อ phase: [phase-1-mvp-core-loop.md](../03-task/phase-1-mvp-core-loop.md),
   [phase-2-motivation-recommendation-ux.md](../03-task/phase-2-motivation-recommendation-ux.md),
   [phase-3-smart-integrations.md](../03-task/phase-3-smart-integrations.md)

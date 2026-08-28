@@ -16,6 +16,7 @@ PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอ�
 
 | Task ID | ชื่อ Task | Feature ID/REQ | Status | คำอธิบาย | References |
 |---|---|---|---|---|---|
+| TASK-INFRA-01 | ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง | (Infrastructure — ไม่มี Feature ID) | ยังไม่เริ่ม | Provision Supabase project จริง (Auth + Database + RLS) ตาม [tech-stack.md](../../02-design/02-technical/tech-stack.md) — ทำให้ NFR-04/NFR-06/NFR-08/NFR-11 ตรวจสอบได้จริง (ปัจจุบัน mark "not testable in this round" ใน test-plan.md เพราะยังไม่มี backend จริง) | NFR-04, NFR-06, NFR-08, NFR-11, [tech-stack.md §7](../../02-design/02-technical/tech-stack.md#7-จุดที่ยังไม่ได้ตัดสินใจ--ควรยืนยันเพิ่มเติม) (Supabase region ยังไม่เลือก) |
 | TASK-ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | ONB-1 / REQ-01 | ยังไม่เริ่ม | รับอายุ เพศ น้ำหนัก ส่วนสูง ระดับกิจกรรม คำนวณ BMR/TDEE ด้วยสูตร Mifflin-St Jeor | AC-ONB-1-01–03, [detailed-design/onboarding-personalization.md](../../02-design/02-technical/detailed-design/onboarding-personalization.md) |
 | TASK-ONB-2 | เลือกอุปกรณ์ที่มี | ONB-2 / REQ-03 | ยังไม่เริ่ม | เลือกอุปกรณ์ (ไม่มี/ดัมเบล/ยิมครบชุด แบบ multi-select) บันทึกเป็น filter ของวิดีโอ | AC-ONB-2-01–03 |
 | TASK-ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus + safety floor) | ONB-3 / REQ-02 | ยังไม่เริ่ม | เลือกประเภทเป้าหมาย แปลงเป็นเป้าหมายแคลอรี่รายวัน ปรับตาม safety floor 1,200–1,500 kcal | AC-ONB-3-01–03, [detailed-design/onboarding-personalization.md](../../02-design/02-technical/detailed-design/onboarding-personalization.md) |
@@ -31,6 +32,8 @@ PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอ�
   พัฒนาจริงที่ยังไม่มี ณ ตอนนี้ (ดู [Release Plan §5](../02-plan/release-plan.md#5-จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม))
 - จุดที่ยังไม่ได้ระบุเดิมของแต่ละ feature (เช่น REC-1 tolerance, Activity Factor ต่อระดับ, safety floor
   ตัวเลขแน่นอน) ยังไม่ resolve ใน `01-spec/` — ไม่กระทบการมีอยู่ของ task นี้ แต่กระทบรายละเอียดตอน implement
+- **TASK-INFRA-01**: `tech-stack.md` § 7 ยังไม่เลือก Supabase region ที่แน่นอน — ควรยืนยันก่อนเริ่ม
+  provision จริง (เป็น open point เดิมของ `tech-stack.md` ไม่ใช่ของไฟล์นี้)
 
 ## 4. ความสัมพันธ์กับเอกสารอื่น
 
@@ -40,3 +43,5 @@ PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอ�
   [Requirement — Daily YouTube Recommendation](../01-spec/20260823-02-daily-youtube-recommendation.md),
   [Requirement — Planner & Logging](../01-spec/20260823-03-planner-logging.md)
 - [User Journeys](../../02-design/01-prototypes/user-journeys.md) — ลำดับ step ของแต่ละ feature
+- [Non-Functional Requirements](../01-spec/20260827-05-non-functional-requirements.md),
+  [Tech Stack](../../02-design/02-technical/tech-stack.md) — ที่มาของ `TASK-INFRA-01`
