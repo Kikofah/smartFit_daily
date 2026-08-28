@@ -10,30 +10,53 @@ documentation. There are no commands to build, lint, or test yet — when code i
 should be updated with the actual commands (build/lint/test/single-test) and a description of the
 real architecture.
 
-## Current focus: Requirements, Backlog & User Journeys
+## Documentation pipeline status
 
-Work so far has moved through the first two stages of the documentation pipeline:
+The pipeline has moved well past initial requirements — most stages now have real content, each
+owned by a dedicated skill/agent pair (see "Skills & agents at a glance" below for which is which).
+Re-running a skill on an already-populated stage audits and updates it; it doesn't start from
+scratch.
 
-- `docs/01-requirements/01-spec/` — one **Requirements** doc per epic (Onboarding & Personalization,
-  Daily YouTube Recommendation, Planner & Logging, Smart Integrations), each with scope, business
-  rules (`REQ-01`…`REQ-13`), acceptance criteria, confirmed decisions, and open points.
+**Populated with real content:**
+
+- `docs/01-requirements/01-spec/` — 5 Requirement docs: one per epic (Onboarding & Personalization,
+  Daily YouTube Recommendation, Planner & Logging, Smart Integrations) plus a Non-Functional
+  Requirements doc, each with scope, business rules (`REQ-01`…`REQ-13`, `NFR-01`…`NFR-08`), confirmed
+  decisions, and open points.
 - `docs/01-requirements/backlog.md` — the **Product Backlog**: a single summary table of every
   feature (`ONB-1`…`INT-3`) with its Epic, MoSCoW priority, related `REQ-xx`, and linked spec doc,
   followed by a full description of each feature.
+- `docs/01-requirements/acceptance-criteria.md` — Given-When-Then per backlog item.
 - `docs/02-design/01-prototypes/user-journeys.md` — the **User Journey** for every feature: a
   Mermaid diagram first, then a step-by-step walkthrough in the same order with a `REQ-xx` mapping
   per step, then Actor/Goal/Trigger/Preconditions/Success State/Alt-Edge Cases.
 - `docs/02-design/01-prototypes/DESIGN.md` — the **Design System**: Brand Identity & CI, Design
   Tokens (colors, typography, spacing), UI Components & Patterns, and UX Guidelines & Rules, in an
   Earth Tone + Minimalist + Muji-inspired style. Check it before designing any new screen/component.
+- `docs/02-design/01-prototypes/v1/` — 12 self-contained HTML screen prototypes covering every
+  feature.
+- `docs/02-design/02-technical/high-level-architecture.md` — conceptual, stack-agnostic system
+  architecture.
+- `docs/02-design/02-technical/api-spec.md` and `database-schema.md` — conceptual API operations and
+  a logical/relational data model, one level more concrete than the HLA doc.
+- `docs/02-design/02-technical/detailed-design/{epic-slug}.md` — sequence diagrams, state diagrams,
+  and algorithm write-ups, one file per epic.
+- `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{epic-slug}.md` — project-wide test
+  strategy and step-by-step test cases.
 
-Downstream stages `02-plan`, `03-task`, and `04-retrospectives` are scaffolded but not the current
-priority — don't populate them speculatively; let them get filled in once the backlog is actually
-picked up for planning/build. `03-testing` was empty of actual content for a while too, and
-`02-design/02-technical` now has its first document (`high-level-architecture.md`) — both have a
-dedicated skill/agent ready to populate/extend them (see "Building the test suite", "Building the
-High Level Architecture doc", and "Building the API Spec & Database Schema" below) — build into them
-when actually asked.
+**Still scaffolded, not populated — don't fill speculatively, wait until actually asked:**
+
+- `docs/01-requirements/02-plan/`, `03-task/` — roadmap/phasing and task breakdown, once the backlog
+  is actually picked up for planning/build.
+- `docs/03-testing/02-test-result/` — actual pass/fail results and bugs found, once tests are
+  executed.
+- `docs/04-retrospectives/` — once a phase/sprint/milestone actually completes.
+- Genuinely stack-specific docs in `02-technical/` (tech choices, actual DBMS/framework decisions) —
+  once a team picks a stack; see "Building the Detailed Design docs" below for why this is distinct
+  from the conceptual docs that already exist there.
+
+`docs/05-log/{YYYYMMDD}-log.md` is the ongoing changelog — every skill run above should summarize
+its work there (create the file for that date if it doesn't exist yet, append if it does).
 
 `index.md` in each `docs/` folder is a **structural description of the folder's purpose only** — it
 is not where actual content goes. Add real documents as new files alongside `index.md`, never by
