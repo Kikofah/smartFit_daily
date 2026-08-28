@@ -400,3 +400,27 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
 - [Product Backlog](../../01-requirements/backlog.md), [Requirement 4 epic + NFR](../../01-requirements/01-spec/index.md) —
   แหล่งที่มาของกติกาธุรกิจที่ผูกกับแต่ละตาราง
 - [api-spec.md](api-spec.md) — operation ที่อ่าน/เขียนแต่ละตารางเหล่านี้ (คู่กัน)
+
+## 8. ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในเอกสารนี้ (นอกเหนือจาก logical data type) ที่มีชื่อเทคโนโลยีจริง**
+> แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่ [tech-stack.md](tech-stack.md) เสมอ — หัวข้อ 1-7 ข้างต้นยังคง
+> conceptual/logical ตามกติกาเดิมทุกประการ ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน
+> แล้วภาคผนวกนี้จะถูก sync ตามในการรัน `api-db-spec-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.2](tech-stack.md#62-database-schemamds-logical-type--postgresql-type)
+(2026-08-28):
+
+| Logical Type | PostgreSQL Type |
+|---|---|
+| `identifier` | `uuid` (default `gen_random_uuid()`) |
+| `string` | `text` |
+| `integer` | `integer` |
+| `decimal` | `numeric` |
+| `boolean` | `boolean` |
+| `date` | `date` |
+| `datetime` | `timestamptz` |
+| `enum` | PostgreSQL native `enum` type (เช่น `workout_session_status`, `connection_status`) |
+
+ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, REST
+convention → Supabase routing) และเหตุผลการเลือก stack

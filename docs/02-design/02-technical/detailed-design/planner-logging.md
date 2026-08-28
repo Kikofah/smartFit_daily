@@ -163,3 +163,25 @@ sequenceDiagram
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-03-planner-logging.md) —
   PLN-1/2/3/4, REQ-08/09/10
 - [User Journeys](../../01-prototypes/user-journeys.md) — ลำดับ step ของ PLN-1/2/3/4
+
+## ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในไฟล์นี้ที่มีชื่อเทคโนโลยีจริง** แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+> [tech-stack.md](../tech-stack.md) เสมอ — หัวข้อข้างต้นยังคง conceptual ตามกติกาเดิมทุกประการ ถ้าทีม
+> เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
+> `detailed-design-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
+(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+
+| Conceptual Component | Concrete Implementation |
+|---|---|
+| Planner & Day-Status | ตาราง `weekly_plan_entry`/`day_status` + Postgres view คำนวณ read-only flag + Edge Function `cheat-rest` (nested check ตาม Detailed Design) |
+| Logging & Streak | ตาราง `daily_log`/`streak_snapshot` + Postgres function หรือ Edge Function สำหรับ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
+
+**Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
+(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Streak walk-back (PLN-4)** เกิดขึ้นฝั่ง **React
+Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน server-side —
+ตาม § 6.1 ด้านบน server-side ส่วนนี้อาจ implement เป็น Postgres function หรือ Supabase Edge Function
+(`tech-stack.md` ยังไม่ได้ฟันธงระหว่างสองแบบนี้ — คำว่า "หรือ" ปรากฏตรงตัวใน § 6.1) เพื่อ recompute/
+validate streak เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดียวกับ ONB-1/REC-2

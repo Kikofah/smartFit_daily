@@ -117,3 +117,25 @@ operation ใดที่ไม่มี component รองรับ
 - [Product Backlog](../../01-requirements/backlog.md), [Requirement 4 epic + NFR](../../01-requirements/01-spec/index.md) —
   แหล่งที่มาของ Feature ID/REQ ที่แต่ละ operation อ้างถึง
 - [database-schema.md](database-schema.md) — โครงสร้างข้อมูลที่ operation แต่ละตัวอ่าน/เขียน (คู่กัน)
+
+## 6. ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในเอกสารนี้ (นอกเหนือจาก REST convention) ที่มีชื่อเทคโนโลยีจริง** แหล่งที่มา
+> และสิทธิ์แก้ไขจริงอยู่ที่ [tech-stack.md](tech-stack.md) เสมอ — หัวข้อ 1-5 ข้างต้นยังคง conceptual ตาม
+> กติกาเดิมทุกประการ ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync
+> ตามในการรัน `api-db-spec-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--supabase-routing)
+(2026-08-28):
+
+- **Operation ที่เป็น CRUD ตรงไปตรงมา** (เช่น `GET /profile`, `GET /logs`, `GET /logs/{date}`,
+  `GET /planner/week`, `GET /streak`) → ใช้ **PostgREST auto-generated API** ของ Supabase โดยตรง (มี RLS
+  policy คุมสิทธิ์ต่อผู้ใช้)
+- **Operation ที่มี business logic/validation/เรียก external API** (เช่น `PUT /profile/goal`,
+  `GET /workouts/today/recommendation`, `POST /workouts/sessions/{sessionId}/complete`,
+  `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → implement เป็น
+  **Supabase Edge Function** (Deno/TypeScript) โดยคง HTTP verb + resource path เดิมตามที่หัวข้อ 3 กำหนด
+  ไว้เป็น convention การตั้งชื่อ route
+
+ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, logical
+type → PostgreSQL type) และเหตุผลการเลือก stack

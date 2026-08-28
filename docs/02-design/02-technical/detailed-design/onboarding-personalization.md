@@ -121,3 +121,24 @@ sequenceDiagram
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md) —
   ONB-1/ONB-2/ONB-3, REQ-01/REQ-02/REQ-03
 - [User Journeys](../../01-prototypes/user-journeys.md) — ลำดับ step ของ ONB-1/ONB-2/ONB-3
+
+## ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในไฟล์นี้ที่มีชื่อเทคโนโลยีจริง** แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+> [tech-stack.md](../tech-stack.md) เสมอ — หัวข้อข้างต้นยังคง conceptual ตามกติกาเดิมทุกประการ ถ้าทีม
+> เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
+> `detailed-design-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
+(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+
+| Conceptual Component | Concrete Implementation |
+|---|---|
+| Personalization & Profile | ตาราง `user_profile`/`goal_selection`/`equipment_selection` + RLS policy ต่อผู้ใช้ + Edge Function `profile-update` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่ง |
+
+**Execution ของ algorithm section**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
+(NFR-01/NFR-03 — client-side calculation) การคำนวณ **TDEE (ONB-1)** และ **Safety Floor (ONB-3)**
+เกิดขึ้นฝั่ง **React Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึก
+ผ่าน **Supabase Edge Function `profile-update`** (ไม่ใช่เขียนตรงเข้าตารางผ่าน PostgREST) เพื่อให้ Edge
+Function validate/บังคับกติกาธุรกิจ (เช่น safety floor, equipment mutual exclusion) เป็นเกราะป้องกันชั้น
+ที่สองฝั่ง server

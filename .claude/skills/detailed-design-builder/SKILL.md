@@ -26,14 +26,19 @@ description: Build or update smartFit_daily's conceptual Detailed Design docs (d
 ต่างจาก `api-db-spec-builder` ที่ต้องขอข้อยกเว้นเพิ่ม (REST convention, logical data type) เพราะเอกสารนี้
 ใช้ **notation ที่เป็นกลางทางเทคโนโลยีอยู่แล้วโดยธรรมชาติ**: sequence diagram, state diagram, และ
 คำอธิบายอัลกอริทึมแบบ step-by-step ไม่ใช่ syntax ของภาษาโปรแกรมหรือ framework ใดๆ — **จึงไม่ต้องขอข้อยกเว้น
-ใหม่เพิ่ม** ยึดกติกาเดิมของ HLA เข้มงวดเหมือนเดิมทุกประการ: ห้ามระบุชื่อ framework/library/ฐานข้อมูล
-เฉพาะเจาะจง/cloud provider/ภาษาโปรแกรม — participant ใน sequence diagram ต้องเป็นชื่อ **Conceptual
-Component ของ HLA** (เช่น "Content Recommendation", "Logging & Streak") หรือ actor ทั่วไป ("ผู้ใช้",
-"YouTube" ในฐานะ external boundary ที่ requirement กำหนดไว้แล้ว) — **ห้ามเป็น** "API Gateway (Express)",
-"PostgreSQL", "Redis Cache" ฯลฯ
+ใหม่เพิ่มสำหรับเนื้อหาหลัก** ยึดกติกาเดิมของ HLA เข้มงวดเหมือนเดิมทุกประการในหัวข้อ 1-3 (ต่อ Feature ID):
+ห้ามระบุชื่อ framework/library/ฐานข้อมูล เฉพาะเจาะจง/cloud provider/ภาษาโปรแกรม — participant ใน sequence
+diagram ต้องเป็นชื่อ **Conceptual Component ของ HLA** (เช่น "Content Recommendation", "Logging &
+Streak") หรือ actor ทั่วไป ("ผู้ใช้", "YouTube" ในฐานะ external boundary ที่ requirement กำหนดไว้แล้ว) —
+**ห้ามเป็น** "API Gateway (Express)", "PostgreSQL", "Redis Cache" ฯลฯ
 
 อัลกอริทึมเขียนเป็น**ขั้นตอนภาษาธรรมชาติ/pseudocode เชิงแนวคิด** (numbered steps, if/else เป็นคำพูด) —
 **ห้ามเป็นโค้ดจริงในภาษาใดภาษาหนึ่ง**
+
+**ข้อยกเว้นเดียว (ใหม่ — ยืนยันจากผู้ใช้ 2026-08-28)**: **section "ภาคผนวก: Stack Mapping"** ท้ายไฟล์แต่ละ
+epic (ดูขั้นตอนที่ 3 ข้อ 4) อนุญาตให้มีชื่อเทคโนโลยีจริงจาก `tech-stack.md` ได้ — เป็น section เดียวในทั้ง
+เอกสารที่ยกเว้นกติกานี้ เนื้อหาหลัก (หัวข้อ 1-3 ต่อ Feature ID) ยังคง conceptual ล้วนเหมือนเดิมทุกประการ
+ไม่ปะปนกัน
 
 ## ขั้นตอนที่ -1 — ตรวจสอบว่ามี HLA, API Spec, Database Schema ครบหรือยัง (บังคับก่อนทำอย่างอื่นทั้งหมด)
 
@@ -67,6 +72,9 @@ Component ของ HLA** (เช่น "Content Recommendation", "Logging & Str
 - `high-level-architecture.md`, `api-spec.md`, `database-schema.md`, Requirement, Backlog, หรือ User
   Journey เปลี่ยนแปลง — ไม่ว่าจะรู้จากผู้ใช้แจ้งตรงๆ หรือจาก skill อื่นแจ้งมา
 - เอกสารนี้มีอยู่แล้วแต่ยังไม่ได้ตรวจมาสักระยะ — ห้ามสันนิษฐานว่ายัง fresh อยู่เพราะไม่มีใครแจ้ง
+- `docs/02-design/02-technical/tech-stack.md` ถูกสร้าง/แก้ไข (ถ้ามี) — ต้องตรวจว่า "ภาคผนวก: Stack
+  Mapping" ของแต่ละไฟล์ epic ที่มีอยู่แล้วยัง sync กับ `tech-stack.md` § 6.1 และคำอธิบาย client-side/
+  server-side split ปัจจุบันหรือไม่
 
 ## ขั้นตอนที่ 0 — Detailed Design Consistency Audit (รันก่อนแก้ไขอะไร ถ้ามีเอกสารอยู่แล้ว)
 
@@ -84,8 +92,12 @@ Component ของ HLA** (เช่น "Content Recommendation", "Logging & Str
    diagram หรือไม่
 6. **Prototype** (ถ้ามี) — ใช้ประกอบเพื่อยืนยันว่า UI state ที่ sequence diagram อ้างถึง (เช่น
    error/success ที่แสดงผล) ตรงกับ prototype จริง — ไม่มีให้ข้ามไปเฉยๆ
-7. **Self-check กติกา conceptual**: ไม่มีชื่อ stack หลุดเข้ามาใน participant name หรือ algorithm
-   description
+7. **Self-check กติกา conceptual**: อ่านหัวข้อ 1-3 ต่อ Feature ID (ไม่รวมภาคผนวก) ซ้ำ ตรวจว่าไม่มีชื่อ
+   stack หลุดเข้ามาใน participant name หรือ algorithm description
+8. **Stack Mapping Appendix freshness** (ถ้ามี `tech-stack.md` และไฟล์ epic นั้นมีภาคผนวกอยู่แล้ว): เทียบ
+   เนื้อหาภาคผนวกกับ `tech-stack.md` § 6.1 (Component → concrete implementation) และคำอธิบาย client-side/
+   server-side split ปัจจุบัน — ถ้าไม่ตรงกัน ถือเป็น**การมิเรอร์ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การ
+   ตัดสินใจเนื้อหาใหม่** — แก้ให้ตรงได้เองผ่าน flow ปกติ ไม่ต้องถามผู้ใช้
 
 ### การจัดกลุ่มสิ่งที่พบ + การ Reconcile — เหมือน pattern เดิมของ `api-db-spec-builder`
 
@@ -150,6 +162,17 @@ Component ของ HLA** (เช่น "Content Recommendation", "Logging & Str
 4. **จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม**
 5. **ความสัมพันธ์กับเอกสารอื่น** — ลิงก์กลับ HLA, `api-spec.md`, `database-schema.md`, backlog.md,
    01-spec ของ epic นั้น, user-journeys.md
+6. **ภาคผนวก: Stack Mapping** (สร้าง/อัปเดตเฉพาะเมื่อ `docs/02-design/02-technical/tech-stack.md` มีอยู่
+   แล้ว — ถ้ายังไม่มีให้ข้ามหัวข้อนี้ไปทั้งหมด ไม่ใช่ gap) — มิเรอร์ (ไม่ใช่แก้ไข) เฉพาะส่วนที่เกี่ยวข้องกับ
+   Feature ID ในไฟล์ epic นี้จาก `tech-stack.md` § 6.1 (Conceptual Component → concrete implementation
+   จริง): ต่อ Conceptual Component ที่ปรากฏเป็น participant ใน sequence diagram ของไฟล์นี้ ระบุ
+   implementation จริง (เช่น "Logging & Streak" → คำนวณ streak ฝั่ง mobile client แล้วเขียนผ่าน Supabase
+   Edge Function ไม่ใช่เขียนตรงเข้าตาราง) พร้อมอ้างเหตุผล NFR-01/NFR-03 (client-side calculation) ตามที่
+   `tech-stack.md` ระบุไว้ และสำหรับ Feature ID ที่มี algorithm section ในหัวข้อ 3 ให้ระบุด้วยว่า execution
+   จริงอยู่ฝั่งไหน (client-side / Edge Function) — พร้อมประโยคเปิดที่ระบุชัดว่า **"หัวข้อนี้เป็นข้อยกเว้น
+   เดียวในไฟล์นี้ที่มีชื่อเทคโนโลยีจริง แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+   [tech-stack.md](../tech-stack.md) เสมอ — ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน
+   แล้วภาคผนวกนี้จะถูก sync ตามในการรัน `detailed-design-builder` ครั้งถัดไป"**
 
 ## ขั้นตอนที่ 4 — สร้าง/แก้ไฟล์ (หลังผู้ใช้ยืนยันแผนแล้วเท่านั้น)
 
@@ -157,6 +180,8 @@ Component ของ HLA** (เช่น "Content Recommendation", "Logging & Str
 - เขียนเป็นภาษาไทย ใช้ศัพท์เทคนิคภาษาอังกฤษทับศัพท์ได้ตาม convention ของโปรเจกต์
 - ทุก participant/operation/table/state ต้อง trace กลับไปยัง HLA/API Spec/Database Schema ได้เสมอ — ถ้า
   trace ไม่ได้ แปลว่ามีปัญหาตั้งแต่ขั้นตอนที่ 1
+- ก่อนเขียน/ข้ามหัวข้อ 6 (ภาคผนวก: Stack Mapping) ของแต่ละไฟล์ ให้ตรวจก่อนเสมอว่ามี
+  `docs/02-design/02-technical/tech-stack.md` อยู่จริงหรือไม่ — มีจึงเขียน ไม่มีให้ข้าม
 - สร้างโฟลเดอร์ `docs/02-design/02-technical/detailed-design/` ถ้ายังไม่มี (ครั้งแรกที่รัน)
 - หลังสร้าง/อัปเดตไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงโฟลเดอร์นี้ (ถ้ายังไม่
   ได้กล่าวถึง) ตาม convention ของโปรเจกต์นี้ (ห้ามเขียนเนื้อหาจริงลงใน index.md)
@@ -182,7 +207,8 @@ alt-path, หรือทิศทางการ reconcile ความไม�
 - ผลจาก Detailed Design Consistency Audit (ถ้ารัน): เทียบกับกี่ชั้น, พบอะไรบ้าง, จัดเป็นล้าหลัง/ข้อมูลใหม่/
   ขัดแย้งตรงๆ อย่างไร
 - แผนที่ผู้ใช้ยืนยันแล้ว (Feature ID ที่มี sequence/state diagram/algorithm ครอบคลุม)
-- ไฟล์ที่สร้าง/แก้ไข (`detailed-design/{epic-slug}.md` กี่ไฟล์, `index.md` ถ้าแก้, log entry)
+- ไฟล์ที่สร้าง/แก้ไข (`detailed-design/{epic-slug}.md` กี่ไฟล์, `index.md` ถ้าแก้, log entry) — รวมถึง
+  ระบุว่าแต่ละไฟล์ "ภาคผนวก: Stack Mapping" ถูกสร้าง/อัปเดต/ข้ามไป และเพราะอะไร
 - ถ้าเรียก `architecture-builder`/`api-db-spec-builder`/`feature-list-journey`/`prototype-builder`/
   `test-suite-builder` ต่อเพื่อแก้เอกสารอื่น ให้ระบุว่าเรียกไปทำอะไรและผลลัพธ์เป็นอย่างไร
 - คำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง (ถ้ามี)

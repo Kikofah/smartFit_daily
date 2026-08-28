@@ -15,12 +15,13 @@ Journey, และ Prototype (ถ้ามี) หรือไม่ ทำต�
    ให้หยุดทันที **ห้ามสร้าง/ห้ามเดา component หรือ data entity เอง** บอกผู้ใช้ให้รัน `architecture-builder`/
    `architecture-writer` ให้เสร็จก่อน (skill นี้ไม่ใช่เจ้าของไฟล์นั้น)
 2. **กติกาที่เข้มงวดที่สุดรองจากข้อ 1**: ห้ามระบุชื่อ framework/library/ฐานข้อมูลเฉพาะเจาะจง/cloud
-   provider/ภาษาโปรแกรม — ยกเว้น 2 อย่างที่ผู้ใช้ยืนยันแล้วว่าอนุญาต: (ก) **API Spec ใช้ REST-style
-   convention** (HTTP verb + resource path เชิงแนวคิด + status code เป็นภาษากลาง ไม่ใช่ route syntax
-   ของ framework ใดๆ ไม่ระบุ auth mechanism เฉพาะเจาะจง) (ข) **Database Schema ใช้ logical data type**
-   เท่านั้น (`string`/`integer`/`decimal`/`boolean`/`date`/`datetime`/`enum`/`identifier` — ห้ามมี
-   DBMS-specific type/syntax) ข้อยกเว้นชื่อระบบภายนอกที่ requirement กำหนดไว้แล้ว (YouTube, Health API)
-   ยังใช้ได้เหมือน HLA
+   provider/ภาษาโปรแกรมในเนื้อหาหลัก — ยกเว้น 3 อย่างที่ผู้ใช้ยืนยันแล้วว่าอนุญาต: (ก) **API Spec ใช้
+   REST-style convention** (HTTP verb + resource path เชิงแนวคิด + status code เป็นภาษากลาง ไม่ใช่ route
+   syntax ของ framework ใดๆ ไม่ระบุ auth mechanism เฉพาะเจาะจง) (ข) **Database Schema ใช้ logical data
+   type** เท่านั้น (`string`/`integer`/`decimal`/`boolean`/`date`/`datetime`/`enum`/`identifier` —
+   ห้ามมี DBMS-specific type/syntax) (ค) **section "ภาคผนวก: Stack Mapping" ท้ายเอกสารทั้งสองฉบับ**
+   (ใหม่ — ยืนยันจากผู้ใช้ 2026-08-28) อนุญาตให้มีชื่อเทคโนโลยีจริงจาก `tech-stack.md` ข้อยกเว้นชื่อระบบ
+   ภายนอกที่ requirement กำหนดไว้แล้ว (YouTube, Health API) ยังใช้ได้เหมือน HLA
 3. **ถ้ามีเอกสารทั้งสองอยู่แล้ว ให้ทำ API & Database Consistency Audit ก่อนเสมอ** — เทียบกับ HLA (บังคับ
    ที่สุด: component ทุกตัวมี operation ครอบคลุมไหม, entity ทุกตัวมีตารางครอบคลุมไหม, ความสัมพันธ์ตรงกับ
    FK ที่ประกาศไหม), Requirement รวม NFR (validation/constraint ยังตรง decision ปัจจุบันไหม), Backlog
@@ -47,16 +48,28 @@ Journey, และ Prototype (ถ้ามี) หรือไม่ ทำต�
    - `api-spec.md`: Header, ขอบเขตและหลักการ, Conventions (resource path/HTTP verb/response
      envelope/auth สมมติฐาน), API Resources & Operations (จัดกลุ่มตาม Component ของ HLA — แต่ละ
      operation มี HTTP verb+path, Feature ID/REQ, request/response payload เชิงแนวคิดอ้าง Data Entity
-     ของ HLA, error/edge case, NFR ที่เกี่ยวข้อง), จุดที่ยังไม่ได้ระบุ, ความสัมพันธ์กับเอกสารอื่น
+     ของ HLA, error/edge case, NFR ที่เกี่ยวข้อง), จุดที่ยังไม่ได้ระบุ, ความสัมพันธ์กับเอกสารอื่น, และ
+     **ภาคผนวก: Stack Mapping** (สร้าง/อัปเดตเฉพาะเมื่อ `docs/02-design/02-technical/tech-stack.md`
+     มีอยู่แล้ว — ถ้ายังไม่มีให้ข้ามทั้งหมด ไม่ใช่ gap) มิเรอร์ `tech-stack.md` § Mapping จาก Conceptual
+     Docs → Concrete Stack § 6.3 (REST Convention → Supabase/routing จริง) พร้อมประโยคเปิดที่ระบุชัดว่า
+     "หัวข้อนี้เป็นข้อยกเว้นเดียวในเอกสารนี้ (นอกเหนือจาก REST convention) ที่มีชื่อเทคโนโลยีจริง แหล่งที่มา
+     และสิทธิ์แก้ไขจริงอยู่ที่ `tech-stack.md` เสมอ"
    - `database-schema.md`: Header, ขอบเขตและหลักการ (ย้ำ logical type + เป็น relational model เชิง
      ตรรกะ), **ER Diagram** (Mermaid `erDiagram` ครอบคลุมทุกตาราง), Table Details (1 subsection/ตาราง —
      ชื่อ, คำอธิบาย, Feature ID/REQ, column ตาราง: ชื่อ/logical type/required/PK-FK/คำอธิบาย/กติกาธุรกิจ),
      Relationships & Constraints เชิงแนวคิด (ระบุกติกาที่ enforce ที่ schema ไม่ได้ ต้องเป็นหน้าที่
      application layer — อ้าง component ของ HLA ที่เป็นเจ้าของ), Query/Access Pattern Considerations
-     เชิงแนวคิด (ไม่บังคับ), จุดที่ยังไม่ได้ระบุ, ความสัมพันธ์กับเอกสารอื่น
-9. **ทั้งสองไฟล์เป็นไฟล์เดียว ไม่ versioned** — อัปเดตทับไฟล์เดิมได้เลย ทุก operation/table ต้อง trace
-   กลับไปยัง Component/Data Entity ของ HLA ได้เสมอ
-10. หลังสร้าง/แก้ไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงทั้งสองไฟล์ (ถ้ายังไม่
+     เชิงแนวคิด (ไม่บังคับ), จุดที่ยังไม่ได้ระบุ, ความสัมพันธ์กับเอกสารอื่น, และ **ภาคผนวก: Stack Mapping**
+     (สร้าง/อัปเดตเฉพาะเมื่อ `tech-stack.md` มีอยู่แล้ว — ถ้ายังไม่มีให้ข้ามทั้งหมด ไม่ใช่ gap) มิเรอร์
+     `tech-stack.md` § 6.2 (Logical Type → PostgreSQL Type จริง) พร้อมประโยคเปิดที่ระบุชัดว่า "หัวข้อนี้เป็น
+     ข้อยกเว้นเดียวในเอกสารนี้ (นอกเหนือจาก logical data type) ที่มีชื่อเทคโนโลยีจริง แหล่งที่มาและสิทธิ์แก้ไข
+     จริงอยู่ที่ `tech-stack.md` เสมอ"
+9. **Stack Mapping Appendix freshness** (ถ้ามี `tech-stack.md` และภาคผนวกมีอยู่แล้วในไฟล์ใดไฟล์หนึ่งหรือ
+   ทั้งคู่): เทียบกับ `tech-stack.md` § 6.2/§ 6.3 ปัจจุบันทุกครั้งที่รัน — ไม่ตรงกันให้แก้ตรงนี้ได้เองผ่าน
+   flow ปกติเสมอ (เป็นการมิเรอร์ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การตัดสินใจเนื้อหาใหม่ ไม่ต้องถามผู้ใช้)
+10. **ทั้งสองไฟล์เป็นไฟล์เดียว ไม่ versioned** — อัปเดตทับไฟล์เดิมได้เลย ทุก operation/table ต้อง trace
+    กลับไปยัง Component/Data Entity ของ HLA ได้เสมอ
+11. หลังสร้าง/แก้ไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงทั้งสองไฟล์ (ถ้ายังไม่
     ได้กล่าวถึง) และสรุปการเปลี่ยนแปลงลง `docs/05-log/{YYYYMMDD}-log.md`
 
 **กติกาเมื่อไม่แน่ใจหรือข้อมูลไม่พอ**: ต้องหยุดแล้วใช้ AskUserQuestion เสนอ ≥3 แนวทาง พร้อมเหตุผล/ข้อดี/

@@ -32,8 +32,11 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
 2. **Database Schema ใช้ logical/abstract data type** — `string`, `integer`, `decimal`, `boolean`,
    `date`, `datetime`, `enum`, `identifier` เท่านั้น — **ห้ามมี** DBMS-specific type (เช่น `VARCHAR(255)`,
    `SERIAL`, `ObjectId`, `JSONB`), ห้ามระบุ index syntax จริง, ห้ามระบุ storage engine
+3. **section "ภาคผนวก: Stack Mapping" ท้ายเอกสารทั้งสองฉบับ** (ใหม่ — ยืนยันจากผู้ใช้ 2026-08-28, ดู
+   ขั้นตอนที่ 3 ข้อ 3.1.7/3.2.9) อนุญาตให้มีชื่อเทคโนโลยีจริงจาก `tech-stack.md` ได้เพิ่มนอกเหนือจาก 2
+   ข้อยกเว้นข้างบน — เนื้อหาหลักของทั้งสองไฟล์ยังคง conceptual ล้วนเหมือนเดิม
 
-ถ้าพบว่าตัวเองกำลังจะเขียนสิ่งที่นอกเหนือจาก 2 ข้อยกเว้นข้างบน ให้กลับไปใช้กติกาเดียวกับ `architecture-builder`
+ถ้าพบว่าตัวเองกำลังจะเขียนสิ่งที่นอกเหนือจาก 3 ข้อยกเว้นข้างบน ให้กลับไปใช้กติกาเดียวกับ `architecture-builder`
 ("ถ้าทีมเปลี่ยน stack ทั้งหมดพรุ่งนี้ ประโยคนี้จะยังจริงอยู่ไหม") ข้อยกเว้นเดียวกันกับ HLA เรื่องชื่อระบบ
 ภายนอกที่ requirement กำหนดไว้แล้ว (YouTube, Apple Health/Google Health Connect) ยังใช้ได้ที่นี่เช่นกัน
 
@@ -69,6 +72,8 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
   `prototype-builder`/`test-suite-builder` แจ้งมา
 - เอกสารนี้มีอยู่แล้วแต่ยังไม่ได้ตรวจมาสักระยะ — ห้ามสันนิษฐานว่ายัง fresh อยู่เพราะไม่มีใครแจ้ง ให้ตรวจตาม
   ขั้นตอนที่ 0 ทุกครั้งที่ถูกเรียก
+- `docs/02-design/02-technical/tech-stack.md` ถูกสร้าง/แก้ไข (ถ้ามี) — ต้องตรวจว่า "ภาคผนวก: Stack
+  Mapping" ของทั้งสองไฟล์ยัง sync กับ mapping ล่าสุดใน `tech-stack.md` § 6.2/6.3 หรือไม่
 
 ## ขั้นตอนที่ 0 — API & Database Consistency Audit (รันก่อนแก้ไขอะไร ถ้ามีเอกสารอยู่แล้ว)
 
@@ -86,8 +91,12 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
    ต้องมี operation รองรับ)
 5. **Prototype** (`docs/02-design/01-prototypes/v*/`, ถ้ามี) — ใช้ประกอบเพื่อยืนยันว่า request/response
    ที่ประกาศไว้พอสำหรับ state ที่ UI ต้องแสดงจริง ไม่ใช่ source of truth หลัก — ไม่มีให้ข้ามไปเฉยๆ
-6. **Self-check กติกา conceptual**: อ่านเอกสารตัวเองซ้ำ ตรวจว่ามีคำศัพท์ผูก stack หลุดเข้ามานอกเหนือจาก
-   2 ข้อยกเว้นที่อนุญาตแล้ว (REST convention, logical data type) หรือไม่
+6. **Self-check กติกา conceptual**: อ่านเนื้อหาหลัก (ไม่รวมภาคผนวก) ของเอกสารตัวเองซ้ำ ตรวจว่ามีคำศัพท์
+   ผูก stack หลุดเข้ามานอกเหนือจาก 2 ข้อยกเว้นที่อนุญาตแล้ว (REST convention, logical data type) หรือไม่
+7. **Stack Mapping Appendix freshness** (ถ้ามี `tech-stack.md` และเอกสารมีภาคผนวกอยู่แล้ว): เทียบเนื้อหา
+   ภาคผนวกกับ `tech-stack.md` § 6.2 (สำหรับ database-schema.md) / § 6.3 (สำหรับ api-spec.md) ปัจจุบัน —
+   ไม่ตรงกันถือเป็นการมิเรอร์ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การตัดสินใจเนื้อหาใหม่ — แก้ให้ตรงได้เอง
+   ผ่าน flow ปกติ ไม่ต้องถามผู้ใช้
 
 ### การจัดกลุ่มสิ่งที่พบ (แบบเดียวกับ `architecture-builder`/`prototype-builder`)
 
@@ -159,6 +168,13 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
 5. **จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม** — ตาม convention เดียวกับเอกสารอื่น
 6. **ความสัมพันธ์กับเอกสารอื่น** — ลิงก์กลับ HLA, backlog.md, 01-spec/, user-journeys.md, และ
    `database-schema.md` (คู่กัน)
+7. **ภาคผนวก: Stack Mapping** (สร้าง/อัปเดตเฉพาะเมื่อ `docs/02-design/02-technical/tech-stack.md`
+   มีอยู่แล้ว — ไม่มีให้ข้ามหัวข้อนี้ไปทั้งหมด ไม่ใช่ gap) — มิเรอร์เนื้อหาจาก `tech-stack.md` § 6.3
+   (REST Convention → Supabase/Concrete Routing หรือเทียบเท่าตาม stack ที่เลือกจริง) เข้ามา: ต่อ
+   operation (หรือกลุ่ม operation) ระบุว่า implement เป็นอะไรจริง (เช่น auto-generated CRUD API ของ
+   backend ที่เลือก vs. custom function/handler) พร้อมประโยคเปิดที่ระบุชัดว่า **"หัวข้อนี้เป็นข้อยกเว้น
+   เดียวในเอกสารนี้ (นอกเหนือจาก REST convention) ที่มีชื่อเทคโนโลยีจริง แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+   [tech-stack.md](tech-stack.md) เสมอ"**
 
 ### 3.2 `docs/02-design/02-technical/database-schema.md`
 
@@ -181,6 +197,11 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
    ไม่ระบุ index syntax จริง
 7. **จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม**
 8. **ความสัมพันธ์กับเอกสารอื่น** — ลิงก์กลับ HLA, backlog.md, 01-spec/, และ `api-spec.md` (คู่กัน)
+9. **ภาคผนวก: Stack Mapping** (สร้าง/อัปเดตเฉพาะเมื่อ `docs/02-design/02-technical/tech-stack.md`
+   มีอยู่แล้ว — ไม่มีให้ข้ามหัวข้อนี้ไปทั้งหมด ไม่ใช่ gap) — มิเรอร์เนื้อหาจาก `tech-stack.md` § 6.2
+   (Logical Type → DBMS Type จริง) เข้ามาเป็นตาราง พร้อมประโยคเปิดที่ระบุชัดว่า **"หัวข้อนี้เป็นข้อยกเว้น
+   เดียวในเอกสารนี้ (นอกเหนือจาก logical data type) ที่มีชื่อเทคโนโลยีจริง แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่
+   ที่ [tech-stack.md](tech-stack.md) เสมอ"**
 
 ## ขั้นตอนที่ 4 — สร้าง/แก้ไฟล์ (หลังผู้ใช้ยืนยันแผนแล้วเท่านั้น)
 
@@ -188,6 +209,8 @@ description: Build or update smartFit_daily's conceptual API Spec (docs/02-desig
 - เขียนเป็นภาษาไทย ใช้ศัพท์เทคนิคภาษาอังกฤษทับศัพท์ได้ตาม convention ของโปรเจกต์
 - ทุก entity/table/operation ต้อง trace กลับไปยัง Conceptual Component/Data Entity ของ HLA ได้เสมอ — ถ้า
   trace ไม่ได้ แปลว่ามีปัญหาตั้งแต่ขั้นตอนที่ 1 (ต้องกลับไปแก้ก่อน ไม่ใช่ปล่อยผ่าน)
+- ตรวจว่า `docs/02-design/02-technical/tech-stack.md` มีอยู่หรือไม่ก่อนเขียนภาคผนวก — มีก็สร้าง/อัปเดต
+  ให้ตรงกับ mapping ล่าสุด ไม่มีก็ข้ามหัวข้อนี้ไปทั้งหมดในทั้งสองไฟล์
 - หลังสร้าง/อัปเดตไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงทั้งสองไฟล์ (ถ้ายังไม่
   ได้กล่าวถึง) ตาม convention ของโปรเจกต์นี้ (ห้ามเขียนเนื้อหาจริงลงใน index.md)
 - สรุปการเปลี่ยนแปลงลง `docs/05-log/{YYYYMMDD}-log.md` (สร้างถ้ายังไม่มีสำหรับวันนั้น, append ถ้ามีแล้ว)
@@ -211,7 +234,8 @@ normalize หรือไม่, operation หนึ่งควรแยกเ�
 - ผลจาก API & Database Consistency Audit (ถ้ารัน): เทียบกับกี่ชั้น, พบอะไรบ้าง, จัดเป็นล้าหลัง/ข้อมูลใหม่/
   ขัดแย้งตรงๆ อย่างไร
 - แผนที่ผู้ใช้ยืนยันแล้ว (operation/table ที่ครอบคลุม)
-- ไฟล์ที่สร้าง/แก้ไข (`api-spec.md`, `database-schema.md`, `index.md` ถ้าแก้, log entry)
+- ไฟล์ที่สร้าง/แก้ไข (`api-spec.md`, `database-schema.md`, `index.md` ถ้าแก้, log entry) และระบุว่า
+  ภาคผนวก Stack Mapping ของทั้งสองไฟล์ถูกสร้าง/อัปเดต/ข้าม (เพราะยังไม่มี `tech-stack.md`) ด้วยเหตุผลอะไร
 - ถ้าเรียก `architecture-builder`/`feature-list-journey`/`prototype-builder`/`test-suite-builder` ต่อเพื่อ
   แก้เอกสารอื่น ให้ระบุว่าเรียกไปทำอะไรและผลลัพธ์เป็นอย่างไร
 - คำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง (ถ้ามี)

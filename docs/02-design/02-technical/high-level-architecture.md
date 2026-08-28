@@ -390,3 +390,26 @@ flowchart TD
 - เอกสารนี้เป็นพื้นฐานก่อนเอกสาร stack-specific ใดๆ ที่จะตามมาในอนาคตใน `02-technical/` (database schema,
   API design, tech choices) — เมื่อทีมเลือก stack แล้ว เอกสารเหล่านั้นควร derive แนวคิดจากที่นี่ ไม่ใช่มา
   แทนที่เอกสารนี้ ไม่ใช่หน้าที่ของ `architecture-builder` ที่จะสร้างเอกสารเหล่านั้น
+
+## 10. ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในเอกสารนี้ที่มีชื่อเทคโนโลยีจริง** แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+> [tech-stack.md](tech-stack.md) เสมอ — หัวข้อ 1-9 ข้างต้นยังคง conceptual ล้วนตามกติกาเดิมทุกประการ
+> ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
+> `architecture-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
+(2026-08-28):
+
+| Conceptual Component (หัวข้อ 3) | Concrete Implementation |
+|---|---|
+| Personalization & Profile | ตาราง `user_profile`/`goal_selection`/`equipment_selection` + RLS policy ต่อผู้ใช้ + Edge Function `profile-update` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่ง |
+| Content Recommendation | Edge Function `recommendation` เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Edge Function `session-complete` validate + เขียน `actual_calorie_burn` |
+| Planner & Day-Status | ตาราง `weekly_plan_entry`/`day_status` + Postgres view คำนวณ read-only flag + Edge Function `cheat-rest` (nested check ตาม Detailed Design) |
+| Logging & Streak | ตาราง `daily_log`/`streak_snapshot` + Postgres function หรือ Edge Function สำหรับ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
+| Insights & Forecast | ตาราง `weight_forecast_snapshot` + Edge Function `forecast` คำนวณจากประวัติ `daily_log`/`weight_record` |
+| Integration Gateway | Edge Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
+
+ดูรายละเอียดเหตุผลการเลือก stack และ mapping ที่เหลือ (logical type → PostgreSQL type, REST convention →
+Supabase routing) ที่ [tech-stack.md](tech-stack.md)

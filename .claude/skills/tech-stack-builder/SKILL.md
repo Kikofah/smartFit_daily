@@ -156,6 +156,13 @@ backend vs BaaS, SQL vs NoSQL) — **ต้องใช้กติกา "ถ�
   "PostgreSQL" คงชื่อเดิม)
 - หลังสร้าง/อัปเดตไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงไฟล์นี้ (ถ้ายังไม่ได้
   กล่าวถึง) — ระบุชัดว่าไฟล์นี้เป็นข้อยกเว้นเดียวที่ stack-specific จริงในโฟลเดอร์นี้
+- **การรับรู้แบบสองทิศทาง (bidirectional awareness) กับ `architecture-builder`/`api-db-spec-builder`/
+  `detailed-design-builder`**: เอกสารทั้ง 3 ตัวนั้นมี "ภาคผนวก: Stack Mapping" ที่มิเรอร์เนื้อหาจาก § 6
+  ของไฟล์นี้โดยตรง — ถ้าการสร้าง/แก้ไฟล์รอบนี้ทำให้ § 6 (Mapping จาก Conceptual Docs → Concrete Stack)
+  เปลี่ยนไป (เช่น เปลี่ยนตัวเลือก DBMS, เปลี่ยน routing convention, เปลี่ยน client-side/server-side split)
+  ให้ระบุไว้ในรายงานผลชัดเจนว่าภาคผนวกของเอกสารไหนบ้าง (HLA/API Spec/Database Schema/Detailed Design
+  epic ใด) อาจ stale ไปแล้ว และแนะนำให้รัน skill เจ้าของเอกสารนั้นต่อเพื่อ sync ภาคผนวก — **ห้ามแก้ไฟล์
+  เหล่านั้นเอง** เพราะ skill นี้ไม่ใช่เจ้าของไฟล์เหล่านั้น
 - สรุปการเปลี่ยนแปลง (รวมสรุปคำตอบ Discovery Questionnaire ที่ได้) ลง `docs/05-log/{YYYYMMDD}-log.md`
 
 ## กติกาเมื่อไม่แน่ใจหรือข้อมูลไม่พอ — ต้องถามผู้ใช้ก่อนเสมอ

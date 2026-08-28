@@ -37,3 +37,10 @@ framework, backend, DBMS, cloud provider, การเชื่อมต่อ t
 Questionnaire) ก่อนแนะนำเสมอ — ต้องมีครบทั้ง `high-level-architecture.md`, `api-spec.md`,
 `database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (2026-08-28) เลือก React Native
 + Expo (mobile/web client) กับ Supabase/PostgreSQL (backend/database) ตาม Discovery Questionnaire
+
+**ภาคผนวก: Stack Mapping** (เพิ่ม 2026-08-28): `high-level-architecture.md`, `api-spec.md`,
+`database-schema.md`, และแต่ละไฟล์ใน `detailed-design/` ทุกไฟล์มี section ท้ายไฟล์ชื่อ "ภาคผนวก: Stack
+Mapping" เป็นข้อยกเว้นเดียวในเนื้อหาแต่ละไฟล์ที่อนุญาตให้มีชื่อเทคโนโลยีจริงได้ — มิเรอร์เนื้อหาจาก
+`tech-stack.md` § Mapping จาก Conceptual Docs → Concrete Stack เท่านั้น (ไม่ใช่แหล่งที่มาจริง) สร้าง/
+อัปเดตโดย skill เจ้าของไฟล์นั้นๆ เอง (ไม่ใช่ `tech-stack-builder`) และ**เฉพาะเมื่อ** `tech-stack.md` มีอยู่
+แล้ว — ถ้ายังไม่มีให้ข้ามไปทั้งหมด ไม่ถือเป็น gap

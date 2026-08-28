@@ -149,3 +149,26 @@ sequenceDiagram
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-04-smart-integrations.md) —
   INT-1/2/3, REQ-11/12/13
 - [User Journeys](../../01-prototypes/user-journeys.md) — ลำดับ step ของ INT-1/2/3
+
+## ภาคผนวก: Stack Mapping
+
+> **หัวข้อนี้เป็นข้อยกเว้นเดียวในไฟล์นี้ที่มีชื่อเทคโนโลยีจริง** แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่
+> [tech-stack.md](../tech-stack.md) เสมอ — หัวข้อข้างต้นยังคง conceptual ตามกติกาเดิมทุกประการ ถ้าทีม
+> เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
+> `detailed-design-builder` ครั้งถัดไป
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
+(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+
+| Conceptual Component | Concrete Implementation |
+|---|---|
+| Insights & Forecast | ตาราง `weight_forecast_snapshot` + Edge Function `forecast` คำนวณจากประวัติ `daily_log`/`weight_record` |
+| Integration Gateway | Edge Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
+
+**Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
+(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Forecast (INT-1)** เกิดขึ้นฝั่ง **React Native
+client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Supabase Edge Function
+`forecast`** เพื่อ validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server — ส่วน **INT-2/INT-3** (จับคู่/ซิงค์อุปกรณ์
+ภายนอก) ใช้ native module ฝั่ง client ตามที่ตารางข้างบนระบุ (`react-native-health` สำหรับ Apple HealthKit,
+`react-native-health-connect` สำหรับ Google Health Connect, `react-native-ble-plx` สำหรับ Bluetooth
+สมาร์ตสเกล) แล้วส่งข้อมูลที่ซิงค์ได้ผ่าน Edge Function `integrations`

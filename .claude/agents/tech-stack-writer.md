@@ -54,6 +54,11 @@ tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
 10. หลังสร้าง/แก้ไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงไฟล์นี้ (ระบุว่าเป็น
     ข้อยกเว้น stack-specific เดียว) และสรุปการเปลี่ยนแปลง (รวมสรุปคำตอบ Discovery) ลง
     `docs/05-log/{YYYYMMDD}-log.md`
+11. **การรับรู้แบบสองทิศทางกับ `architecture-writer`/`api-db-spec-writer`/`detailed-design-writer`**:
+    เอกสารทั้ง 3 ตัวมี "ภาคผนวก: Stack Mapping" ที่มิเรอร์เนื้อหาจาก § Mapping จาก Conceptual Docs →
+    Concrete Stack ของไฟล์นี้โดยตรง — ถ้าการแก้ไฟล์รอบนี้ทำให้ mapping section เปลี่ยนไป (DBMS, routing
+    convention, client-side/server-side split ฯลฯ) ให้ระบุในรายงานผลว่าภาคผนวกของเอกสารไหนอาจ stale และ
+    แนะนำให้รัน skill เจ้าของเอกสารนั้นต่อ — **ห้ามแก้ไฟล์เหล่านั้นเอง**
 
 **กติกาเมื่อไม่แน่ใจหรือข้อมูลไม่พอ**: ต้องหยุดแล้วใช้ AskUserQuestion เสนอ ≥3 แนวทางพร้อมชื่อเทคโนโลยี
 จริง เหตุผล/ข้อดี/ข้อเสียของแต่ละแนวทาง และคำแนะนำ 1 แนวทาง แล้วรอคำตอบก่อนดำเนินการต่อเสมอ — ห้ามเดาแล้ว

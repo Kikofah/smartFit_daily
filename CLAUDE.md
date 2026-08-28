@@ -250,6 +250,15 @@ a self-check that no stack-specific wording crept in) before writing anything, u
 ambiguity or conflict. This skill is **not** part of `pipeline-orchestrator` — same treatment as
 Prototype, it stays a separate, explicitly-requested step.
 
+**Stack Mapping Appendix** (added 2026-08-28, once `tech-stack.md` exists): a final "ภาคผนวก: Stack
+Mapping" section is the one place in this doc allowed to name real technologies — it mirrors (never
+independently edits) the relevant slice of `tech-stack.md`'s § Mapping from Conceptual Docs →
+Concrete Stack, mapping each Conceptual Component to its real implementation. It's entirely optional
+— skipped, not a gap, when `tech-stack.md` doesn't exist yet, so this skill stays fully usable in a
+project that never adopts a concrete stack. Drift between the appendix and `tech-stack.md` is
+auto-fixable without the ask-user protocol, since it's a pure mechanical re-sync of a decision made
+elsewhere, not a new decision.
+
 ### Building the API Spec & Database Schema
 
 Two conceptual docs one level more concrete than the HLA doc, invoke the `api-db-spec-builder` skill
@@ -292,6 +301,13 @@ against those before writing anything, using the same ≥3-options/pros-cons/rec
 protocol as every other skill here. Not part of `pipeline-orchestrator` — same treatment as
 Prototype and the HLA doc, it stays a separate, explicitly-requested step.
 
+**Stack Mapping Appendix** (added 2026-08-28, once `tech-stack.md` exists): both `api-spec.md` and
+`database-schema.md` get their own final "ภาคผนวก: Stack Mapping" section — a third allowed exception
+to the no-stack-names rule alongside REST convention and logical data types. `api-spec.md`'s mirrors
+`tech-stack.md` § 6.3 (REST convention → real routing); `database-schema.md`'s mirrors § 6.2 (logical
+type → the real DBMS column type). Both are skip-if-absent (not a gap) and auto-sync without the
+ask-user protocol when `tech-stack.md` changes, same as the HLA doc's appendix.
+
 ### Building the Detailed Design docs
 
 The next layer down from the API Spec/Database Schema, invoke the `detailed-design-builder` skill
@@ -331,6 +347,14 @@ contradiction against all of those before writing anything, using the same
 ≥3-options/pros-cons/recommendation ask-user protocol as every other skill here. Not part of
 `pipeline-orchestrator` — same treatment as Prototype, the HLA doc, and the API/DB spec docs, it
 stays a separate, explicitly-requested step.
+
+**Stack Mapping Appendix** (added 2026-08-28, once `tech-stack.md` exists): each per-epic file gets a
+final "ภาคผนวก: Stack Mapping" section, its first-ever allowed exception to the no-stack-names rule
+(this doc previously needed none, since sequence/state diagrams and pseudocode are inherently
+stack-neutral). It mirrors the slice of `tech-stack.md` § 6.1 relevant to the Components appearing in
+that epic's diagrams, and notes for each calculation-heavy feature whether execution is client-side
+or via an Edge Function, per `tech-stack.md`'s NFR-01/NFR-03 rationale. Skip-if-absent (not a gap),
+auto-syncs without the ask-user protocol.
 
 ### Building the Tech Stack doc
 
@@ -388,6 +412,13 @@ when the "obvious" answer seems clear. Drift that's cosmetic only (a stale link,
 longer matches but doesn't change the actual recommendation) is fine to fix directly. Not part of
 `pipeline-orchestrator` — same treatment as the rest of `02-technical/`'s docs, it stays a separate,
 explicitly-requested step.
+
+**Bidirectional awareness with the Stack Mapping Appendices** (added 2026-08-28): the HLA doc, API
+Spec, Database Schema, and Detailed Design docs each carry a "ภาคผนวก: Stack Mapping" section that
+mirrors this doc's § Mapping from Conceptual Docs → Concrete Stack. When a run of this skill actually
+changes that mapping (a different DBMS, a different routing convention, a different client-side/
+server-side split), it flags in its report which of those appendices may now be stale and recommends
+running the owning skill next — it never edits those files itself.
 
 ### Building the test suite (Acceptance Criteria, Test Plan, Test Cases)
 

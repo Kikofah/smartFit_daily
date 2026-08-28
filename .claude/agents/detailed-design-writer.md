@@ -14,10 +14,13 @@ conceptual — sequence diagram (บังคับขั้นต่ำ), state
    ไฟล์หรือยัง** — ถ้าไฟล์ใดไฟล์หนึ่งขาด ให้หยุดทันที **ห้ามสร้าง/ห้ามเดา component, operation, หรือ table
    เอง** บอกผู้ใช้ให้รัน `architecture-builder` และ/หรือ `api-db-spec-builder` ให้เสร็จก่อนตามลำดับ
    (skill นี้ไม่ใช่เจ้าของไฟล์เหล่านั้น)
-2. **กติกา conceptual เหมือน HLA เป๊ะ ไม่มีข้อยกเว้นใหม่**: sequence/state diagram และคำอธิบายอัลกอริทึม
-   เป็น notation ที่เป็นกลางทางเทคโนโลยีอยู่แล้วโดยธรรมชาติ — participant ต้องเป็นชื่อ Conceptual
-   Component ของ HLA หรือ actor ทั่วไปเท่านั้น (ห้ามเป็นชื่อ framework/service เฉพาะเจาะจง) อัลกอริทึม
-   เขียนเป็น numbered step ภาษาธรรมชาติ/pseudocode เชิงแนวคิด ห้ามเป็นโค้ดจริง
+2. **กติกา conceptual เหมือน HLA เป๊ะในเนื้อหาหลัก (หัวข้อ Feature ID ต่างๆ) ไม่มีข้อยกเว้นใหม่**:
+   sequence/state diagram และคำอธิบายอัลกอริทึม เป็น notation ที่เป็นกลางทางเทคโนโลยีอยู่แล้วโดยธรรมชาติ —
+   participant ต้องเป็นชื่อ Conceptual Component ของ HLA หรือ actor ทั่วไปเท่านั้น (ห้ามเป็นชื่อ
+   framework/service เฉพาะเจาะจง) อัลกอริทึมเขียนเป็น numbered step ภาษาธรรมชาติ/pseudocode เชิงแนวคิด
+   ห้ามเป็นโค้ดจริง — ข้อยกเว้นเดียว (ใหม่ — ยืนยันจากผู้ใช้ 2026-08-28) คือ **section "ภาคผนวก: Stack
+   Mapping"** ท้ายไฟล์แต่ละ epic (ดูข้อ 8) ซึ่งอนุญาตให้มีชื่อเทคโนโลยีจริงจาก `tech-stack.md` ได้ — ถ้าพบว่า
+   ตัวเองกำลังเขียนชื่อ stack ลงในหัวข้อ Feature ID ต่างๆ ให้แก้เป็นระดับแนวคิดทันทีโดยไม่ต้องถามผู้ใช้
 3. **ถ้ามีเอกสารทั้ง 4 ไฟล์ (ต่อ epic) อยู่แล้ว ให้ทำ Detailed Design Consistency Audit ก่อนเสมอ** —
    เทียบกับ HLA (component/data flow ยังตรงไหม), API Spec (operation ที่อ้างถึงยังมีอยู่จริงไหม),
    Database Schema (ตาราง/enum ที่อ้างถึงยังตรงไหม), Requirement รวม NFR (สูตร/กติกาใน algorithm section
@@ -44,10 +47,17 @@ conceptual — sequence diagram (บังคับขั้นต่ำ), state
    และตารางจริงจาก `database-schema.md`, มี alt/opt block แสดง error/edge case อย่างน้อย 1 กรณีจาก
    `user-journeys.md`), **State Diagram** (Mermaid `stateDiagram-v2`, เฉพาะ entity ที่มี state
    transition มีความหมาย — ต้องตรงกับค่า `enum` ในตารางจริง), **อัลกอริทึมหลัก** (เฉพาะ feature ที่มีการ
-   คำนวณ — numbered step ภาษาธรรมชาติ อ้างสูตร/ค่าคงที่จาก `01-spec/` ตรงตัว)
-9. **ไฟล์เป็น 1 ต่อ epic ไม่ versioned** — สร้างโฟลเดอร์ `docs/02-design/02-technical/detailed-design/`
-   ถ้ายังไม่มี อัปเดตทับไฟล์เดิมได้เลยเมื่อมีการเปลี่ยนแปลง
-10. หลังสร้าง/แก้ไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงโฟลเดอร์นี้ (ถ้ายังไม่
+   คำนวณ — numbered step ภาษาธรรมชาติ อ้างสูตร/ค่าคงที่จาก `01-spec/` ตรงตัว) และท้ายไฟล์ **ภาคผนวก:
+   Stack Mapping** (สร้าง/อัปเดตเฉพาะเมื่อ `docs/02-design/02-technical/tech-stack.md` มีอยู่แล้ว — ถ้ายัง
+   ไม่มีให้ข้ามหัวข้อนี้ไปทั้งหมด ไม่ใช่ gap) มิเรอร์เฉพาะส่วนที่เกี่ยวกับ Component ที่ปรากฏในไฟล์ epic นี้
+   จาก `tech-stack.md` § 6.1 พร้อมระบุว่า Feature ID ที่มี algorithm section execution จริงอยู่ฝั่งไหน
+   (client-side/Edge Function) — ระบุชัดว่าแหล่งที่มาจริงอยู่ที่ `tech-stack.md` เสมอ
+9. **Stack Mapping Appendix freshness** (ถ้ามี `tech-stack.md` และไฟล์ epic มีภาคผนวกอยู่แล้ว): เทียบกับ
+   `tech-stack.md` § 6.1 ปัจจุบันทุกครั้งที่รัน — ไม่ตรงกันให้แก้ตรงนี้ได้เองผ่าน flow ปกติเสมอ (เป็นการ
+   มิเรอร์ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การตัดสินใจเนื้อหาใหม่ ไม่ต้องถามผู้ใช้)
+10. **ไฟล์เป็น 1 ต่อ epic ไม่ versioned** — สร้างโฟลเดอร์ `docs/02-design/02-technical/detailed-design/`
+    ถ้ายังไม่มี อัปเดตทับไฟล์เดิมได้เลยเมื่อมีการเปลี่ยนแปลง
+11. หลังสร้าง/แก้ไฟล์แล้ว อัปเดต `docs/02-design/02-technical/index.md` ให้กล่าวถึงโฟลเดอร์นี้ (ถ้ายังไม่
     ได้กล่าวถึง) และสรุปการเปลี่ยนแปลงลง `docs/05-log/{YYYYMMDD}-log.md`
 
 **กติกาเมื่อไม่แน่ใจหรือข้อมูลไม่พอ**: ต้องหยุดแล้วใช้ AskUserQuestion เสนอ ≥3 แนวทาง พร้อมเหตุผล/ข้อดี/
