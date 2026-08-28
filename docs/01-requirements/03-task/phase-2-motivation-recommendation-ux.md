@@ -1,4 +1,4 @@
-# Task Breakdown — Phase 2: Motivation & Recommendation UX
+# Task Breakdown — Next Phase
 
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
@@ -10,8 +10,8 @@
 
 เพิ่มความสามารถเปลี่ยนวิดีโอ (คงเป้าหมายเดิม), วอร์มอัพ-คูลดาวน์อัตโนมัติสำหรับวิดีโอความเข้มข้นสูง, และ
 แสดง streak ต่อเนื่องเพื่อสร้างแรงจูงใจ — Feature ID: REC-3, REC-4, PLN-4 (ทั้งหมด MoSCoW = Should) ต้องมี
-[Phase 1](phase-1-mvp-core-loop.md) เสร็จก่อน รายละเอียดเต็มดู
-[Release Plan §3.2](../02-plan/release-plan.md#32-phase-2--motivation--recommendation-ux)
+[MVP Phase](phase-1-mvp-core-loop.md) เสร็จก่อน รายละเอียดเต็มดู
+[Release Plan §3.2](../02-plan/release-plan.md#32-next-phase)
 
 ## 2. Task List
 
@@ -33,4 +33,4 @@
 - [Requirement — Daily YouTube Recommendation](../01-spec/20260823-02-daily-youtube-recommendation.md),
   [Requirement — Planner & Logging](../01-spec/20260823-03-planner-logging.md)
 - [User Journeys](../../02-design/01-prototypes/user-journeys.md) — ลำดับ step ของแต่ละ feature
-- [phase-1-mvp-core-loop.md](phase-1-mvp-core-loop.md) — phase ก่อนหน้าที่ต้องเสร็จก่อน
+- [MVP Phase](phase-1-mvp-core-loop.md) — phase ก่อนหน้าที่ต้องเสร็จก่อน

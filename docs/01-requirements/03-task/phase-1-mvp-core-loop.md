@@ -1,4 +1,4 @@
-# Task Breakdown — Phase 1: MVP Core Loop
+# Task Breakdown — MVP Phase
 
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
@@ -10,7 +10,7 @@
 
 Core loop รายวันใช้งานได้ครบวงจร: onboarding คำนวณเป้าหมายแคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผน
 รายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing — Feature ID: ONB-1, ONB-2, ONB-3, REC-1, REC-2,
-PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอียดเต็มดู [Release Plan §3.1](../02-plan/release-plan.md#31-phase-1--mvp-core-loop)
+PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอียดเต็มดู [Release Plan §3.1](../02-plan/release-plan.md#31-mvp-phase)
 
 ## 2. Task List
 

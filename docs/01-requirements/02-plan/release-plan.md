@@ -28,13 +28,13 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
 
 | Phase | Feature ID | เป้าหมาย (Objective) | เหตุผลการจัดกลุ่ม |
 |---|---|---|---|
-| **Phase 1 — MVP Core Loop** | ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 | Core loop รายวันใช้งานได้ครบวงจร: onboarding คำนวณเป้าหมายแคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผนรายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing | ทุก feature เป็น MoSCoW = Must — ไม่มี feature ใดใน phase นี้ต้องพึ่งพา Should/Could |
-| **Phase 2 — Motivation & Recommendation UX** | REC-3, REC-4, PLN-4 | เพิ่ม streak tracking และ UX เสริมของการแนะนำวิดีโอ ต่อยอดจาก core loop ที่ทำงานแล้วใน Phase 1 | MoSCoW = Should ทั้งหมด — ทุกตัวพึ่งพา component เดียวกับ feature ใน Phase 1 (ดูหัวข้อ 4) |
-| **Phase 3 — Smart Integrations** | INT-1, INT-2, INT-3 | การเชื่อมต่ออุปกรณ์ภายนอก (ตาชั่งอัจฉริยะ, wearable) และพยากรณ์วันถึงเป้าหมายน้ำหนัก | MoSCoW = Could ทั้งหมด — เป็น optional ตาม NFR-07 (core loop ต้องไม่ผูกกับความพร้อมของ Epic นี้) |
+| **MVP Phase** | ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 | Core loop รายวันใช้งานได้ครบวงจร: onboarding คำนวณเป้าหมายแคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผนรายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing | ทุก feature เป็น MoSCoW = Must — ไม่มี feature ใดใน phase นี้ต้องพึ่งพา Should/Could |
+| **Next Phase** | REC-3, REC-4, PLN-4 | เพิ่ม streak tracking และ UX เสริมของการแนะนำวิดีโอ ต่อยอดจาก core loop ที่ทำงานแล้วใน MVP Phase | MoSCoW = Should ทั้งหมด — ทุกตัวพึ่งพา component เดียวกับ feature ใน MVP Phase (ดูหัวข้อ 4) |
+| **Future Phase** | INT-1, INT-2, INT-3 | การเชื่อมต่ออุปกรณ์ภายนอก (ตาชั่งอัจฉริยะ, wearable) และพยากรณ์วันถึงเป้าหมายน้ำหนัก | MoSCoW = Could ทั้งหมด — เป็น optional ตาม NFR-07 (core loop ต้องไม่ผูกกับความพร้อมของ Epic นี้) |
 
 ## 3. รายละเอียดต่อ Phase
 
-### 3.1 Phase 1 — MVP Core Loop
+### 3.1 MVP Phase
 
 - **Objective**: ผู้ใช้ทำ onboarding ได้ครบ (TDEE, อุปกรณ์, เป้าหมายแคลอรี่) → เห็นวิดีโอแนะนำตรงเป้าแคลอรี่
   รายวัน → ออกกำลังกายแล้วระบบคำนวณแคลอรี่เผาผลาญจริง → วางแผนรายสัปดาห์/ตั้ง Cheat-Rest Day ได้ → บันทึกผล
@@ -59,33 +59,33 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   test case ของทุก Feature ID ระดับ Must ถูก execute ครบและไม่มี defect ระดับ Critical/High ค้างอยู่โดยไม่
   มีแผนแก้ไข
 
-### 3.2 Phase 2 — Motivation & Recommendation UX
+### 3.2 Next Phase
 
 - **Objective**: เพิ่มความสามารถเปลี่ยนวิดีโอ (คงเป้าหมายเดิม), วอร์มอัพ-คูลดาวน์อัตโนมัติสำหรับวิดีโอความ
   เข้มข้นสูง, และแสดง streak ต่อเนื่องเพื่อสร้างแรงจูงใจ
 - **Feature ID**: REC-3 (REQ-06), REC-4 (REQ-07), PLN-4 (REQ-09, REQ-10) — ทั้งหมด MoSCoW = Should
 - **Dependency Notes**:
-  - REC-3, REC-4 → REC-1 (Phase 1) — ทั้งคู่อยู่ component เดียวกัน "Content Recommendation" ตาม HLA
+  - REC-3, REC-4 → REC-1 (MVP Phase) — ทั้งคู่อยู่ component เดียวกัน "Content Recommendation" ตาม HLA
     §3.2 ("รับผิดชอบ: REC-1, REC-3, REC-4") จึงต้องมี REC-1 ทำงานอยู่ก่อน
-  - PLN-4 → PLN-3 (Phase 1) — HLA §3.5 "Logging & Streak" รับผิดชอบทั้ง PLN-3 และ PLN-4 โดย PLN-4's
+  - PLN-4 → PLN-3 (MVP Phase) — HLA §3.5 "Logging & Streak" รับผิดชอบทั้ง PLN-3 และ PLN-4 โดย PLN-4's
     algorithm (ดู [detailed-design/planner-logging.md](../../02-design/02-technical/detailed-design/planner-logging.md))
     ไล่ประวัติ `daily_log` ที่ PLN-3 เป็นผู้สร้างย้อนหลัง
-- **Entry Criteria**: Phase 1 ผ่าน Exit Criteria แล้ว
+- **Entry Criteria**: MVP Phase ผ่าน Exit Criteria แล้ว
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 2 —
   test case ของ REC-3/REC-4/PLN-4 ถูก execute ครบ (defect ที่ไม่ใช่ Critical/High ไม่ block การ exit)
 
-### 3.3 Phase 3 — Smart Integrations
+### 3.3 Future Phase
 
 - **Objective**: ซิงค์น้ำหนักจากตาชั่งอัจฉริยะและข้อมูลจาก wearable เข้าโปรไฟล์ พร้อมพยากรณ์วันที่คาดว่าจะ
   ถึงเป้าหมายน้ำหนัก — ทั้งหมดเป็น optional ไม่ผูกกับ core loop รายวัน (NFR-07)
 - **Feature ID**: INT-1 (REQ-11), INT-2 (REQ-12), INT-3 (REQ-13) — ทั้งหมด MoSCoW = Could
 - **Dependency Notes**:
-  - INT-1 → PLN-3, PLN-4 (Phase 1/2 — HLA §3.6 "Insights & Forecast คุยกับ Logging & Streak: อ่าน
-    ประวัติ log") และ → ONB-3 (Phase 1 — "Personalization & Profile: อ่านน้ำหนักเป้าหมาย")
-  - INT-2, INT-3 → ONB-1 (Phase 1 — HLA §3.7 "Integration Gateway คุยกับ Personalization & Profile:
-    เขียนน้ำหนัก/องค์ประกอบร่างกายที่ซิงค์มา" เพื่อคำนวณ TDEE ใหม่) และ INT-3 → REC-2 (Phase 1 — "คุยกับ
-    Exertion & Calorie Calculation: เขียนค่าแทนที่จาก wearable")
-- **Entry Criteria**: Phase 1 และ 2 ผ่าน Exit Criteria แล้ว — พฤติกรรม fallback ของ NFR-07 (core loop
+  - INT-1 → PLN-3, PLN-4 (MVP Phase/Next Phase — HLA §3.6 "Insights & Forecast คุยกับ Logging &
+    Streak: อ่านประวัติ log") และ → ONB-3 (MVP Phase — "Personalization & Profile: อ่านน้ำหนักเป้าหมาย")
+  - INT-2, INT-3 → ONB-1 (MVP Phase — HLA §3.7 "Integration Gateway คุยกับ Personalization & Profile:
+    เขียนน้ำหนัก/องค์ประกอบร่างกายที่ซิงค์มา" เพื่อคำนวณ TDEE ใหม่) และ INT-3 → REC-2 (MVP Phase —
+    "คุยกับ Exertion & Calorie Calculation: เขียนค่าแทนที่จาก wearable")
+- **Entry Criteria**: MVP Phase และ Next Phase ผ่าน Exit Criteria แล้ว — พฤติกรรม fallback ของ NFR-07 (core loop
   ทำงานได้แม้ไม่มี Epic 4) ต้องยืนยันแล้วว่าใช้งานได้จริง
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 3 —
   ปัจจุบัน Epic 4 อยู่นอกขอบเขตการ execute ของรอบทดสอบปัจจุบัน (test case เตรียมไว้ล่วงหน้าแล้ว) — Exit
@@ -95,7 +95,7 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
 
 ```mermaid
 flowchart TD
-    subgraph P1["Phase 1 — MVP Core Loop (Must)"]
+    subgraph P1["MVP Phase (Must)"]
         ONB1["ONB-1"] --> ONB2["ONB-2"]
         ONB1 --> ONB3["ONB-3"]
         ONB2 --> REC1["REC-1"]
@@ -107,12 +107,12 @@ flowchart TD
         PLN1 --> PLN3
         PLN2 --> PLN3
     end
-    subgraph P2["Phase 2 — Motivation & Recommendation UX (Should)"]
+    subgraph P2["Next Phase (Should)"]
         REC3["REC-3"]
         REC4["REC-4"]
         PLN4["PLN-4"]
     end
-    subgraph P3["Phase 3 — Smart Integrations (Could)"]
+    subgraph P3["Future Phase (Could)"]
         INT1["INT-1"]
         INT2["INT-2"]
         INT3["INT-3"]
@@ -128,14 +128,14 @@ flowchart TD
     REC2 --> INT3
 ```
 
-ไม่มีลูกศรใดพุ่งจาก Phase 2/3 ย้อนกลับเข้า Phase 1 — ยืนยันว่าไม่มี Must feature ตัวใดพึ่งพา Should/Could
-จริง (ตามที่ตรวจสอบในหัวข้อ 1)
+ไม่มีลูกศรใดพุ่งจาก Next Phase/Future Phase ย้อนกลับเข้า MVP Phase — ยืนยันว่าไม่มี Must feature ตัวใด
+พึ่งพา Should/Could จริง (ตามที่ตรวจสอบในหัวข้อ 1)
 
 ## 5. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
 - **Timeline จริง**: เอกสารนี้จงใจไม่มีตัวเลขเวลา/estimate (ดูหัวข้อ 1) — เมื่อมีทีมพัฒนาจริงและข้อมูล
   velocity ควรกลับมาเพิ่มเป็นส่วนเสริม
-- **ลำดับภายใน Phase 1**: dependency ที่ระบุในหัวข้อ 4 แสดงทิศทางความสัมพันธ์ (ใครต้องมาก่อนใคร) แต่ไม่ได้
+- **ลำดับภายใน MVP Phase**: dependency ที่ระบุในหัวข้อ 4 แสดงทิศทางความสัมพันธ์ (ใครต้องมาก่อนใคร) แต่ไม่ได้
   ฟันธงว่าต้องพัฒนาทีละ feature เรียงตามนี้เป๊ะๆ — ทีมพัฒนาจริงอาจขนาน (parallelize) งานบางส่วนได้ตาม
   ทรัพยากรที่มี
 - **จุดที่ยังไม่ได้ระบุเดิมของ conceptual docs** (REC-1 tolerance, REC-4 warmup/cooldown นับ target หรือไม่,

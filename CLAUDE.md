@@ -46,9 +46,9 @@ scratch.
   Questionnaire on 2026-08-28), distinct from the conceptual docs that precede it.
 - `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{epic-slug}.md` — project-wide test
   strategy and step-by-step test cases.
-- `docs/01-requirements/02-plan/release-plan.md` — 3 phases (MVP Core Loop / Motivation &
-  Recommendation UX / Smart Integrations) derived from MoSCoW + verified dependency (no Must feature
-  depends on a Should/Could one), with a Mermaid dependency map — no time estimates by design.
+- `docs/01-requirements/02-plan/release-plan.md` — 3 phases (MVP Phase / Next Phase / Future Phase)
+  derived from MoSCoW + verified dependency (no Must feature depends on a Should/Could one), with a
+  Mermaid dependency map — no time estimates by design.
 - `docs/01-requirements/03-task/{phase-slug}.md` — one task per Feature ID per phase, status-only
   (no Owner field), covering all 13 Feature IDs across the 3 phases.
 

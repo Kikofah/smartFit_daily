@@ -1,4 +1,4 @@
-# Task Breakdown — Phase 3: Smart Integrations
+# Task Breakdown — Future Phase
 
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
@@ -10,8 +10,8 @@
 
 การเชื่อมต่ออุปกรณ์ภายนอก (ตาชั่งอัจฉริยะ, wearable) และพยากรณ์วันที่คาดว่าจะถึงเป้าหมายน้ำหนัก — ทั้งหมด
 เป็น optional ไม่ผูกกับ core loop รายวัน (NFR-07) — Feature ID: INT-1, INT-2, INT-3 (ทั้งหมด MoSCoW =
-Could) ต้องมี [Phase 1](phase-1-mvp-core-loop.md) และ [Phase 2](phase-2-motivation-recommendation-ux.md)
-เสร็จก่อน รายละเอียดเต็มดู [Release Plan §3.3](../02-plan/release-plan.md#33-phase-3--smart-integrations)
+Could) ต้องมี [MVP Phase](phase-1-mvp-core-loop.md) และ [Next Phase](phase-2-motivation-recommendation-ux.md)
+เสร็จก่อน รายละเอียดเต็มดู [Release Plan §3.3](../02-plan/release-plan.md#33-future-phase)
 
 ## 2. Task List
 
@@ -35,5 +35,5 @@ Could) ต้องมี [Phase 1](phase-1-mvp-core-loop.md) และ [Phase 2
 - [Product Backlog](../backlog.md) — แหล่งที่มาของ Feature ID/REQ ทุกตัว
 - [Requirement — Smart Integrations](../01-spec/20260823-04-smart-integrations.md)
 - [User Journeys](../../02-design/01-prototypes/user-journeys.md) — ลำดับ step ของแต่ละ feature
-- [phase-1-mvp-core-loop.md](phase-1-mvp-core-loop.md), [phase-2-motivation-recommendation-ux.md](phase-2-motivation-recommendation-ux.md)
+- [MVP Phase](phase-1-mvp-core-loop.md), [Next Phase](phase-2-motivation-recommendation-ux.md)
   — phase ก่อนหน้าที่ต้องเสร็จก่อน
