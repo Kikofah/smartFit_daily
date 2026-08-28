@@ -67,7 +67,7 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Nine skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Ten skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
@@ -81,6 +81,7 @@ detailed in its own subsection below; use this table to find the right one first
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
 | `plan-task-builder` (`plan-task-writer`) | `docs/01-requirements/02-plan/release-plan.md`, `docs/01-requirements/03-task/{phase-slug}.md` | Asked to create, update, or audit the release/phase plan or the per-phase task breakdown. Divides the backlog into phases with a hybrid MoSCoW + dependency-aware strategy (dependency signals come only from `01-spec/` business rules or the HLA's component relationships — never invented), then lists one task per Feature ID by default (finer sub-tasks only when scope narrows to one feature and Detailed Design exists for it). No time estimates and no Owner column — status-only (Not Started/In Progress/Done), since there's no real team or velocity data yet. Requires Requirement/Backlog/User Journey to exist first; everything else (HLA, Detailed Design, Acceptance Criteria, Test Plan) is optional context. Audits (but never writes) Requirement/Backlog/User Journey for drift, and hands any needed fix to `feature-list-journey` (see "Building the Plan/Phase/Release & Task Breakdown docs"). |
 | `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, the Detailed Design docs, the Tech Stack doc, or the Plan/Task Breakdown docs — all six stay separate, explicitly-requested steps. |
+| `technical-design-orchestrator` (`technical-design-runner`) | Chains `architecture-builder` → `api-db-spec-builder` → `detailed-design-builder`, then an audit-only NFR Review | Asked to run the Architecture → API/DB Spec → Detailed Design chain continuously instead of invoking each separately, with a Non-Functional Requirements Review tacked on at the end (see "Running the technical design pipeline in one go"). The NFR Review stage is this orchestrator's own methodology (no skill owns "NFR review" outright) — it reports gaps against the just-updated HLA/Detailed Design/DESIGN.md/tech-stack.md but never edits the NFR doc; running `test-suite-builder` to apply anything found is a separate, explicit choice. Does not touch Prototype or Tech Stack, and is not a substitute for `pipeline-orchestrator` (different chain entirely). |
 
 Together `feature-list-journey`, `prototype-builder`, `architecture-builder`, `api-db-spec-builder`,
 `detailed-design-builder`, `tech-stack-builder`, `test-suite-builder`, and `plan-task-builder` cover
@@ -96,7 +97,10 @@ audits across the seams it touches and tells you (or the right agent) which one 
 only skill choosing real technology, it always asks before changing an actual stack recommendation,
 even when the drift is otherwise unremarkable. `pipeline-orchestrator` doesn't add new rules of its
 own — it just runs `feature-list-journey` then `test-suite-builder` back to back for a given
-requirement so the user doesn't have to invoke each stage by hand.
+requirement so the user doesn't have to invoke each stage by hand. `technical-design-orchestrator`
+similarly sequences `architecture-builder` → `api-db-spec-builder` → `detailed-design-builder` without
+adding rules of its own to those three, but its 4th stage (NFR Review) is genuinely new methodology —
+see "Running the technical design pipeline in one go" below.
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
@@ -181,6 +185,38 @@ says so in its report and recommends running `prototype-builder` separately, rat
 work itself. For more than one distinct requirement in the same request, it runs one
 `pipeline-runner` per requirement, sequentially (never in parallel, to avoid `RUNNING_NO`/Feature ID
 collisions), and logs the whole run as one entry in `docs/05-log/{YYYYMMDD}-log.md`.
+
+### Running the technical design pipeline in one go
+
+Architecture → API Spec/Database Schema → Detailed Design are normally invoked one at a time, each a
+separate, explicitly-requested step (see their own sections below). When the user wants that chain to
+run continuously — plus a check of whether the NFR doc needs updating afterward — without invoking
+`architecture-builder`, `api-db-spec-builder`, and `detailed-design-builder` by hand, invoke the
+`technical-design-orchestrator` skill (`.claude/skills/technical-design-orchestrator/SKILL.md`) or
+`technical-design-runner` agent (`.claude/agents/technical-design-runner.md`) instead.
+
+Like `pipeline-orchestrator`, the first 3 stages have no rules of their own — it re-reads each
+builder's skill/agent files every run and applies their full methodology (audit, propose outline,
+wait for confirmation, write) in sequence: HLA → API Spec/Database Schema → Detailed Design. It
+doesn't skip or soften any stage's ask-user protocol. Defaults to the entire backlog, accepts a
+narrower scope (Feature ID/Epic) matching the three builders' own convention — not a raw requirement
+input like `pipeline-orchestrator`, since these three work from Requirement/Backlog/User Journey that
+already exist rather than authoring a new requirement.
+
+**Stage 4 (Non-Functional Requirements Review) is new** — no other skill in this pipeline owns
+"reviewing whether the NFR doc needs updating." It's audit-only by design (confirmed with the user
+2026-08-28): it reads the just-updated HLA §6/§7, Detailed Design's Stack Mapping Appendix, DESIGN.md
+§4, and tech-stack.md's Discovery Questionnaire answers for NFR-relevant content not yet formalized —
+the same kind of check that surfaced NFR-09/10/11 earlier — and reports findings in three buckets
+(stale content, new candidates with clear evidence, genuinely unclear points needing the ask-user
+protocol). It **never edits `01-spec/`** itself; running `test-suite-builder` to actually apply any
+finding is a separate choice the user makes after reading the report. If no NFR doc exists yet, this
+stage is skipped with a note to run `test-suite-builder`'s NFR bootstrap first.
+
+Not a substitute for `pipeline-orchestrator` (different chain: that one is Requirement → Backlog/
+Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case). Excludes Prototype and Tech
+Stack — both stay separate, explicitly-requested steps, same treatment as everywhere else in this
+pipeline.
 
 ### Building HTML prototypes
 
