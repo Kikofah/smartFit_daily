@@ -20,5 +20,13 @@ external integration boundaries — **ยังไม่ผูกมัดกั
 model พร้อม ER Diagram) — ยังคง**ไม่ผูกมัดกับ technical stack จริง** (ไม่มีชื่อ framework/DBMS/cloud
 provider) ยกเว้น REST convention และ logical data type ที่ยืนยันแล้วว่าอนุญาต สร้าง/อัปเดต/audit โดย
 skill `api-db-spec-builder` (`.claude/skills/api-db-spec-builder/SKILL.md`) เท่านั้น — ต้องมี
-`high-level-architecture.md` อยู่ก่อนเสมอ เป็นพื้นฐานก่อนที่เอกสาร stack-specific จริง (tech choices เมื่อ
-ทีมเลือก stack) จะถูกเพิ่มเข้าโฟลเดอร์นี้ในอนาคต
+`high-level-architecture.md` อยู่ก่อนเสมอ
+
+`detailed-design/{epic-slug}.md` (หนึ่งไฟล์ต่อ epic) ในโฟลเดอร์นี้คือชั้นถัดจาก `api-spec.md`/
+`database-schema.md` หนึ่งระดับ — **Detailed Design** เชิง conceptual: Sequence Diagram (บังคับทุก
+feature), State Diagram (สำหรับ entity ที่มี state transition มีความหมาย), และอัลกอริทึมหลัก (สำหรับ
+feature ที่มีการคำนวณ) — ยังคง**ไม่ผูกมัดกับ technical stack จริง** (ไม่ต้องมีข้อยกเว้นเพิ่มเพราะ sequence/
+state diagram และ pseudocode เป็นกลางทางเทคโนโลยีอยู่แล้ว) สร้าง/อัปเดต/audit โดย skill
+`detailed-design-builder` (`.claude/skills/detailed-design-builder/SKILL.md`) เท่านั้น — ต้องมีครบทั้ง
+`high-level-architecture.md`, `api-spec.md`, และ `database-schema.md` อยู่ก่อนเสมอ เป็นพื้นฐานก่อนที่
+เอกสาร stack-specific จริง (tech choices เมื่อทีมเลือก stack) จะถูกเพิ่มเข้าโฟลเดอร์นี้ในอนาคต
