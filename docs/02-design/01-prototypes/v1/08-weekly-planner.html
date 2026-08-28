@@ -1,16 +1,30 @@
 <!-- Feature: PLN-1, PLN-2 | REQ: REQ-08, REQ-09 -->
 <!--
-  Content decisions made in this prototype that were not fully specified upstream:
+  Content decisions made in this prototype:
   1. Example week chosen as Mon 24 Aug 2026 - Sun 30 Aug 2026, with "today" = Thu 27 Aug 2026
-     (matches currentDate context), to give a plausible concrete week for the mockup.
-  2. Open question from 01-spec/20260823-03-planner-logging.md ("จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม":
-     "ผู้ใช้แก้ไขแผนของวันที่ผ่านไปแล้ว (มี log แล้ว) ได้หรือไม่") is rendered here as: past days that
-     already have a log (Mon/Tue/Wed in this example) open a READ-ONLY day-detail sheet with an inline
-     caption explaining the open question, while today and future days (no log yet) are fully editable.
-     This is a mockup decision only, not a resolved product decision -- still open, see spec doc.
+     (matches currentDate context at the time this prototype was first built), to give a plausible
+     concrete week for the mockup. This exact week/date is also the canonical dataset referenced by
+     test cases TC-PLN-1-001..003, TC-PLN-2-001..005, and TC-PLN-4-001 in
+     docs/03-testing/01-test-plan/test-cases/planner-logging.md, so it stays fixed here rather than
+     tracking the real current date.
+  2. RESOLVED (2026-08-27): past days that already have a log (Mon/Tue/Wed in this example) open a
+     READ-ONLY day-detail sheet -- regardless of whether that day's log ended up "ครบเป้าหมาย" or
+     "ไม่ครบเป้าหมาย". This was an open question when this prototype was first built; it is now a
+     confirmed decision recorded in
+     01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว (see also
+     user-journeys.md#pln-1--ปฏิทินวางแผนรายสัปดาห์-req-08). Today and future days (no log yet)
+     remain fully editable.
   3. Activity-type options shown in the day-detail sheet ("คาร์ดิโอ" / "เวทเทรนนิ่ง" / "HIIT" / ปล่อยว่าง =
      แนะนำอัตโนมัติ) are inferred from REC-1's filter categories and the PLN-1 journey's "กำหนดเอง หรือ
      ปล่อยว่าง (default = แนะนำอัตโนมัติ)" branching, since 01-spec doesn't enumerate an explicit UI list.
+
+  Fixed by prototype-builder's consistency audit (2026-08-28, see v1/README.md "เปลี่ยนแปลงจาก audit"):
+  Mon 24 Aug's status was corrected from "completed" to "ไม่ครบเป้าหมาย" (no icon, data-status="missed")
+  to match the canonical log data already used in 09-log-history.html (260 kcal, ไม่ครบเป้าหมาย) and
+  test cases TC-PLN-2-004 / TC-PLN-4-001, which this file previously contradicted. "missed" is treated
+  the same as "cheatrest" for read-only purposes (isReadOnly = isPast && status !== 'none') since a
+  past day with a logged-but-incomplete result still has a log and must stay read-only per the
+  resolved decision above -- only "none" (genuinely no log yet) stays editable.
 -->
 <!DOCTYPE html>
 <html lang="th">
@@ -150,11 +164,14 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     </div>
 
     <div class="week-grid" id="weekGrid">
-      <!-- Mon 24: completed -->
-      <button type="button" class="day-cell" data-day="24" data-label="จันทร์ 24 ส.ค." data-status="completed" data-past="true" data-activity="คาร์ดิโอ 30 นาที">
+      <!-- Mon 24: ไม่ครบเป้าหมาย (has a log, 260 kcal, did not reach target) -- matches 09-log-history.html
+           and TC-PLN-2-004/TC-PLN-4-001. No icon per DESIGN.md 3.5 (incomplete days render icon-less,
+           not red/negative). data-status="missed" (not "none") so the day-detail sheet still treats
+           this past day as read-only, since it has an existing log. -->
+      <button type="button" class="day-cell" data-day="24" data-label="จันทร์ 24 ส.ค." data-status="missed" data-past="true" data-activity="คาร์ดิโอ">
         <span class="day-label">จ</span>
         <span class="day-num">24</span>
-        <svg class="day-icon" viewBox="0 0 24 24" fill="none" stroke="var(--color-sage)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"></polyline></svg>
+        <span class="day-icon"></span>
       </button>
       <!-- Tue 25: completed -->
       <button type="button" class="day-cell" data-day="25" data-label="อังคาร 25 ส.ค." data-status="completed" data-past="true" data-activity="เวทเทรนนิ่ง 25 นาที">
@@ -240,7 +257,7 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   </div>
 
   <div id="readonlyCaption" class="readonly-caption" style="display:none;">
-    <p class="text-body-sm" style="margin:0; color: var(--color-ink);">วันที่ผ่านมาแล้ว ยังไม่ยืนยันว่าแก้ไขได้หรือไม่</p>
+    <p class="text-body-sm" style="margin:0; color: var(--color-ink);">วันที่ผ่านมาแล้วและมี log อยู่แล้ว เปิดดูได้อย่างเดียว (read-only)</p>
   </div>
 
   <p class="text-caption">ประเภทกิจกรรม</p>

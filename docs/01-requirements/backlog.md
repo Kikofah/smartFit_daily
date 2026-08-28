@@ -7,7 +7,10 @@
 [Onboarding](01-spec/20260823-01-onboarding-personalization.md),
 [Daily YouTube Recommendation](01-spec/20260823-02-daily-youtube-recommendation.md),
 [Planner & Logging](01-spec/20260823-03-planner-logging.md),
-[Smart Integrations](01-spec/20260823-04-smart-integrations.md))
+[Smart Integrations](01-spec/20260823-04-smart-integrations.md); ดูคุณภาพเชิงระบบที่ตัดขวางทุก Epic
+ใน [Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) — ไม่มี Feature ID
+ของตัวเอง จึงไม่อยู่ในตารางสรุปด้านล่าง ดู [NFR Traceability](#non-functional-requirements-nfr-traceability)
+ท้ายเอกสารแทน)
 ตามวิธีการใน skill `feature-list-journey`
 (`.claude/skills/feature-list-journey/SKILL.md`) — รวมข้อกำหนดจากส่วน "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว"
 ของแต่ละเอกสาร spec ด้านบน ที่ผูกพันเป็นข้อกำหนดจริงแล้ว
@@ -58,9 +61,10 @@
 - **Priority**: Must — หากไม่กรองด้วยอุปกรณ์ ระบบอาจแนะนำวิดีโอที่ผู้ใช้ทำไม่ได้จริง (เช่น ต้องใช้ยิม
   ทั้งที่ผู้ใช้ไม่มี) ทำให้ core loop ของแอปใช้งานไม่ได้ตั้งแต่ต้น
 - **REQ ที่เกี่ยวข้อง**: REQ-03
-- **คำอธิบาย**: ผู้ใช้เลือกอุปกรณ์ที่มี (ไม่มีอุปกรณ์ / ดัมเบล / ยิมครบชุด) ระบบบันทึกเป็นโปรไฟล์อุปกรณ์
-  และใช้เป็น filter ทุกครั้งที่เอนจิ้นแนะนำวิดีโอทำงาน (REC-1) เชื่อมโยงโดยตรงกับความเป็นไปได้จริงของ
-  วิดีโอที่แนะนำในทุก session
+- **คำอธิบาย**: ผู้ใช้เลือกอุปกรณ์ที่มีได้ **มากกว่า 1 ประเภทพร้อมกัน** (ไม่มีอุปกรณ์ / ดัมเบล / ยิมครบชุด —
+  ยืนยันแล้วใน[ข้อสมมติฐาน/การตัดสินใจของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
+  ระบบบันทึกเป็นโปรไฟล์อุปกรณ์และใช้เป็น filter ทุกครั้งที่เอนจิ้นแนะนำวิดีโอทำงาน (REC-1) เชื่อมโยงโดยตรง
+  กับความเป็นไปได้จริงของวิดีโอที่แนะนำในทุก session
 
 #### ONB-3 — ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor)
 
@@ -118,8 +122,10 @@
 - **Priority**: Must — การวางแผนล่วงหน้าเป็นสัปดาห์คือคุณค่าหลักของ Epic นี้ตามที่ระบุใน backlog
   โดยตรง ผู้ใช้ต้องเห็นและกำหนดแผนล่วงหน้าได้ ไม่ใช่แค่เห็นวันนี้วันเดียว
 - **REQ ที่เกี่ยวข้อง**: REQ-08
-- **คำอธิบาย**: แสดงปฏิทินรายสัปดาห์ (7 วันข้างหน้า) ให้ผู้ใช้กำหนดประเภทกิจกรรมต่อวัน หรือปล่อยให้
-  ระบบแนะนำอัตโนมัติจาก REC-1 และเป็นจุดที่ผู้ใช้ตั้ง Cheat Day/Rest Day ล่วงหน้าได้ (เชื่อมกับ PLN-2)
+- **คำอธิบาย**: แสดงปฏิทินรายสัปดาห์แบบ **fixed calendar week (จันทร์–อาทิตย์)** ให้ผู้ใช้กำหนดประเภท
+  กิจกรรมต่อวัน หรือปล่อยให้ระบบแนะนำอัตโนมัติจาก REC-1 และเป็นจุดที่ผู้ใช้ตั้ง Cheat Day/Rest Day
+  ล่วงหน้าได้ (เชื่อมกับ PLN-2) — วันที่ผ่านมาแล้วในสัปดาห์เดียวกันที่มี log อยู่ก่อนแสดงเป็น read-only
+  แก้ไขไม่ได้ ตาม[decision ที่ยืนยันแล้วใน Planner spec](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
 
 #### PLN-2 — โหมด Cheat Day / Rest Day (preserve log, completed wins)
 
@@ -130,7 +136,10 @@
   ตัด streak ตาม decision ที่ resolve แล้ว: **ถ้าวันนั้นยังไม่มี log ระบบจะ mark วันนั้นเป็น "ครบเป้าหมาย"
   (completed) ทันที** แต่ **ถ้าวันนั้นมี log อยู่แล้วก่อนตั้ง Cheat/Rest Day ระบบจะเก็บ log เดิมไว้
   ไม่ลบทิ้ง** และสถานะ "ครบเป้าหมาย" ยังคงมีผล (completed ชนะเสมอ) — Cheat/Rest Day มีผลเปลี่ยนสถานะ
-  เฉพาะวันที่ยังไม่มี log เท่านั้น
+  เฉพาะวันที่ยังไม่มี log หรือ **วันนี้ที่มี log แล้วเท่านั้น** การทับ log ที่มีอยู่แล้วทำได้เฉพาะ "วันนี้"
+  เท่านั้น ไม่สามารถทำผ่านการแตะวันในอดีตของสัปดาห์จากปฏิทิน (PLN-1) ได้ เพราะวันในอดีตที่มี log เป็น
+  read-only ตาม[decision ของ PLN-1](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  ไม่มีข้อยกเว้นสำหรับ PLN-2
 
 #### PLN-3 — บันทึกผลรายวัน (all-or-nothing)
 
@@ -205,6 +214,30 @@ REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ท�
 (ดูรายละเอียดสมมติฐาน/ช่องว่างที่ยังไม่ชัดเจน ซึ่งไม่ใช่ส่วนหนึ่งของ 4 decision ที่ resolve แล้ว
 ได้ใน [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions)
 หรือใน section "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของแต่ละเอกสารใน [01-spec/](01-spec/index.md))
+
+---
+
+## Non-Functional Requirements (NFR) Traceability
+
+[Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) (NFR-01–NFR-08,
+สร้างขึ้น 2026-08-27 โดย `test-suite-builder` เพื่อเป็นฐานของ `test-plan.md`) เป็นคุณภาพเชิงระบบที่
+**ตัดขวางทุก Epic** ไม่ใช่ business rule ของ feature ใดโดยเฉพาะ จึงไม่มี Feature ID ของตัวเองและไม่อยู่ใน
+ตารางสรุปด้านบน — แต่ยังต้อง trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
+
+| NFR | หมวด | Feature ID ที่เกี่ยวข้อง |
+|---|---|---|
+| NFR-01 | Performance | REC-1 (Daily Dashboard) |
+| NFR-02 | Performance | PLN-2, PLN-3 (action ที่บันทึกข้อมูล) |
+| NFR-03 | Performance | ONB-1, REC-2 (คำนวณฝั่ง client) |
+| NFR-04 | Security/Privacy | ONB-1, ONB-2, ONB-3, INT-2, INT-3 (ข้อมูลสุขภาพส่วนบุคคล) |
+| NFR-05 | Security/Privacy | INT-2, INT-3 (consent ก่อนเชื่อมต่อ) |
+| NFR-06 | Security/Privacy | ทุก Feature ที่เก็บข้อมูลผู้ใช้ (data deletion) |
+| NFR-07 | Reliability | ONB-1→REC-1→PLN-3 (core loop), INT-1, INT-2, INT-3 (fallback เมื่อ integration ล่ม) |
+| NFR-08 | Reliability | PLN-3, PLN-4 (log/streak ไม่หายเมื่อ network ไม่เสถียร) |
+
+รายละเอียดแบบเต็มของแต่ละ NFR (threshold, เหตุผล, จุดที่ยังไม่ได้ระบุ) อยู่ใน
+[01-spec/20260827-05-non-functional-requirements.md](01-spec/20260827-05-non-functional-requirements.md)
+ไม่ทำซ้ำที่นี่
 
 ---
 

@@ -83,7 +83,9 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   .form-group { margin-bottom: var(--space-4); }
   .form-label { display:block; margin-bottom: var(--space-2); }
   .stepper-input { display:flex; align-items:center; gap: var(--space-2); background: var(--color-paper-sunken); border-radius: var(--radius-md); padding: var(--space-2); }
-  .stepper-btn { width:36px; height:36px; min-height:36px; border-radius: var(--radius-sm); background: var(--color-paper-alt); border: var(--border-width) solid var(--color-border-strong); font-size:18px; font-family:inherit; color: var(--color-ink); cursor:pointer; flex-shrink:0; }
+  /* 44x44 minimum touch target per DESIGN.md 4.3 Accessibility (fixed by prototype-builder audit
+     2026-08-28 -- was 36x36, inconsistent with 01-onboarding-personal-info.html's stepper). */
+  .stepper-btn { width:44px; height:44px; min-height:44px; border-radius: var(--radius-sm); background: var(--color-paper-alt); border: var(--border-width) solid var(--color-border-strong); font-size:18px; font-family:inherit; color: var(--color-ink); cursor:pointer; flex-shrink:0; }
   .stepper-value { flex:1; text-align:center; font-size:18px; font-weight:500; background:transparent; border:none; font-family:inherit; color: var(--color-ink); width:100%; box-sizing:border-box; }
   .stepper-value:focus { outline:none; }
 

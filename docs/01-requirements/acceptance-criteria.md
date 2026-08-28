@@ -209,10 +209,15 @@ Spec: [01-spec/20260823-03-planner-logging.md](01-spec/20260823-03-planner-loggi
 - **Then**: วันนั้นใช้ค่า default คือให้ระบบแนะนำอัตโนมัติตาม REC-1
 - Prototype: [08-weekly-planner.html](../02-design/01-prototypes/v1/08-weekly-planner.html)
 
-> หมายเหตุ: journey ของ PLN-1 ยังมี Alt/Edge Case ที่ระบุว่า "ผู้ใช้แก้ไขแผนของวันที่ผ่านไปแล้ว (มี log แล้ว)
-> ได้หรือไม่ ยังไม่ระบุชัดเจน" — เป็นพฤติกรรมที่ยังไม่ถูกตัดสินใจ (เห็นได้จาก v1 README ที่ mockup เลือก
-> "read-only" เป็นทางเลือกของ prototype เองเท่านั้น ยังไม่ใช่มติ product) จึงไม่แปลงเป็น scenario ในไฟล์นี้
-> (ดู [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions) ข้อ 3)
+#### AC-PLN-1-03 — วันที่ผ่านมาแล้วซึ่งมี log อยู่ก่อน เปิดดูได้เฉพาะแบบ read-only (REQ-08)
+- **Given**: ผู้ใช้เปิดปฏิทินรายสัปดาห์แบบ fixed calendar week (จันทร์–อาทิตย์) และมีวันที่ผ่านมาแล้วในสัปดาห์
+  เดียวกันซึ่งมี log บันทึกไว้ก่อนแล้ว (ไม่ว่าสถานะ log เดิมจะครบเป้าหมายหรือไม่)
+- **When**: ผู้ใช้แตะ/เปิดดูวันนั้นในปฏิทิน
+- **Then**: ระบบเปิดชีทรายละเอียดของวันนั้นแบบ read-only เท่านั้น ไม่อนุญาตให้แก้ไขประเภทกิจกรรมของวันนั้นผ่าน
+  หน้านี้ ส่วนวันนี้และวันในอนาคตของสัปดาห์เดียวกัน (ที่ยังไม่มี log) ยังคงกำหนด/แก้ไขแผนได้ตามปกติ — ตาม
+  [decision ที่ resolve แล้ว](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  เมื่อ 2026-08-27 (เดิมเป็น Open Question ที่ยังไม่ระบุ ปิดแล้ว)
+- Prototype: [08-weekly-planner.html](../02-design/01-prototypes/v1/08-weekly-planner.html)
 
 ### PLN-2 — โหมด Cheat Day / Rest Day (preserve log, completed wins)
 
@@ -223,11 +228,13 @@ Spec: [01-spec/20260823-03-planner-logging.md](01-spec/20260823-03-planner-loggi
   เป็น "ครบเป้าหมาย" (completed) ทันที
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
 
-#### AC-PLN-2-02 — ตั้ง Cheat/Rest Day ในวันที่มี log อยู่แล้ว เก็บ log เดิมไว้ (REQ-09)
-- **Given**: วันที่ผู้ใช้เลือกมี log บันทึกอยู่แล้วจากการออกกำลังกายจริง (ไม่ว่าสถานะเดิมจะครบเป้าหมายหรือไม่)
-- **When**: ผู้ใช้ตั้งวันนั้นเป็น Cheat Day หรือ Rest Day ภายหลัง
+#### AC-PLN-2-02 — ตั้ง Cheat/Rest Day ทับ log ของวันนี้ที่มีอยู่แล้ว เก็บ log เดิมไว้ (REQ-09)
+- **Given**: วันนี้มี log บันทึกอยู่แล้วจากการออกกำลังกายจริง (ไม่ว่าสถานะเดิมจะครบเป้าหมายหรือไม่)
+- **When**: ผู้ใช้ตั้งวันนี้เป็น Cheat Day หรือ Rest Day ภายหลัง (เช่น หลังออกกำลังกายเสร็จในวันเดียวกัน)
 - **Then**: ระบบเก็บ log เดิมไว้ทั้งหมดไม่ลบทิ้ง และ mark สถานะวันนั้นเป็น "ครบเป้าหมาย" (completed) เสมอ
-  (completed ชนะเสมอ)
+  (completed ชนะเสมอ) — การทับ log ด้วยวิธีนี้ทำได้เฉพาะ **วันนี้เท่านั้น** ตาม
+  [decision ที่ resolve แล้วเมื่อ 2026-08-28](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  (ดู AC-PLN-2-04 สำหรับกรณีวันในอดีตของสัปดาห์)
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
 
 #### AC-PLN-2-03 — ยกเลิกการตั้ง Cheat/Rest Day ก่อนสิ้นวัน (REQ-09)
@@ -235,6 +242,17 @@ Spec: [01-spec/20260823-03-planner-logging.md](01-spec/20260823-03-planner-loggi
 - **When**: ผู้ใช้ยกเลิกการตั้ง Cheat/Rest Day ก่อนสิ้นวัน
 - **Then**: วันนั้นกลับไปนับเป้าหมายแคลอรี่ตามปกติ และสถานะจะถูกประเมินใหม่ตามกติกาของ PLN-3
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
+
+#### AC-PLN-2-04 — พยายามตั้ง/เปลี่ยน Cheat/Rest Day ทับ log ของวันในอดีตของสัปดาห์ ถูกปิดกั้น (REQ-09)
+- **Given**: ผู้ใช้เปิดปฏิทินรายสัปดาห์และเลือกวันในอดีตของสัปดาห์เดียวกัน (fixed calendar week ของ PLN-1)
+  ซึ่งมี log อยู่ก่อนแล้ว
+- **When**: ผู้ใช้พยายามตั้งหรือเปลี่ยน Cheat Day/Rest Day ทับ log ของวันนั้นผ่านปฏิทิน
+- **Then**: ระบบปิดกั้นการแก้ไข วันนั้นเปิดได้แบบ read-only เท่านั้น ตาม
+  [decision ของ PLN-1 ที่ resolve แล้ว](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  โดยไม่มีข้อยกเว้นสำหรับ PLN-2 — การทับ log ด้วย Cheat/Rest Day ทำได้เฉพาะวันนี้เท่านั้น (ดู AC-PLN-2-02)
+  ([resolve แล้วเมื่อ 2026-08-28](01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  เดิมเป็นคำถามที่ `test-suite-builder` พบระหว่าง self-freshness audit)
+- Prototype: [08-weekly-planner.html](../02-design/01-prototypes/v1/08-weekly-planner.html)
 
 ### PLN-3 — บันทึกผลรายวัน (all-or-nothing)
 
@@ -361,14 +379,14 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | REC-2 | 3 |
 | REC-3 | 2 |
 | REC-4 | 3 |
-| PLN-1 | 2 |
-| PLN-2 | 3 |
+| PLN-1 | 3 |
+| PLN-2 | 4 |
 | PLN-3 | 3 |
 | PLN-4 | 3 |
 | INT-1 | 3 |
 | INT-2 | 2 |
 | INT-3 | 2 |
-| **รวม** | **38** |
+| **รวม** | **40** |
 
 ---
 

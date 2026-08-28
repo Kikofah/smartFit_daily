@@ -97,3 +97,38 @@ screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ 
 
 จุดเหล่านี้ควรถูกหยิบไปตัดสินใจจริงผ่าน `01-spec/` (แล้วให้ `feature-list-journey` ปรับ `user-journeys.md`
 ตาม) ก่อนจะ build เป็น production UI — ไม่ควรอ้างอิงพฤติกรรมที่ mockup แสดงไว้เป็นกติกาจริงโดยไม่ยืนยันก่อน
+
+## เปลี่ยนแปลงจาก audit (Prototype Consistency Audit, 2026-08-27/28)
+
+`prototype-builder` รัน full consistency audit ของ v1 ทั้ง 12 หน้าจอ เทียบกับทั้ง 7 ชั้น
+(Requirement/NFR, Backlog, User Journey, Acceptance Criteria, Test Case, Test Plan, DESIGN.md) หลังจาก
+`feature-list-journey` เพิ่ง resolve นิยาม "ปฏิทินรายสัปดาห์" ของ PLN-1 (fixed calendar week, ไม่ใช่
+rolling 7-day-forward) และเพิ่ม NFR traceability เข้า `backlog.md`/`user-journeys.md` เมื่อ 2026-08-27
+ผลตรวจ: ส่วนใหญ่สอดคล้องกันดี (ดูรายละเอียดเต็มใน log การ audit) พบ 5 จุดที่ต้องแก้ ทั้งหมดเป็น
+prototype ล้าหลัง/บั๊กภายในของตัว prototype เอง — **ไม่มีจุดใดขัดแย้งกับเอกสารต้นทาง** จึงไม่ต้องเรียก
+`feature-list-journey`/`test-suite-builder` ต่อรอบนี้ ผู้ใช้ยืนยันให้แก้ v1 ตรง ๆ (ไม่สร้าง v2) เพราะเป็น
+การแก้เล็ก ๆ กับ version ที่ยังไม่ผ่าน review เป็นทางการ:
+
+1. **`05-daily-dashboard.html`** — วันในสัปดาห์ของ "27 ส.ค." เขียนผิดเป็น "วันอังคาร" ทั้งที่ 27 ส.ค. 2569
+   คือวันพฤหัสบดีตามสัปดาห์ตัวอย่างเดียวกับ `08-weekly-planner.html`/`09-log-history.html`/test case
+   ทุกไฟล์ — แก้เป็น "วันพฤหัสบดี 27 ส.ค."
+2. **`05-daily-dashboard.html`** — Streak Badge เดิมตั้งไว้ที่ "5 วัน" เป็นค่า placeholder อิสระ แต่
+   dataset ของสัปดาห์เดียวกันใน `09-log-history.html` (ซึ่ง `TC-PLN-4-001` อ้างอิงเป็น canonical dataset
+   แล้ว) คำนวณ streak ได้ = 3 วัน (พฤ 27 → พุธ 26 (Rest Day) → อังคาร 25 ต่อเนื่อง แล้วขาดที่จันทร์ 24) —
+   แก้ Streak Badge เป็น "3 วัน" ให้ตรงกับ dataset เดียวกัน
+3. **`08-weekly-planner.html`** — comment ต้นไฟล์และ caption ในชีทรายละเอียดวัน (`readonlyCaption`) ยังเขียน
+   ว่ากติกา read-only ของวันที่ผ่านมาแล้ว "ยังไม่ยืนยัน"/"ยังเป็น mockup decision เท่านั้น" ทั้งที่ตอนนี้
+   resolve เป็นทางการแล้วเมื่อ 2026-08-27 ใน
+   [`01-spec/20260823-03-planner-logging.md`](../../../01-requirements/01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+   — แก้ comment/caption ให้สะท้อนว่าเป็น confirmed decision แล้ว (พฤติกรรมเดิมของ prototype ถูกต้องอยู่แล้ว
+   ไม่ต้องแก้ logic ใด ๆ)
+4. **`08-weekly-planner.html`** — วันจันทร์ 24 ส.ค. เดิมแสดงสถานะ "ครบเป้าหมาย" (เครื่องหมายถูกสีเขียว,
+   กิจกรรม "คาร์ดิโอ 30 นาที") ซึ่งขัดแย้งกับ `09-log-history.html` ที่แสดงวันเดียวกันเป็น "ไม่ครบเป้าหมาย"
+   (260 kcal, ไม่มีไอคอน) และขัดกับ test case `TC-PLN-2-004`/`TC-PLN-4-001` ที่ใช้ "จันทร์ 24 ส.ค. =
+   ไม่ครบเป้าหมาย (260 kcal)" เป็น test data มาตรฐาน — แก้สถานะวันจันทร์ 24 เป็น `data-status="missed"`
+   (ไม่มีไอคอน ตาม DESIGN.md 3.5) และปรับ logic ให้ยังถือว่าวันนี้เป็น read-only เหมือน "cheatrest" (เพราะมี
+   log อยู่แล้ว ตาม decision ข้อ 3)
+5. **`12-device-pairing.html`** — ปุ่ม stepper (+/−) ของฟอร์มกรอกน้ำหนักด้วยตนเอง (scale fallback) มีขนาด
+   36×36px เล็กกว่าเกณฑ์ขั้นต่ำ 44×44px ที่กำหนดใน
+   [DESIGN.md §4.3 Accessibility](../DESIGN.md) และไม่ตรงกับปุ่ม stepper แบบเดียวกันใน
+   `01-onboarding-personal-info.html` ที่ใช้ 44×44px อยู่แล้ว — ขยายเป็น 44×44px ให้ตรงตาม DESIGN.md
