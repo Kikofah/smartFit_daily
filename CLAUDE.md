@@ -51,9 +51,10 @@ scratch.
 - `docs/03-testing/02-test-result/` — actual pass/fail results and bugs found, once tests are
   executed.
 - `docs/04-retrospectives/` — once a phase/sprint/milestone actually completes.
-- Genuinely stack-specific docs in `02-technical/` (tech choices, actual DBMS/framework decisions) —
-  once a team picks a stack; see "Building the Detailed Design docs" below for why this is distinct
-  from the conceptual docs that already exist there.
+- `docs/02-design/02-technical/tech-stack.md` — the one genuinely stack-specific doc in
+  `02-technical/` (actual framework/DBMS/hosting choices), distinct from the conceptual docs that
+  already exist there. Has a dedicated skill/agent ready (see "Building the Tech Stack doc" below)
+  but hasn't been run yet — it requires an intensive Discovery Questionnaire with the user first.
 
 `docs/05-log/{YYYYMMDD}-log.md` is the ongoing changelog — every skill run above should summarize
 its work there (create the file for that date if it doesn't exist yet, append if it does).
@@ -64,7 +65,7 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Seven skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Eight skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
@@ -74,17 +75,21 @@ detailed in its own subsection below; use this table to find the right one first
 | `architecture-builder` (`architecture-writer`) | `docs/02-design/02-technical/high-level-architecture.md` | Asked to create, update, or audit the conceptual (stack-agnostic) High Level Architecture doc. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the High Level Architecture doc"). |
 | `api-db-spec-builder` (`api-db-spec-writer`) | `docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md` | Asked to create, update, or audit the conceptual API Spec (REST-style convention) or Database Schema/ER model (logical data types). Requires `high-level-architecture.md` to exist first — refuses to invent components/entities not already in it. Audits (but never writes) the HLA doc/Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the API Spec & Database Schema"). |
 | `detailed-design-builder` (`detailed-design-writer`) | `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one per epic) | Asked to create, update, or audit the conceptual Detailed Design docs — Mermaid sequence diagrams (mandatory), state diagrams, and algorithm write-ups. Requires `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` to all exist first — refuses to invent components/operations/tables not already in them. Audits (but never writes) those three plus Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the Detailed Design docs"). |
+| `tech-stack-builder` (`tech-stack-writer`) | `docs/02-design/02-technical/tech-stack.md` | Asked to create, update, or audit the Tech Stack doc, or to help choose an appropriate technology stack. The one skill that picks real technologies rather than staying conceptual — runs an intensive Discovery Questionnaire with the user first (full on first run, only affected areas on re-runs). Requires the HLA, API Spec, Database Schema, and Detailed Design docs to all exist first. Never silently changes an actual stack choice, even for "merely stale" drift — always asks the user first, since real migration cost is involved (see "Building the Tech Stack doc"). |
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
-| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, or the Detailed Design docs — all four stay separate, explicitly-requested steps. |
+| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, the Detailed Design docs, or the Tech Stack doc — all five stay separate, explicitly-requested steps. |
 
 Together `feature-list-journey`, `prototype-builder`, `architecture-builder`, `api-db-spec-builder`,
-`detailed-design-builder`, and `test-suite-builder` cover the full chain end to end — Requirement →
-Backlog/Feature List → User Journey → Prototype / Architecture → API Spec/Database Schema →
-Detailed Design → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between
-Prototype, Architecture, the API/DB spec docs, the Detailed Design docs, and every other layer (each
-can reveal something no other doc captured yet, not just go stale from one). A change anywhere in
-it should eventually be reflected everywhere connected to it. No skill writes another's files; each
-audits across the seams it touches and tells you (or the right agent) which one to run next.
+`detailed-design-builder`, `tech-stack-builder`, and `test-suite-builder` cover the full chain end to
+end — Requirement → Backlog/Feature List → User Journey → Prototype / Architecture → API
+Spec/Database Schema → Detailed Design → Tech Stack → Acceptance Criteria → Test Plan/Test Case —
+plus the cross-links between Prototype, Architecture, the API/DB spec docs, the Detailed Design
+docs, the Tech Stack doc, and every other layer (each can reveal something no other doc captured
+yet, not just go stale from one). A change anywhere in it should eventually be reflected everywhere
+connected to it. No skill writes another's files; each audits across the seams it touches and tells
+you (or the right agent) which one to run next. `tech-stack-builder` is the one exception to "audits
+auto-fix merely-stale drift" — because it's the only skill choosing real technology, it always asks
+before changing an actual stack recommendation, even when the drift is otherwise unremarkable.
 `pipeline-orchestrator` doesn't add new rules of its own — it just runs `feature-list-journey`
 then `test-suite-builder` back to back for a given requirement so the user doesn't have to invoke
 each stage by hand.
@@ -328,6 +333,63 @@ contradiction against all of those before writing anything, using the same
 `pipeline-orchestrator` — same treatment as Prototype, the HLA doc, and the API/DB spec docs, it
 stays a separate, explicitly-requested step.
 
+### Building the Tech Stack doc
+
+The one document in this pipeline that deliberately breaks from "stay conceptual" — invoke the
+`tech-stack-builder` skill (`.claude/skills/tech-stack-builder/SKILL.md`) or `tech-stack-writer`
+agent (`.claude/agents/tech-stack-writer.md`) to create/update/audit it, and to help the user
+actually choose a stack — never hand-write it:
+
+- `docs/02-design/02-technical/tech-stack.md` — real technology choices per layer (mobile/client,
+  backend/API, database engine, authentication, hosting/infra, third-party integration setup,
+  CI/CD & dev tooling), the Discovery Questionnaire answers they were derived from, rationale,
+  alternatives considered, and — critically — a mapping from each conceptual doc's abstractions to
+  the concrete stack (HLA components → real modules/services, `database-schema.md` logical types →
+  the chosen DBMS's real column types, `api-spec.md`'s REST convention → the chosen framework's real
+  routing).
+
+**Every other document in `02-technical/` must stay conceptual with no stack names; this one must
+have them.** Recommendations here name real frameworks, languages, database engines, and cloud
+providers — vague functional language ("a mobile client") is a failure here, not a virtue.
+
+**Hard prerequisite**: `high-level-architecture.md`, `api-spec.md`, `database-schema.md`, and
+`detailed-design/*.md` must all already exist (all four, not just the first three) — if any is
+missing, this skill stops immediately and tells the user which upstream skill to run first, in
+order: `architecture-builder` → `api-db-spec-builder` → `detailed-design-builder`. It is not allowed
+to create any of them itself.
+
+**Runs an intensive Discovery Questionnaire before recommending anything — this is the one skill
+here that asks proactively, not just when something is unclear**, because the context it needs
+(team background, budget, timeline, compliance needs) doesn't exist in any project doc. On first run
+(no `tech-stack.md` yet) it covers every dimension: platform targets, team background,
+hosting/infra preference, backend approach preference (custom vs. Backend-as-a-Service), budget/
+scale tier, timeline, data compliance/residency (ties to NFR-04/05/06), and offline support — spread
+across multiple `AskUserQuestion` rounds (at most 4 questions each). On later re-runs, it only
+re-asks the dimensions actually affected by whatever upstream changed, not the full questionnaire
+again. For any single decision with more than one real option (e.g. native vs. cross-platform
+mobile, custom backend vs. BaaS, SQL vs. NoSQL), it still proposes ≥3 named real technologies with
+pros/cons and a recommendation rather than picking silently, even when one option looks technically
+best — this is a decision the user has to own.
+
+Single file, not versioned. Treats the HLA doc, API Spec, Database Schema, Detailed Design docs,
+`01-spec/` (including the NFR doc), `backlog.md`, and `user-journeys.md` as read-only upstream, and
+only informationally references the prototype if one exists — never edits any of those, handing
+fixes to `architecture-builder`, `api-db-spec-builder`, `detailed-design-builder`, or
+`feature-list-journey` instead. Always proposes the recommended stack for the user to confirm before
+writing.
+
+**The one skill in this pipeline that never silently auto-fixes "merely stale" drift.** Every other
+skill here updates non-conflicting staleness on its own and only asks the user about genuine
+contradictions or new information. `tech-stack-builder` is different: because changing a real
+technology choice carries real migration cost, *any* upstream change that could plausibly affect an
+actual stack choice (a new external integration the current stack doesn't support, an NFR change
+that shifts a requirement, new scope needing a platform capability) gets routed back through a
+targeted mini Discovery Questionnaire and the ask-user protocol — never updated on its own, even
+when the "obvious" answer seems clear. Drift that's cosmetic only (a stale link, wording that no
+longer matches but doesn't change the actual recommendation) is fine to fix directly. Not part of
+`pipeline-orchestrator` — same treatment as the rest of `02-technical/`'s docs, it stays a separate,
+explicitly-requested step.
+
 ### Building the test suite (Acceptance Criteria, Test Plan, Test Cases)
 
 Three test artifacts, invoke the `test-suite-builder` skill (`.claude/skills/test-suite-builder/SKILL.md`)
@@ -398,8 +460,10 @@ to make sure it goes in the right place:
      `api-spec.md` and `database-schema.md` (one level more concrete, still stack-agnostic except
      for the REST-convention/logical-type exceptions — see "Building the API Spec & Database
      Schema" above), `detailed-design/{epic-slug}.md` (sequence/state diagrams and algorithms, still
-     conceptual with no new exceptions needed — see "Building the Detailed Design docs" above), plus,
-     once a stack is chosen, genuinely stack-specific tech-choice docs (not yet populated)
+     conceptual with no new exceptions needed — see "Building the Detailed Design docs" above), and
+     `tech-stack.md` (the one genuinely stack-specific doc here — real framework/DBMS/hosting
+     choices, picked via an intensive Discovery Questionnaire — see "Building the Tech Stack doc"
+     above; has a dedicated skill ready but not yet populated)
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
      `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below

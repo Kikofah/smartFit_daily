@@ -28,5 +28,11 @@ feature), State Diagram (สำหรับ entity ที่มี state transit
 feature ที่มีการคำนวณ) — ยังคง**ไม่ผูกมัดกับ technical stack จริง** (ไม่ต้องมีข้อยกเว้นเพิ่มเพราะ sequence/
 state diagram และ pseudocode เป็นกลางทางเทคโนโลยีอยู่แล้ว) สร้าง/อัปเดต/audit โดย skill
 `detailed-design-builder` (`.claude/skills/detailed-design-builder/SKILL.md`) เท่านั้น — ต้องมีครบทั้ง
-`high-level-architecture.md`, `api-spec.md`, และ `database-schema.md` อยู่ก่อนเสมอ เป็นพื้นฐานก่อนที่
-เอกสาร stack-specific จริง (tech choices เมื่อทีมเลือก stack) จะถูกเพิ่มเข้าโฟลเดอร์นี้ในอนาคต
+`high-level-architecture.md`, `api-spec.md`, และ `database-schema.md` อยู่ก่อนเสมอ
+
+`tech-stack.md` ในโฟลเดอร์นี้คือ**เอกสารเดียวที่ stack-specific จริง** — ระบุชื่อเทคโนโลยีจริง (mobile
+framework, backend, DBMS, cloud provider, การเชื่อมต่อ third-party) แทนที่จะเป็น conceptual เหมือน
+เอกสารอื่นทั้งหมดในโฟลเดอร์นี้ สร้าง/อัปเดต/audit โดย skill `tech-stack-builder`
+(`.claude/skills/tech-stack-builder/SKILL.md`) เท่านั้น ซึ่งจะถามผู้ใช้แบบเข้มข้น (Discovery
+Questionnaire) ก่อนแนะนำเสมอ — ต้องมีครบทั้ง `high-level-architecture.md`, `api-spec.md`,
+`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ
