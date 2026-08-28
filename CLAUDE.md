@@ -46,11 +46,14 @@ scratch.
   Questionnaire on 2026-08-28), distinct from the conceptual docs that precede it.
 - `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{epic-slug}.md` — project-wide test
   strategy and step-by-step test cases.
+- `docs/01-requirements/02-plan/release-plan.md` — 3 phases (MVP Core Loop / Motivation &
+  Recommendation UX / Smart Integrations) derived from MoSCoW + verified dependency (no Must feature
+  depends on a Should/Could one), with a Mermaid dependency map — no time estimates by design.
+- `docs/01-requirements/03-task/{phase-slug}.md` — one task per Feature ID per phase, status-only
+  (no Owner field), covering all 13 Feature IDs across the 3 phases.
 
 **Still scaffolded, not populated — don't fill speculatively, wait until actually asked:**
 
-- `docs/01-requirements/02-plan/`, `03-task/` — roadmap/phasing and task breakdown, once the backlog
-  is actually picked up for planning/build.
 - `docs/03-testing/02-test-result/` — actual pass/fail results and bugs found, once tests are
   executed.
 - `docs/04-retrospectives/` — once a phase/sprint/milestone actually completes.
@@ -530,11 +533,10 @@ to make sure it goes in the right place:
    - `backlog.md` — **Product Backlog / Feature List** (see above; not a subfolder, a single file)
    - `acceptance-criteria.md` — **Acceptance Criteria**, Given-When-Then per backlog item (see
      "Building the test suite" below; not a subfolder, a single file)
-   - `02-plan/` — currently unused (roadmap/phasing, once picked up — see "Building the Plan/Phase/
-     Release & Task Breakdown docs" below)
-   - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status only — no Owner
-     field until a real team exists — see "Building the Plan/Phase/Release & Task Breakdown docs"
-     below)
+   - `02-plan/` — **Release Plan**: phase/milestone breakdown of the backlog (see "Building the
+     Plan/Phase/Release & Task Breakdown docs" below; not versioned, a single file)
+   - `03-task/` — **Task Breakdown**, one file per phase, status-only (no Owner field until a real
+     team exists — see "Building the Plan/Phase/Release & Task Breakdown docs" below)
 2. `docs/02-design/` — design derived from requirements:
    - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — holds
      `user-journeys.md`, `DESIGN.md`, and versioned HTML prototype folders `v1/`, `v2/`, ...
