@@ -41,26 +41,28 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Six skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Seven skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
 |---|---|---|
-| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder`/`architecture-builder`/`api-db-spec-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes/the architecture doc/the API-DB spec docs went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
+| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder`/`architecture-builder`/`api-db-spec-builder`/`detailed-design-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes/the architecture doc/the API-DB spec docs/the detailed design docs went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype, or to check whether an existing prototype is still consistent with the other six docs. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Acceptance Criteria/Test Case/Test Plan for drift, and hands any needed fix to whichever skill owns that file (see "Building HTML prototypes"). |
 | `architecture-builder` (`architecture-writer`) | `docs/02-design/02-technical/high-level-architecture.md` | Asked to create, update, or audit the conceptual (stack-agnostic) High Level Architecture doc. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the High Level Architecture doc"). |
 | `api-db-spec-builder` (`api-db-spec-writer`) | `docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md` | Asked to create, update, or audit the conceptual API Spec (REST-style convention) or Database Schema/ER model (logical data types). Requires `high-level-architecture.md` to exist first — refuses to invent components/entities not already in it. Audits (but never writes) the HLA doc/Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the API Spec & Database Schema"). |
+| `detailed-design-builder` (`detailed-design-writer`) | `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one per epic) | Asked to create, update, or audit the conceptual Detailed Design docs — Mermaid sequence diagrams (mandatory), state diagrams, and algorithm write-ups. Requires `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` to all exist first — refuses to invent components/operations/tables not already in them. Audits (but never writes) those three plus Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the Detailed Design docs"). |
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
-| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, or the API/DB spec docs — all three stay separate, explicitly-requested steps. |
+| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, or the Detailed Design docs — all four stay separate, explicitly-requested steps. |
 
 Together `feature-list-journey`, `prototype-builder`, `architecture-builder`, `api-db-spec-builder`,
-and `test-suite-builder` cover the full chain end to end — Requirement → Backlog/Feature List → User
-Journey → Prototype / Architecture → API Spec/Database Schema → Acceptance Criteria → Test Plan/Test
-Case — plus the cross-links between Prototype, Architecture, the API/DB spec docs, and every other
-layer (each can reveal something no other doc captured yet, not just go stale from one). A change
-anywhere in it should eventually be reflected everywhere connected to it. No skill writes another's
-files; each audits across the seams it touches and tells you (or the right agent) which one to run
-next. `pipeline-orchestrator` doesn't add new rules of its own — it just runs `feature-list-journey`
+`detailed-design-builder`, and `test-suite-builder` cover the full chain end to end — Requirement →
+Backlog/Feature List → User Journey → Prototype / Architecture → API Spec/Database Schema →
+Detailed Design → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between
+Prototype, Architecture, the API/DB spec docs, the Detailed Design docs, and every other layer (each
+can reveal something no other doc captured yet, not just go stale from one). A change anywhere in
+it should eventually be reflected everywhere connected to it. No skill writes another's files; each
+audits across the seams it touches and tells you (or the right agent) which one to run next.
+`pipeline-orchestrator` doesn't add new rules of its own — it just runs `feature-list-journey`
 then `test-suite-builder` back to back for a given requirement so the user doesn't have to invoke
 each stage by hand.
 
@@ -263,6 +265,46 @@ against those before writing anything, using the same ≥3-options/pros-cons/rec
 protocol as every other skill here. Not part of `pipeline-orchestrator` — same treatment as
 Prototype and the HLA doc, it stays a separate, explicitly-requested step.
 
+### Building the Detailed Design docs
+
+The next layer down from the API Spec/Database Schema, invoke the `detailed-design-builder` skill
+(`.claude/skills/detailed-design-builder/SKILL.md`) or `detailed-design-writer` agent
+(`.claude/agents/detailed-design-writer.md`) to create/update/audit them — never hand-write them:
+
+- `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one file per epic, slug matching
+  `01-spec/`/`test-cases/`) — grouped by Feature ID, each with a Mermaid `sequenceDiagram` (mandatory
+  for every feature), a Mermaid `stateDiagram-v2` for entities with a meaningful state transition
+  (not every feature needs one), and a step-by-step algorithm write-up for calculation-heavy features
+  (TDEE, MET, safety floor, all-or-nothing logging, streak, forecast).
+
+**Stays conceptual with no new exceptions** — unlike the API Spec/Database Schema doc, this one
+doesn't need to ask for stack-adjacent allowances: sequence diagrams, state diagrams, and
+plain-language algorithm steps are inherently technology-neutral notation already. Participants in a
+sequence diagram must be a Conceptual Component from the HLA doc or a generic actor — never a named
+framework/service. Algorithms are written as numbered natural-language/pseudocode steps, never real
+code in any language.
+
+**Hard prerequisite**: `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` must
+all already exist. If any is missing, this skill stops immediately and tells the user which upstream
+skill to run first (`architecture-builder`, then `api-db-spec-builder`) — it is not allowed to create
+any of them itself. Every participant, operation, table, and state referenced must trace back to
+something already in those three docs; a genuinely new one gets flagged through the ask-user
+protocol with sending it back to the owning skill as one of the options, not invented directly here.
+
+One file per epic (not versioned). Default scope is the entire backlog; can be narrowed to a Feature
+ID or an Epic. Treats the HLA doc, API Spec, Database Schema, `01-spec/` (including the NFR doc),
+`backlog.md`, and `user-journeys.md` as read-only upstream, and only informationally references the
+prototype if one exists — never edits any of those, handing fixes to `architecture-builder`,
+`api-db-spec-builder`, `feature-list-journey`, or `prototype-builder` instead. Always proposes a
+content outline (which features get a sequence diagram, which entities get a state diagram, which
+features get an algorithm write-up) for the user to confirm before writing. Re-run this whenever any
+of its three required upstream docs, `01-spec/`, `backlog.md`, or `user-journeys.md` changes, or
+when a detailed-design doc has been hand-edited directly — it audits itself for staleness/
+contradiction against all of those before writing anything, using the same
+≥3-options/pros-cons/recommendation ask-user protocol as every other skill here. Not part of
+`pipeline-orchestrator` — same treatment as Prototype, the HLA doc, and the API/DB spec docs, it
+stays a separate, explicitly-requested step.
+
 ### Building the test suite (Acceptance Criteria, Test Plan, Test Cases)
 
 Three test artifacts, invoke the `test-suite-builder` skill (`.claude/skills/test-suite-builder/SKILL.md`)
@@ -332,8 +374,9 @@ to make sure it goes in the right place:
      stack-agnostic architecture — see "Building the High Level Architecture doc" above),
      `api-spec.md` and `database-schema.md` (one level more concrete, still stack-agnostic except
      for the REST-convention/logical-type exceptions — see "Building the API Spec & Database
-     Schema" above), plus, once a stack is chosen, genuinely stack-specific tech-choice docs (not
-     yet populated)
+     Schema" above), `detailed-design/{epic-slug}.md` (sequence/state diagrams and algorithms, still
+     conceptual with no new exceptions needed — see "Building the Detailed Design docs" above), plus,
+     once a stack is chosen, genuinely stack-specific tech-choice docs (not yet populated)
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
      `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below
