@@ -24,7 +24,7 @@ stack-specific (database schema, API design, tech choices) ในอนาคต
 เอกสารเหล่านั้นควร derive concept จากที่นี่ ไม่ใช่มาแทนที่เอกสารนี้
 
 ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 13 Feature ID ในทั้ง 4 Epic ตาม
-[backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–08 จาก
+[backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–11 จาก
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 ในฐานะ cross-cutting concern (ดูหัวข้อ 7)
 
@@ -125,7 +125,7 @@ flowchart LR
 - **คุยกับ**: Personalization & Profile (เขียนน้ำหนัก/องค์ประกอบร่างกายที่ซิงค์มา), Exertion & Calorie
   Calculation (เขียนค่าแทนที่จาก wearable), Insights & Forecast (ทางอ้อม ผ่านน้ำหนักที่ซิงค์)
 
-> NFR-01–08 ไม่ใช่ component ของตัวเอง — เป็น cross-cutting concern ที่พาดผ่านทั้ง 7 component ข้างต้น
+> NFR-01–11 ไม่ใช่ component ของตัวเอง — เป็น cross-cutting concern ที่พาดผ่านทั้ง 7 component ข้างต้น
 > (ดูหัวข้อ 7)
 
 ## 4. Data Flow ตาม User Journey
@@ -360,6 +360,12 @@ flowchart TD
 - **Reliability** (NFR-07, NFR-08): ระบบต้อง fallback อย่างสงบเมื่อระบบภายนอกไม่พร้อมใช้งาน โดย core loop
   รายวัน (Onboarding → Recommendation → Logging) ต้องไม่ผูกกับความพร้อมของ Smart Integrations (Epic 4,
   Could ทั้งหมด) และข้อมูล log/streak ต้องไม่สูญหายจาก network ที่ไม่เสถียร
+- **Usability** (NFR-09, NFR-10): ทุกหน้าจอต้องผ่านเกณฑ์ accessibility ขั้นต่ำ (touch target, contrast,
+  ไม่สื่อสถานะด้วยสีอย่างเดียว, รองรับการปรับขนาดตัวอักษรของระบบ) และใช้ภาษาไทยเป็นหลักเสมอ (ศัพท์เทคนิค
+  ทับศัพท์ได้)
+- **Legal/Regulatory Compliance** (NFR-11): ระบบต้องปฏิบัติตาม PDPA มาตรฐานทั่วไป ครอบคลุม consent
+  record-keeping (เชื่อมกับ NFR-05), สิทธิ์เข้าถึง/แก้ไข/ลบข้อมูลของเจ้าของข้อมูล (เชื่อมกับ NFR-06), และ
+  กระบวนการแจ้งเหตุข้อมูลรั่วไหล
 
 ## 8. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
