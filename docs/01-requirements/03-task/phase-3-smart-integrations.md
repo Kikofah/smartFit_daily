@@ -17,9 +17,9 @@ Could) ต้องมี [MVP Phase](phase-1-mvp-core-loop.md) และ [Next 
 
 | Task ID | ชื่อ Task | Feature ID/REQ | Status | คำอธิบาย | References |
 |---|---|---|---|---|---|
-| TASK-INT-1 | พยากรณ์วันถึงเป้าหมายน้ำหนัก | INT-1 / REQ-11 | ยังไม่เริ่ม | พยากรณ์จากอัตราขาดดุล/เกินดุลแคลอรี่เฉลี่ยที่บันทึกจริง (7,700 kcal ≈ 1 กก.) | AC-INT-1-01–03, [detailed-design/smart-integrations.md](../../02-design/02-technical/detailed-design/smart-integrations.md) |
-| TASK-INT-2 | ซิงค์ตาชั่งอัจฉริยะ | INT-2 / REQ-12 | ยังไม่เริ่ม | จับคู่ตาชั่งผ่าน Bluetooth/Health API พร้อม consent ซิงค์น้ำหนัก/องค์ประกอบร่างกาย | AC-INT-2-01–02, [detailed-design/smart-integrations.md](../../02-design/02-technical/detailed-design/smart-integrations.md) |
-| TASK-INT-3 | ซิงค์ข้อมูล Wearable | INT-3 / REQ-13 | ยังไม่เริ่ม | ขอ consent เข้าถึง Health API/wearable ใช้ค่าจริงแทนค่าประมาณ MET เมื่อมี | AC-INT-3-01–02, [detailed-design/smart-integrations.md](../../02-design/02-technical/detailed-design/smart-integrations.md) |
+| TASK-INT-1 | พยากรณ์วันถึงเป้าหมายน้ำหนัก | INT-1 / REQ-11 | ยังไม่เริ่ม | พยากรณ์จากอัตราขาดดุล/เกินดุลแคลอรี่เฉลี่ยที่บันทึกจริง (7,700 kcal ≈ 1 กก.) | AC-INT-1-01–03, [detailed-design/04-smart-integrations.md](../../02-design/02-technical/detailed-design/04-smart-integrations.md) |
+| TASK-INT-2 | ซิงค์ตาชั่งอัจฉริยะ | INT-2 / REQ-12 | ยังไม่เริ่ม | จับคู่ตาชั่งผ่าน Bluetooth/Health API พร้อม consent ซิงค์น้ำหนัก/องค์ประกอบร่างกาย | AC-INT-2-01–02, [detailed-design/04-smart-integrations.md](../../02-design/02-technical/detailed-design/04-smart-integrations.md) |
+| TASK-INT-3 | ซิงค์ข้อมูล Wearable | INT-3 / REQ-13 | ยังไม่เริ่ม | ขอ consent เข้าถึง Health API/wearable ใช้ค่าจริงแทนค่าประมาณ MET เมื่อมี | AC-INT-3-01–02, [detailed-design/04-smart-integrations.md](../../02-design/02-technical/detailed-design/04-smart-integrations.md) |
 
 ## 3. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 

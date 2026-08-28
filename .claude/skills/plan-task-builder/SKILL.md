@@ -34,7 +34,7 @@ description: Build or update smartFit_daily's Plan/Phase/Release doc (docs/01-re
 3. **Task ย่อยระดับละเอียด**: **ค่า default คือ 1 task ต่อ 1 Feature ID** (ยืนยันจากผู้ใช้ — ป้องกันการ
    ประดิษฐ์ task breakdown ที่ไม่มี upstream รองรับ) แตกเป็น sub-task ละเอียดกว่านั้น (เช่น UI/logic/API/test
    แยกกัน) ได้เฉพาะเมื่อ (ก) ผู้ใช้ระบุ scope แคบลงเฉพาะ feature เดียวหรือไม่กี่ feature และ (ข) มี
-   `detailed-design/{epic-slug}.md` ของ feature นั้นอยู่แล้วให้ derive sub-task จาก sequence diagram/
+   `detailed-design/{NN}-{epic-slug}.md` ของ feature นั้นอยู่แล้วให้ derive sub-task จาก sequence diagram/
    algorithm steps จริง — ถ้าไม่มี Detailed Design ให้คงเป็นระดับ Feature ID เดียว ห้ามแตกเอง
 
 ## ขั้นตอนที่ -1 — ตรวจสอบว่ามี Requirement, Backlog, User Journey ครบหรือยัง (บังคับก่อนทำอย่างอื่นทั้งหมด)
@@ -114,7 +114,7 @@ description: Build or update smartFit_daily's Plan/Phase/Release doc (docs/01-re
   ขั้นตอนที่ -1)
 - `high-level-architecture.md` (ถ้ามี) — หัวข้อ 3 (Conceptual Components — ใช้ field "คุยกับ" หา
   dependency ระหว่าง feature)
-- `detailed-design/{epic-slug}.md` (ถ้ามีและ scope แคบเฉพาะ feature) — ใช้แตก sub-task
+- `detailed-design/{NN}-{epic-slug}.md` (ถ้ามีและ scope แคบเฉพาะ feature) — ใช้แตก sub-task
 - `docs/01-requirements/acceptance-criteria.md`/`docs/03-testing/01-test-plan/test-plan.md` (ถ้ามี) —
   ใช้ mirror รูปแบบ Entry/Exit Criteria
 

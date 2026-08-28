@@ -51,7 +51,7 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   [phase-1-mvp-core-loop.md](../03-task/phase-1-mvp-core-loop.md)
 - **Dependency Notes** (แหล่งที่มา: HLA §3 "คุยกับ" + กติกาธุรกิจใน `01-spec/`):
   - ONB-1 (TDEE) → ONB-3 ("อ่านค่า TDEE ปัจจุบันจาก user_profile" ตาม algorithm ของ ONB-3 ใน
-    [detailed-design/onboarding-personalization.md](../../02-design/02-technical/detailed-design/onboarding-personalization.md))
+    [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md))
     และ → REC-1/REC-2 (HLA §3.1 "Personalization & Profile คุยกับ Content Recommendation: ส่งโปรไฟล์
     อุปกรณ์ + เป้าหมายแคลอรี่รายวัน" และ "คุยกับ Exertion & Calorie Calculation: ส่งน้ำหนักตัว")
   - ONB-2 (อุปกรณ์) → REC-1 (HLA §3.1 เดียวกัน — ส่งโปรไฟล์อุปกรณ์เป็น filter)
@@ -82,7 +82,7 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
   - REC-3, REC-4 → REC-1 (MVP Phase) — ทั้งคู่อยู่ component เดียวกัน "Content Recommendation" ตาม HLA
     §3.2 ("รับผิดชอบ: REC-1, REC-3, REC-4") จึงต้องมี REC-1 ทำงานอยู่ก่อน
   - PLN-4 → PLN-3 (MVP Phase) — HLA §3.5 "Logging & Streak" รับผิดชอบทั้ง PLN-3 และ PLN-4 โดย PLN-4's
-    algorithm (ดู [detailed-design/planner-logging.md](../../02-design/02-technical/detailed-design/planner-logging.md))
+    algorithm (ดู [detailed-design/03-planner-logging.md](../../02-design/02-technical/detailed-design/03-planner-logging.md))
     ไล่ประวัติ `daily_log` ที่ PLN-3 เป็นผู้สร้างย้อนหลัง
 - **Entry Criteria**: MVP Phase ผ่าน Exit Criteria แล้ว
 - **Exit Criteria**: mirror จาก [test-plan.md §5](../../03-testing/01-test-plan/test-plan.md) ข้อ 2 —

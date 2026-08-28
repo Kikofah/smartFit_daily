@@ -39,12 +39,12 @@ scratch.
   architecture.
 - `docs/02-design/02-technical/api-spec.md` and `database-schema.md` — conceptual API operations and
   a logical/relational data model, one level more concrete than the HLA doc.
-- `docs/02-design/02-technical/detailed-design/{epic-slug}.md` — sequence diagrams, state diagrams,
+- `docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md` — sequence diagrams, state diagrams,
   and algorithm write-ups, one file per epic.
 - `docs/02-design/02-technical/tech-stack.md` — the one genuinely stack-specific doc in
   `02-technical/` (React Native + Expo, Supabase/PostgreSQL, chosen via an intensive Discovery
   Questionnaire on 2026-08-28), distinct from the conceptual docs that precede it.
-- `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{epic-slug}.md` — project-wide test
+- `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{NN}-{epic-slug}.md` — project-wide test
   strategy and step-by-step test cases.
 - `docs/01-requirements/02-plan/release-plan.md` — 3 phases (MVP Phase / Next Phase / Future Phase)
   derived from MoSCoW + verified dependency (no Must feature depends on a Should/Could one), with a
@@ -76,9 +76,9 @@ detailed in its own subsection below; use this table to find the right one first
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype, or to check whether an existing prototype is still consistent with the other six docs. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Acceptance Criteria/Test Case/Test Plan for drift, and hands any needed fix to whichever skill owns that file (see "Building HTML prototypes"). |
 | `architecture-builder` (`architecture-writer`) | `docs/02-design/02-technical/high-level-architecture.md` | Asked to create, update, or audit the conceptual (stack-agnostic) High Level Architecture doc. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the High Level Architecture doc"). |
 | `api-db-spec-builder` (`api-db-spec-writer`) | `docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md` | Asked to create, update, or audit the conceptual API Spec (REST-style convention) or Database Schema/ER model (logical data types). Requires `high-level-architecture.md` to exist first — refuses to invent components/entities not already in it. Audits (but never writes) the HLA doc/Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the API Spec & Database Schema"). |
-| `detailed-design-builder` (`detailed-design-writer`) | `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one per epic) | Asked to create, update, or audit the conceptual Detailed Design docs — Mermaid sequence diagrams (mandatory), state diagrams, and algorithm write-ups. Requires `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` to all exist first — refuses to invent components/operations/tables not already in them. Audits (but never writes) those three plus Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the Detailed Design docs"). |
+| `detailed-design-builder` (`detailed-design-writer`) | `docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md` (one per epic) | Asked to create, update, or audit the conceptual Detailed Design docs — Mermaid sequence diagrams (mandatory), state diagrams, and algorithm write-ups. Requires `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` to all exist first — refuses to invent components/operations/tables not already in them. Audits (but never writes) those three plus Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the Detailed Design docs"). |
 | `tech-stack-builder` (`tech-stack-writer`) | `docs/02-design/02-technical/tech-stack.md` | Asked to create, update, or audit the Tech Stack doc, or to help choose an appropriate technology stack. The one skill that picks real technologies rather than staying conceptual — runs an intensive Discovery Questionnaire with the user first (full on first run, only affected areas on re-runs). Requires the HLA, API Spec, Database Schema, and Detailed Design docs to all exist first. Never silently changes an actual stack choice, even for "merely stale" drift — always asks the user first, since real migration cost is involved (see "Building the Tech Stack doc"). |
-| `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
+| `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{NN}-{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
 | `plan-task-builder` (`plan-task-writer`) | `docs/01-requirements/02-plan/release-plan.md`, `docs/01-requirements/03-task/{phase-slug}.md` | Asked to create, update, or audit the release/phase plan or the per-phase task breakdown. Divides the backlog into phases with a hybrid MoSCoW + dependency-aware strategy (dependency signals come only from `01-spec/` business rules or the HLA's component relationships — never invented), then lists one task per Feature ID by default (finer sub-tasks only when scope narrows to one feature and Detailed Design exists for it). No time estimates and no Owner column — status-only (Not Started/In Progress/Done), since there's no real team or velocity data yet. Requires Requirement/Backlog/User Journey to exist first; everything else (HLA, Detailed Design, Acceptance Criteria, Test Plan) is optional context. Audits (but never writes) Requirement/Backlog/User Journey for drift, and hands any needed fix to `feature-list-journey` (see "Building the Plan/Phase/Release & Task Breakdown docs"). |
 | `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, the Detailed Design docs, the Tech Stack doc, or the Plan/Task Breakdown docs — all six stay separate, explicitly-requested steps. |
 | `technical-design-orchestrator` (`technical-design-runner`) | Chains `architecture-builder` → `api-db-spec-builder` → `detailed-design-builder`, then an audit-only NFR Review | Asked to run the Architecture → API/DB Spec → Detailed Design chain continuously instead of invoking each separately, with a Non-Functional Requirements Review tacked on at the end (see "Running the technical design pipeline in one go"). The NFR Review stage is this orchestrator's own methodology (no skill owns "NFR review" outright) — it reports gaps against the just-updated HLA/Detailed Design/DESIGN.md/tech-stack.md but never edits the NFR doc; running `test-suite-builder` to apply anything found is a separate, explicit choice. Does not touch Prototype or Tech Stack, and is not a substitute for `pipeline-orchestrator` (different chain entirely). |
@@ -355,7 +355,7 @@ The next layer down from the API Spec/Database Schema, invoke the `detailed-desi
 (`.claude/skills/detailed-design-builder/SKILL.md`) or `detailed-design-writer` agent
 (`.claude/agents/detailed-design-writer.md`) to create/update/audit them — never hand-write them:
 
-- `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one file per epic, slug matching
+- `docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md` (one file per epic, slug matching
   `01-spec/`/`test-cases/`) — grouped by Feature ID, each with a Mermaid `sequenceDiagram` (mandatory
   for every feature), a Mermaid `stateDiagram-v2` for entities with a meaningful state transition
   (not every feature needs one), and a step-by-step algorithm write-up for calculation-heavy features
@@ -471,7 +471,7 @@ hand-write them:
   grouped by Epic. ID format `AC-{FeatureID}-{2-digit}`.
 - `docs/03-testing/01-test-plan/test-plan.md` — one file for the whole project: scope, test types,
   environment, risk management, entry/exit criteria.
-- `docs/03-testing/01-test-plan/test-cases/{epic-slug}.md` — one file per epic (slug matches the
+- `docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md` — one file per epic (slug matches the
   corresponding `01-spec/` file), step-by-step cases grouped by Feature ID, each with at minimum
   Test ID (`TC-{FeatureID}-{3-digit}`), name, pre-condition, steps, expected result, test data, and
   references (REQ-xx, AC ID, user journey section).
@@ -526,7 +526,7 @@ business rule in `01-spec/*.md` or from a Conceptual Component's "คุยก�
 allowed. Time estimates are out of scope entirely (confirmed with the user 2026-08-28) — both docs
 sequence work, they don't schedule it. The task list defaults to one task per Feature ID; finer
 sub-tasks (UI/logic/API/tests split out) are only allowed when scope is narrowed to a specific
-feature **and** that feature already has a `detailed-design/{epic-slug}.md` entry to ground the
+feature **and** that feature already has a `detailed-design/{NN}-{epic-slug}.md` entry to ground the
 breakdown in — otherwise stay at Feature-ID granularity.
 
 **Hard prerequisite**: `01-spec/*.md` (every epic), `backlog.md`, and `user-journeys.md` must already
@@ -580,14 +580,14 @@ to make sure it goes in the right place:
      stack-agnostic architecture — see "Building the High Level Architecture doc" above),
      `api-spec.md` and `database-schema.md` (one level more concrete, still stack-agnostic except
      for the REST-convention/logical-type exceptions — see "Building the API Spec & Database
-     Schema" above), `detailed-design/{epic-slug}.md` (sequence/state diagrams and algorithms, still
+     Schema" above), `detailed-design/{NN}-{epic-slug}.md` (sequence/state diagrams and algorithms, still
      conceptual with no new exceptions needed — see "Building the Detailed Design docs" above), and
      `tech-stack.md` (the one genuinely stack-specific doc here — real framework/DBMS/hosting
      choices, picked via an intensive Discovery Questionnaire — see "Building the Tech Stack doc"
      above)
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
-     `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below
+     `test-cases/{NN}-{epic-slug}.md` (one file per epic) — see "Building the test suite" below
    - `02-test-result/` — actual pass/fail results and bugs found
 4. `docs/04-retrospectives/` — retrospectives per phase/sprint/milestone (what went well, what to
    improve, action items), informed by test results and the log

@@ -1,6 +1,6 @@
 ---
 name: detailed-design-builder
-description: Build or update smartFit_daily's conceptual Detailed Design docs (docs/02-design/02-technical/detailed-design/{epic-slug}.md, one file per epic) - sequence diagrams (mandatory minimum) plus state diagrams for entities with meaningful state transitions and step-by-step algorithm descriptions for calculation-heavy features, all derived directly from the High Level Architecture doc's components/data flow and the API Spec/Database Schema docs' operations/tables. Stays conceptual/stack-agnostic like its upstream docs - sequence/state diagrams and algorithm steps are inherently notation, not stack, so no new exceptions are needed beyond what api-db-spec-builder already allows. Requires high-level-architecture.md, api-spec.md, and database-schema.md to already exist and refuses to invent operations/tables/components not already in them. Also audits whether existing detailed-design docs are still consistent with those three, Requirement (incl. NFR), Backlog/Feature List, User Journey, and Prototype, handing off any needed fix to whichever skill owns that document. Defaults to covering every feature but accepts a narrower scope. Always proposes a content outline before writing, and uses the ask-the-user protocol (>=3 options with pros/cons and a recommendation) whenever something isn't clear. Use when asked to create, update, or audit the Detailed Design / sequence diagram / state diagram / algorithm design document for smartFit_daily.
+description: Build or update smartFit_daily's conceptual Detailed Design docs (docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md, one file per epic) - sequence diagrams (mandatory minimum) plus state diagrams for entities with meaningful state transitions and step-by-step algorithm descriptions for calculation-heavy features, all derived directly from the High Level Architecture doc's components/data flow and the API Spec/Database Schema docs' operations/tables. Stays conceptual/stack-agnostic like its upstream docs - sequence/state diagrams and algorithm steps are inherently notation, not stack, so no new exceptions are needed beyond what api-db-spec-builder already allows. Requires high-level-architecture.md, api-spec.md, and database-schema.md to already exist and refuses to invent operations/tables/components not already in them. Also audits whether existing detailed-design docs are still consistent with those three, Requirement (incl. NFR), Backlog/Feature List, User Journey, and Prototype, handing off any needed fix to whichever skill owns that document. Defaults to covering every feature but accepts a narrower scope. Always proposes a content outline before writing, and uses the ask-the-user protocol (>=3 options with pros/cons and a recommendation) whenever something isn't clear. Use when asked to create, update, or audit the Detailed Design / sequence diagram / state diagram / algorithm design document for smartFit_daily.
 ---
 
 # Detailed Design Builder
@@ -68,7 +68,7 @@ epic (ดูขั้นตอนที่ 3 ข้อ 4) อนุญาตใ�
 รันการตรวจสอบทุกครั้งที่:
 
 - ผู้ใช้ขอให้ตรวจสอบ/ยืนยันว่า Detailed Design ยังตรงกับเอกสารอื่นหรือไม่
-- ไฟล์ `detailed-design/{epic-slug}.md` ถูกแก้ไขโดยตรง (hand-edit)
+- ไฟล์ `detailed-design/{NN}-{epic-slug}.md` ถูกแก้ไขโดยตรง (hand-edit)
 - `high-level-architecture.md`, `api-spec.md`, `database-schema.md`, Requirement, Backlog, หรือ User
   Journey เปลี่ยนแปลง — ไม่ว่าจะรู้จากผู้ใช้แจ้งตรงๆ หรือจาก skill อื่นแจ้งมา
 - เอกสารนี้มีอยู่แล้วแต่ยังไม่ได้ตรวจมาสักระยะ — ห้ามสันนิษฐานว่ายัง fresh อยู่เพราะไม่มีใครแจ้ง
@@ -78,7 +78,7 @@ epic (ดูขั้นตอนที่ 3 ข้อ 4) อนุญาตใ�
 
 ## ขั้นตอนที่ 0 — Detailed Design Consistency Audit (รันก่อนแก้ไขอะไร ถ้ามีเอกสารอยู่แล้ว)
 
-เทียบ `detailed-design/{epic-slug}.md` ที่มีอยู่กับ:
+เทียบ `detailed-design/{NN}-{epic-slug}.md` ที่มีอยู่กับ:
 
 1. **HLA (บังคับ)** — component ที่ปรากฏใน sequence diagram ยังมีอยู่ใน HLA หัวข้อ 3 หรือไม่ ลำดับ
    interaction ยังตรงกับ Data Flow (หัวข้อ 4) หรือไม่
@@ -105,7 +105,7 @@ epic (ดูขั้นตอนที่ 3 ข้อ 4) อนุญาตใ�
 - **เอกสารมี component/operation/table ที่ไม่มีใน HLA/API Spec/Database Schema เลย**: ต้องถามผู้ใช้ (≥3
   แนวทาง + คำแนะนำ โดยตัวเลือกหนึ่งควรเป็น "ส่งกลับให้ skill เจ้าของเอกสารต้นทางเพิ่มก่อน")
 - **เอกสารขัดแย้งตรงๆ กับ upstream**: ห้ามเลือกฝั่งใดฝั่งหนึ่งเอง ถามผู้ใช้ด้วยรูปแบบเดียวกัน
-- **การ Reconcile**: แก้ `detailed-design/{epic-slug}.md` ได้เองผ่าน flow ปกติ — **ห้ามแก้** HLA เอง (เรียก
+- **การ Reconcile**: แก้ `detailed-design/{NN}-{epic-slug}.md` ได้เองผ่าน flow ปกติ — **ห้ามแก้** HLA เอง (เรียก
   `architecture-builder`), **ห้ามแก้** API Spec/Database Schema เอง (เรียก `api-db-spec-builder`),
   **ห้ามแก้** Requirement/Backlog/User Journey เอง (เรียก `feature-list-journey`), **ห้ามแก้** Prototype
   เอง (เรียก `prototype-builder`), **ห้ามแก้** Acceptance Criteria/Test Plan/Test Case เอง (เรียก
@@ -140,9 +140,11 @@ epic (ดูขั้นตอนที่ 3 ข้อ 4) อนุญาตใ�
 
 ## ขั้นตอนที่ 3 — โครงสร้างเอกสารบังคับ
 
-`docs/02-design/02-technical/detailed-design/{epic-slug}.md` — **1 ไฟล์ต่อ 1 epic** (slug ตรงกับไฟล์
-`01-spec/`/`test-cases/` ของ epic นั้นเป๊ะๆ: `onboarding-personalization`, `daily-youtube-recommendation`,
-`planner-logging`, `smart-integrations`) จัดกลุ่มภายในไฟล์ตาม Feature ID แต่ละไฟล์มีโครงสร้าง:
+`docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md` — **1 ไฟล์ต่อ 1 epic** (เลข 2 หลัก
+`NN` + slug ตรงกับไฟล์ `01-spec/`/`test-cases/` ของ epic นั้นเป๊ะๆ, เรียงตามลำดับ Epic เดียวกับ
+`01-spec/`'s `RUNNING_NO`: `01-onboarding-personalization`, `02-daily-youtube-recommendation`,
+`03-planner-logging`, `04-smart-integrations` — ยืนยันจากผู้ใช้ 2026-08-28 ให้ตั้งชื่อไฟล์แบบมีเลขนำหน้า
+สอดคล้องกับ `01-spec/` แทนชื่อ slug ล้วนแบบเดิม) จัดกลุ่มภายในไฟล์ตาม Feature ID แต่ละไฟล์มีโครงสร้าง:
 
 1. **Header** — ประเภทเอกสาร (Detailed Design — Conceptual), สถานะ, วันที่, อ้างอิงกลับ HLA/API
    Spec/Database Schema/backlog/01-spec
@@ -207,7 +209,7 @@ alt-path, หรือทิศทางการ reconcile ความไม�
 - ผลจาก Detailed Design Consistency Audit (ถ้ารัน): เทียบกับกี่ชั้น, พบอะไรบ้าง, จัดเป็นล้าหลัง/ข้อมูลใหม่/
   ขัดแย้งตรงๆ อย่างไร
 - แผนที่ผู้ใช้ยืนยันแล้ว (Feature ID ที่มี sequence/state diagram/algorithm ครอบคลุม)
-- ไฟล์ที่สร้าง/แก้ไข (`detailed-design/{epic-slug}.md` กี่ไฟล์, `index.md` ถ้าแก้, log entry) — รวมถึง
+- ไฟล์ที่สร้าง/แก้ไข (`detailed-design/{NN}-{epic-slug}.md` กี่ไฟล์, `index.md` ถ้าแก้, log entry) — รวมถึง
   ระบุว่าแต่ละไฟล์ "ภาคผนวก: Stack Mapping" ถูกสร้าง/อัปเดต/ข้ามไป และเพราะอะไร
 - ถ้าเรียก `architecture-builder`/`api-db-spec-builder`/`feature-list-journey`/`prototype-builder`/
   `test-suite-builder` ต่อเพื่อแก้เอกสารอื่น ให้ระบุว่าเรียกไปทำอะไรและผลลัพธ์เป็นอย่างไร

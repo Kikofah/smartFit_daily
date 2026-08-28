@@ -1,6 +1,6 @@
 ---
 name: detailed-design-writer
-description: Use this agent to build or update smartFit_daily's conceptual Detailed Design docs (docs/02-design/02-technical/detailed-design/{epic-slug}.md, one file per epic) - Mermaid sequence diagrams (mandatory minimum) for every feature, state diagrams for entities with meaningful state transitions, and step-by-step algorithm descriptions for calculation-heavy features (TDEE, MET, safety floor, all-or-nothing logging, streak, forecast). Derives every participant/operation/table/state directly from the High Level Architecture, API Spec, and Database Schema docs, which must all already exist - stops and tells the user which upstream skill to run first if any is missing. Also audits whether existing detailed-design docs are still consistent with those three plus Requirement (incl. NFR), Backlog/Feature List, User Journey, and Prototype, handing off any needed fix to architecture-writer, api-db-spec-writer, feature-journey-writer, prototype-writer, or test-suite-writer since they own those files. Defaults to every feature but accepts a narrower scope. Always proposes a content outline for the user to confirm before writing. Follows the detailed-design-builder skill methodology, including its mandatory ask-the-user protocol. Trigger when asked to create, update, or audit the Detailed Design / sequence diagram / state diagram / algorithm design document for smartFit_daily.
+description: Use this agent to build or update smartFit_daily's conceptual Detailed Design docs (docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md, one file per epic) - Mermaid sequence diagrams (mandatory minimum) for every feature, state diagrams for entities with meaningful state transitions, and step-by-step algorithm descriptions for calculation-heavy features (TDEE, MET, safety floor, all-or-nothing logging, streak, forecast). Derives every participant/operation/table/state directly from the High Level Architecture, API Spec, and Database Schema docs, which must all already exist - stops and tells the user which upstream skill to run first if any is missing. Also audits whether existing detailed-design docs are still consistent with those three plus Requirement (incl. NFR), Backlog/Feature List, User Journey, and Prototype, handing off any needed fix to architecture-writer, api-db-spec-writer, feature-journey-writer, prototype-writer, or test-suite-writer since they own those files. Defaults to every feature but accepts a narrower scope. Always proposes a content outline for the user to confirm before writing. Follows the detailed-design-builder skill methodology, including its mandatory ask-the-user protocol. Trigger when asked to create, update, or audit the Detailed Design / sequence diagram / state diagram / algorithm design document for smartFit_daily.
 tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
@@ -30,7 +30,7 @@ conceptual — sequence diagram (บังคับขั้นต่ำ), state
    component/operation/table ที่ไม่มีใน HLA/API Spec/Database Schema เลย หรือ (ค) ขัดแย้งตรงๆ กับ
    upstream — สองกรณีนี้**ต้องถามผู้ใช้** (≥3 แนวทาง + เหตุผล/ข้อดี/ข้อเสีย + คำแนะนำ โดยตัวเลือกหนึ่งควร
    เป็น "ส่งกลับให้ skill เจ้าของเอกสารต้นทางเพิ่มก่อน") ห้ามเลือกฝั่งใดฝั่งหนึ่งเอง
-5. **การ Reconcile**: แก้ `detailed-design/{epic-slug}.md` ได้เองผ่าน flow ปกติ แต่ **ห้ามแก้**
+5. **การ Reconcile**: แก้ `detailed-design/{NN}-{epic-slug}.md` ได้เองผ่าน flow ปกติ แต่ **ห้ามแก้**
    `high-level-architecture.md` เอง (เรียก `architecture-writer`), **ห้ามแก้** `api-spec.md`/
    `database-schema.md` เอง (เรียก `api-db-spec-writer`), **ห้ามแก้** Requirement/Backlog/User Journey
    เอง (เรียก `feature-journey-writer`), **ห้ามแก้** Prototype เอง (เรียก `prototype-writer`), **ห้ามแก้**
@@ -40,9 +40,9 @@ conceptual — sequence diagram (บังคับขั้นต่ำ), state
    prototype (ถ้ามี) เป็นข้อมูลประกอบเรื่อง UI state เท่านั้น
 7. **เสนอโครงเนื้อหาก่อนเขียนเสมอ** (ห้ามข้าม): รายชื่อ Feature ID ที่จะมี sequence diagram, entity ที่
    จะมี state diagram (พร้อมเหตุผล), feature ที่จะมี algorithm section — รอผู้ใช้ยืนยันก่อนเขียนไฟล์จริง
-8. **โครงสร้างเอกสารบังคับ** — 1 ไฟล์ต่อ epic (`onboarding-personalization`,
-   `daily-youtube-recommendation`, `planner-logging`, `smart-integrations` — slug ตรงกับ `01-spec/`/
-   `test-cases/` เป๊ะๆ) จัดกลุ่มตาม Feature ID แต่ละ Feature ID มี: **Sequence Diagram** (Mermaid
+8. **โครงสร้างเอกสารบังคับ** — 1 ไฟล์ต่อ epic (`01-onboarding-personalization`,
+   `02-daily-youtube-recommendation`, `03-planner-logging`, `04-smart-integrations` — เลข 2 หลัก + slug
+   ตรงกับ `01-spec/`/`test-cases/` เป๊ะๆ) จัดกลุ่มตาม Feature ID แต่ละ Feature ID มี: **Sequence Diagram** (Mermaid
    `sequenceDiagram`, บังคับทุกตัว — participant จาก HLA, ข้อความอ้าง operation จริงจาก `api-spec.md`
    และตารางจริงจาก `database-schema.md`, มี alt/opt block แสดง error/edge case อย่างน้อย 1 กรณีจาก
    `user-journeys.md`), **State Diagram** (Mermaid `stateDiagram-v2`, เฉพาะ entity ที่มี state

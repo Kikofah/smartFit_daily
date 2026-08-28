@@ -53,9 +53,9 @@ Feature List (`backlog.md`), User Journey (`user-journeys.md`) เป็น upst
    ประเภทการทดสอบ, environment, risk management, entry/exit criteria รับข้อมูลจาก `backlog.md` รวมถึง
    Non-Functional Requirement (ดู "NFR bootstrap" ด้านล่าง) และข้อมูลอื่นที่เกี่ยวข้อง (เช่น `CLAUDE.md`
    Project status)
-3. **Test Case** — `docs/03-testing/01-test-plan/test-cases/{epic-slug}.md` — **หนึ่งไฟล์ต่อ epic**
-   (slug ตรงกับไฟล์ `01-spec/` ของ epic นั้นเป๊ะ ๆ: `onboarding-personalization`,
-   `daily-youtube-recommendation`, `planner-logging`, `smart-integrations`) แบบ step-by-step ต่อ
+3. **Test Case** — `docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md` — **หนึ่งไฟล์ต่อ epic**
+   (เลข 2 หลัก + slug ตรงกับไฟล์ `01-spec/` ของ epic นั้นเป๊ะ ๆ: `01-onboarding-personalization`,
+   `02-daily-youtube-recommendation`, `03-planner-logging`, `04-smart-integrations`) แบบ step-by-step ต่อ
    Feature ID ภายใน epic นั้น รับข้อมูลจาก `acceptance-criteria.md` + `backlog.md` + `user-journeys.md`
    (+ prototype ถ้ามี)
 
@@ -137,10 +137,12 @@ Skill นี้**ห้ามแก้ไข** `01-spec/*.md` ที่มีอ
 
 ต้องลิงก์กลับไปยัง `backlog.md` และเอกสาร NFR spec doc
 
-## 3. Test Case (`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`)
+## 3. Test Case (`docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md`)
 
-- หนึ่งไฟล์ต่อ epic (4 ไฟล์: `onboarding-personalization.md`, `daily-youtube-recommendation.md`,
-  `planner-logging.md`, `smart-integrations.md`) จัดกลุ่มภายในไฟล์ตาม Feature ID
+- หนึ่งไฟล์ต่อ epic (4 ไฟล์ ตั้งชื่อด้วยเลข 2 หลักนำหน้า + slug เรียงตามลำดับเดียวกับ `01-spec/`'s
+  `RUNNING_NO` — ยืนยันจากผู้ใช้ 2026-08-28: `01-onboarding-personalization.md`,
+  `02-daily-youtube-recommendation.md`, `03-planner-logging.md`, `04-smart-integrations.md`)
+  จัดกลุ่มภายในไฟล์ตาม Feature ID
 - แต่ละ test case ต้องมีอย่างน้อยฟิลด์เหล่านี้ (เป็นตารางหรือ block ก็ได้ แต่ต้องมีครบ):
 
   | ฟิลด์ | คำอธิบาย |

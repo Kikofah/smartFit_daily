@@ -36,7 +36,7 @@ Criteria, Test Plan, และ Test Case โดยถือว่า Requirement
    ข้อเสียและคำแนะนำ แล้วสร้างเอกสาร NFR ใหม่ `docs/01-requirements/01-spec/{YYYYMMDD}-{RUNNING_NO}-non-functional-requirements.md`
    ตาม template เดียวกับ 4 ไฟล์ spec เดิมจากคำตอบที่ได้ ก่อนค่อย derive ส่วน NFR ของ Test Plan จากมัน
    (ถ้ามีเอกสาร NFR อยู่แล้ว อ่านแล้ว derive ได้เลย ห้ามเขียนตัวเลข NFR ใหม่ตรงใน test-plan.md เอง)
-5. **Test Case** (`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`, หนึ่งไฟล์ต่อ epic — slug
+5. **Test Case** (`docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md`, หนึ่งไฟล์ต่อ epic — slug
    ตรงกับ `01-spec/` ของ epic นั้น) จัดกลุ่มภายในตาม Feature ID แต่ละ test case ต้องมีอย่างน้อย: Test ID
    (`TC-{FeatureID}-{เลข 3 หลัก}`), Test Case Name, Pre-condition, Test Steps, Expected Result, Test
    Data, และ References (REQ-xx, AC ID, ลิงก์ user-journeys.md) — ทุก AC scenario ต้องมี test case

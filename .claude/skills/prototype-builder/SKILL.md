@@ -54,7 +54,7 @@ DESIGN.md เสมอ ไม่ว่าจะสร้างใหม่หร
    กับสิ่งที่ prototype ทำ (เช่น ไม่ทำ prototype ละเอียดเกินสำหรับ feature ที่ยัง Could และยังไม่ได้ตกลง scope)
 4. **Acceptance Criteria** (`docs/01-requirements/acceptance-criteria.md`, ถ้ามี) — สถานะ/ข้อความที่
    screen แสดง (เช่น success state, error state) ยังตรงกับ Given-When-Then ของ scenario ที่เกี่ยวข้องหรือไม่
-5. **Test Case** (`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`, ถ้ามี) — ข้อความ/ค่าที่
+5. **Test Case** (`docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md`, ถ้ามี) — ข้อความ/ค่าที่
    screen แสดงยังตรงกับ Expected Result/Test Data ที่ test case อ้างถึงหรือไม่
 6. **Test Plan** (`docs/03-testing/01-test-plan/test-plan.md`, ถ้ามี) — screen ที่มีอยู่ไม่เกินขอบเขต
    (scope) ที่ระบุไว้ใน test plan โดยไม่มีการปรับ scope ให้สอดคล้องกันก่อน

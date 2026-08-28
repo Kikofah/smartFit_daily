@@ -20,13 +20,13 @@ description: Audit consistency across smartFit_daily's Requirement docs (01-spec
 นอกจาก 3 ชั้นนี้ ยังมีเอกสาร/ผลงานดาวน์สตรีมที่ skill อื่นเป็นเจ้าของ (ไม่ใช่ skill นี้): **Acceptance
 Criteria** (`docs/01-requirements/acceptance-criteria.md`), **Test Plan**
 (`docs/03-testing/01-test-plan/test-plan.md`), **Test Case**
-(`docs/03-testing/01-test-plan/test-cases/{epic-slug}.md`) — ทั้ง 3 นี้เป็นของ `test-suite-builder` —
+(`docs/03-testing/01-test-plan/test-cases/{NN}-{epic-slug}.md`) — ทั้ง 3 นี้เป็นของ `test-suite-builder` —
 **Prototype** (`docs/02-design/01-prototypes/v*/`) ซึ่งเป็นของ `prototype-builder` — **High Level
 Architecture** (`docs/02-design/02-technical/high-level-architecture.md`) ซึ่งเป็นของ
 `architecture-builder` — **API Spec/Database Schema**
 (`docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md`) ซึ่ง
 เป็นของ `api-db-spec-builder` — **Detailed Design**
-(`docs/02-design/02-technical/detailed-design/{epic-slug}.md`) ซึ่งเป็นของ `detailed-design-builder`
+(`docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md`) ซึ่งเป็นของ `detailed-design-builder`
 — **Tech Stack** (`docs/02-design/02-technical/tech-stack.md`) ซึ่งเป็นของ `tech-stack-builder` — และ
 **Release Plan/Task Breakdown** (`docs/01-requirements/02-plan/release-plan.md`,
 `docs/01-requirements/03-task/{phase-slug}.md`) ซึ่งเป็นของ `plan-task-builder` — skill นี้

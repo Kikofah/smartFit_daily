@@ -38,7 +38,7 @@ agent ของแต่ละตัวด้านล่าง ให้ **อ�
 
 อ่าน `.claude/agents/detailed-design-writer.md` และ `.claude/skills/detailed-design-builder/SKILL.md`
 ให้ครบทุกครั้ง แล้วทำตามทุกขั้นตอนของมันสำหรับ scope เดียวกัน — ต้องทำ Stage 1-2 เสร็จก่อนเสมอ เขียน/
-อัปเดต `docs/02-design/02-technical/detailed-design/{epic-slug}.md`
+อัปเดต `docs/02-design/02-technical/detailed-design/{NN}-{epic-slug}.md`
 
 ## Stage 4 — Non-Functional Requirements Review (audit-only, ห้ามเขียนไฟล์)
 
@@ -49,7 +49,7 @@ agent ของแต่ละตัวด้านล่าง ให้ **อ�
 2. ถ้ามีอยู่แล้ว อ่านทั้งไฟล์ แล้วเทียบกับแหล่งข้อมูลต่อไปนี้ (อ่านฉบับล่าสุดหลัง Stage 1-3 เสร็จแล้ว):
    - `high-level-architecture.md` §7 (Cross-cutting Concerns) และ §6 (External Integration
      Boundaries) — ทุก concern ที่ถูกอ้างถึงต้องมี NFR รองรับและตรงกัน
-   - `detailed-design/{epic-slug}.md`'s ภาคผนวก: Stack Mapping (ถ้ามี) — client-side/server-side
+   - `detailed-design/{NN}-{epic-slug}.md`'s ภาคผนวก: Stack Mapping (ถ้ามี) — client-side/server-side
      split ต้องสอดคล้องกับ NFR performance ที่มีอยู่
    - `docs/02-design/01-prototypes/DESIGN.md` (ถ้ามี) — หัวข้อ 4 (UX Guidelines & Rules) มี rule ใดที่
      ยังไม่ถูก formalize เป็น NFR บ้าง (pattern เดียวกับ NFR-02/NFR-09/NFR-10 ที่เคย mirror DESIGN.md

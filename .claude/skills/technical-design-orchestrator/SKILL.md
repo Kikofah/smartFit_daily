@@ -68,7 +68,7 @@ methodology เดิมของแต่ละ skill ไม่มีกติ�
 1. **`high-level-architecture.md` §7 Cross-cutting Concerns และ §6 External Integration Boundaries** —
    ทุก NFR ที่ถูกอ้างถึงในสองหัวข้อนี้ต้องมีอยู่จริงใน NFR doc และเนื้อหาต้องตรงกัน — ถ้า HLA กล่าวถึง
    concern ที่ไม่มี NFR รองรับเลย ถือเป็น candidate ใหม่
-2. **`detailed-design/{epic-slug}.md`'s ภาคผนวก: Stack Mapping** (ถ้ามี) — ส่วนที่ระบุ client-side/
+2. **`detailed-design/{NN}-{epic-slug}.md`'s ภาคผนวก: Stack Mapping** (ถ้ามี) — ส่วนที่ระบุ client-side/
    server-side split ต้องสอดคล้องกับ NFR-01/NFR-03 (หรือ NFR performance ที่เทียบเท่า) ที่มีอยู่
 3. **`docs/02-design/01-prototypes/DESIGN.md`** (ถ้ามี) — ตรวจทุก subsection ของหัวข้อ 4 (UX
    Guidelines & Rules) ว่ามี rule ใดที่ยังไม่ถูก formalize เป็น NFR บ้าง (pattern เดียวกับที่ NFR-02 เคย

@@ -20,7 +20,7 @@ tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
    (ข) **ห้ามใส่ตัวเลขเวลา/estimate ใดๆ** (ยืนยันจากผู้ใช้ 2026-08-28 — ยังไม่มีทีมจริง/velocity) ใช้การ
    เรียงลำดับ (sequencing) เท่านั้น
    (ค) Task list ค่า default คือ **1 task ต่อ 1 Feature ID** — แตกเป็น sub-task ละเอียดกว่านั้นได้เฉพาะเมื่อ
-   scope แคบลงเฉพาะ feature เดียว/ไม่กี่ตัว **และ** มี `detailed-design/{epic-slug}.md` ของ feature นั้น
+   scope แคบลงเฉพาะ feature เดียว/ไม่กี่ตัว **และ** มี `detailed-design/{NN}-{epic-slug}.md` ของ feature นั้น
    ให้ derive จริง ห้ามแตกเองถ้าไม่มี Detailed Design รองรับ
 3. **ถ้ามีเอกสารทั้งสองอยู่แล้ว ให้ทำ Plan & Task Consistency Audit ก่อนเสมอ** — เทียบกับ Backlog (Feature
    ID/MoSCoW ยังตรงไหม feature ใหม่มี phase รองรับหรือยัง), Requirement รวม NFR (กติกาที่อ้างเป็นเหตุผล

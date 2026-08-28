@@ -41,7 +41,7 @@ Prototype ที่มีอยู่แล้วหลุด fresh หรือ
 
 อ่าน `.claude/skills/test-suite-builder/SKILL.md` ให้ครบทุกครั้ง แล้วทำตามทุกขั้นตอนของมันสำหรับ scope ที่
 กระทบจาก Stage 1-2 เท่านั้น (ไม่ต้องทำทั้ง backlog ถ้า requirement รอบนี้กระทบแค่ feature เดียว): self-freshness
-audit, เขียน/อัปเดต `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` ตามรูปแบบที่
+audit, เขียน/อัปเดต `acceptance-criteria.md`, `test-plan.md`, `test-cases/{NN}-{epic-slug}.md` ตามรูปแบบที่
 กำหนดไว้ในไฟล์นั้น รวม NFR bootstrap (ถามผู้ใช้ ≥3 แนวทางนิยาม NFR พร้อมคำแนะนำ แล้วสร้างเอกสาร NFR ใหม่)
 ถ้ายังไม่มีเอกสาร NFR และ `test-plan.md` ต้องใช้
 
