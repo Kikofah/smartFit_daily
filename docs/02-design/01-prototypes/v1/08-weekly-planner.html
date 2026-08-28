@@ -137,8 +137,11 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   .sheet-handle { width:36px; height:4px; border-radius:2px; background: var(--color-border-strong); margin: 0 auto var(--space-4); }
   .sheet-title-row { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: var(--space-4); }
   .activity-options { display:flex; flex-wrap:wrap; gap: var(--space-2); margin: var(--space-3) 0 var(--space-6); }
+  /* min-height 44px per DESIGN.md 4.3 Accessibility / NFR-09 (touch target >=44x44 for every
+     interactive element incl. chips) -- fixed by prototype-builder's 2026-08-28 consistency audit,
+     was 36px, inconsistent with 02-onboarding-equipment.html's chip (already 44px). */
   .chip {
-    padding: 0 var(--space-4); min-height:36px; display:inline-flex; align-items:center;
+    padding: 0 var(--space-4); min-height:44px; display:inline-flex; align-items:center;
     border-radius: var(--radius-lg); background: var(--color-paper-alt); color: var(--color-ink);
     font-size:14px; border: none; font-family: inherit; cursor:pointer;
   }

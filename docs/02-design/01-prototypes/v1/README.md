@@ -14,7 +14,7 @@
 | 02 | `02-onboarding-equipment.html` | ONB-2 | REQ-03 |
 | 03 | `03-onboarding-goal-select.html` | ONB-3 | REQ-02 |
 | 04 | `04-onboarding-goal-confirm.html` | ONB-3 | REQ-02 |
-| 05 | `05-daily-dashboard.html` | REC-1, REC-3, PLN-2, PLN-4 | REQ-04, REQ-06, REQ-09 |
+| 05 | `05-daily-dashboard.html` | REC-1, REC-3, PLN-2, PLN-4 | REQ-04, REQ-06, REQ-09, REQ-10 |
 | 06 | `06-workout-session.html` | REC-2, REC-4 | REQ-05, REQ-07 |
 | 07 | `07-workout-result.html` | REC-2, PLN-3 | REQ-05, REQ-10 |
 | 08 | `08-weekly-planner.html` | PLN-1, PLN-2 | REQ-08, REQ-09 |
@@ -31,8 +31,11 @@ screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ 
 - [backlog.md](../../../01-requirements/backlog.md) — Feature ID/Priority/REQ mapping
 - [01-spec/](../../../01-requirements/01-spec/index.md) — Requirement ทั้ง 4 epic (REQ-01 – REQ-13)
 - [user-journeys.md](../user-journeys.md) — ลำดับ step/diagram ต่อ feature
-- [DESIGN.md](../DESIGN.md) — token/component ทั้งหมด (ไม่มี Acceptance Criteria/Test Plan/Test Case ให้
-  อ้างอิง ณ ตอนสร้าง version นี้ — `test-suite-builder` ยังไม่เคยถูกรัน)
+- [DESIGN.md](../DESIGN.md) — token/component ทั้งหมด
+- [acceptance-criteria.md](../../../01-requirements/acceptance-criteria.md),
+  [test-plan.md](../../../03-testing/01-test-plan/test-plan.md),
+  [test-cases/](../../../03-testing/01-test-plan/test-cases/) — เพิ่มเข้ามาเป็นแหล่งอ้างอิงตั้งแต่การ audit
+  รอบ 2026-08-28 (ดู "เปลี่ยนแปลงจาก audit" ด้านล่าง) หลังจากไม่มีให้อ้างอิงตอนสร้าง version นี้ครั้งแรก
 
 ## ข้อตกลงร่วมระหว่างทุกไฟล์
 
@@ -132,3 +135,47 @@ prototype ล้าหลัง/บั๊กภายในของตัว pr
    36×36px เล็กกว่าเกณฑ์ขั้นต่ำ 44×44px ที่กำหนดใน
    [DESIGN.md §4.3 Accessibility](../DESIGN.md) และไม่ตรงกับปุ่ม stepper แบบเดียวกันใน
    `01-onboarding-personal-info.html` ที่ใช้ 44×44px อยู่แล้ว — ขยายเป็น 44×44px ให้ตรงตาม DESIGN.md
+
+## เปลี่ยนแปลงจาก audit (Prototype Consistency Audit, 2026-08-28 รอบที่ 2)
+
+`prototype-builder` รัน full consistency audit ของ v1 ทั้ง 12 หน้าจอ เทียบกับทั้ง 7 ชั้นอีกครั้ง (Requirement/
+NFR, Backlog, User Journey, **Acceptance Criteria, Test Case, Test Plan** — ครั้งแรกที่เทียบกับ 3 ชั้นนี้แบบ
+เต็มรูปแบบ เพราะตอน audit รอบก่อน (2026-08-27/28) ยังไม่มีทั้ง 3 เอกสารนี้ — ตอนนี้มีแล้วจาก `test-suite-builder`
+วันที่ 2026-08-27/28, DESIGN.md) หลังจากมีการ rename ไฟล์ `detailed-design/*.md`/`test-cases/*.md` แบบ mechanical
+(เติมเลขนำหน้า 01-04 ให้ตรง Epic order, commit `eed7f67`) และรัน `technical-design-orchestrator` เต็มรูปแบบ
+(commit `9d06211`) ผลตรวจ: ส่วนใหญ่ยังสอดคล้องกันดี (5 จุดที่แก้ไปในรอบ 2026-08-27/28 ก่อนหน้ายังคงถูกต้อง
+ตรวจซ้ำแล้ว) พบ 4 จุดใหม่ ทั้งหมดเป็น **prototype ล้าหลัง** (เอกสารต้นทางเปลี่ยน/เพิ่มไปแล้ว prototype ยังไม่ตาม
+ไม่ใช่ข้อขัดแย้ง) — ผู้ใช้ยืนยันให้แก้ v1 ตรง ๆ (ไม่สร้าง v2) เพราะยังเป็นการแก้ที่ไม่กระทบ layout เดิมมากและ
+version นี้ยังไม่ผ่าน review เป็นทางการ:
+
+1. **`04-onboarding-goal-confirm.html`** — ไม่มีช่องกรอก "น้ำหนักเป้าหมาย (target weight, kg)" เลย ทั้งที่
+   [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+   (resolve เมื่อ 2026-08-28 — หลังจาก v1 ถูกสร้างครั้งแรก) กำหนดให้ต้องกรอกค่านี้: **บังคับ**เมื่อเลือกเป้าหมาย
+   "ลดน้ำหนัก", **ไม่บังคับ**สำหรับเป้าหมายอื่น ค่านี้เป็นแหล่งที่มาจริงของ precondition "มีเป้าหมายน้ำหนัก" ที่
+   INT-1 ใช้พยากรณ์ (ดู `test-cases/04-smart-integrations.md`'s persona ที่สมมติว่ามีค่านี้อยู่แล้วโดยไม่มี
+   ที่มาในหน้าจอใดเลย) — เพิ่มช่อง stepper "น้ำหนักเป้าหมาย (กก.)" บนหน้านี้ (ไม่ใช่
+   `03-onboarding-goal-select.html`) พร้อม label/hint ที่เปลี่ยนตามเป้าหมายที่เลือก (บังคับ/ไม่บังคับ) และ
+   validate ก่อนปุ่ม "เริ่มใช้งาน" จะพาไปหน้าถัดไปได้ — บันทึกค่าไว้ที่ `localStorage` key
+   `smartfit_onb_target_weight` เมื่อมีการกรอก (ตำแหน่งหน้าจอนี้เลือกผ่าน ask-user protocol แล้ว: option ที่
+   เลือกคือรวมไว้ในหน้าสรุปสุดท้ายเพื่อไม่ให้กระทบโครงสร้าง 4 ขั้นตอน/4 progress dot เดิม)
+2. **`08-weekly-planner.html`** — chip เลือกประเภทกิจกรรมในชีทรายละเอียดวัน (`.activity-options .chip`) สูง
+   36px ต่ำกว่าเกณฑ์ขั้นต่ำ 44×44px ตาม [DESIGN.md §4.3](../DESIGN.md)/NFR-09 และไม่ตรงกับ chip แบบเดียวกันใน
+   `02-onboarding-equipment.html` ที่ใช้ 44px อยู่แล้ว — ขยายเป็น `min-height:44px` ให้ตรงกัน
+3. **`05-daily-dashboard.html`** (และ `README.md`/`index.html` แถวเดียวกัน) — header comment ระบุ Feature
+   ID `PLN-4` แต่ REQ tag มีแค่ `REQ-04, REQ-06, REQ-09` ขาด `REQ-10` ทั้งที่ PLN-4 ผูกกับทั้ง REQ-09 **และ**
+   REQ-10 ตาม [backlog.md § REQ Traceability Matrix](../../../01-requirements/backlog.md#req-traceability-matrix)
+   — เพิ่ม `REQ-10` เข้าไปในทั้ง 3 ไฟล์
+4. **`11-device-integrations.html`** — ส่วน "การตั้งค่า" มีลิงก์แก้ไขอุปกรณ์/ข้อมูลส่วนตัว แต่ไม่มีทางเข้าไป
+   แก้ไขเป้าหมายหลัก/น้ำหนักเป้าหมายเลย ทั้งที่
+   [AC-ONB-3-02](../../../01-requirements/acceptance-criteria.md#ac-onb-3-02--เปลี่ยนเป้าหมายหลักภายหลัง-คำนวณใหม่ทันที-req-02)/
+   `TC-ONB-3-004` ระบุ flow ว่า "เปิดหน้าตั้งค่าเป้าหมายหลัก (**Settings** หรือหน้าเลือกเป้าหมาย)" — เพิ่มลิงก์
+   "แก้ไขเป้าหมายหลัก / น้ำหนักเป้าหมาย" ไปยัง `03-onboarding-goal-select.html` (bundle มาพร้อมกับข้อ 1
+   เพราะเป็นข้อมูลชุดเดียวกัน)
+
+จุดที่ 5-6 ที่ audit นี้พบด้วยแต่ **ไม่ได้แก้ในไฟล์นี้** (เพราะเป็นไฟล์ที่ `prototype-builder` ไม่ได้เป็นเจ้าของ)
+ถูกส่งต่อให้ `test-suite-builder` แก้แยกต่างหาก (เรียกคู่ขนานกัน ไม่ใช่ audit นี้เป็นคนแก้เอง):
+
+- `acceptance-criteria.md` § Epic 1 (ONB-3) ยังไม่มี AC scenario สำหรับการกรอกน้ำหนักเป้าหมาย
+  (บังคับ/ไม่บังคับตามเป้าหมายที่เลือก) — ตกหล่นเพราะ AC ไฟล์นี้เขียนก่อน decision ของ ONB-3 เรื่องนี้จะ resolve
+- `test-cases/01-onboarding-personalization.md` ยังไม่มี test case สำหรับ validate ช่องน้ำหนักเป้าหมาย
+  (บังคับเมื่อเลือก "ลดน้ำหนัก", ไม่บังคับเมื่อเลือกอื่น) ด้วยเหตุผลเดียวกัน

@@ -83,6 +83,21 @@ strong, b { font-weight: 600; }
 .warning-note[hidden] { display:none; }
 .warning-note .icon { color:var(--color-warning); flex-shrink:0; margin-top:2px; }
 .warning-note p { color:var(--color-warning); }
+
+/* Target-weight field (ONB-3/REQ-02 decision resolved 2026-08-28): stepper pattern reused
+   verbatim from 01-onboarding-personal-info.html per DESIGN.md 3.7 Forms & Inputs. */
+.field-group { margin-bottom:0; }
+.field-group label { display:block; margin-bottom:var(--space-2); }
+.stepper { display:flex; align-items:center; gap:var(--space-1); background:var(--color-paper-sunken); border-radius:var(--radius-md); padding:var(--space-1); }
+.stepper:focus-within { box-shadow: inset 0 0 0 var(--border-width) var(--color-clay); }
+.stepper.error { box-shadow: inset 0 0 0 var(--border-width) var(--color-danger); }
+.stepper-btn { width:44px; height:44px; flex-shrink:0; border-radius:var(--radius-sm); border:none; background:transparent; color:var(--color-ink); font-size:20px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; font-family:inherit; }
+.stepper-btn:active { background:var(--color-paper-alt); }
+.stepper-input { flex:1; min-width:0; border:none; background:transparent; text-align:center; font-size:18px; font-family:inherit; color:var(--color-ink); min-height:44px; -moz-appearance:textfield; }
+.stepper-input:focus { outline:none; }
+.stepper-input::-webkit-outer-spin-button, .stepper-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.error-text { color:var(--color-danger); margin-top:var(--space-1); display:block; }
+.error-text[hidden] { display:none; }
 </style>
 </head>
 <body>
@@ -140,7 +155,24 @@ strong, b { font-weight: 600; }
       ทุกเป้าหมายจะไม่ถูกปรับให้ต่ำกว่า 1,200–1,500 kcal/วัน เพื่อความปลอดภัยของร่างกาย ไม่ว่าผลคำนวณจะออกมาเท่าไหร่
     </p>
 
-    <a href="05-daily-dashboard.html" class="btn btn-primary" style="margin-top:var(--space-8)">เริ่มใช้งาน</a>
+    <!-- ONB-3/REQ-02 (decision resolved 2026-08-28): target weight (kg) capture — mandatory when
+         goal = "ลดน้ำหนัก" (the only case INT-1's forecast precondition actually needs), optional
+         for the other two goals. Placed on this confirm screen (not 03-onboarding-goal-select.html)
+         per prototype-builder's 2026-08-28 consistency-audit decision, to keep 03 a pure single-tap
+         choice screen and group all final onboarding commitments (kcal target + target weight) on
+         this one review step before "เริ่มใช้งาน". -->
+    <div class="field-group" id="targetWeightGroup" style="margin-top:var(--space-6)">
+      <label class="text-h3" for="targetWeight" id="targetWeightLabel">น้ำหนักเป้าหมาย (กก.)</label>
+      <p class="text-body-sm" id="targetWeightHint" style="margin-bottom:var(--space-2)"></p>
+      <div class="stepper">
+        <button type="button" class="stepper-btn" data-target="targetWeight" data-step="-0.5" aria-label="ลดน้ำหนักเป้าหมายลง 0.5 กก.">−</button>
+        <input type="number" id="targetWeight" name="targetWeight" class="stepper-input" value="" min="20" max="250" step="0.5" inputmode="decimal" aria-describedby="targetWeight-error" placeholder="—">
+        <button type="button" class="stepper-btn" data-target="targetWeight" data-step="0.5" aria-label="เพิ่มน้ำหนักเป้าหมายขึ้น 0.5 กก.">+</button>
+      </div>
+      <span class="text-caption error-text" id="targetWeight-error" hidden></span>
+    </div>
+
+    <button type="button" id="startBtn" class="btn btn-primary" style="margin-top:var(--space-8)">เริ่มใช้งาน</button>
   </div>
 </div>
 
@@ -170,6 +202,7 @@ strong, b { font-weight: 600; }
   var raw = EXAMPLE_TDEE + goal.delta;
   var floored = raw < FLOOR;
   var final = floored ? FLOOR : raw;
+  var targetWeightRequired = (goalKey === 'lose');
 
   function fmt(n){ return n.toLocaleString('th-TH'); }
 
@@ -183,6 +216,69 @@ strong, b { font-weight: 600; }
     document.getElementById('floor-warning').hidden = false;
     document.getElementById('floor-value').textContent = fmt(FLOOR);
   }
+
+  // ONB-3/REQ-02 target-weight field: label/hint/required-marker depend on the selected goal.
+  var targetWeightLabel = document.getElementById('targetWeightLabel');
+  var targetWeightHint = document.getElementById('targetWeightHint');
+  var targetWeightInput = document.getElementById('targetWeight');
+  var targetWeightError = document.getElementById('targetWeight-error');
+  var targetWeightStepper = targetWeightInput.closest('.stepper');
+
+  if (targetWeightRequired) {
+    targetWeightLabel.textContent = 'น้ำหนักเป้าหมาย (กก.) *';
+    targetWeightHint.textContent = 'จำเป็นสำหรับเป้าหมาย "ลดน้ำหนัก" — ใช้พยากรณ์วันที่คาดว่าจะถึงเป้าหมายในหน้าความคืบหน้า (INT-1)';
+  } else {
+    targetWeightLabel.textContent = 'น้ำหนักเป้าหมาย (กก.) (ไม่บังคับ)';
+    targetWeightHint.textContent = 'กรอกไว้ล่วงหน้าได้ถ้าอยากเห็นวันที่คาดว่าจะถึงเป้าหมายในหน้าความคืบหน้า (INT-1) — ข้ามได้ถ้ายังไม่แน่ใจ';
+  }
+
+  function validateTargetWeight(){
+    var raw = targetWeightInput.value;
+    if (raw === '') {
+      // Empty is only invalid when this goal requires a target weight.
+      var emptyValid = !targetWeightRequired;
+      targetWeightStepper.classList.toggle('error', !emptyValid);
+      targetWeightError.hidden = emptyValid;
+      if (!emptyValid) targetWeightError.textContent = 'กรุณากรอกน้ำหนักเป้าหมาย (จำเป็นสำหรับเป้าหมาย "ลดน้ำหนัก")';
+      return emptyValid;
+    }
+    var val = parseFloat(raw);
+    var min = parseFloat(targetWeightInput.min);
+    var max = parseFloat(targetWeightInput.max);
+    var valid = !isNaN(val) && val >= min && val <= max;
+    targetWeightStepper.classList.toggle('error', !valid);
+    targetWeightError.hidden = valid;
+    if (!valid) targetWeightError.textContent = 'กรุณากรอกน้ำหนักเป้าหมายระหว่าง 20–250 กก.';
+    return valid;
+  }
+
+  targetWeightGroup_bindSteppers();
+  function targetWeightGroup_bindSteppers(){
+    document.querySelectorAll('#targetWeightGroup .stepper-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var step = parseFloat(btn.getAttribute('data-step'));
+        var val = parseFloat(targetWeightInput.value);
+        if (isNaN(val)) val = parseFloat(targetWeightInput.min) || 0;
+        val = Math.round((val + step) * 10) / 10;
+        targetWeightInput.value = val;
+        validateTargetWeight();
+      });
+    });
+  }
+  targetWeightInput.addEventListener('input', validateTargetWeight);
+
+  document.getElementById('startBtn').addEventListener('click', function(){
+    if (!validateTargetWeight()) {
+      targetWeightStepper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    try {
+      if (targetWeightInput.value !== '') {
+        localStorage.setItem('smartfit_onb_target_weight', targetWeightInput.value);
+      }
+    } catch (err) {}
+    window.location.href = '05-daily-dashboard.html';
+  });
 })();
 </script>
 </body>
