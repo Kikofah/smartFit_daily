@@ -50,7 +50,7 @@ scratch.
   derived from MoSCoW + verified dependency (no Must feature depends on a Should/Could one), with a
   Mermaid dependency map — no time estimates by design.
 - `docs/01-requirements/03-task/{phase-slug}.md` — one task per Feature ID per phase, status-only
-  (no Owner field), covering all 13 Feature IDs across the 3 phases.
+  (no Owner field), covering all 14 Feature IDs across the 3 phases.
 
 **Still scaffolded, not populated — don't fill speculatively, wait until actually asked:**
 

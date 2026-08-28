@@ -6,7 +6,7 @@
 - **สร้างโดย:** skill `test-suite-builder`
 
 เอกสารนี้อ้างอิงจาก [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) (MoSCoW priority
-และ Feature ID ทั้ง 13 ตัว) และ
+และ Feature ID ทั้ง 14 ตัว) และ
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 (NFR-01–NFR-11 — ขยายจาก NFR-01–08 เมื่อ 2026-08-28 ด้วย NFR-09/10 Usability และ NFR-11 Legal/Regulatory
 Compliance) เป็นหลัก ร่วมกับ "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของเอกสาร spec ทั้ง 4 ไฟล์ใน
@@ -130,7 +130,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
    contradiction ค้างอยู่ — ตรวจสอบแล้วในตอนเขียนแผนนี้ว่า **backlog.md และ NFR doc สอดคล้องกัน**
    (Epic 4 = Could ทั้งคู่) ไม่พบความขัดแย้งระหว่าง Requirement/Backlog ที่ต้องหยุดรอ
 2. [`docs/01-requirements/acceptance-criteria.md`](../../01-requirements/acceptance-criteria.md) — สร้าง
-   เสร็จแล้ว (40 scenario ครอบคลุมทั้ง 13 Feature ID ณ 2026-08-28 หลังเพิ่ม AC-PLN-1-03 และ AC-PLN-2-04)
+   เสร็จแล้ว (40 scenario ครอบคลุมทั้ง 14 Feature ID ณ 2026-08-28 หลังเพิ่ม AC-PLN-1-03 และ AC-PLN-2-04)
    ในการรัน `test-suite-builder`
    จึงพร้อมให้ `test-cases/{epic-slug}.md` อ้างอิง AC ID ได้ครบทุก feature
 3. เตรียม mock/stub ของ YouTube API, Health API/wearable, และ Bluetooth สมาร์ตสเกล ตาม §3 ให้พร้อม

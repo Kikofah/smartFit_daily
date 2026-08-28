@@ -23,7 +23,7 @@ provider, ภาษาโปรแกรม, หรือรูปแบบ API 
 stack-specific (database schema, API design, tech choices) ในอนาคต — เมื่อทีมเลือก stack จริงแล้ว
 เอกสารเหล่านั้นควร derive concept จากที่นี่ ไม่ใช่มาแทนที่เอกสารนี้
 
-ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 13 Feature ID ในทั้ง 4 Epic ตาม
+ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 14 Feature ID ในทั้ง 4 Epic ตาม
 [backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–11 จาก
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 ในฐานะ cross-cutting concern (ดูหัวข้อ 7)
@@ -130,7 +130,7 @@ flowchart LR
 
 ## 4. Data Flow ตาม User Journey
 
-จัดกลุ่ม 13 feature เป็น 5 data flow ตามลำดับ step ที่ระบุไว้จริงใน
+จัดกลุ่ม 14 feature เป็น 5 data flow ตามลำดับ step ที่ระบุไว้จริงใน
 [user-journeys.md](../01-prototypes/user-journeys.md) — เลขอ้างอิง "Step N" ด้านล่างตรงกับลำดับ
 "คำอธิบายตามลำดับ diagram" ของแต่ละ feature ในเอกสารนั้น
 

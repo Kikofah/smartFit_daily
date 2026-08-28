@@ -10,7 +10,7 @@
 
 ## 1. ขอบเขตและหลักการ (Scope & Principles)
 
-เอกสารนี้แบ่ง Product Backlog (13 Feature ID ในทั้ง 4 Epic) เป็น phase/release โดยใช้กลยุทธ์ **Hybrid
+เอกสารนี้แบ่ง Product Backlog (14 Feature ID ในทั้ง 4 Epic) เป็น phase/release โดยใช้กลยุทธ์ **Hybrid
 MoSCoW + Dependency-aware** (ยืนยันจากผู้ใช้ 2026-08-28): ใช้ MoSCoW priority (`backlog.md`) เป็นโครงหลัก
 ในการแบ่ง phase (Must → Should → Could) แต่ตรวจสอบก่อนว่ามี feature ระดับ Must ตัวใดต้องพึ่งพา feature
 ระดับ Should/Could จริงหรือไม่ (ถ้ามี ต้องดึง feature นั้นขึ้นมาข้าม phase) — **ตรวจสอบแล้วว่าไม่มีกรณีนี้

@@ -1,7 +1,7 @@
 # Acceptance Criteria — smartFit_daily
 
 เอกสารนี้แจกแจง Acceptance Criteria แบบ **Given-When-Then** ของทุก Feature ใน
-[backlog.md](backlog.md) (13 Feature ID ครบทุก Epic) โดยยึด **Success State** เป็น happy-path
+[backlog.md](backlog.md) (14 Feature ID ครบทุก Epic) โดยยึด **Success State** เป็น happy-path
 scenario และ **Alt/Edge Cases** ที่มีอยู่แล้วใน
 [user-journeys.md](../02-design/01-prototypes/user-journeys.md) เป็น scenario เพิ่มเติมต่อ feature —
 ไม่มีการสร้าง edge case ใหม่ที่ไม่มีอยู่ใน journey เดิม (จุดที่ journey ทิ้งไว้เป็น Open Question โดยไม่มี

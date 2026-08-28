@@ -5,7 +5,7 @@
 
 ## Scope
 
-ครอบคลุมทั้ง 13 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่สร้าง 2026-08-27) รวม 12 หน้าจอ HTML
+ครอบคลุมทั้ง 14 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่สร้าง 2026-08-27) รวม 12 หน้าจอ HTML
 ดูสารบัญเต็มที่ [index.html](index.html)
 
 | # | ไฟล์ | Feature ID | REQ |
