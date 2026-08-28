@@ -64,34 +64,36 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Eight skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Nine skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
 |---|---|---|
-| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder`/`architecture-builder`/`api-db-spec-builder`/`detailed-design-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes/the architecture doc/the API-DB spec docs/the detailed design docs went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
+| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder`/`architecture-builder`/`api-db-spec-builder`/`detailed-design-builder`/`plan-task-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes/the architecture doc/the API-DB spec docs/the detailed design docs/the release plan & task breakdown docs went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype, or to check whether an existing prototype is still consistent with the other six docs. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Acceptance Criteria/Test Case/Test Plan for drift, and hands any needed fix to whichever skill owns that file (see "Building HTML prototypes"). |
 | `architecture-builder` (`architecture-writer`) | `docs/02-design/02-technical/high-level-architecture.md` | Asked to create, update, or audit the conceptual (stack-agnostic) High Level Architecture doc. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the High Level Architecture doc"). |
 | `api-db-spec-builder` (`api-db-spec-writer`) | `docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md` | Asked to create, update, or audit the conceptual API Spec (REST-style convention) or Database Schema/ER model (logical data types). Requires `high-level-architecture.md` to exist first — refuses to invent components/entities not already in it. Audits (but never writes) the HLA doc/Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the API Spec & Database Schema"). |
 | `detailed-design-builder` (`detailed-design-writer`) | `docs/02-design/02-technical/detailed-design/{epic-slug}.md` (one per epic) | Asked to create, update, or audit the conceptual Detailed Design docs — Mermaid sequence diagrams (mandatory), state diagrams, and algorithm write-ups. Requires `high-level-architecture.md`, `api-spec.md`, and `database-schema.md` to all exist first — refuses to invent components/operations/tables not already in them. Audits (but never writes) those three plus Requirement/Backlog/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the Detailed Design docs"). |
 | `tech-stack-builder` (`tech-stack-writer`) | `docs/02-design/02-technical/tech-stack.md` | Asked to create, update, or audit the Tech Stack doc, or to help choose an appropriate technology stack. The one skill that picks real technologies rather than staying conceptual — runs an intensive Discovery Questionnaire with the user first (full on first run, only affected areas on re-runs). Requires the HLA, API Spec, Database Schema, and Detailed Design docs to all exist first. Never silently changes an actual stack choice, even for "merely stale" drift — always asks the user first, since real migration cost is involved (see "Building the Tech Stack doc"). |
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
-| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, the Detailed Design docs, or the Tech Stack doc — all five stay separate, explicitly-requested steps. |
+| `plan-task-builder` (`plan-task-writer`) | `docs/01-requirements/02-plan/release-plan.md`, `docs/01-requirements/03-task/{phase-slug}.md` | Asked to create, update, or audit the release/phase plan or the per-phase task breakdown. Divides the backlog into phases with a hybrid MoSCoW + dependency-aware strategy (dependency signals come only from `01-spec/` business rules or the HLA's component relationships — never invented), then lists one task per Feature ID by default (finer sub-tasks only when scope narrows to one feature and Detailed Design exists for it). No time estimates and no Owner column — status-only (Not Started/In Progress/Done), since there's no real team or velocity data yet. Requires Requirement/Backlog/User Journey to exist first; everything else (HLA, Detailed Design, Acceptance Criteria, Test Plan) is optional context. Audits (but never writes) Requirement/Backlog/User Journey for drift, and hands any needed fix to `feature-list-journey` (see "Building the Plan/Phase/Release & Task Breakdown docs"). |
+| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype, the Architecture doc, the API/DB spec docs, the Detailed Design docs, the Tech Stack doc, or the Plan/Task Breakdown docs — all six stay separate, explicitly-requested steps. |
 
 Together `feature-list-journey`, `prototype-builder`, `architecture-builder`, `api-db-spec-builder`,
-`detailed-design-builder`, `tech-stack-builder`, and `test-suite-builder` cover the full chain end to
-end — Requirement → Backlog/Feature List → User Journey → Prototype / Architecture → API
-Spec/Database Schema → Detailed Design → Tech Stack → Acceptance Criteria → Test Plan/Test Case —
-plus the cross-links between Prototype, Architecture, the API/DB spec docs, the Detailed Design
-docs, the Tech Stack doc, and every other layer (each can reveal something no other doc captured
-yet, not just go stale from one). A change anywhere in it should eventually be reflected everywhere
-connected to it. No skill writes another's files; each audits across the seams it touches and tells
-you (or the right agent) which one to run next. `tech-stack-builder` is the one exception to "audits
-auto-fix merely-stale drift" — because it's the only skill choosing real technology, it always asks
-before changing an actual stack recommendation, even when the drift is otherwise unremarkable.
-`pipeline-orchestrator` doesn't add new rules of its own — it just runs `feature-list-journey`
-then `test-suite-builder` back to back for a given requirement so the user doesn't have to invoke
-each stage by hand.
+`detailed-design-builder`, `tech-stack-builder`, `test-suite-builder`, and `plan-task-builder` cover
+the full chain end to end — Requirement → Backlog/Feature List → User Journey → Prototype /
+Architecture → API Spec/Database Schema → Detailed Design → Tech Stack → Acceptance Criteria → Test
+Plan/Test Case, plus Backlog/Feature List → Release Plan/Phase → Task Breakdown as a parallel
+downstream branch — plus the cross-links between Prototype, Architecture, the API/DB spec docs, the
+Detailed Design docs, the Tech Stack doc, the Plan/Task Breakdown docs, and every other layer (each
+can reveal something no other doc captured yet, not just go stale from one). A change anywhere in it
+should eventually be reflected everywhere connected to it. No skill writes another's files; each
+audits across the seams it touches and tells you (or the right agent) which one to run next.
+`tech-stack-builder` is the one exception to "audits auto-fix merely-stale drift" — because it's the
+only skill choosing real technology, it always asks before changing an actual stack recommendation,
+even when the drift is otherwise unremarkable. `pipeline-orchestrator` doesn't add new rules of its
+own — it just runs `feature-list-journey` then `test-suite-builder` back to back for a given
+requirement so the user doesn't have to invoke each stage by hand.
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
@@ -460,6 +462,54 @@ with no AC/test case yet, decision values that changed since the AC/test data wa
 whether `test-plan.md`'s scope still matches current MoSCoW priorities) and fixes only what's
 actually stale — never assume "no one told me anything changed" means it's still fresh.
 
+### Building the Plan/Phase/Release & Task Breakdown docs
+
+Two more documents derived from the backlog, invoke the `plan-task-builder` skill
+(`.claude/skills/plan-task-builder/SKILL.md`) or `plan-task-writer` agent
+(`.claude/agents/plan-task-writer.md`) to create/update/audit them — never hand-write them:
+
+- `docs/01-requirements/02-plan/release-plan.md` — divides the backlog into phases/releases using a
+  **hybrid MoSCoW + dependency-aware strategy** (confirmed with the user 2026-08-28): MoSCoW sets the
+  primary phase structure (Must → Should → Could), but a Should/Could feature that a Must feature
+  actually depends on gets pulled forward. Per phase: objective, Feature IDs included, dependency
+  notes, and Entry/Exit Criteria mirroring `test-plan.md`'s pattern, plus a Mermaid dependency map
+  across phases.
+- `docs/01-requirements/03-task/{phase-slug}.md` (one file per phase) — a task list for that phase,
+  one task per Feature ID by default, with a Task ID, name, Feature ID/REQ references, and a
+  **Status-only** field (Not Started/In Progress/Done, defaulting to Not Started on creation and
+  never reset on a re-run unless the user explicitly asks) — no Owner column and no time estimates,
+  since the project has no real team or velocity data yet.
+
+**The rule that matters most for this pair: never invent a dependency, an estimate, or a sub-task
+that isn't traceable to an existing document.** Cross-feature dependencies may only come from a
+business rule in `01-spec/*.md` or from a Conceptual Component's "คุยกับ" relationship in
+`high-level-architecture.md` §3 (if that doc exists) — guessing that two features are related is not
+allowed. Time estimates are out of scope entirely (confirmed with the user 2026-08-28) — both docs
+sequence work, they don't schedule it. The task list defaults to one task per Feature ID; finer
+sub-tasks (UI/logic/API/tests split out) are only allowed when scope is narrowed to a specific
+feature **and** that feature already has a `detailed-design/{epic-slug}.md` entry to ground the
+breakdown in — otherwise stay at Feature-ID granularity.
+
+**Hard prerequisite**: `01-spec/*.md` (every epic), `backlog.md`, and `user-journeys.md` must already
+exist — if any is missing, this skill stops immediately and tells the user to run
+`feature-list-journey` first. Unlike `api-db-spec-builder`/`detailed-design-builder`/
+`tech-stack-builder`, nothing else in `02-technical/` is required: the High Level Architecture,
+API Spec/Database Schema, Detailed Design, and Tech Stack docs are purely optional context here (used
+for dependency detection or sub-task grounding when they exist) since phase/release planning is a
+project-management decision, not a technical one.
+
+Single file plus one file per phase, neither versioned. Default scope is the entire backlog; can be
+narrowed to a Feature ID, an Epic, or one phase. Treats `01-spec/`, `backlog.md`, and
+`user-journeys.md` as read-only upstream — never edits any of those, handing fixes to
+`feature-list-journey` instead. Always proposes the phase breakdown and task file list for the user
+to confirm before writing. Re-run this whenever `01-spec/`, `backlog.md`, or `user-journeys.md`
+changes, or when a plan/task doc has been hand-edited directly — it audits itself for staleness
+against those three before writing anything (a feature whose MoSCoW priority changed should move
+phase; a new Feature ID needs a task entry), using the same ≥3-options/pros-cons/recommendation
+ask-user protocol as every other skill here for any real ambiguity (e.g. whether an unclear
+dependency is real). Not part of `pipeline-orchestrator` — same treatment as Prototype and the four
+`02-technical/` docs, it stays a separate, explicitly-requested step.
+
 ### Language
 
 Existing documentation content (all `index.md` files, and any requirement/backlog/journey files) is
@@ -480,8 +530,11 @@ to make sure it goes in the right place:
    - `backlog.md` — **Product Backlog / Feature List** (see above; not a subfolder, a single file)
    - `acceptance-criteria.md` — **Acceptance Criteria**, Given-When-Then per backlog item (see
      "Building the test suite" below; not a subfolder, a single file)
-   - `02-plan/` — currently unused (roadmap/phasing, once picked up)
-   - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status, owners)
+   - `02-plan/` — currently unused (roadmap/phasing, once picked up — see "Building the Plan/Phase/
+     Release & Task Breakdown docs" below)
+   - `03-task/` — task breakdown derived from the backlog (concrete to-dos, status only — no Owner
+     field until a real team exists — see "Building the Plan/Phase/Release & Task Breakdown docs"
+     below)
 2. `docs/02-design/` — design derived from requirements:
    - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — holds
      `user-journeys.md`, `DESIGN.md`, and versioned HTML prototype folders `v1/`, `v2/`, ...

@@ -1,6 +1,6 @@
 ---
 name: feature-journey-writer
-description: Use this agent to audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then reconcile whichever are out of date or contradictory. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-writer), Prototypes (owned by prototype-writer), the High Level Architecture doc (owned by architecture-writer), the API Spec/Database Schema docs (owned by api-db-spec-writer), the Detailed Design docs (owned by detailed-design-writer), or the Tech Stack doc (owned by tech-stack-writer) have gone stale as a result and flags that. Trigger when any file under docs/01-requirements/01-spec/ changes, when backlog.md or user-journeys.md is edited directly, when prototype-writer, architecture-writer, api-db-spec-writer, detailed-design-writer, or tech-stack-writer flags a discrepancy, or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey documents. Follows the feature-list-journey skill methodology, including its mandatory ask-the-user protocol when information is missing or contradictory.
+description: Use this agent to audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then reconcile whichever are out of date or contradictory. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-writer), Prototypes (owned by prototype-writer), the High Level Architecture doc (owned by architecture-writer), the API Spec/Database Schema docs (owned by api-db-spec-writer), the Detailed Design docs (owned by detailed-design-writer), the Tech Stack doc (owned by tech-stack-writer), or the Release Plan/Task Breakdown docs (owned by plan-task-writer) have gone stale as a result and flags that. Trigger when any file under docs/01-requirements/01-spec/ changes, when backlog.md or user-journeys.md is edited directly, when prototype-writer, architecture-writer, api-db-spec-writer, detailed-design-writer, tech-stack-writer, or plan-task-writer flags a discrepancy, or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey documents. Follows the feature-list-journey skill methodology, including its mandatory ask-the-user protocol when information is missing or contradictory.
 tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
@@ -52,21 +52,23 @@ tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
    `docs/02-design/02-technical/high-level-architecture.md` (ของ `architecture-builder`),
    `docs/02-design/02-technical/api-spec.md`/`docs/02-design/02-technical/database-schema.md` (ของ
    `api-db-spec-builder`), `docs/02-design/02-technical/detailed-design/*.md` (ของ
-   `detailed-design-builder`), และ `docs/02-design/02-technical/tech-stack.md` (ของ
-   `tech-stack-builder`) ถ้ายังไม่มีก็ไม่ต้องพูดถึง ถ้ามีอยู่แล้ว ให้ตรวจแบบผิวเผิน (ไม่ต้อง audit
-   ลึกเท่า 3 ชั้นหลัก) ว่า Feature ID/REQ ที่เพิ่ง reconcile ไปยังตรงกับที่เอกสาร/screen/architecture
-   doc/API-DB spec/detailed design/tech stack doc เหล่านั้นอ้างอยู่หรือไม่ **ห้ามแก้ไฟล์เหล่านี้เอง**
-   ไม่ว่ากรณีใด ถ้าพบว่าหลุด fresh ให้ระบุในรายงานว่าไฟล์/screen/section ไหนกระทบ เพราะอะไร และแนะนำให้
-   รัน skill/agent เจ้าของที่เกี่ยวข้อง (`test-suite-builder`/`test-suite-writer`,
-   `prototype-builder`/`prototype-writer`, `architecture-builder`/`architecture-writer`,
-   `api-db-spec-builder`/`api-db-spec-writer`, `detailed-design-builder`/`detailed-design-writer`,
-   และ/หรือ `tech-stack-builder`/`tech-stack-writer`) ต่อ
+   `detailed-design-builder`), `docs/02-design/02-technical/tech-stack.md` (ของ
+   `tech-stack-builder`), และ `docs/01-requirements/02-plan/release-plan.md`/
+   `docs/01-requirements/03-task/*.md` (ของ `plan-task-builder`) ถ้ายังไม่มีก็ไม่ต้องพูดถึง ถ้ามีอยู่แล้ว
+   ให้ตรวจแบบผิวเผิน (ไม่ต้อง audit ลึกเท่า 3 ชั้นหลัก) ว่า Feature ID/REQ ที่เพิ่ง reconcile ไปยังตรงกับที่
+   เอกสาร/screen/architecture doc/API-DB spec/detailed design/tech stack doc/release plan/task
+   breakdown เหล่านั้นอ้างอยู่หรือไม่ **ห้ามแก้ไฟล์เหล่านี้เอง** ไม่ว่ากรณีใด ถ้าพบว่าหลุด fresh ให้ระบุใน
+   รายงานว่าไฟล์/screen/section ไหนกระทบ เพราะอะไร และแนะนำให้รัน skill/agent เจ้าของที่เกี่ยวข้อง
+   (`test-suite-builder`/`test-suite-writer`, `prototype-builder`/`prototype-writer`,
+   `architecture-builder`/`architecture-writer`, `api-db-spec-builder`/`api-db-spec-writer`,
+   `detailed-design-builder`/`detailed-design-writer`, `tech-stack-builder`/`tech-stack-writer`,
+   และ/หรือ `plan-task-builder`/`plan-task-writer`) ต่อ
 
 ก่อนหยุดงาน ให้ตรวจว่า REQ ล่าสุดทั้งหมดในเอกสาร spec ปรากฏอยู่ในเอกสารอย่างน้อยหนึ่งครั้ง ทั้งสามชั้นลิงก์
 ถึงกันครบ (backlog.md ↔ 01-spec/, user-journeys.md ↔ 01-spec/, backlog.md ↔ user-journeys.md) และไม่มี
 ข้อขัดแย้งเหลือค้างระหว่างชั้นที่ยังไม่ resolve แล้วรายงานกลับว่า: audit เจอความไม่สอดคล้องอะไรบ้างใน 3 ชั้นหลัก,
 แก้ไขอะไรไปแล้ว, มีคำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และผลตรวจ AC/Test Plan/Test Case/Prototype/
-Architecture/API-DB Spec/Detailed Design/Tech Stack ตามข้อ 9 (ยังไม่มี / ยัง fresh อยู่ / หลุด fresh
-แล้วต้องรัน test-suite-builder, prototype-builder, architecture-builder, api-db-spec-builder,
-detailed-design-builder, และ/หรือ tech-stack-builder ต่อสำหรับ
+Architecture/API-DB Spec/Detailed Design/Tech Stack/Release Plan & Task Breakdown ตามข้อ 9 (ยังไม่มี /
+ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน test-suite-builder, prototype-builder, architecture-builder,
+api-db-spec-builder, detailed-design-builder, tech-stack-builder, และ/หรือ plan-task-builder ต่อสำหรับ
 scope ไหน)

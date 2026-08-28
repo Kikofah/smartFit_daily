@@ -1,6 +1,6 @@
 ---
 name: feature-list-journey
-description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-builder), Prototypes (owned by prototype-builder), the High Level Architecture doc (owned by architecture-builder), the API Spec/Database Schema docs (owned by api-db-spec-builder), the Detailed Design docs (owned by detailed-design-builder), or the Tech Stack doc (owned by tech-stack-builder) have gone stale as a result, and flags that instead of rewriting them. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - when prototype-builder, architecture-builder, api-db-spec-builder, detailed-design-builder, or tech-stack-builder flags a discrepancy - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
+description: Audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then create or reconcile whichever of them are out of date so all three stay consistent and up to date. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-builder), Prototypes (owned by prototype-builder), the High Level Architecture doc (owned by architecture-builder), the API Spec/Database Schema docs (owned by api-db-spec-builder), the Detailed Design docs (owned by detailed-design-builder), the Tech Stack doc (owned by tech-stack-builder), or the Release Plan/Task Breakdown docs (owned by plan-task-builder) have gone stale as a result, and flags that instead of rewriting them. Use whenever any one of the three changes - a requirement spec doc, backlog.md, or user-journeys.md is created or edited - when prototype-builder, architecture-builder, api-db-spec-builder, detailed-design-builder, tech-stack-builder, or plan-task-builder flags a discrepancy - or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey docs.
 ---
 
 # Feature List & User Journey Writer
@@ -27,9 +27,11 @@ Architecture** (`docs/02-design/02-technical/high-level-architecture.md`) ซึ
 (`docs/02-design/02-technical/api-spec.md`, `docs/02-design/02-technical/database-schema.md`) ซึ่ง
 เป็นของ `api-db-spec-builder` — **Detailed Design**
 (`docs/02-design/02-technical/detailed-design/{epic-slug}.md`) ซึ่งเป็นของ `detailed-design-builder`
-— และ **Tech Stack** (`docs/02-design/02-technical/tech-stack.md`) ซึ่งเป็นของ `tech-stack-builder` —
-skill นี้ **ตรวจสอบ (audit)** ว่าสิ่งเหล่านี้ (ถ้ามีอยู่แล้ว) ยัง fresh/สอดคล้องกับการเปลี่ยนแปลงใน 3
-ชั้นหลักหรือไม่ แต่**ไม่เขียน/แก้ไฟล์เหล่านี้เอง** — ดู "ขั้นตอนที่ 0.5" ด้านล่าง
+— **Tech Stack** (`docs/02-design/02-technical/tech-stack.md`) ซึ่งเป็นของ `tech-stack-builder` — และ
+**Release Plan/Task Breakdown** (`docs/01-requirements/02-plan/release-plan.md`,
+`docs/01-requirements/03-task/{phase-slug}.md`) ซึ่งเป็นของ `plan-task-builder` — skill นี้
+**ตรวจสอบ (audit)** ว่าสิ่งเหล่านี้ (ถ้ามีอยู่แล้ว) ยัง fresh/สอดคล้องกับการเปลี่ยนแปลงใน 3 ชั้นหลักหรือไม่
+แต่**ไม่เขียน/แก้ไฟล์เหล่านี้เอง** — ดู "ขั้นตอนที่ 0.5" ด้านล่าง
 
 ## เมื่อไหร่ต้องรัน skill นี้
 
@@ -50,6 +52,8 @@ skill นี้ **ตรวจสอบ (audit)** ว่าสิ่งเหล
   Design เจอข้อมูลที่ควรทำให้ Requirement/Backlog/User Journey ต้องอัปเดต
 - `tech-stack-builder` แจ้งมาจาก Tech Stack Consistency Audit ของมันว่าเอกสาร Tech Stack เจอข้อมูลที่
   ควรทำให้ Requirement/Backlog/User Journey ต้องอัปเดต
+- `plan-task-builder` แจ้งมาจาก Plan & Task Consistency Audit ของมันว่าเอกสาร Release Plan/Task
+  Breakdown เจอข้อมูลที่ควรทำให้ Requirement/Backlog/User Journey ต้องอัปเดต
 
 ## ขั้นตอนที่ 0 — Full Consistency Audit ของ 3 ชั้นหลัก (รันทุกครั้ง ไม่ใช่แค่ครั้งแรกที่สร้างเอกสาร)
 
@@ -74,7 +78,7 @@ skill นี้ **ตรวจสอบ (audit)** ว่าสิ่งเหล
    ให้จัดการตาม "การ reconcile drift" ด้านล่าง
 
 ## ขั้นตอนที่ 0.5 — ตรวจสอบว่าดาวน์สตรีม (AC/Test Plan/Test Case/Prototype/Architecture/API-DB
-Spec/Detailed Design/Tech Stack) หลุด fresh หรือไม่
+Spec/Detailed Design/Tech Stack/Release Plan & Task Breakdown) หลุด fresh หรือไม่
 
 หลัง reconcile 3 ชั้นหลักเสร็จแล้ว (หรือถ้าไม่มีอะไรต้อง reconcile เลย) ให้ตรวจต่อว่า
 `docs/01-requirements/acceptance-criteria.md`, `docs/03-testing/01-test-plan/test-plan.md`, และ
@@ -83,21 +87,24 @@ version ล่าสุดใน `docs/02-design/01-prototypes/v*/` (เป็�
 `docs/02-design/02-technical/high-level-architecture.md` (เป็นเจ้าของโดย `architecture-builder`),
 `docs/02-design/02-technical/api-spec.md`/`docs/02-design/02-technical/database-schema.md`
 (เป็นเจ้าของโดย `api-db-spec-builder`),
-`docs/02-design/02-technical/detailed-design/*.md` (เป็นเจ้าของโดย `detailed-design-builder`), และ
-`docs/02-design/02-technical/tech-stack.md` (เป็นเจ้าของโดย `tech-stack-builder`) **มีอยู่แล้วหรือยัง**:
+`docs/02-design/02-technical/detailed-design/*.md` (เป็นเจ้าของโดย `detailed-design-builder`),
+`docs/02-design/02-technical/tech-stack.md` (เป็นเจ้าของโดย `tech-stack-builder`), และ
+`docs/01-requirements/02-plan/release-plan.md`/`docs/01-requirements/03-task/*.md` (เป็นเจ้าของโดย
+`plan-task-builder`) **มีอยู่แล้วหรือยัง**:
 
-- **ถ้ายังไม่มีเอกสาร/prototype/architecture doc/API-DB spec/detailed design/tech stack doc เหล่านี้
-  เลย**: ไม่ใช่ gap ที่ต้องแจ้ง — แค่ยังไม่ถูกสร้าง ไม่ต้องพูดถึงในรายงาน
+- **ถ้ายังไม่มีเอกสาร/prototype/architecture doc/API-DB spec/detailed design/tech stack doc/release
+  plan/task breakdown เหล่านี้เลย**: ไม่ใช่ gap ที่ต้องแจ้ง — แค่ยังไม่ถูกสร้าง ไม่ต้องพูดถึงในรายงาน
 - **ถ้ามีอยู่แล้ว**: ตรวจ (ในระดับผิวเผินพอที่จะรู้ว่าต้อง regenerate หรือไม่ ไม่ต้องอ่านลึกเท่า audit หลัก):
   - Feature ID/REQ ที่เพิ่ง reconcile ไปยังคงตรงกับที่อ้างใน `acceptance-criteria.md`/`test-cases/*.md`/
     prototype screen/`high-level-architecture.md`/`api-spec.md`/`database-schema.md`/
-    `detailed-design/*.md`/`tech-stack.md` หรือไม่ (เช่น Feature ID เปลี่ยนเลข, REQ ถูกลบ/แก้ความหมาย,
-    decision ที่เคย resolve เปลี่ยนไป)
+    `detailed-design/*.md`/`tech-stack.md`/`release-plan.md`/`03-task/*.md` หรือไม่ (เช่น Feature ID
+    เปลี่ยนเลข, REQ ถูกลบ/แก้ความหมาย, decision ที่เคย resolve เปลี่ยนไป)
   - Feature ใหม่ที่เพิ่งเพิ่มเข้า `backlog.md`/`user-journeys.md` มี AC/test case/prototype screen/
     component หรือ data flow ใน architecture doc/operation หรือ table ใน API-DB spec/sequence diagram
-    ใน detailed design/ตัวเลือก stack ใน `tech-stack.md` ครอบคลุมหรือยัง
+    ใน detailed design/ตัวเลือก stack ใน `tech-stack.md`/phase ใน `release-plan.md` ครอบคลุมหรือยัง
   - Scope/priority ที่เปลี่ยนใน `backlog.md` (เช่น MoSCoW เปลี่ยน) ยังตรงกับ scope ที่ระบุใน
-    `test-plan.md` หรือไม่
+    `test-plan.md` หรือไม่ — และยังตรงกับ phase ที่ `release-plan.md` จัดไว้หรือไม่ (feature ที่เคย Could
+    แล้วถูกปรับเป็น Must ควรย้าย phase)
   - Journey step/diagram ที่เพิ่งแก้ไป ยังตรงกับที่ prototype screen ปัจจุบันแสดง/สื่อถึง หรือกับ data flow
     ที่ `high-level-architecture.md`/operation ที่ `api-spec.md`/sequence diagram ที่ `detailed-design/*.md`
     บรรยายไว้ หรือไม่
@@ -105,10 +112,11 @@ version ล่าสุดใน `docs/02-design/01-prototypes/v*/` (เป็�
   เจ้าของแต่ละไฟล์) ให้ระบุไว้ชัดในรายงานผลว่าไฟล์/screen/section ไหนหลุด fresh เพราะอะไร และแนะนำให้รัน
   `test-suite-builder` (agent `test-suite-writer`), `prototype-builder` (agent `prototype-writer`),
   `architecture-builder` (agent `architecture-writer`), `api-db-spec-builder` (agent
-  `api-db-spec-writer`), `detailed-design-builder` (agent `detailed-design-writer`), และ/หรือ
-  `tech-stack-builder` (agent `tech-stack-writer`) ต่อสำหรับ scope ที่กระทบ — ถ้าเป็น `tech-stack.md`
-  ที่หลุด fresh ให้บอกผู้ใช้ด้วยว่า `tech-stack-builder` จะไม่แก้ตัวเลือก stack จริงเองแม้จะรู้ว่าต้อง
-  เปลี่ยน (จะถามผู้ใช้ก่อนเสมอ) — เป็นพฤติกรรมที่ตั้งใจ ไม่ใช่ข้อจำกัด
+  `api-db-spec-writer`), `detailed-design-builder` (agent `detailed-design-writer`),
+  `tech-stack-builder` (agent `tech-stack-writer`), และ/หรือ `plan-task-builder` (agent
+  `plan-task-writer`) ต่อสำหรับ scope ที่กระทบ — ถ้าเป็น `tech-stack.md` ที่หลุด fresh ให้บอกผู้ใช้ด้วยว่า
+  `tech-stack-builder` จะไม่แก้ตัวเลือก stack จริงเองแม้จะรู้ว่าต้องเปลี่ยน (จะถามผู้ใช้ก่อนเสมอ) — เป็น
+  พฤติกรรมที่ตั้งใจ ไม่ใช่ข้อจำกัด
 
 ## การ Reconcile Drift (เฉพาะ 3 ชั้นหลัก)
 
@@ -201,12 +209,13 @@ user-journeys.md) เมื่อเป็นการ update เอกสาร
 ไม่ต้องเขียนใหม่ทั้งไฟล์โดยไม่จำเป็น ห้ามแก้ไข `index.md` ของแต่ละโฟลเดอร์ — เป็นคำอธิบายโครงสร้างเท่านั้น
 ไม่ใช่ที่เก็บเนื้อหาจริง **ห้ามแก้ไข `acceptance-criteria.md`, `test-plan.md`, `test-cases/*.md`,
 prototype ใด ๆ ใน `v*/`, `high-level-architecture.md`, `api-spec.md`, `database-schema.md`,
-`detailed-design/*.md`, หรือ `tech-stack.md` เอง** ไม่ว่ากรณีใด — เป็นหน้าที่ของ skill
-`test-suite-builder`, `prototype-builder`, `architecture-builder`, `api-db-spec-builder`,
-`detailed-design-builder`, และ `tech-stack-builder` ตามลำดับ
+`detailed-design/*.md`, `tech-stack.md`, `release-plan.md`, หรือ `03-task/*.md` เอง** ไม่ว่ากรณีใด — เป็น
+หน้าที่ของ skill `test-suite-builder`, `prototype-builder`, `architecture-builder`,
+`api-db-spec-builder`, `detailed-design-builder`, `tech-stack-builder`, และ `plan-task-builder` ตามลำดับ
 
 ก่อนจบงานทุกครั้ง ให้สรุปผล Consistency Audit กลับไปหาผู้เรียก: พบความไม่สอดคล้องอะไรบ้างใน 3 ชั้นหลัก,
 แก้ไขอะไรไปแล้ว, มีอะไรที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และ**ผลตรวจ AC/Test Plan/Test Case/Prototype/
-Architecture/API-DB Spec/Detailed Design/Tech Stack ตามขั้นตอนที่ 0.5** (ยังไม่มี / ยัง fresh อยู่ /
-หลุด fresh แล้วต้องรัน `test-suite-builder`, `prototype-builder`, `architecture-builder`,
-`api-db-spec-builder`, `detailed-design-builder`, และ/หรือ `tech-stack-builder` ต่อสำหรับ scope ไหน)
+Architecture/API-DB Spec/Detailed Design/Tech Stack/Release Plan & Task Breakdown ตามขั้นตอนที่ 0.5**
+(ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน `test-suite-builder`, `prototype-builder`,
+`architecture-builder`, `api-db-spec-builder`, `detailed-design-builder`, `tech-stack-builder`,
+และ/หรือ `plan-task-builder` ต่อสำหรับ scope ไหน)
