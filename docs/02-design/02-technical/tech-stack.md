@@ -133,9 +133,12 @@ chain ทั้งหมดให้เป็นทางเลือกที�
 2. **HealthKit/Health Connect library ที่แน่นอน**: `react-native-health`/`react-native-health-connect`
    เป็นตัวเลือกที่นิยม แต่ยังไม่ได้ประเมิน maintenance status ล่าสุดหรือเทียบกับการเขียน custom native
    module เอง
-3. **Web app scope**: Expo web export ครอบคลุมทุก feature เท่ากับ mobile หรือไม่ (เช่น Bluetooth/
-   HealthKit ใช้ไม่ได้บนเว็บ) — ควรตัดสินใจว่า web app จะเป็น full feature parity หรือ subset (เช่น ดู
-   dashboard/log อย่างเดียว ไม่รองรับ INT-2/INT-3)
+3. **Web app scope — RESOLVED (2026-08-28)**: เดิมคือ "Expo web export ครอบคลุมทุก feature เท่ากับ
+   mobile หรือไม่" ปัจจุบัน resolve แล้ว: **core loop parity เต็มทุกแพลตฟอร์ม + Epic 4 (INT-1/INT-2/
+   INT-3) เป็น mobile-only โดยตั้งใจ** เว็บแสดงข้อความ "ไม่รองรับ" อย่างสงบแทน (fallback ตาม NFR-07) — ไม่
+   กระทบตัวเลือก stack ใดๆ ในเอกสารนี้ (ยังเป็น React Native + Expo + Supabase เหมือนเดิม) เป็นเพียงการ
+   ยืนยันขอบเขต feature บน platform ไม่ใช่การเปลี่ยนเทคโนโลยี — บันทึกอย่างเป็นทางการไว้ที่
+   [high-level-architecture.md §6.2/§6.3](high-level-architecture.md) ไม่ใช่ decision ใหม่ของเอกสารนี้
 4. **สอดคล้องกับ Open Points เดิมของ conceptual docs**: ค่า Activity Factor/MET lookup table จริง,
    ตัวเลข tolerance ของ REC-1, จำนวนวัน log ขั้นต่ำของ INT-1 ฯลฯ ยังไม่ resolve — ต้องแก้ที่ต้นทาง
    (`01-spec/`) ก่อน ไม่ใช่ตัดสินใจในเอกสารนี้
