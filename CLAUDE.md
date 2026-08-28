@@ -41,6 +41,9 @@ scratch.
   a logical/relational data model, one level more concrete than the HLA doc.
 - `docs/02-design/02-technical/detailed-design/{epic-slug}.md` — sequence diagrams, state diagrams,
   and algorithm write-ups, one file per epic.
+- `docs/02-design/02-technical/tech-stack.md` — the one genuinely stack-specific doc in
+  `02-technical/` (React Native + Expo, Supabase/PostgreSQL, chosen via an intensive Discovery
+  Questionnaire on 2026-08-28), distinct from the conceptual docs that precede it.
 - `docs/03-testing/01-test-plan/test-plan.md` and `test-cases/{epic-slug}.md` — project-wide test
   strategy and step-by-step test cases.
 
@@ -51,10 +54,6 @@ scratch.
 - `docs/03-testing/02-test-result/` — actual pass/fail results and bugs found, once tests are
   executed.
 - `docs/04-retrospectives/` — once a phase/sprint/milestone actually completes.
-- `docs/02-design/02-technical/tech-stack.md` — the one genuinely stack-specific doc in
-  `02-technical/` (actual framework/DBMS/hosting choices), distinct from the conceptual docs that
-  already exist there. Has a dedicated skill/agent ready (see "Building the Tech Stack doc" below)
-  but hasn't been run yet — it requires an intensive Discovery Questionnaire with the user first.
 
 `docs/05-log/{YYYYMMDD}-log.md` is the ongoing changelog — every skill run above should summarize
 its work there (create the file for that date if it doesn't exist yet, append if it does).
@@ -463,7 +462,7 @@ to make sure it goes in the right place:
      conceptual with no new exceptions needed — see "Building the Detailed Design docs" above), and
      `tech-stack.md` (the one genuinely stack-specific doc here — real framework/DBMS/hosting
      choices, picked via an intensive Discovery Questionnaire — see "Building the Tech Stack doc"
-     above; has a dedicated skill ready but not yet populated)
+     above)
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
      `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below

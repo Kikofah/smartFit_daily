@@ -35,4 +35,5 @@ framework, backend, DBMS, cloud provider, การเชื่อมต่อ t
 เอกสารอื่นทั้งหมดในโฟลเดอร์นี้ สร้าง/อัปเดต/audit โดย skill `tech-stack-builder`
 (`.claude/skills/tech-stack-builder/SKILL.md`) เท่านั้น ซึ่งจะถามผู้ใช้แบบเข้มข้น (Discovery
 Questionnaire) ก่อนแนะนำเสมอ — ต้องมีครบทั้ง `high-level-architecture.md`, `api-spec.md`,
-`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ
+`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (2026-08-28) เลือก React Native
++ Expo (mobile/web client) กับ Supabase/PostgreSQL (backend/database) ตาม Discovery Questionnaire
