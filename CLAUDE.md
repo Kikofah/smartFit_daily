@@ -27,11 +27,12 @@ Work so far has moved through the first two stages of the documentation pipeline
   Tokens (colors, typography, spacing), UI Components & Patterns, and UX Guidelines & Rules, in an
   Earth Tone + Minimalist + Muji-inspired style. Check it before designing any new screen/component.
 
-Downstream stages `02-plan`, `03-task`, `02-design/02-technical`, and `04-retrospectives` are
-scaffolded but not the current priority — don't populate them speculatively; let them get filled in
-once the backlog is actually picked up for planning/build. `03-testing` is empty of actual content
-too, but unlike those it already has a dedicated skill/agent ready to populate it (see "Building the
-test suite" below) — build into it when actually asked, it just hasn't been exercised yet.
+Downstream stages `02-plan`, `03-task`, and `04-retrospectives` are scaffolded but not the current
+priority — don't populate them speculatively; let them get filled in once the backlog is actually
+picked up for planning/build. `03-testing` and `02-design/02-technical` are empty of actual content
+too, but unlike the others they already have a dedicated skill/agent ready to populate them (see
+"Building the test suite" and "Building the High Level Architecture doc" below) — build into them
+when actually asked, they just haven't been exercised much yet.
 
 `index.md` in each `docs/` folder is a **structural description of the folder's purpose only** — it
 is not where actual content goes. Add real documents as new files alongside `index.md`, never by
@@ -39,24 +40,26 @@ overwriting it.
 
 ### Skills & agents at a glance
 
-Four skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
+Five skill/agent pairs automate this pipeline — never hand-write the files they own. Each is
 detailed in its own subsection below; use this table to find the right one first.
 
 | Skill (agent) | Produces | Use when |
 |---|---|---|
-| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
+| `feature-list-journey` (`feature-journey-writer`) | `backlog.md`, `user-journeys.md` | A requirement doc, `backlog.md`, or `user-journeys.md` changes, `prototype-builder`/`architecture-builder` flags a discrepancy, or you're asked to audit/create/update any of the three. Also audits (but never writes) whether `acceptance-criteria.md`/`test-plan.md`/`test-cases/*.md`/prototypes/the architecture doc went stale as a result, and tells you which sibling skill to run if so (see "Keeping Requirement, Feature List/Backlog, and User Journey consistent"). |
 | `prototype-builder` (`prototype-writer`) | `docs/02-design/01-prototypes/v{N}/` (HTML) | Asked to build, mockup, or update a screen prototype, or to check whether an existing prototype is still consistent with the other six docs. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Acceptance Criteria/Test Case/Test Plan for drift, and hands any needed fix to whichever skill owns that file (see "Building HTML prototypes"). |
+| `architecture-builder` (`architecture-writer`) | `docs/02-design/02-technical/high-level-architecture.md` | Asked to create, update, or audit the conceptual (stack-agnostic) High Level Architecture doc. Audits (but never writes) Requirement/Backlog/Feature List/User Journey/Prototype for drift, and hands any needed fix to whichever skill owns that file (see "Building the High Level Architecture doc"). |
 | `test-suite-builder` (`test-suite-writer`) | `acceptance-criteria.md`, `test-plan.md`, `test-cases/{epic-slug}.md` | Asked to create/update/audit acceptance criteria, a test plan, or test cases, or when `feature-list-journey`/`prototype-builder` flags one as stale. Re-checks its own outputs against current upstream every run (see "Building the test suite"). |
-| `pipeline-orchestrator` (`pipeline-runner`) | Chains the three rows above for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype. |
+| `pipeline-orchestrator` (`pipeline-runner`) | Chains `feature-list-journey` and `test-suite-builder` for one requirement | Asked to take a requirement (new or changed) all the way through Requirement → Backlog/Feature List/User Journey → Acceptance Criteria/Test Plan/Test Case in one continuous invocation, instead of running each skill separately (see "Running the full pipeline in one go"). Does not touch Prototype or the Architecture doc — both stay separate, explicitly-requested steps. |
 
-Together the first three cover the full chain end to end — Requirement → Backlog/Feature List →
-User Journey → Prototype → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between
-Prototype and every other layer (a prototype can reveal something no doc captured yet, not just go
-stale from one). A change anywhere in it should eventually be reflected everywhere connected to it.
-No skill writes another's files; each audits across the seams it touches and tells you (or the
-right agent) which one to run next. `pipeline-orchestrator` doesn't add new rules of its own — it
-just runs `feature-list-journey` then `test-suite-builder` back to back for a given requirement so
-the user doesn't have to invoke each stage by hand.
+Together `feature-list-journey`, `prototype-builder`, `architecture-builder`, and `test-suite-builder`
+cover the full chain end to end — Requirement → Backlog/Feature List → User Journey → Prototype /
+Architecture → Acceptance Criteria → Test Plan/Test Case — plus the cross-links between Prototype,
+Architecture, and every other layer (a prototype or the architecture doc can each reveal something
+no other doc captured yet, not just go stale from one). A change anywhere in it should eventually be
+reflected everywhere connected to it. No skill writes another's files; each audits across the seams
+it touches and tells you (or the right agent) which one to run next. `pipeline-orchestrator` doesn't
+add new rules of its own — it just runs `feature-list-journey` then `test-suite-builder` back to
+back for a given requirement so the user doesn't have to invoke each stage by hand.
 
 ### Keeping Requirement, Feature List/Backlog, and User Journey consistent
 
@@ -176,6 +179,43 @@ Screen-level prototypes live in versioned folders `docs/02-design/01-prototypes/
    e.g. a layout the User Journey doesn't specify in enough detail, or a component/token `DESIGN.md`
    doesn't have yet.
 
+### Building the High Level Architecture doc
+
+A single conceptual architecture doc, invoke the `architecture-builder` skill
+(`.claude/skills/architecture-builder/SKILL.md`) or `architecture-writer` agent
+(`.claude/agents/architecture-writer.md`) to create/update/audit it — never hand-write it:
+
+- `docs/02-design/02-technical/high-level-architecture.md` — system context, conceptual
+  components/modules (named by responsibility, not by framework), data flow per user journey
+  (one Mermaid diagram per related group of journeys, each step mapped back to a `user-journeys.md`
+  step number), conceptual data entities (no DB schema — no types/keys), external integration
+  boundaries (YouTube, Health API/wearable, Bluetooth smart scale, tied to the relevant NFRs), and
+  cross-cutting concerns referencing the NFR doc conceptually.
+
+**The single rule that matters most for this doc: it must stay conceptual, never tied to a
+technical stack.** No specific framework, database, cloud provider, language, or API style names —
+describe everything by function/role instead (e.g. "mobile client", "a structured data store",
+"server-side compute layer"). The one exception is an external system's name that a requirement
+doc already fixes as a business fact (e.g. "YouTube" in REQ-04, "Apple Health/Google Health
+Connect" in REQ-13) — those are documented as external integration boundaries, not as the team's
+chosen stack. This doc is meant to precede whatever stack-specific documents eventually land
+alongside it in `02-technical/` (database schema, API design, tech choices) once the team picks a
+stack — it is not those documents.
+
+It's a single file, not versioned like the prototypes — update it in place. Default scope is the
+entire backlog; it can be narrowed to a Feature ID, an Epic, or one section of the doc. Like
+`prototype-builder`, it treats `01-spec/` (including the NFR doc), `backlog.md`, and
+`user-journeys.md` as read-only upstream, and only informationally references the prototype
+(`docs/02-design/01-prototypes/v*/`) if one exists — it never edits any of those, handing fixes to
+`feature-list-journey` or `prototype-builder` instead. Always proposes a content outline (which
+components, which data flows, which integration boundaries) for the user to confirm before writing.
+Re-run this whenever `01-spec/`, `backlog.md`, or `user-journeys.md` changes, or when the doc has
+been hand-edited directly — it audits itself for staleness/contradiction against those three (plus
+a self-check that no stack-specific wording crept in) before writing anything, using the same
+≥3-options/pros-cons/recommendation ask-user protocol as every other skill here for any real
+ambiguity or conflict. This skill is **not** part of `pipeline-orchestrator` — same treatment as
+Prototype, it stays a separate, explicitly-requested step.
+
 ### Building the test suite (Acceptance Criteria, Test Plan, Test Cases)
 
 Three test artifacts, invoke the `test-suite-builder` skill (`.claude/skills/test-suite-builder/SKILL.md`)
@@ -241,7 +281,9 @@ to make sure it goes in the right place:
 2. `docs/02-design/` — design derived from requirements:
    - `01-prototypes/` — UI/UX prototypes, wireframes, user flow, design system — holds
      `user-journeys.md`, `DESIGN.md`, and versioned HTML prototype folders `v1/`, `v2/`, ...
-   - `02-technical/` — technical design: architecture, database schema, API design, tech choices
+   - `02-technical/` — technical design: holds `high-level-architecture.md` (the conceptual,
+     stack-agnostic architecture — see "Building the High Level Architecture doc" above), plus,
+     once a stack is chosen, database schema/API design/tech-choice docs (not yet populated)
 3. `docs/03-testing/` — testing derived from design:
    - `01-test-plan/` — holds `test-plan.md` (one file, whole-project test strategy) and
      `test-cases/{epic-slug}.md` (one file per epic) — see "Building the test suite" below

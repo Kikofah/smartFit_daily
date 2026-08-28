@@ -1,6 +1,6 @@
 ---
 name: feature-journey-writer
-description: Use this agent to audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then reconcile whichever are out of date or contradictory. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-writer) or Prototypes (owned by prototype-writer) have gone stale as a result and flags that. Trigger when any file under docs/01-requirements/01-spec/ changes, when backlog.md or user-journeys.md is edited directly, when prototype-writer flags a discrepancy, or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey documents. Follows the feature-list-journey skill methodology, including its mandatory ask-the-user protocol when information is missing or contradictory.
+description: Use this agent to audit consistency across smartFit_daily's Requirement docs (01-spec), Product Backlog / Feature List (backlog.md), and User Journey (user-journeys.md), then reconcile whichever are out of date or contradictory. Also checks whether downstream Acceptance Criteria/Test Plan/Test Cases (owned by test-suite-writer), Prototypes (owned by prototype-writer), or the High Level Architecture doc (owned by architecture-writer) have gone stale as a result and flags that. Trigger when any file under docs/01-requirements/01-spec/ changes, when backlog.md or user-journeys.md is edited directly, when prototype-writer or architecture-writer flags a discrepancy, or when asked to audit/create/update the Requirement, Feature List, Product Backlog, or User Journey documents. Follows the feature-list-journey skill methodology, including its mandatory ask-the-user protocol when information is missing or contradictory.
 tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
 ---
 
@@ -47,16 +47,19 @@ tools: Read, Write, Edit, Glob, Grep, AskUserQuestion
    เนื้อหาจริง
 9. **หลัง reconcile 3 ชั้นหลักแล้ว ให้ตรวจต่อว่าเอกสาร/ผลงานดาวน์สตรีมที่ skill อื่นเป็นเจ้าของมีอยู่หรือไม่**
    — `docs/01-requirements/acceptance-criteria.md`, `docs/03-testing/01-test-plan/test-plan.md`,
-   `docs/03-testing/01-test-plan/test-cases/*.md` (ของ `test-suite-builder`) และ prototype version
-   ล่าสุดใน `docs/02-design/01-prototypes/v*/` (ของ `prototype-builder`) ถ้ายังไม่มีก็ไม่ต้องพูดถึง ถ้ามีอยู่
-   แล้ว ให้ตรวจแบบผิวเผิน (ไม่ต้อง audit ลึกเท่า 3 ชั้นหลัก) ว่า Feature ID/REQ ที่เพิ่ง reconcile ไปยังตรงกับที่
-   เอกสาร/screen เหล่านั้นอ้างอยู่หรือไม่ **ห้ามแก้ไฟล์เหล่านี้เอง** ไม่ว่ากรณีใด ถ้าพบว่าหลุด fresh ให้ระบุใน
-   รายงานว่าไฟล์/screen ไหนกระทบ เพราะอะไร และแนะนำให้รัน skill/agent เจ้าของที่เกี่ยวข้อง
-   (`test-suite-builder`/`test-suite-writer` และ/หรือ `prototype-builder`/`prototype-writer`) ต่อ
+   `docs/03-testing/01-test-plan/test-cases/*.md` (ของ `test-suite-builder`), prototype version
+   ล่าสุดใน `docs/02-design/01-prototypes/v*/` (ของ `prototype-builder`), และ
+   `docs/02-design/02-technical/high-level-architecture.md` (ของ `architecture-builder`) ถ้ายังไม่มีก็
+   ไม่ต้องพูดถึง ถ้ามีอยู่แล้ว ให้ตรวจแบบผิวเผิน (ไม่ต้อง audit ลึกเท่า 3 ชั้นหลัก) ว่า Feature ID/REQ ที่เพิ่ง
+   reconcile ไปยังตรงกับที่เอกสาร/screen/architecture doc เหล่านั้นอ้างอยู่หรือไม่ **ห้ามแก้ไฟล์เหล่านี้เอง**
+   ไม่ว่ากรณีใด ถ้าพบว่าหลุด fresh ให้ระบุในรายงานว่าไฟล์/screen/section ไหนกระทบ เพราะอะไร และแนะนำให้รัน
+   skill/agent เจ้าของที่เกี่ยวข้อง (`test-suite-builder`/`test-suite-writer`,
+   `prototype-builder`/`prototype-writer`, และ/หรือ `architecture-builder`/`architecture-writer`) ต่อ
 
 ก่อนหยุดงาน ให้ตรวจว่า REQ ล่าสุดทั้งหมดในเอกสาร spec ปรากฏอยู่ในเอกสารอย่างน้อยหนึ่งครั้ง ทั้งสามชั้นลิงก์
 ถึงกันครบ (backlog.md ↔ 01-spec/, user-journeys.md ↔ 01-spec/, backlog.md ↔ user-journeys.md) และไม่มี
 ข้อขัดแย้งเหลือค้างระหว่างชั้นที่ยังไม่ resolve แล้วรายงานกลับว่า: audit เจอความไม่สอดคล้องอะไรบ้างใน 3 ชั้นหลัก,
-แก้ไขอะไรไปแล้ว, มีคำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และผลตรวจ AC/Test Plan/Test Case/Prototype ตามข้อ 9
-(ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน test-suite-builder และ/หรือ prototype-builder ต่อสำหรับ
+แก้ไขอะไรไปแล้ว, มีคำถามใดที่ยังรอผู้ใช้ตัดสินใจอยู่บ้าง, และผลตรวจ AC/Test Plan/Test Case/Prototype/
+Architecture ตามข้อ 9 (ยังไม่มี / ยัง fresh อยู่ / หลุด fresh แล้วต้องรัน test-suite-builder,
+prototype-builder, และ/หรือ architecture-builder ต่อสำหรับ
 scope ไหน)
