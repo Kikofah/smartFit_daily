@@ -95,7 +95,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | YouTube Data API | REC-1, REC-2 | ชุดวิดีโอจำลองพร้อม metadata ครบ (ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา) ให้ REC-1 จับคู่แคลอรี่เป้าหมายได้ และ REC-2 คำนวณ MET ได้โดยไม่ต้องเรียก API จริง — ควรมีชุดที่ "ไม่มีวิดีโอตรงเป้าเป๊ะ" ด้วย เพื่อทดสอบ tolerance (ดู Risk R1 ใน §4) |
 | Health API / wearable (Apple Health, Google Health Connect) | INT-3 | payload จำลองของแคลอรี่เผาผลาญจากอัตราการเต้นหัวใจ รวมถึงกรณีค่าที่ต่างจากค่าประมาณ MET มาก (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
 | ตาชั่งอัจฉริยะผ่าน Bluetooth | INT-2 | payload น้ำหนัก/องค์ประกอบร่างกายจำลอง รวมกรณีชั่งหลายครั้งในวันเดียว (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
-| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification) | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR ที่ "not testable" ในรอบนี้ (ดู §5) |
+| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification) | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR ที่ "not testable" ในรอบนี้ (ดู §5) — จะ unblock ได้เมื่อ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md)) เสร็จจริง — **ปัจจุบัน task นี้ยังเป็น "ยังไม่เริ่ม"** ไม่ใช่ backend จริงในตอนนี้ |
 
 ---
 
@@ -113,11 +113,11 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | R4 | INT-1 ไม่ได้ระบุจำนวนวัน log ขั้นต่ำก่อนเริ่มพยากรณ์วันถึงเป้าหมาย — พยากรณ์จากข้อมูล 1 วันอาจให้ผลลัพธ์ที่เข้าใจผิดได้ | [20260823-04-smart-integrations.md § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260823-04-smart-integrations.md) | Medium | Medium (Could — ไม่กระทบ core loop แต่กระทบความน่าเชื่อถือของ insight) | นอกขอบเขต execute รอบนี้ (Epic 4 = Could) — เตรียม test case ที่ระบุ edge case "log น้อยวัน" ไว้ล่วงหน้าเพื่อบังคับให้ทีมยืนยันค่าขั้นต่ำก่อน implement จริง |
 | R5 | INT-2/INT-3 ไม่ได้ระบุลำดับความสำคัญเมื่อข้อมูลชนกัน (ชั่งน้ำหนักหลายครั้ง/วัน ใช้ค่าล่าสุดหรือค่าเฉลี่ย; wearable ต่างจากค่าประมาณ MET มากควรทำอย่างไร) — ค่าที่ผิดจะไหลต่อไปกระทบ TDEE, REC-2, PLN-3, INT-1 | [20260823-04-smart-integrations.md § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260823-04-smart-integrations.md) | Medium | High (ข้อมูลผิดไหลต่อหลาย feature แม้ตัว Epic 4 เองเป็น Could) | นอกขอบเขต execute รอบนี้ — เมื่อถึงเวลา implement ต้อง resolve ก่อนเขียน test case แบบ conflict-data จริงจัง ระหว่างนี้เขียนได้เฉพาะ happy-path (ไม่มีข้อมูลชนกัน) |
 | R6 | NFR-01 ยังไม่มีตัวเลข threshold เวลาโหลด Daily Dashboard ที่แน่นอน (เช่น "< 2 วิ บน 4G") เพราะยังไม่มี backend/infra จริงให้วัด | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | High | Medium | ทดสอบเชิงคุณภาพไปก่อน ("การแสดงผลรู้สึกหน่วงหรือไม่ในสายตาผู้ทดสอบ") แทนตัวเลขที่ชัดเจน จนกว่าจะยืนยัน threshold ตอนเข้า implementation จริง |
-| R7 | NFR-04 (encryption at rest) และ NFR-06 (data deletion) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบ ไม่ใช่ skip เงียบ ๆ — บันทึกเป็นรายการที่ต้องกลับมาทดสอบเมื่อมี backend |
+| R7 | NFR-04 (encryption at rest) และ NFR-06 (data deletion) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบ ไม่ใช่ skip เงียบ ๆ — มี concrete task รองรับแล้ว: [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) ใน MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md) (สถานะปัจจุบัน: ยังไม่เริ่ม) — กลับมาทดสอบเมื่อ task นั้นเสร็จจริง ไม่ใช่แค่ "รอเมื่อมี backend" แบบลอยๆ อีกต่อไป |
 | R8 | NFR-07 ยังไม่มีตัวเลข uptime/SLA เฉพาะสำหรับ YouTube/Health API เพราะเป็น third-party service ที่ทีมไม่ได้ควบคุม SLA เอง | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Medium | Medium | ทดสอบพฤติกรรม fallback ด้วยการ inject timeout/error ปลอมใน mock (ดู §3) แทนการอิงตัวเลข SLA จริง — ยืนยันแค่ว่า "core loop ยังใช้งานได้เมื่อ external API ล่ม" ตรงตาม NFR-07 |
 | R9 | Data retention period ของ log ประวัติย้อนหลัง (PLN-3) ยังไม่ได้ระบุ เกี่ยวโยงกับ NFR-06 | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Low (ยังไม่ใช่เงื่อนไข Must ของรอบนี้) | Low ตอนนี้ | นอกขอบเขตการทดสอบรอบนี้ — บันทึกเป็น open question รอ resolve ก่อนเขียน test case เรื่อง log purge/retention |
 | R10 | NFR-10 ยังไม่ระบุรูปแบบวันที่/ตัวเลขตาม locale ไทยที่แน่นอน (ค.ศ. หรือ พ.ศ.) — DESIGN.md §4.5 เองก็ทิ้ง open point นี้ไว้เช่นกัน | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Low (ไม่กระทบ core loop) | Low | ทดสอบเฉพาะกติกาที่ตายตัวแล้วไปก่อน (ภาษาไทยเป็นหลัก, ทับศัพท์คำเทคนิคได้) ส่วนรูปแบบวันที่ยังไม่ lock ค่าใดจนกว่าจะยืนยัน |
-| R11 | NFR-11 (PDPA — consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบเหมือน R7 — บันทึกเป็นรายการที่ต้องกลับมาทดสอบเมื่อมี backend/ระบบบัญชีผู้ใช้จริง |
+| R11 | NFR-11 (PDPA — consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบเหมือน R7 — มี concrete task รองรับแล้วเช่นเดียวกัน: [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) ใน MVP Phase (สถานะปัจจุบัน: ยังไม่เริ่ม) — กลับมาทดสอบเมื่อ task นั้นเสร็จจริง |
 
 ---
 
@@ -149,7 +149,10 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 4. NFR ที่ **execute ได้จริง** ในสถานะปัจจุบัน (NFR-01, NFR-02, NFR-03, NFR-05, NFR-07 บางส่วนผ่าน mock,
    NFR-09/NFR-10 ผ่านการตรวจสอบ prototype โดยตรง) ผ่านเกณฑ์เชิงคุณภาพตาม §4 (R6, R8, R10) — ส่วน
    NFR-04/NFR-06/NFR-08/NFR-11 (พึ่ง backend จริง) ถูก mark ว่า **"not testable in this round"** อย่างชัด
-   แจ้งใน test result ไม่ใช่ถูกละไว้เฉย ๆ
+   แจ้งใน test result ไม่ใช่ถูกละไว้เฉย ๆ — เงื่อนไขที่จะทำให้ทั้ง 4 ตัวนี้ย้ายออกจากกลุ่มนี้ในการรันรอบ
+   ถัดไปคือ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/
+   ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md))
+   ต้องเสร็จจริงก่อน — **ปัจจุบันยังเป็น "ยังไม่เริ่ม" จึงยังไม่เปลี่ยนสถานะ testability ในรอบนี้**
 5. ความเสี่ยงทั้งหมดใน §4 ถูกบันทึกสถานะ (resolved / accepted-as-is / deferred พร้อมเหตุผล) ก่อนปิดรอบ
    — ไม่จำเป็นต้อง resolve ทุกข้อ แต่ต้องมีการตัดสินใจที่ชัดเจนต่อแต่ละข้อ ไม่ใช่ถูกลืม
 6. ผลการทดสอบถูกบันทึกไว้ใน `docs/03-testing/02-test-result/` และสรุปไว้ใน
@@ -166,4 +169,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 - [docs/02-design/01-prototypes/user-journeys.md](../../02-design/01-prototypes/user-journeys.md) —
   อ้างอิง flow/Preconditions ที่ใช้ในการออกแบบ Usability Testing ของ onboarding
 - `docs/01-requirements/01-spec/` ทั้ง 4 ไฟล์ — ที่มาของความเสี่ยง R1–R5 ในหัวข้อ 4 (ดูลิงก์ต่อแถวในตาราง)
+- [Release Plan](../../01-requirements/02-plan/release-plan.md) และ
+  [TASK-INFRA-01](../../01-requirements/03-task/phase-1-mvp-core-loop.md) — เงื่อนไขที่จะ unblock
+  NFR-04/06/08/11 จาก "not testable in this round" (R7, R11, §5 ข้อ 4)
 - ผลการทดสอบจริง: [docs/03-testing/02-test-result/](../02-test-result/index.md)
