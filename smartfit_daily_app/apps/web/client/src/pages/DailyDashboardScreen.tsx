@@ -7,10 +7,11 @@ import { VideoCard } from '../components/VideoCard';
 import { StreakBadge } from '../components/StreakBadge';
 import { IconDashedCircle } from '../components/Icon';
 import { api } from '../services/api';
+import { useProfile } from '../hooks/useProfile';
+import { useAuth } from '../store/AuthContext';
 import { workoutDraft, type WorkoutVideoDraft } from '../store/workoutDraft';
 import { colors, spacing, typography } from '../constants/theme';
 import { dailyDashboardScreenStyles as styles } from './styles';
-import type { UserProfile } from '@smartfit/shared-types';
 
 /** Mock alternates for "เปลี่ยนวิดีโอ" — GET /workouts/today/recommendation/swap is still a 501 stub (YouTube Data API pending). */
 const MOCK_RECOMMENDATIONS: WorkoutVideoDraft[] = [
@@ -55,25 +56,23 @@ const TODAY_CAPTION = new Date().toLocaleDateString('th-TH', { weekday: 'long', 
  */
 export default function DailyDashboardScreen() {
   const navigate = useNavigate();
-  const [displayName, setDisplayName] = useState<string | null>(null);
-  const [goalKcal, setGoalKcal] = useState(0);
+  const { user } = useAuth();
+  const { profile } = useProfile();
   const [accumulatedKcal, setAccumulatedKcal] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
   const [isCheatRest, setIsCheatRest] = useState(false);
   const [videoIdx, setVideoIdx] = useState(0);
-  const [weightKg, setWeightKg] = useState(60);
+
+  const displayName = profile?.displayName ?? 'ผู้ใช้งาน';
+  const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
+  const weightKg = profile?.weightKg ?? 60;
 
   useEffect(() => {
+    // Wait for Firebase Auth to finish restoring the session (matters on a
+    // hard refresh — api.ts reads auth.currentUser synchronously, so firing
+    // before it resolves would silently send these requests unauthenticated.
+    if (!user) return;
     const today = new Date().toISOString().slice(0, 10);
-
-    api
-      .get<UserProfile>('/profile')
-      .then((profile) => {
-        setDisplayName(profile.displayName);
-        setGoalKcal(profile.goalSelection?.dailyCalorieTargetKcal ?? 0);
-        setWeightKg(profile.weightKg);
-      })
-      .catch(() => {});
 
     api
       .get<{ accumulatedKcal: number }>(`/logs/${today}`)
@@ -84,7 +83,7 @@ export default function DailyDashboardScreen() {
       .get<{ currentStreakDays: number }>('/streak')
       .then((s) => setStreakDays(s.currentStreakDays))
       .catch(() => {});
-  }, []);
+  }, [user]);
 
   const video = MOCK_RECOMMENDATIONS[videoIdx]!;
 
@@ -124,7 +123,7 @@ export default function DailyDashboardScreen() {
       <View style={styles.topBar}>
         <View>
           <Text style={typography.caption}>{TODAY_CAPTION}</Text>
-          <Text style={typography.h1}>สวัสดี {displayName ?? 'ผู้ใช้งาน'}</Text>
+          <Text style={typography.h1}>สวัสดี {displayName}</Text>
         </View>
         <StreakBadge days={streakDays} />
       </View>

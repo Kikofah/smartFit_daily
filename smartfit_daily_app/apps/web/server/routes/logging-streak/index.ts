@@ -1,21 +1,33 @@
 import { Router } from 'express';
+import { FieldPath } from 'firebase-admin/firestore';
 import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
 
 export const router = Router();
 
-/** GET /api/logs — PLN-3 / REQ-10. Optional date range; returns newest first. */
+/**
+ * GET /api/logs — PLN-3 / REQ-10. Optional date range; returns newest first.
+ * `dailyLogs/{date}` docs don't store `logDate` as a field (database-schema.md
+ * §8.2 — the ISO date is the doc ID itself), so order/filter by document ID
+ * (lexicographic = chronological for YYYY-MM-DD) and stitch `logDate` back
+ * onto each entry from `d.id` for the client (DailyLog's documented shape).
+ *
+ * Queries ascending (Firestore auto-indexes `__name__` ascending for free)
+ * and reverses in memory for "newest first" — `orderBy(..., 'desc')` on
+ * `__name__` needs an explicit composite index to be created/deployed via
+ * firestore.indexes.json first, which this avoids entirely.
+ */
 router.get(
   '/logs',
   asyncHandler(async (req, res) => {
     const { fromDate, toDate } = req.query as { fromDate?: string; toDate?: string };
 
-    let query = db.collection(`users/${req.userId}/dailyLogs`).orderBy('logDate', 'desc') as FirebaseFirestore.Query;
-    if (fromDate) query = query.where('logDate', '>=', fromDate);
-    if (toDate) query = query.where('logDate', '<=', toDate);
+    let query = db.collection(`users/${req.userId}/dailyLogs`).orderBy(FieldPath.documentId(), 'asc') as FirebaseFirestore.Query;
+    if (fromDate) query = query.where(FieldPath.documentId(), '>=', fromDate);
+    if (toDate) query = query.where(FieldPath.documentId(), '<=', toDate);
 
     const snapshot = await query.get();
-    return res.json(snapshot.docs.map((d) => d.data()));
+    return res.json(snapshot.docs.map((d) => ({ logDate: d.id, ...d.data() })).reverse());
   }),
 );
 
@@ -27,7 +39,7 @@ router.get(
     if (!snapshot.exists) {
       return res.status(404).json({ error: 'No log for this date.' });
     }
-    return res.json(snapshot.data());
+    return res.json({ logDate: req.params.date, ...snapshot.data() });
   }),
 );
 
