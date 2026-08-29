@@ -1,5 +1,35 @@
+.github/
 .obsidian/
 .DS_Store
 
 # Claude Code local settings (permissions etc.) - not shared project config
 .claude/settings.local.json
+
+# Node / TypeScript
+node_modules/
+dist/
+lib/
+*.tsbuildinfo
+npm-debug.log*
+
+# Expo (apps/mobile)
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.env
+.env.local
+
+# EAS
+.eas/
+

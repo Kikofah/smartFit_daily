@@ -4,11 +4,37 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project status
 
-This repository currently contains no application source code, package manifest, or build/test
-tooling. It is an **Obsidian vault** (see `.obsidian/`, gitignored) used purely for project
-documentation. There are no commands to build, lint, or test yet — when code is added, this file
-should be updated with the actual commands (build/lint/test/single-test) and a description of the
-real architecture.
+This repository is an **Obsidian vault** (see `.obsidian/`, gitignored) used for project
+documentation, **plus** an application codebase scaffolded on 2026-08-29 following the stack
+decided in `docs/02-design/02-technical/tech-stack.md`. The documentation pipeline described
+below remains the source of truth for requirements/design/business rules — application code
+should never contradict it; when they disagree, treat the docs as correct and either fix the code
+or flag the doc as stale via the relevant skill.
+
+**Real architecture**: npm-workspaces monorepo —
+
+- `apps/mobile/` — React Native + Expo client (TypeScript, Expo Router). Screen tree mirrors
+  `docs/02-design/01-prototypes/v1/`.
+- `apps/functions/` — Firebase Cloud Functions backend (Node.js + TypeScript), one folder per
+  conceptual component from `high-level-architecture.md` §3.
+- `packages/shared-types/` — TypeScript entities shared by both apps, mirroring
+  `database-schema.md`'s conceptual entities (one file per HLA component).
+
+Most Cloud Functions and screens are scaffolded stubs (see inline `TODO`s) — this is a folder
+structure, not a working feature set yet.
+
+**Commands** (run from repo root):
+
+```bash
+npm install
+npm run mobile           # Expo dev server (apps/mobile)
+npm run functions:serve  # build + Firebase emulator (apps/functions)
+npm run typecheck        # tsc --noEmit across every workspace
+npm run lint             # eslint across every workspace
+npm run test             # per-workspace test script (none real yet)
+```
+
+There is no single-test command yet (no test suites exist in either app).
 
 ## Documentation pipeline status
 

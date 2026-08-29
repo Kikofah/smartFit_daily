@@ -1,0 +1,41 @@
+{
+  "name": "@smartfit/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "React Native + Expo client — screens mirror docs/02-design/01-prototypes/v1/.",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "build:web": "expo export --platform web",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "echo \"no tests yet\" && exit 0",
+    "postinstall": "node ./scripts/fix-metro-monorepo-entry.js"
+  },
+  "dependencies": {
+    "@smartfit/shared-types": "*",
+    "expo": "~51.0.0",
+    "expo-router": "~3.5.0",
+    "expo-status-bar": "~1.12.0",
+    "firebase": "^10.12.0",
+    "react": "18.2.0",
+    "react-native": "0.74.0",
+    "react-native-safe-area-context": "4.10.1",
+    "react-native-screens": "3.31.1",
+    "react-native-health": "^1.19.0",
+    "react-native-health-connect": "^3.2.0",
+    "react-native-ble-plx": "^3.2.1",
+    "react-native-web": "~0.19.10",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "~18.2.79",
+    "eslint": "^8.57.0",
+    "eslint-config-expo": "^7.1.2",
+    "typescript": "^5.5.4"
+  }
+}

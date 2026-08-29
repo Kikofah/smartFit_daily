@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "smartFit_daily",
+    "slug": "smartfit-daily",
+    "scheme": "smartfitdaily",
+    "version": "0.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.smartfitdaily.app"
+    },
+    "android": {
+      "package": "com.smartfitdaily.app"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
