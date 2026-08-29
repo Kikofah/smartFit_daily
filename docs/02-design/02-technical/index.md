@@ -67,3 +67,10 @@ FK/constraint enforcement migration, รวมถึงกติกาใหม�
 — **อัปเดต 2026-08-29 (ล่าสุด)**: แก้ถ้อยคำล้าหลังใน `tech-stack.md` §7 ข้อ 1 และ §8 ที่ยังเขียนว่า
 `database-schema.md`/ภาคผนวก Stack Mapping ของ HLA/API Spec/Detailed Design "ยังต้องทำ"/"stale" ให้ตรงกับ
 สถานะจริงว่า sync/ออกแบบเสร็จสมบูรณ์แล้วทุกไฟล์ (cosmetic wording แก้เองได้ ไม่กระทบตัวเลือก stack จริง)
+— **อัปเดต 2026-08-29 (ล่าสุดสุด, `architecture-builder`)**: audit เต็มรูปแบบเทียบ `backlog.md`
+ฉบับที่เพิ่งเพิ่ม 2 แถวในตาราง NFR Traceability (NFR-12→REC-2/INT-3, NFR-13→INT-1) พบว่า HLA §1/§7 sync
+ครบแล้วจากรอบก่อนหน้า แต่พบว่า**หัวข้อ 10 (ภาคผนวก: Stack Mapping) เองล้าหลังไปอีกชั้น** — ยังอ้างเวอร์ชัน
+เบื้องต้นของ `tech-stack.md` §6.1 ทั้งที่ `tech-stack-builder` ปรับให้ละเอียดระดับ per-table/collection ไป
+แล้วในรอบ sync ก่อนหน้านี้ (บรรทัดด้านบน) จัดเป็น "Stack Mapping Appendix freshness" (มิเรอร์ข้อเท็จจริงที่
+ตัดสินใจแล้วที่อื่น) แก้ได้เองไม่ต้องถามผู้ใช้ — เขียนหัวข้อ 10 ใหม่ให้ตรงกับ §6.1 ฉบับละเอียดปัจจุบันแล้ว
+เนื้อหาหลักหัวข้อ 1-9 ของ HLA ไม่พบ drift อื่น

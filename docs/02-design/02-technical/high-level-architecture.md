@@ -5,8 +5,13 @@
 - **วันที่สร้าง:** 2026-08-28
 - **อัปเดตล่าสุด:** 2026-08-29 — (1) sync หัวข้อ 10 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1
   ฉบับ Firebase ใหม่ (2) เพิ่มการอ้างอิง NFR-12 (Reliability — Data Integrity) และ NFR-13 (Usability —
-  Data Visualization) เข้าหัวข้อ 7 ตามที่เพิ่มใหม่ใน NFR doc — audit หัวข้ออื่นทั้งหมดแล้วไม่พบ drift
-  เพิ่มเติม (ดู [log 2026-08-29](../../05-log/20260829-log.md))
+  Data Visualization) เข้าหัวข้อ 7 ตามที่เพิ่มใหม่ใน NFR doc (3) รอบ audit ล่าสุด — ตรวจ sync กับ
+  `backlog.md` ฉบับที่เพิ่งเพิ่ม 2 แถวในตาราง NFR Traceability (NFR-12→REC-2/INT-3, NFR-13→INT-1) พบว่า
+  หัวข้อ 1/7 ตรงอยู่แล้ว (ไม่มีอะไรต้องแก้เพิ่มจากส่วนนี้) แต่พบว่าหัวข้อ 10 เองล้าหลังไปอีกชั้น — sync ครั้ง
+  ก่อนอ้างเวอร์ชัน `tech-stack.md` §6.1 แบบเบื้องต้น ทั้งที่ `tech-stack-builder` ปรับ §6.1 ให้ละเอียดระดับ
+  per-table/collection ไปแล้วในรอบถัดมา (Stack Mapping Appendix freshness — แก้ได้เองไม่ต้องถามผู้ใช้) จึง
+  เขียนหัวข้อ 10 ใหม่ให้ตรงกับ §6.1 ฉบับละเอียดปัจจุบัน — audit หัวข้ออื่นทั้งหมด (1-9) แล้วไม่พบ drift อื่น
+  (ดู [log 2026-08-29](../../05-log/20260829-log.md))
 - **สร้างโดย:** skill `architecture-builder`
 - **อ้างอิงจาก:** [Product Backlog](../../01-requirements/backlog.md),
   [Requirement ทั้ง 4 epic + NFR](../../01-requirements/01-spec/index.md),
@@ -424,23 +429,29 @@ flowchart TD
 > `architecture-builder` ครั้งถัดไป
 
 มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-(อัปเดต 2026-08-29 — เปลี่ยนจาก Supabase/PostgreSQL เป็น Firebase ตามคำขอของผู้ใช้งานโดยตรง ไม่ใช่ผลจาก
-Weighted Scoring Model เดิม ดู [tech-stack.md](tech-stack.md) §2 และ §5):
+(sync ล่าสุด 2026-08-29 — ฉบับละเอียดระดับ per-table/collection ตามแนวทาง Hybrid ที่ `api-db-spec-builder`
+และ `tech-stack-builder` ยืนยันร่วมกันแล้ว ไม่ใช่แนวทางเบื้องต้นแบบเดิมอีกต่อไป ดู [tech-stack.md](tech-stack.md)
+§2 และ §5 สำหรับเหตุผลการเลือก Firebase เอง):
+
+> เกณฑ์ embed vs. subcollection ที่ใช้ด้านล่าง (mirror จาก `database-schema.md` §8.2): ข้อมูล **bounded**
+> (ขอบเขตจำกัดชัดเจน, 1:1/multi-select เล็กกับผู้ใช้หรือ 1 เซสชัน, ไม่มี pattern query อิสระ) → **embed**
+> ในเอกสารแม่; ข้อมูล **unbounded** (สะสมทุกวัน/ทุกเซสชัน) หรือต้อง query/pagination อิสระ →
+> **subcollection แยก**
 
 | Conceptual Component (หัวข้อ 3) | Concrete Implementation |
 |---|---|
-| Personalization & Profile | Firestore collection `users/{userId}` เก็บ `profile`/`goalSelection`/`equipmentSelection` + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
-| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
-| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Cloud Function `sessionComplete` validate + เขียน `actualCalorieBurn` ลง Firestore |
-| Planner & Day-Status | Firestore collection `weeklyPlanEntries`/`dayStatus` + Cloud Function คำนวณ read-only flag (แทน Postgres view เดิม) + Cloud Function `cheatRest` (nested check ตาม Detailed Design) |
-| Logging & Streak | Firestore collection `dailyLogs`/`streakSnapshots` + Cloud Function ที่ trigger จาก Firestore `onWrite` เพื่อ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
-| Insights & Forecast | Firestore collection `weightForecastSnapshots` + Cloud Function `forecast` คำนวณจากประวัติ `dailyLogs`/`weightRecords` |
-| Integration Gateway | Cloud Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — ไม่เปลี่ยนจากเดิม |
+| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` อยู่ใน document เดียวกัน (bounded) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
+| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry — สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (bounded); ระหว่างสลับวิดีโอ (REC-3) อัปเดต embedded array field `rejectedVideoIds: []` ใน document เดียวกัน |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client ตาม NFR-01/03 → Cloud Function `sessionComplete` validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เก็บเป็น embedded map field `wearableReading` ใน document เดียวกัน — ทุก operation ที่รับ `sessionId` จาก client ต้อง `get()` ยืนยันว่า document นั้นมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ (**referential existence validation** — NFR-12, เพราะ Firestore ไม่มี FK) |
+| Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) ใช้ ID เดียวกับ `dailyLogs/{date}` เพื่ออ่าน 3 เอกสารของวันเดียวกันด้วย `get()` ตรง; Cloud Function ของ `PUT /planner/days/{date}` อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag; Cloud Function `cheatRest` อ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` เพื่อ enforce กติกา "วันนี้เท่านั้น" |
+| Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` (unbounded, ISO date) + embedded map field `streakSnapshot` ภายใน `users/{userId}` (1:1); all-or-nothing enforce ที่ Cloud Function ที่เขียน `dailyLogs/{date}`; Cloud Function trigger จาก Firestore `onWrite` ของ `dailyLogs/{date}`/`dayStatus/{date}` recompute `streakSnapshot` ทุกครั้งที่ต้นทางเปลี่ยน |
+| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` (unbounded) + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` (1:1) — Cloud Function `forecast` คำนวณจากประวัติ `dailyLogs`/`weightRecords` แล้วเขียนทับ `weightForecastSnapshot` |
+| Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` (bounded — 2 ประเภทตายตัวตาม INT-2/INT-3 ปัจจุบัน) — Cloud Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
 
-⚠️ เช่นเดียวกับ `tech-stack.md` § 6: ตารางนี้เป็น**แนวทางเบื้องต้น**เท่านั้น — โครงสร้าง collection/document
-ที่สมบูรณ์ (denormalize จาก 15 ตาราง relational เดิมใน `database-schema.md`) ยังไม่ถูกออกแบบอย่างเป็นทางการ
-ต้องรอ `api-db-spec-builder` ปรับ `database-schema.md`/`api-spec.md` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามอีก
-ครั้งเมื่อ `api-spec.md`/`database-schema.md` มีเวอร์ชัน Firebase ที่สมบูรณ์
+⚠️ **Referential existence validation เป็นกติกา cross-cutting** ไม่ได้ผูกกับ component เดียว (ดูหัวข้อ 7 —
+Reliability/NFR-12) — ทุก Cloud Function ที่รับ id อ้างอิงจาก client ต้อง `get()` ยืนยันว่า document ปลายทาง
+มีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ
 
-ดูรายละเอียดเหตุผลการเลือก stack, ประวัติการตัดสินใจ 2026-08-29, และ mapping ที่เหลือ (logical type →
-Firestore field type, REST convention → Firebase Cloud Functions routing) ที่ [tech-stack.md](tech-stack.md)
+ดูรายละเอียดเหตุผลการเลือก stack, ประวัติการตัดสินใจ 2026-08-29, mapping ที่เหลือ (logical type → Firestore
+field type ที่ §6.2, REST convention → Firebase Cloud Functions routing ที่ §6.3), และรายละเอียด per-table
+เต็มรูปแบบ (สอดคล้องกับ [`database-schema.md` §8.2/§8.3](database-schema.md)) ที่ [tech-stack.md](tech-stack.md)
