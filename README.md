@@ -36,10 +36,27 @@ npm run mobile
 
 Copy `smartfit_daily_app/.firebaserc`'s `default` project id to a real Firebase project before
 deploying, and set the Firebase env vars each app reads:
-`apps/web/client/.env` (copy from `.env.example`, `VITE_FIREBASE_*`) and
-`apps/mobile/.env` (copy from `.env.example`, `EXPO_PUBLIC_FIREBASE_*` — this app also needs
+`apps/web/client/.env` (copy from `.env.example`, `VITE_FIREBASE_*`),
+`apps/web/.env` (copy from `.env.example` — server-side, see "Local Admin SDK credentials" below),
+and `apps/mobile/.env` (copy from `.env.example`, `EXPO_PUBLIC_FIREBASE_*` — this app also needs
 `EXPO_PUBLIC_API_BASE_URL` pointing at wherever `apps/web`'s Express server runs, since it isn't
 served by the same origin the way the web client is).
+
+### Local Admin SDK credentials
+
+`apps/web/server` uses `firebase-admin` (Firestore + Auth token verification) — on real GCP
+hosting (Cloud Run, Cloud Functions, etc.) this auto-detects both the project and credentials from
+the ambient environment, but locally there's no such environment. Without setup, every route that
+touches Firestore or verifies a token fails (the server itself stays up — it's just a 500 per
+request — but nothing that needs Firestore/Auth admin access will work). Pick one:
+
+1. Firebase Console → Project settings → Service accounts → Generate new private key, then set
+   `GOOGLE_APPLICATION_CREDENTIALS=/absolute/path/to/the/downloaded/key.json` in `apps/web/.env`.
+2. Install the `gcloud` CLI and run `gcloud auth application-default login` once on this machine
+   (leave `GOOGLE_APPLICATION_CREDENTIALS` unset — it'll find the login automatically).
+
+Either way, keep `FIREBASE_PROJECT_ID` set in `apps/web/.env` too — the Admin SDK needs it to
+validate a token's audience claim even before it gets to the credentials check.
 
 ## Status
 

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { auth } from '../../firebaseAdmin';
+import { asyncHandler } from '../../asyncHandler';
 
 /**
  * POST /api/auth/forgot-password — ONB-0 / REQ-16
@@ -9,7 +10,7 @@ import { auth } from '../../firebaseAdmin';
  */
 export const router = Router();
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', asyncHandler(async (req, res) => {
   const { email } = req.body as { email?: string };
   if (!email) {
     return res.status(400).json({ error: 'email is required' });
@@ -29,4 +30,4 @@ router.post('/forgot-password', async (req, res) => {
   // TODO: send the reset email (Admin SDK's generatePasswordResetLink +
   // an email delivery mechanism).
   return res.status(202).json({ status: 'sent' });
-});
+}));

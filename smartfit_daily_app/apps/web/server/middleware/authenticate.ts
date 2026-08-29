@@ -27,7 +27,8 @@ export async function authenticate(req: Request, res: Response, next: NextFuncti
     const decoded = await auth.verifyIdToken(header.slice('Bearer '.length));
     req.userId = decoded.uid;
     next();
-  } catch {
+  } catch (e) {
+    console.error('verifyIdToken failed:', e);
     return res.status(401).json({ error: 'Invalid or expired session.' });
   }
 }

@@ -1,9 +1,11 @@
+import 'dotenv/config'; // must run before any other import touches process.env (firebaseAdmin.ts does, transitively)
 import express from 'express';
 import path from 'path';
 import { authenticate } from './middleware/authenticate';
 import { NotFoundError } from './assertDocExists';
 
 import { router as accountSessionRouter } from './routes/account-session/forgotPassword';
+import { router as pairingRouter } from './routes/pairing';
 import { router as personalizationProfileRouter } from './routes/personalization-profile';
 import { router as contentRecommendationRouter } from './routes/content-recommendation';
 import { router as exertionCalorieRouter } from './routes/exertion-calorie';
@@ -11,6 +13,11 @@ import { router as plannerDayStatusRouter } from './routes/planner-day-status';
 import { router as loggingStreakRouter } from './routes/logging-streak';
 import { router as insightsForecastRouter } from './routes/insights-forecast';
 import { router as integrationGatewayRouter } from './routes/integration-gateway';
+
+// Defense-in-depth alongside asyncHandler (see asyncHandler.ts) — logs
+// instead of silently killing the process if something still slips through
+// outside any request's promise chain.
+process.on('unhandledRejection', (reason) => console.error('Unhandled rejection:', reason));
 
 const app = express();
 app.use(express.json());
@@ -20,6 +27,12 @@ app.use(express.json());
 // is the one operation that needs a server route, and it runs before the
 // user has a session, so it's mounted without `authenticate`.
 app.use('/api/auth', accountSessionRouter);
+
+// Device-pairing handoff (2026-08-29) — mixed auth requirements per route
+// (create-code needs a signed-in web user, redeem deliberately doesn't), so
+// it applies `authenticate` itself per-route rather than via this blanket
+// mount — see routes/pairing/index.ts.
+app.use('/api', pairingRouter);
 
 // Every other route needs a verified Firebase ID token (see
 // server/middleware/authenticate.ts, replacing Cloud Functions' onCall()
