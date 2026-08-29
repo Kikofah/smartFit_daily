@@ -5,18 +5,16 @@
 
 export type WeightRecordSource = 'manual' | 'smart_scale_sync';
 
+/** Subcollection doc `users/{userId}/weightRecords/{recordId}` — id is the auto-generated Firestore doc ID, never a stored field (§8.2). */
 export interface WeightRecord {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id
   weightKg: number;
   bodyCompositionNote?: string;
   recordedAt: string; // ISO-8601 datetime
   source: WeightRecordSource;
 }
 
+/** Embedded map field `weightForecastSnapshot` inside `users/{userId}` — no id/userProfileId (§8.2). */
 export interface WeightForecastSnapshot {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id, 1:1
   forecastedGoalDate: string; // ISO-8601 date
   averageDailyDeficitKcal: number;
   computedAt: string; // ISO-8601 datetime

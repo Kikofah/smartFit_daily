@@ -10,7 +10,7 @@ import { api } from '../services/api';
 import { workoutDraft, type WorkoutVideoDraft } from '../store/workoutDraft';
 import { colors, spacing, typography } from '../constants/theme';
 import { dailyDashboardScreenStyles as styles } from './styles';
-import type { GoalSelection, UserProfile } from '@smartfit/shared-types';
+import type { UserProfile } from '@smartfit/shared-types';
 
 /** Mock alternates for "เปลี่ยนวิดีโอ" — GET /workouts/today/recommendation/swap is still a 501 stub (YouTube Data API pending). */
 const MOCK_RECOMMENDATIONS: WorkoutVideoDraft[] = [
@@ -55,6 +55,7 @@ const TODAY_CAPTION = new Date().toLocaleDateString('th-TH', { weekday: 'long', 
  */
 export default function DailyDashboardScreen() {
   const navigate = useNavigate();
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [goalKcal, setGoalKcal] = useState(0);
   const [accumulatedKcal, setAccumulatedKcal] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
@@ -66,8 +67,9 @@ export default function DailyDashboardScreen() {
     const today = new Date().toISOString().slice(0, 10);
 
     api
-      .get<UserProfile & { goalSelection?: GoalSelection }>('/profile')
+      .get<UserProfile>('/profile')
       .then((profile) => {
+        setDisplayName(profile.displayName);
         setGoalKcal(profile.goalSelection?.dailyCalorieTargetKcal ?? 0);
         setWeightKg(profile.weightKg);
       })
@@ -122,7 +124,7 @@ export default function DailyDashboardScreen() {
       <View style={styles.topBar}>
         <View>
           <Text style={typography.caption}>{TODAY_CAPTION}</Text>
-          <Text style={typography.h1}>สวัสดี</Text>
+          <Text style={typography.h1}>สวัสดี {displayName ?? 'ผู้ใช้งาน'}</Text>
         </View>
         <StreakBadge days={streakDays} />
       </View>

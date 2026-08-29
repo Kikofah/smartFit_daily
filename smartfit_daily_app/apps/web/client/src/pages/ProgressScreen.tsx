@@ -24,13 +24,13 @@ import { progressScreenStyles as styles } from './styles';
 // Until both exist, the trend line below is a small realistic mock dataset; only the forecast
 // date/deficit/current-weight numbers attempt the real endpoint first.
 const MOCK_WEIGHT_HISTORY: WeightRecord[] = [
-  { id: 'mock-1', userProfileId: 'mock', weightKg: 72.1, recordedAt: daysAgoIso(56), source: 'manual' },
-  { id: 'mock-2', userProfileId: 'mock', weightKg: 71.6, recordedAt: daysAgoIso(46), source: 'manual' },
-  { id: 'mock-3', userProfileId: 'mock', weightKg: 70.9, recordedAt: daysAgoIso(35), source: 'smart_scale_sync' },
-  { id: 'mock-4', userProfileId: 'mock', weightKg: 71.3, recordedAt: daysAgoIso(25), source: 'manual' },
-  { id: 'mock-5', userProfileId: 'mock', weightKg: 70.2, recordedAt: daysAgoIso(14), source: 'smart_scale_sync' },
-  { id: 'mock-6', userProfileId: 'mock', weightKg: 69.1, recordedAt: daysAgoIso(6), source: 'manual' },
-  { id: 'mock-7', userProfileId: 'mock', weightKg: 68.4, recordedAt: daysAgoIso(0), source: 'smart_scale_sync' },
+  { weightKg: 72.1, recordedAt: daysAgoIso(56), source: 'manual' },
+  { weightKg: 71.6, recordedAt: daysAgoIso(46), source: 'manual' },
+  { weightKg: 70.9, recordedAt: daysAgoIso(35), source: 'smart_scale_sync' },
+  { weightKg: 71.3, recordedAt: daysAgoIso(25), source: 'manual' },
+  { weightKg: 70.2, recordedAt: daysAgoIso(14), source: 'smart_scale_sync' },
+  { weightKg: 69.1, recordedAt: daysAgoIso(6), source: 'manual' },
+  { weightKg: 68.4, recordedAt: daysAgoIso(0), source: 'smart_scale_sync' },
 ];
 const MOCK_TARGET_WEIGHT_KG = 64;
 

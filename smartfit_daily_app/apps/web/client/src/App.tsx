@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './store/AuthContext';
 import { TabsLayout } from './layouts/TabsLayout';
+import { OnboardingLayout } from './layouts/OnboardingLayout';
 
 import WelcomeScreen from './pages/auth/WelcomeScreen';
 import SignupScreen from './pages/auth/SignupScreen';
@@ -37,10 +38,12 @@ export function App() {
           <Route path="/login" element={<LoginScreen />} />
           <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
 
-          <Route path="/onboarding/personal-info" element={<PersonalInfoScreen />} />
-          <Route path="/onboarding/equipment" element={<EquipmentScreen />} />
-          <Route path="/onboarding/goal-select" element={<GoalSelectScreen />} />
-          <Route path="/onboarding/goal-confirm" element={<GoalConfirmScreen />} />
+          <Route element={<OnboardingLayout />}>
+            <Route path="/onboarding/personal-info" element={<PersonalInfoScreen />} />
+            <Route path="/onboarding/equipment" element={<EquipmentScreen />} />
+            <Route path="/onboarding/goal-select" element={<GoalSelectScreen />} />
+            <Route path="/onboarding/goal-confirm" element={<GoalConfirmScreen />} />
+          </Route>
 
           <Route element={<TabsLayout />}>
             <Route path="/" element={<DailyDashboardScreen />} />

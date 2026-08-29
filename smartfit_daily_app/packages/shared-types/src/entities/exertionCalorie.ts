@@ -6,20 +6,16 @@
 export type CalorieBurnSource = 'met_formula' | 'wearable';
 export type WearablePlatform = 'apple_health' | 'google_health_connect';
 
+/** Embedded map field `actualCalorieBurn` inside a `workoutSessions/{sessionId}` doc — no id/workoutSessionId (§8.2). */
 export interface ActualCalorieBurn {
-  id: string;
-  workoutSessionId: string; // FK -> WorkoutSession.id, 1:1
   source: CalorieBurnSource;
   /** Required when source === 'met_formula'. */
   metValue?: number;
   calculatedKcal: number;
-  /** Required when source === 'wearable'. */
-  wearableReadingId?: string; // FK -> WearableReading.id
 }
 
+/** Embedded map field `wearableReading` inside the same `workoutSessions/{sessionId}` doc — no id/workoutSessionId (§8.2); read directly as a sibling field instead of by FK when present. */
 export interface WearableReading {
-  id: string;
-  workoutSessionId: string; // FK -> WorkoutSession.id
   platform: WearablePlatform;
   calorieValueKcal: number;
   recordedAt: string; // ISO-8601 datetime

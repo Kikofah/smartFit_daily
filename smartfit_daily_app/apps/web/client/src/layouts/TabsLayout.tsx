@@ -50,6 +50,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    maxWidth: 720,
+    marginHorizontal: 'auto' as unknown as number,
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderTopWidth: 1,

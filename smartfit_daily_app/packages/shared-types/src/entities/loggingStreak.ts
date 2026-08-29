@@ -7,18 +7,16 @@ export type LogCompletionStatus = 'completed' | 'incomplete'; // all-or-nothing,
 export type LogSource = 'workout_session' | 'cheat_rest_override';
 
 export interface DailyLog {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id
-  logDate: string; // ISO-8601 date, unique with userProfileId
+  /** Subcollection doc ID `users/{userId}/dailyLogs/{logDate}` (§8.2) — not itself a stored field. */
+  logDate: string; // ISO-8601 date
   minutesExercised: number;
   accumulatedKcal: number;
   completionStatus: LogCompletionStatus;
   source: LogSource;
 }
 
+/** Embedded map field `streakSnapshot` inside `users/{userId}` — no id/userProfileId (§8.2). */
 export interface StreakSnapshot {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id, 1:1
   currentStreakDays: number;
   /** Must be recomputed whenever this user's daily_log/day_status changes. */
   computedAt: string; // ISO-8601 datetime

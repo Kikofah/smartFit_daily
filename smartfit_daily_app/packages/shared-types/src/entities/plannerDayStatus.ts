@@ -3,10 +3,9 @@
  * Source of truth: docs/02-design/02-technical/database-schema.md §3.10-3.11
  */
 
+/** Subcollection doc `users/{userId}/weeklyPlanEntries/{planDate}` — id/userProfileId aren't stored, `planDate` is the doc ID (§8.2). */
 export interface WeeklyPlanEntry {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id
-  planDate: string; // ISO-8601 date, unique with userProfileId
+  planDate: string; // ISO-8601 date
   plannedActivityType?: ActivityPlanType;
   isDefaultAuto: boolean;
   /**
@@ -19,10 +18,9 @@ export interface WeeklyPlanEntry {
 
 export type ActivityPlanType = 'cardio' | 'strength' | 'hiit' | 'rest';
 
+/** Subcollection doc `users/{userId}/dayStatus/{statusDate}` — id/userProfileId aren't stored, `statusDate` is the doc ID (§8.2). */
 export interface DayStatus {
-  id: string;
-  userProfileId: string; // FK -> UserProfile.id
-  statusDate: string; // ISO-8601 date, unique with userProfileId
+  statusDate: string; // ISO-8601 date
   isCheatRest: boolean;
   setAt: string; // ISO-8601 datetime
 }

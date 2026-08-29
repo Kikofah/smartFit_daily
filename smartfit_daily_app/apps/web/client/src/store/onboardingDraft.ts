@@ -9,6 +9,7 @@ import type { ActivityLevel, EquipmentType, GoalType, Sex } from '@smartfit/shar
  * that's fine since a reload mid-onboarding re-enters at step 1.
  */
 export interface OnboardingDraft {
+  displayName?: string;
   age?: number;
   sex?: Sex;
   weightKg?: number;

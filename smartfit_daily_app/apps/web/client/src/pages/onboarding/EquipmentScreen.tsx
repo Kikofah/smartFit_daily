@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { Chip } from '../../components/Chip';
 import { ProgressDots } from '../../components/ProgressDots';
 import { api } from '../../services/api';
+import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { equipmentScreenStyles as styles } from './styles';
@@ -24,9 +25,14 @@ const EQUIPMENT_OPTIONS: { value: EquipmentType; label: string }[] = [
  */
 export default function EquipmentScreen() {
   const navigate = useNavigate();
+  const { profile } = useOutletContext<OnboardingContext>();
   const [selected, setSelected] = useState<Set<EquipmentType>>(new Set());
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.equipmentTypes) setSelected(new Set(profile.equipmentTypes));
+  }, [profile]);
 
   function toggle(value: EquipmentType) {
     setSelected((prev) => {

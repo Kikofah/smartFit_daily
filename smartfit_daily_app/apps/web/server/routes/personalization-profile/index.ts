@@ -19,6 +19,7 @@ router.get(
 );
 
 interface UpdatePersonalInfoRequest {
+  displayName: string;
   age: number;
   sex: Sex;
   weightKg: number;
@@ -32,6 +33,9 @@ router.put(
   '/profile/personal-info',
   asyncHandler(async (req, res) => {
     const body = req.body as UpdatePersonalInfoRequest;
+    if (!body.displayName?.trim()) {
+      return res.status(400).json({ error: 'displayName must not be empty.' });
+    }
     if (body.age <= 0 || body.weightKg <= 0 || body.heightCm <= 0) {
       return res.status(400).json({ error: 'age/weightKg/heightCm must be positive.' });
     }

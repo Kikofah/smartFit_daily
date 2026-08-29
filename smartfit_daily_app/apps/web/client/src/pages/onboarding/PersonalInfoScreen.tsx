@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
 import { Stepper } from '../../components/Stepper';
 import { ProgressDots } from '../../components/ProgressDots';
 import { api } from '../../services/api';
+import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { personalInfoScreenRowStyles as rowStyles, personalInfoScreenStyles as styles } from './styles';
@@ -40,6 +42,8 @@ function computeTdeeKcal(sex: Sex, weightKg: number, heightCm: number, age: numb
  */
 export default function PersonalInfoScreen() {
   const navigate = useNavigate();
+  const { profile } = useOutletContext<OnboardingContext>();
+  const [name, setName] = useState('');
   const [age, setAge] = useState(25);
   const [sex, setSex] = useState<Sex | null>(null);
   const [weightKg, setWeightKg] = useState(60);
@@ -48,6 +52,20 @@ export default function PersonalInfoScreen() {
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (profile?.displayName) setName(profile.displayName);
+  }, [profile]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setAge(profile.age);
+    setSex(profile.sex);
+    setWeightKg(profile.weightKg);
+    setHeightCm(profile.heightCm);
+    setActivityLevel(profile.activityLevel);
+  }, [profile]);
+
+  const nameValid = name.trim().length > 0;
   const ageValid = age >= 10 && age <= 100;
   const weightValid = weightKg >= 20 && weightKg <= 250;
   const heightValid = heightCm >= 100 && heightCm <= 220;
@@ -56,12 +74,13 @@ export default function PersonalInfoScreen() {
 
   async function handleSubmit() {
     setTouched(true);
-    if (!(ageValid && weightValid && heightValid && sexValid && activityValid)) return;
+    if (!(nameValid && ageValid && weightValid && heightValid && sexValid && activityValid)) return;
 
     const tdeeKcal = computeTdeeKcal(sex!, weightKg, heightCm, age, activityLevel!);
+    const displayName = name.trim();
     try {
-      await api.put('/profile/personal-info', { age, sex, weightKg, heightCm, activityLevel, tdeeKcal });
-      Object.assign(onboardingDraft, { age, sex, weightKg, heightCm, activityLevel, tdeeKcal });
+      await api.put('/profile/personal-info', { displayName, age, sex, weightKg, heightCm, activityLevel, tdeeKcal });
+      Object.assign(onboardingDraft, { displayName, age, sex, weightKg, heightCm, activityLevel, tdeeKcal });
       navigate('/onboarding/equipment');
     } catch (e) {
       setError((e as Error).message);
@@ -84,6 +103,14 @@ export default function PersonalInfoScreen() {
       </Text>
 
       <View style={{ marginTop: spacing[8], gap: spacing[6] }}>
+        <Input
+          label="ชื่อ-นามสกุล"
+          placeholder="เช่น พิมพ์ใจ สุขสันต์"
+          value={name}
+          onChangeText={setName}
+          error={touched && !nameValid ? 'กรุณากรอกชื่อ-นามสกุล' : undefined}
+        />
+
         <View>
           <Stepper label="อายุ (ปี)" value={age} onChange={setAge} min={10} max={100} unit="ปี" error={touched && !ageValid} />
           {touched && !ageValid && <Text style={styles.errorText}>กรุณากรอกอายุระหว่าง 10–100 ปี</Text>}

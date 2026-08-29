@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { Stepper } from '../../components/Stepper';
 import { ProgressDots } from '../../components/ProgressDots';
 import { api } from '../../services/api';
+import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { goalConfirmScreenStyles as styles } from './styles';
@@ -32,19 +33,28 @@ const SAFETY_FLOOR_MIN_KCAL = 1200;
  */
 export default function GoalConfirmScreen() {
   const navigate = useNavigate();
-  const goalType = onboardingDraft.goalType;
-  const tdeeKcal = onboardingDraft.tdeeKcal;
+  const { profile, isLoading } = useOutletContext<OnboardingContext>();
+  const savedGoalSelection = profile?.goalSelection;
+  const goalType = onboardingDraft.goalType ?? savedGoalSelection?.goalType;
+  const tdeeKcal = onboardingDraft.tdeeKcal ?? profile?.tdeeKcal;
   const [targetWeightKg, setTargetWeightKg] = useState<number | null>(null);
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (savedGoalSelection?.targetWeightKg !== undefined) {
+      setTargetWeightKg(savedGoalSelection.targetWeightKg);
+    }
+  }, [savedGoalSelection]);
+
+  useEffect(() => {
+    if (isLoading) return;
     if (!goalType) {
       navigate('/onboarding/goal-select', { replace: true });
     } else if (tdeeKcal === undefined) {
       navigate('/onboarding/personal-info', { replace: true });
     }
-  }, [goalType, tdeeKcal, navigate]);
+  }, [isLoading, goalType, tdeeKcal, navigate]);
 
   const computed = useMemo(() => {
     if (!goalType || tdeeKcal === undefined) return null;

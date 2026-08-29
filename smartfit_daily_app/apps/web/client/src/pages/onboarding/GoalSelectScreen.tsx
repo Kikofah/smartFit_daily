@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { ProgressDots } from '../../components/ProgressDots';
+import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { goalSelectScreenStyles as styles } from './styles';
@@ -22,7 +23,12 @@ const GOAL_OPTIONS: { value: GoalType; title: string; subtext: string }[] = [
  */
 export default function GoalSelectScreen() {
   const navigate = useNavigate();
+  const { profile } = useOutletContext<OnboardingContext>();
   const [goalType, setGoalType] = useState<GoalType | null>(null);
+
+  useEffect(() => {
+    if (profile?.goalSelection?.goalType) setGoalType(profile.goalSelection.goalType);
+  }, [profile]);
 
   function handleSubmit() {
     if (!goalType) return;
