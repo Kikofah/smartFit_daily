@@ -6,24 +6,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is an **Obsidian vault** (see `.obsidian/`, gitignored) used for project
 documentation, **plus** an application codebase scaffolded on 2026-08-29 following the stack
-decided in `docs/02-design/02-technical/tech-stack.md`. The documentation pipeline described
-below remains the source of truth for requirements/design/business rules — application code
-should never contradict it; when they disagree, treat the docs as correct and either fix the code
-or flag the doc as stale via the relevant skill.
+decided in `docs/02-design/02-technical/tech-stack.md`, kept in its own `smartfit_daily_app/`
+subdirectory to stay separate from the documentation pipeline. The documentation pipeline
+described below remains the source of truth for requirements/design/business rules — application
+code should never contradict it; when they disagree, treat the docs as correct and either fix the
+code or flag the doc as stale via the relevant skill.
 
-**Real architecture**: npm-workspaces monorepo —
+**Real architecture**: npm-workspaces monorepo at `smartfit_daily_app/` —
 
-- `apps/mobile/` — React Native + Expo client (TypeScript, Expo Router). Screen tree mirrors
-  `docs/02-design/01-prototypes/v1/`.
-- `apps/functions/` — Firebase Cloud Functions backend (Node.js + TypeScript), one folder per
-  conceptual component from `high-level-architecture.md` §3.
-- `packages/shared-types/` — TypeScript entities shared by both apps, mirroring
+- `smartfit_daily_app/apps/mobile/` — React Native + Expo client (TypeScript, Expo Router). Screen
+  tree mirrors `docs/02-design/01-prototypes/v1/`.
+- `smartfit_daily_app/apps/functions/` — Firebase Cloud Functions backend (Node.js + TypeScript),
+  one folder per conceptual component from `high-level-architecture.md` §3.
+- `smartfit_daily_app/packages/shared-types/` — TypeScript entities shared by both apps, mirroring
   `database-schema.md`'s conceptual entities (one file per HLA component).
 
 Most Cloud Functions and screens are scaffolded stubs (see inline `TODO`s) — this is a folder
 structure, not a working feature set yet.
 
-**Commands** (run from repo root):
+**Commands** (run from `smartfit_daily_app/`, i.e. `cd smartfit_daily_app` first):
 
 ```bash
 npm install

@@ -12,10 +12,10 @@ lib/
 *.tsbuildinfo
 npm-debug.log*
 
-# Expo (apps/mobile)
-apps/mobile/.expo/
-apps/mobile/dist/
-apps/mobile/web-build/
+# Expo (smartfit_daily_app/apps/mobile)
+smartfit_daily_app/apps/mobile/.expo/
+smartfit_daily_app/apps/mobile/dist/
+smartfit_daily_app/apps/mobile/web-build/
 *.jks
 *.p8
 *.p12

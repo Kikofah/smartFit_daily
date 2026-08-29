@@ -4,7 +4,7 @@
     {
       "name": "mobile-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "web", "--workspace", "apps/mobile"],
+      "runtimeArgs": ["--prefix", "smartfit_daily_app", "run", "web", "--workspace", "apps/mobile"],
       "port": 8081
     }
   ]
