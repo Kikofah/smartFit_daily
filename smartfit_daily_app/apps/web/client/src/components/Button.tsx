@@ -1,7 +1,7 @@
 import { Pressable, Text, StyleSheet } from 'react-native';
 import { colors, radius, spacing, typography } from '../constants/theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
 
 interface ButtonProps {
   label: string;
@@ -23,7 +23,15 @@ export function Button({ label, onPress, variant = 'primary', disabled }: Button
         disabled && styles.disabled,
       ]}
     >
-      <Text style={[styles.label, variant === 'primary' ? styles.labelOnClay : styles.labelOnPaper]}>{label}</Text>
+      <Text
+        style={[
+          styles.label,
+          variant === 'primary' ? styles.labelOnClay : styles.labelOnPaper,
+          variant === 'destructive' && styles.labelDestructive,
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -40,10 +48,13 @@ const styles = StyleSheet.create({
   label: { ...typography.body },
   labelOnClay: { color: colors.paper },
   labelOnPaper: { color: colors.ink },
+  labelDestructive: { color: colors.danger },
 });
 
 const variantStyles = StyleSheet.create({
   primary: { backgroundColor: colors.clay },
   secondary: { backgroundColor: colors.paperAlt, borderWidth: 1, borderColor: colors.border },
   ghost: { backgroundColor: 'transparent' },
+  /** DESIGN.md §3.1 — destructive: danger text/border on paper, never a full red fill. */
+  destructive: { backgroundColor: colors.paper, borderWidth: 1, borderColor: colors.danger },
 });

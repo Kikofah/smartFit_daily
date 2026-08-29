@@ -16,5 +16,5 @@ export function ScreenContainer({ style, ...props }: ViewProps) {
 
 const styles = StyleSheet.create({
   page: { minHeight: '100vh' as unknown as number, backgroundColor: colors.paper },
-  content: { maxWidth: 480, marginHorizontal: 'auto', paddingHorizontal: spacing[8], paddingVertical: spacing[6] },
+  content: { paddingHorizontal: spacing[8], paddingVertical: spacing[6]},
 });

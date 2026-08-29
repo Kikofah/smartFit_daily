@@ -12,7 +12,8 @@
     "start": "node dist-server/index.js",
     "typecheck": "tsc -p tsconfig.server.json --noEmit && tsc -p tsconfig.client.json --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "echo \"no tests yet\" && exit 0"
+    "test": "echo \"no tests yet\" && exit 0",
+    "seed:sample-users": "tsx scripts/seedSampleUsers.ts"
   },
   "dependencies": {
     "@smartfit/shared-types": "*",
