@@ -223,11 +223,12 @@ REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ท�
 
 ## Non-Functional Requirements (NFR) Traceability
 
-[Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) (NFR-01–NFR-11 —
+[Non-Functional Requirements](01-spec/20260827-05-non-functional-requirements.md) (NFR-01–NFR-13 —
 NFR-01–08 สร้างขึ้น 2026-08-27 โดย `test-suite-builder` เพื่อเป็นฐานของ `test-plan.md`, NFR-09–11 เพิ่ม
-2026-08-28 หลัง NFR gap analysis เทียบทั้ง pipeline) เป็นคุณภาพเชิงระบบที่ **ตัดขวางทุก Epic** ไม่ใช่
-business rule ของ feature ใดโดยเฉพาะ จึงไม่มี Feature ID ของตัวเองและไม่อยู่ในตารางสรุปด้านบน — แต่ยังต้อง
-trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
+2026-08-28 หลัง NFR gap analysis เทียบทั้ง pipeline, NFR-12–13 เพิ่ม 2026-08-29 หลัง Non-Functional
+Requirements Review ของ `technical-design-orchestrator` ตามการเปลี่ยน backend/database เป็น
+Firebase/Firestore) เป็นคุณภาพเชิงระบบที่ **ตัดขวางทุก Epic** ไม่ใช่ business rule ของ feature ใดโดยเฉพาะ
+จึงไม่มี Feature ID ของตัวเองและไม่อยู่ในตารางสรุปด้านบน — แต่ยังต้อง trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
 
 | NFR | หมวด | Feature ID ที่เกี่ยวข้อง |
 |---|---|---|
@@ -242,6 +243,29 @@ trace ได้ว่าผูกกับ Feature ID ใดบ้าง:
 | NFR-09 | Usability (Accessibility) | ทุก Feature ID (UI-level cross-cutting — touch target, contrast, font scaling ของทุกหน้าจอ) |
 | NFR-10 | Usability (Localization) | ทุก Feature ID (UI-level cross-cutting — ภาษาไทยเป็นหลักของทุกหน้าจอ) |
 | NFR-11 | Legal/Regulatory Compliance | ONB-1, ONB-2, ONB-3, INT-2, INT-3 (เก็บ/เชื่อมต่อข้อมูลส่วนบุคคล — PDPA consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) |
+| NFR-12 | Reliability (Data Integrity) | REC-2, INT-3 (ดูหมายเหตุ 1) |
+| NFR-13 | Usability (Data Visualization) | INT-1 (ดูหมายเหตุ 2) |
+
+**หมายเหตุ 1 (NFR-12)**: เอกสาร NFR เองแนะนำผูกกับ "ทุก Feature ID ที่มี server-side write ยกเว้น
+read-only ล้วน" แต่เมื่อตรวจกับ [database-schema.md
+§8.3](../02-design/02-technical/database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function)
+และ [api-spec.md §3.3/3.7](../02-design/02-technical/api-spec.md) พบว่ากติกาอื่นๆ ที่ถูกจัดกลุ่มไว้ในตาราง
+เดียวกัน (equipment mutual exclusion, safety floor, all-or-nothing, PLN-1 read-only, PLN-2 "วันนี้
+เท่านั้น", streak/forecast sync) เป็น business rule ที่ต้อง enforce ที่ application layer อยู่แล้ว **ไม่ว่า
+จะใช้ relational DB หรือไม่ก็ตาม** (ระบุไว้ชัดเจนในเอกสารเดียวกันว่า "ไม่ใช่เรื่องใหม่จาก Firestore") —
+ส่วนที่เป็นผลกระทบใหม่จริงจากการไม่มี FK ระดับ schema (orphaned/dangling reference) เหลือเฉพาะ operation
+ที่รับ **id ของ document อื่นจาก client เพื่ออ้างอิง entity ที่มีอยู่แล้ว**: `POST
+/workouts/sessions/{sessionId}/complete` (REC-2 — error case ระบุชัดว่า `404 sessionId ไม่พบ`) และ `POST
+/integrations/wearable/readings` (INT-3 — ตัวอย่างที่ยกไว้ตรงในภาคผนวก 8.3 เอง) จึงแก้ mapping ให้แคบลง
+ตามหลักฐานจริงแทนการ copy คำแนะนำกว้างๆ มาตรง ๆ
+
+**หมายเหตุ 2 (NFR-13)**: ยืนยันกับ [DESIGN.md
+§4.4](../02-design/01-prototypes/DESIGN.md) และ prototype
+[`10-progress-insights.html`](../02-design/01-prototypes/v1/10-progress-insights.html) (มี inline SVG
+line chart แนวโน้มน้ำหนัก ใช้สี `--color-clay`/`--color-sage` ตรงตามกติกา NFR-13) ซึ่งแท็ก
+`<!-- Feature: INT-1 -->` ไว้ชัดเจน — ตรวจแล้วไม่พบกราฟลักษณะเดียวกันในหน้าที่เกี่ยวกับ INT-2/INT-3
+(`11-device-integrations.html`, `12-device-pairing.html` เป็น UI เชื่อมต่ออุปกรณ์ล้วน ไม่มี chart) จึงคง
+ผูกเฉพาะ INT-1 ตามที่เอกสาร NFR เองแนะนำไว้แล้ว (ยืนยันตรงกับหลักฐาน ไม่ต้องแก้)
 
 รายละเอียดแบบเต็มของแต่ละ NFR (threshold, เหตุผล, จุดที่ยังไม่ได้ระบุ) อยู่ใน
 [01-spec/20260827-05-non-functional-requirements.md](01-spec/20260827-05-non-functional-requirements.md)

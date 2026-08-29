@@ -3,6 +3,8 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+  (audit เนื้อหาหลัก sequence/state diagram/algorithm ของ REC-1/2/3/4 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
   [Database Schema](../database-schema.md), [Product Backlog](../../../01-requirements/backlog.md),
@@ -184,16 +186,21 @@ sequenceDiagram
 > เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `detailed-design-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
-(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-29**: มิเรอร์ใหม่จาก Supabase/PostgreSQL เป็น Firebase ตามการเปลี่ยน stack ใน
+> `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence/state diagram/algorithm ของ REC-1/2/3/4)
+> **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Content Recommendation | Edge Function `recommendation` เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
-| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Edge Function `session-complete` validate + เขียน `actual_calorie_burn` |
+| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Cloud Function `sessionComplete` validate + เขียน `actualCalorieBurn` ลง Firestore |
 
 **Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **MET + wearable override (REC-2)** เกิดขึ้นฝั่ง
 **React Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน
-**Supabase Edge Function `session-complete`** (ไม่ใช่เขียนตรงเข้าตาราง `actual_calorie_burn` ผ่าน
-PostgREST) เพื่อให้ Edge Function validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server
+**Firebase Cloud Function `sessionComplete`** (แทนที่ Supabase Edge Function `session-complete` เดิม —
+ไม่ใช่เขียนตรงเข้า embedded field `actualCalorieBurn` ภายใน document `workoutSessions/{sessionId}` จาก
+client เอง) เพื่อให้ Cloud Function validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม

@@ -36,12 +36,34 @@ framework, backend, DBMS, cloud provider, การเชื่อมต่อ t
 เอกสารอื่นทั้งหมดในโฟลเดอร์นี้ สร้าง/อัปเดต/audit โดย skill `tech-stack-builder`
 (`.claude/skills/tech-stack-builder/SKILL.md`) เท่านั้น ซึ่งจะถามผู้ใช้แบบเข้มข้น (Discovery
 Questionnaire) ก่อนแนะนำเสมอ — ต้องมีครบทั้ง `high-level-architecture.md`, `api-spec.md`,
-`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (2026-08-28) เลือก React Native
-+ Expo (mobile/web client) กับ Supabase/PostgreSQL (backend/database) ตาม Discovery Questionnaire
+`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (อัปเดต 2026-08-29) เลือก React
+Native + Expo (mobile/web client) กับ **Firebase** (Cloud Firestore + Cloud Functions + Firebase
+Authentication + Firebase Hosting) เป็น backend/database — เปลี่ยนจาก Supabase/PostgreSQL เดิมตามคำขอ
+ของผู้ใช้งานโดยตรง (ไม่ใช่ผลจาก Discovery Questionnaire/Weighted Scoring Model เดิม ดู
+`tech-stack.md` §2/§5)
 
 **ภาคผนวก: Stack Mapping** (เพิ่ม 2026-08-28): `high-level-architecture.md`, `api-spec.md`,
 `database-schema.md`, และแต่ละไฟล์ใน `detailed-design/` ทุกไฟล์มี section ท้ายไฟล์ชื่อ "ภาคผนวก: Stack
 Mapping" เป็นข้อยกเว้นเดียวในเนื้อหาแต่ละไฟล์ที่อนุญาตให้มีชื่อเทคโนโลยีจริงได้ — มิเรอร์เนื้อหาจาก
 `tech-stack.md` § Mapping จาก Conceptual Docs → Concrete Stack เท่านั้น (ไม่ใช่แหล่งที่มาจริง) สร้าง/
 อัปเดตโดย skill เจ้าของไฟล์นั้นๆ เอง (ไม่ใช่ `tech-stack-builder`) และ**เฉพาะเมื่อ** `tech-stack.md` มีอยู่
-แล้ว — ถ้ายังไม่มีให้ข้ามไปทั้งหมด ไม่ถือเป็น gap
+แล้ว — ถ้ายังไม่มีให้ข้ามไปทั้งหมด ไม่ถือเป็น gap **สถานะปัจจุบัน (2026-08-29): ภาคผนวกของ
+`high-level-architecture.md`, `api-spec.md`, และ `database-schema.md` sync กับ `tech-stack.md`
+§6.1/§6.2/§6.3 ฉบับ Firebase แล้วทั้งหมด** — `database-schema.md` เลือกแนวทาง **Hybrid** ตามที่ผู้ใช้ยืนยัน
+(2026-08-29): เนื้อหาหลักหัวข้อ 1-7 (ER Diagram, ตาราง 15 ตาราง, logical type, relational relationships)
+**ไม่เปลี่ยนแปลง** ยังคงเป็น conceptual/relational model เดิมทั้งหมด เพราะ HLA §5 ไม่เปลี่ยน — ส่วนหัวข้อ 8
+(ภาคผนวก: Stack Mapping) ขยายเพิ่ม 2 หัวข้อย่อยนอกเหนือจาก logical-type mapping ปกติ คือ **8.2 Table →
+Firestore Collection/Document Mapping** (per-table ว่าควรเป็น top-level collection/subcollection/embedded
+field) และ **8.3 FK/Constraint Enforcement Migration** (กติกาที่เคย enforce ด้วย FK/constraint ย้ายไป
+Cloud Function ไหน อ้าง HLA component เจ้าของ) — **อัปเดต 2026-08-29 (ล่าสุด): `tech-stack.md` §6.1 sync
+ให้ละเอียดตรงกับ `database-schema.md` §8.2/§8.3 แล้ว** (per-table Firestore collection/document mapping +
+FK/constraint enforcement migration, รวมถึงกติกาใหม่ referential existence validation ที่ผูกกับ NFR-12) —
+เป็นการ mechanical re-sync ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การเปลี่ยนตัวเลือก stack จริงใหม่ จึงทำ
+โดยไม่ต้องรัน Discovery Questionnaire ซ้ำ — ภาคผนวกของ
+`detailed-design/*.md` ทั้ง 4 epic ก็ sync กับ `tech-stack.md` §6.1 ฉบับ Firebase แล้วเช่นกัน (อัปเดต
+2026-08-29 โดย `detailed-design-builder` — ใช้ชื่อ Cloud Function เดียวกับ HLA §10:
+`profileUpdate`/`sessionComplete`/`cheatRest`/`recommendation`/`forecast`/`integrations`) — audit
+เนื้อหาหลัก (sequence/state diagram/algorithm) ของทั้ง 4 ไฟล์แล้วไม่พบ drift อื่นที่เกี่ยวกับ Firebase**
+— **อัปเดต 2026-08-29 (ล่าสุด)**: แก้ถ้อยคำล้าหลังใน `tech-stack.md` §7 ข้อ 1 และ §8 ที่ยังเขียนว่า
+`database-schema.md`/ภาคผนวก Stack Mapping ของ HLA/API Spec/Detailed Design "ยังต้องทำ"/"stale" ให้ตรงกับ
+สถานะจริงว่า sync/ออกแบบเสร็จสมบูรณ์แล้วทุกไฟล์ (cosmetic wording แก้เองได้ ไม่กระทบตัวเลือก stack จริง)

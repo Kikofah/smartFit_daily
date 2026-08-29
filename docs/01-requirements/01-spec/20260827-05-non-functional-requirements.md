@@ -77,6 +77,21 @@
     ตนเองได้ (เชื่อมกับ NFR-06) (ค) ต้องมีกระบวนการแจ้งเหตุข้อมูลรั่วไหล (breach notification) ต่อผู้ใช้และ
     หน่วยงานที่เกี่ยวข้องตามที่กฎหมายกำหนด
 
+**Reliability (เพิ่มเติม 2026-08-29 — หลังเปลี่ยน backend/database เป็น Firebase)**
+
+12. **NFR-12**: ทุก server-side write operation (เช่น Firebase Cloud Function หรือเทียบเท่า) ที่รับ
+    id/reference ของ entity อื่นจาก client (เช่น อ้างอิงไปยัง session, plan entry, หรือ record อื่น) ต้อง
+    validate ว่า entity ปลายทางนั้นมีอยู่จริงก่อนเขียนข้อมูลเสมอ (referential existence validation)
+    เนื่องจากสถาปัตยกรรม backend/database ที่เลือกไม่มีกลไก foreign key ระดับ schema บังคับให้ ต่างจาก
+    ระบบฐานข้อมูลเชิงสัมพันธ์ทั่วไป — เพื่อป้องกัน orphaned/dangling reference ในข้อมูล
+
+**Usability (เพิ่มเติม 2026-08-29)**
+
+13. **NFR-13**: กราฟ/ภาพแสดงข้อมูลน้ำหนักและแคลอรี่ (Smart Integrations) ต้องใช้ palette earth tone เดียวกับ
+    design system เท่านั้น ห้ามใช้สีแบบ red/green traffic-light เพื่อสื่อความหมายเชิงคุณค่ากับข้อมูลน้ำหนัก/
+    ร่างกาย (เช่น น้ำหนักขึ้น = แดง, ลง = เขียว) เพราะตัวเลขร่างกายผันผวนเป็นปกติ ไม่ควรสื่อว่าเป็นความล้มเหลว
+    หรือความสำเร็จ
+
 ## Acceptance Criteria
 
 - [ ] หน้า Daily Dashboard แสดงเนื้อหาหลักได้โดยไม่รู้สึกหน่วง (NFR-01)
@@ -91,6 +106,10 @@
       font scaling) (NFR-09)
 - [ ] ทุกหน้าจอใช้ภาษาไทยเป็นภาษาหลัก ศัพท์เทคนิคทับศัพท์ได้ตามที่กำหนด (NFR-10)
 - [ ] มีกระบวนการ consent record-keeping, สิทธิ์เจ้าของข้อมูล, และ breach notification ตาม PDPA (NFR-11)
+- [ ] ทุก server-side write operation ที่รับ reference จาก client validate การมีอยู่จริงของ entity
+      ปลายทางก่อนเขียนเสมอ (NFR-12)
+- [ ] กราฟข้อมูลน้ำหนัก/แคลอรี่ใช้ earth tone palette เดียวกับ design system ไม่ใช้ red/green
+      traffic-light กับข้อมูลร่างกาย (NFR-13)
 
 ## ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว
 
@@ -113,6 +132,18 @@
   "ไม่รองรับ" อย่างสงบ — **ไม่ใช่ NFR ใหม่ในเอกสารนี้** decision นี้จะถูกบันทึกอย่างเป็นทางการโดย
   `architecture-builder` ใน [high-level-architecture.md](../../02-design/02-technical/high-level-architecture.md)
   §6 External Integration Boundaries แทน
+- **NFR-12/NFR-13 เพิ่มใหม่ (ยืนยันจากผู้ใช้ 2026-08-29)**: มาจาก Non-Functional Requirements Review
+  ที่ทำโดย `technical-design-orchestrator` (Stage 4, audit-only) หลังเปลี่ยน backend/database เป็น
+  Firebase — NFR-12 มาจากกติกาใหม่ใน
+  [database-schema.md §8.3](../../02-design/02-technical/database-schema.md) (referential existence
+  validation — ผลจากการที่ Firestore ไม่มี foreign key ระดับ schema) NFR-13 มาจากกติกาที่มีอยู่แล้วใน
+  [DESIGN.md §4.4](../../02-design/01-prototypes/DESIGN.md) (Data Visualization) ที่ยังไม่ถูก
+  formalize เป็น NFR มาก่อน (pattern เดียวกับที่ NFR-09/10 เคย mirror §4.3/§4.5) — ทั้งสองข้อมีหลักฐาน
+  ชัดเจนในเอกสารอื่นอยู่แล้ว ไม่ใช่การเดา
+- **ไม่ขยายขอบเขต NFR-08 ในรอบนี้**: NFR Review เดียวกันตั้งข้อสังเกตว่า Firestore SDK มี offline
+  persistence ในตัว ซึ่งอาจขยายขอบเขต NFR-08 ได้ แต่ยังไม่ใช่การตัดสินใจที่ชัดเจน (ขัดกับคำตอบ Discovery
+  Questionnaire เดิมที่ว่าไม่จำเป็นต้อง support offline) — คงไว้เป็นจุดที่ยังไม่ได้ระบุ (ดูด้านล่าง)
+  รอผู้ใช้ตัดสินใจแยกต่างหาก
 
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
@@ -132,6 +163,12 @@
 - **Scalability/Capacity**: ยังไม่มี NFR สำหรับจำนวนผู้ใช้ระยะแรก/concurrent usage เพราะยังไม่มีตัวเลข
   เป้าหมายทางธุรกิจ (ผู้ใช้ตัดสินใจเลื่อนออกไปก่อนเมื่อ 2026-08-28 — ดู "ข้อสมมติฐาน/การตัดสินใจที่ยืนยัน
   แล้ว")
+- **NFR-12**: ยังไม่ได้ระบุรูปแบบ error handling ที่แน่นอนเมื่อ referential existence validation ล้มเหลว
+  (เช่น ควร retry, แจ้ง error กลับ client แบบไหน) — เป็นรายละเอียด implementation ที่ควรยืนยันตอนออกแบบ
+  Cloud Function จริงแต่ละตัว
+- **NFR-08 vs. offline capability ของ Firestore**: ยังไม่ตัดสินใจว่าจะใช้ offline persistence ที่ Firestore
+  SDK มีให้ในตัวเพื่อขยายขอบเขต offline support หรือคงขอบเขตเดิมตามคำตอบ Discovery Questionnaire ที่ว่า
+  "ไม่จำเป็นต้อง support offline" — ต้องยืนยันกับผู้ใช้แยกต่างหาก (พบระหว่าง NFR Review 2026-08-29)
 
 ## ความสัมพันธ์กับเอกสารอื่น (Requirement Cross-reference Analysis)
 
@@ -149,8 +186,19 @@ NFR-09/NFR-10 formalize กติกาที่มีอยู่แล้ว�
 NFR-02/§4.6 ข้างต้น NFR-11 อ้างอิงคำตอบ Discovery Questionnaire ใน [tech-stack.md §
 2](../../02-design/02-technical/tech-stack.md)
 
-**หมายเหตุสำหรับ `feature-list-journey`**: การเพิ่ม NFR-09/NFR-10/NFR-11 รอบนี้ทำให้ตาราง "NFR
-Traceability" ใน [backlog.md](../backlog.md#non-functional-requirements-nfr-traceability) (ปัจจุบันมีแค่
-NFR-01–08) ล้าหลัง — `test-suite-builder` ไม่มีสิทธิ์แก้ `backlog.md` เอง ต้องให้ `feature-list-journey`
-เพิ่ม 3 แถวใหม่ต่อ (NFR-09/10 ผูกกับทุก Feature ID เพราะเป็น UI-level cross-cutting, NFR-11 ผูกกับ Feature
-ที่เก็บ/เชื่อมต่อข้อมูลส่วนบุคคลเหมือน NFR-04/NFR-06)
+NFR-12 (เพิ่ม 2026-08-29) อ้างอิงกติกาใหม่ใน
+[database-schema.md §8.3](../../02-design/02-technical/database-schema.md) (FK/Constraint Enforcement
+Migration หลังเปลี่ยนเป็น Firebase/Firestore) NFR-13 (เพิ่ม 2026-08-29) formalize กติกาที่มีอยู่แล้วใน
+[DESIGN.md §4.4](../../02-design/01-prototypes/DESIGN.md) (Data Visualization) — pattern เดียวกับ
+NFR-09/NFR-10/§4.3/§4.5 ข้างต้น ทั้งสองข้อมาจาก Non-Functional Requirements Review ของ
+`technical-design-orchestrator` (audit-only, ดู
+[log 2026-08-29](../../05-log/20260829-log.md))
+
+**หมายเหตุสำหรับ `feature-list-journey`**: การเพิ่ม NFR-09/NFR-10/NFR-11 (2026-08-28) และ
+NFR-12/NFR-13 (2026-08-29) ทำให้ตาราง "NFR Traceability" ใน
+[backlog.md](../backlog.md#non-functional-requirements-nfr-traceability) (ปัจจุบันมีแค่ NFR-01–08)
+ล้าหลัง — `test-suite-builder` ไม่มีสิทธิ์แก้ `backlog.md` เอง ต้องให้ `feature-list-journey` เพิ่ม 5
+แถวใหม่ต่อ (NFR-09/10 ผูกกับทุก Feature ID เพราะเป็น UI-level cross-cutting, NFR-11 ผูกกับ Feature ที่
+เก็บ/เชื่อมต่อข้อมูลส่วนบุคคลเหมือน NFR-04/NFR-06, **NFR-12 ผูกกับทุก Feature ID ที่มี server-side write
+ผ่าน reference — คือทุก Feature ยกเว้นที่เป็น read-only ล้วน**, **NFR-13 ผูกกับ Feature ที่แสดงกราฟ/ภาพ
+ข้อมูลน้ำหนัก-แคลอรี่เท่านั้น คือ Epic 4 Smart Integrations โดยเฉพาะ INT-1**)

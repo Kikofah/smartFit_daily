@@ -3,6 +3,10 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — ขยายหัวข้อ 8 (ภาคผนวก: Stack Mapping) ให้ครอบคลุม per-table Firestore
+  collection/document mapping และการย้าย FK/constraint enforcement ไป Cloud Function ตามการยืนยันของ
+  ผู้ใช้ (เลือกแนวทาง Hybrid — ดูรายละเอียดในภาคผนวก) — **เนื้อหาหลักหัวข้อ 1-7 ไม่เปลี่ยนแปลง** ยังคงเป็น
+  logical/relational model + ER Diagram เดิมทั้งหมด เพราะ HLA §5 (Conceptual Data Entities) ไม่เปลี่ยน
 - **สร้างโดย:** skill `api-db-spec-builder`
 - **อ้างอิงจาก:** [High Level Architecture](high-level-architecture.md),
   [Product Backlog](../../01-requirements/backlog.md),
@@ -405,22 +409,85 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
 
 > **หัวข้อนี้เป็นข้อยกเว้นเดียวในเอกสารนี้ (นอกเหนือจาก logical data type) ที่มีชื่อเทคโนโลยีจริง**
 > แหล่งที่มาและสิทธิ์แก้ไขจริงอยู่ที่ [tech-stack.md](tech-stack.md) เสมอ — หัวข้อ 1-7 ข้างต้นยังคง
-> conceptual/logical ตามกติกาเดิมทุกประการ ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน
-> แล้วภาคผนวกนี้จะถูก sync ตามในการรัน `api-db-spec-builder` ครั้งถัดไป
+> conceptual/logical ตามกติกาเดิมทุกประการ**ไม่เปลี่ยนแปลง** ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน
+> `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน `api-db-spec-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.2](tech-stack.md#62-database-schemamds-logical-type--postgresql-type)
-(2026-08-28):
+> **อัปเดต 2026-08-29 (แนวทาง Hybrid — ยืนยันจากผู้ใช้)**: เนื่องจาก `tech-stack.md` เปลี่ยนจาก
+> PostgreSQL/Supabase เป็น **Cloud Firestore** (NoSQL document database) ซึ่งไม่มี native FK/referential
+> integrity เหมือน relational DB — ภาคผนวกนี้จึงขยายเกินกว่าการ mirror ตาราง type ธรรมดา (หัวข้อ 8.1)
+> เพิ่มอีก 2 หัวข้อย่อยคือ **8.2 Table → Firestore Collection/Document Mapping** และ **8.3 FK/Constraint
+> Enforcement Migration** เพื่อให้เป็นคำตอบที่ actionable ตามที่ `tech-stack.md` §7 ข้อ 1 ร้องขอ โดย
+> **ไม่แตะเนื้อหาหลักหัวข้อ 1-7** (ER Diagram/ตาราง/logical type ยังคงเป็น relational model เดิมทุก
+> ประการ เพื่อให้เอกสารนี้ยังใช้ซ้ำได้ถ้าทีมเปลี่ยน stack อีกในอนาคต) — เนื้อหา 8.2/8.3 เป็นการออกแบบเพิ่มเติม
+> โดย `api-db-spec-builder` เอง (ไม่ใช่การ mirror ข้อความที่มีอยู่แล้วใน `tech-stack.md` แบบตรงๆ เหมือน 8.1
+> เพราะ `tech-stack.md` §6.1 ยังเป็นแค่แนวทางเบื้องต้นระดับ component ไม่ได้ลงรายละเอียดระดับตาราง) —
+> `tech-stack.md` ควรอัปเดต §6 ให้สอดคล้องกับรายละเอียดนี้ในการรัน `tech-stack-builder` ครั้งถัดไป (ไม่ใช่
+> หน้าที่ของ skill นี้ที่จะแก้ `tech-stack.md` เอง)
 
-| Logical Type | PostgreSQL Type |
+### 8.1 Logical Type → Firestore Field Type
+
+มิเรอร์จาก [tech-stack.md § 6.2](tech-stack.md#62-database-schemamds-logical-type--firestore-field-type)
+(อัปเดต 2026-08-29):
+
+| Logical Type | Firestore Field Type |
 |---|---|
-| `identifier` | `uuid` (default `gen_random_uuid()`) |
-| `string` | `text` |
-| `integer` | `integer` |
-| `decimal` | `numeric` |
+| `identifier` | auto-generated document ID (string) หรือ string field ที่เก็บ reference ไปยัง document อื่น (Firestore ไม่มี FK จริง — ต้อง validate ความถูกต้องที่ Cloud Function) |
+| `string` | `string` |
+| `integer` | `number` (Firestore เก็บเป็น number เดียว ไม่แยก int/float — ต้อง validate ขอบเขต/ทศนิยมที่ Cloud Function) |
+| `decimal` | `number` |
 | `boolean` | `boolean` |
-| `date` | `date` |
-| `datetime` | `timestamptz` |
-| `enum` | PostgreSQL native `enum` type (เช่น `workout_session_status`, `connection_status`) |
+| `date` | `Timestamp` (ตั้งเวลาเป็นเที่ยงคืนของวันนั้น) หรือ `string` รูปแบบ ISO-8601 |
+| `datetime` | `Timestamp` |
+| `enum` | `string` ที่ validate ค่าที่อนุญาตไว้ใน Cloud Function (Firestore ไม่มี native enum/check constraint เหมือน PostgreSQL) |
+
+### 8.2 Table → Firestore Collection/Document Mapping
+
+เกณฑ์ที่ใช้ตัดสินระหว่าง **embedded field** (ฝังในเอกสารแม่) กับ **subcollection แยก**: ข้อมูลที่ (ก)
+มีขอบเขตจำนวนจำกัดชัดเจน (bounded), (ข) มี relationship 1:1 หรือ multi-select เล็กๆ กับผู้ใช้/เซสชันเดียว,
+และ (ค) แทบไม่มี pattern การ query อิสระแยกจากเอกสารแม่ → **embed**; ข้อมูลที่ (ก) เพิ่มจำนวนไม่มีขอบเขต
+(unbounded, สะสมทุกวัน/ทุกเซสชัน) หรือ (ข) ต้องการ query/pagination อิสระ (เช่น ค้นตามช่วงวันที่) →
+**subcollection แยก** (ป้องกัน document โตเกินขีดจำกัดขนาดของ Firestore ด้วย)
+
+| ตารางเดิม (Logical) | Firestore Representation | เหตุผล |
+|---|---|---|
+| `user_profile` | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง | เอกสารเดียวต่อผู้ใช้ 1 คน อ่านพร้อมกันบ่อยที่สุด (แทบทุกหน้าจอ) เป็น root ที่ subcollection อื่นผูกสิทธิ์ผ่าน Firestore Security Rule ได้ตรงไปตรงมาที่สุด |
+| `goal_selection` | Embedded map field `goalSelection` ภายใน `users/{userId}` | 1:1 กับ user, เก็บเฉพาะค่าปัจจุบัน (ไม่มีประวัติ ตาม HLA §5) อ่านพร้อมโปรไฟล์แทบทุกครั้ง (Dashboard/Planner) — embed ลดจำนวน read ต่อครั้ง |
+| `equipment_selection` | Embedded array field `equipmentTypes: string[]` ภายใน `users/{userId}` | multi-select แต่ bounded ชัดเจน (สูงสุด 3 ค่าตาม ONB-2) ไม่มี pattern query แยกจากโปรไฟล์ |
+| `workout_session` | Subcollection `users/{userId}/workoutSessions/{sessionId}` | จำนวนไม่จำกัด เพิ่มทุกครั้งที่ออกกำลังกาย ต้อง query อิสระ (ประวัติ session) — embed ในเอกสาร user จะทำให้เอกสารโตไม่มีขอบเขตและเสี่ยงชนขีดจำกัดขนาด document |
+| `session_video` | Embedded array field `sessionVideos: []` ภายใน document `workoutSessions/{sessionId}` เดียวกัน | 1 session มีแค่ 1-3 แถว (หลัก+วอร์มอัพ/คูลดาวน์) เขียนครั้งเดียวตอนสร้าง session ไม่มี pattern query แยก |
+| `session_rejected_video` | Embedded array field `rejectedVideoIds: []` (แต่ละรายการเป็น map `{externalVideoId, rejectedAt}`) ภายใน document เดียวกัน | ใช้เฉพาะระหว่าง REC-3 ของ session เดียวกันเท่านั้น ไม่มี pattern query ข้าม session |
+| `actual_calorie_burn` | Embedded map field `actualCalorieBurn` ภายใน document เดียวกัน (เขียนครั้งเดียวตอนจบ/หยุดเซสชันโดย Cloud Function `sessionComplete`) | ความสัมพันธ์ 1:1 กับ session ไม่มี pattern query อิสระ อ่านพร้อม session เสมอ |
+| `wearable_reading` | Embedded map field `wearableReading` ภายใน document เดียวกัน (เขียนได้ทั้งก่อน/หลัง `sessionComplete` ตามลำดับที่ INT-3 มาถึงจริง) | 1:1 กับ session — ถ้ามาถึงก่อน complete ให้เขียน field นี้ก่อน แล้ว `sessionComplete` อ่านมาใช้แทนค่าประมาณ MET ตามที่ HLA Flow 2/5 ระบุ |
+| `weekly_plan_entry` | Subcollection `users/{userId}/weeklyPlanEntries/{date}` (document ID = ISO date เช่น `2026-08-31`) | จำนวนไม่จำกัด (สะสมทุกสัปดาห์) — ใช้ document ID = date ให้ดึงด้วย `get()` ตรงได้เร็วโดยไม่ต้อง query แยก |
+| `day_status` | Subcollection `users/{userId}/dayStatus/{date}` (document ID = ISO date) | ผูกกับวันที่เดียวกับ `weekly_plan_entry`/`daily_log` — ใช้ document ID ตรงกันเพื่อให้ Cloud Function อ่าน 3 เอกสารของวันเดียวกันพร้อมกันได้ง่าย (ตามที่หัวข้อ 4/5 เดิมระบุว่าต้องอ่านทั้ง 3 ตารางประกอบกัน) |
+| `daily_log` | Subcollection `users/{userId}/dailyLogs/{date}` (document ID = ISO date) | จำนวนไม่จำกัด ต้อง query ช่วงวันที่บ่อยที่สุด (streak, forecast, log history ตามหัวข้อ 5 เดิม) — document ID = date ทำให้ query แบบ range ตรงไปตรงมา |
+| `streak_snapshot` | Embedded map field `streakSnapshot` ภายใน `users/{userId}` | 1:1 กับ user เก็บค่าล่าสุดค่าเดียว อ่านพร้อม Dashboard ทุกครั้งตาม NFR-01 — embed ลด read เพิ่ม |
+| `weight_record` | Subcollection `users/{userId}/weightRecords/{recordId}` | จำนวนไม่จำกัด (ทุกครั้งที่ชั่ง/กรอกเอง) ต้อง query ช่วงเวลา (คำนวณ TDEE ใหม่ + forecast) |
+| `weight_forecast_snapshot` | Embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` | 1:1 กับ user เก็บค่าล่าสุดค่าเดียว อ่านพร้อมหน้า Insights |
+| `integration_connection` | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` | ชุดข้อมูลเล็ก bounded ชัดเจน (2 ประเภทตายตัวตาม INT-2/INT-3 ของ backlog ปัจจุบัน) อ่านพร้อมโปรไฟล์เพื่อตัดสิน UI ปุ่มเชื่อมต่อ/ตัดการเชื่อมต่อ |
+
+⚠️ ตารางนี้เป็นการออกแบบที่ละเอียดกว่า `tech-stack.md` §6.1 ปัจจุบัน (ซึ่งระบุแค่ชื่อ collection ระดับ
+component คร่าวๆ) — ยึดชื่อ collection ที่ `tech-stack.md` §6.1 ตั้งไว้แล้วเป็นหลัก (`workoutSessions`
+เทียบเท่า, `weeklyPlanEntries`/`dayStatus`/`dailyLogs`/`weightForecastSnapshot` ตรงชื่อเดิม) แล้วเพิ่ม
+รายละเอียดว่า nest อยู่ใต้ `users/{userId}` และตารางไหนควร embed แทน — ควรนำกลับไปปรับ `tech-stack.md` §6.1
+ให้ตรงกันในการรัน `tech-stack-builder` ครั้งถัดไป
+
+### 8.3 FK / Constraint Enforcement Migration (ย้ายจาก schema-level ไป Cloud Function)
+
+Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่างจาก relational DB ที่อย่างน้อยยังมี FK บังคับการมีอยู่
+ของ parent row ให้ฟรี ตารางด้านล่างขยายจากหัวข้อ 4 (Relationships & Constraints) เดิม โดยระบุว่ากติกาแต่ละ
+ข้อควรถูก enforce ที่ Cloud Function ตัวไหน (อ้างชื่อจาก `tech-stack.md` §6.1/§6.3 ที่มีอยู่แล้วเมื่อมีชื่อ
+ทางการ — ไม่มีให้อ้างอิง operation จาก `api-spec.md` แทนโดยไม่เดาชื่อ function เอง):
+
+| กติกาเดิม (จากหัวข้อ 4) | สถานะใน Firestore | Cloud Function ที่ต้อง enforce | Component เจ้าของ (HLA §3) |
+|---|---|---|---|
+| Equipment mutual exclusion (`equipment_selection`) | เก็บเป็น `equipmentTypes` array embedded — Firestore ไม่มี constraint ใดบังคับความสัมพันธ์ระหว่างค่าในกลุ่ม | Cloud Function `profileUpdate` (ชื่อทางการตาม tech-stack.md §6.1) | Personalization & Profile |
+| Safety floor (`goal_selection.daily_calorie_target_kcal` ≥ 1,200–1,500) | เก็บใน `goalSelection` embedded map — ไม่มี CHECK constraint | Cloud Function ที่รับ operation `PUT /profile/goal` (ตาม api-spec.md §3.1 — ยังไม่มีชื่อทางการแยกจาก `profileUpdate` ใน tech-stack.md §6.1 ปัจจุบัน ควรยืนยันในการรัน `tech-stack-builder` ครั้งถัดไปว่าเป็นฟังก์ชันเดียวกันหรือแยก) | Personalization & Profile |
+| All-or-nothing (`daily_log.completion_status` ≥100% เท่านั้น ไม่มีค่ากลาง) | เขียนลง `dailyLogs/{date}` โดยตรง ไม่มี CHECK constraint ใดๆ | Cloud Function ที่เขียน `dailyLogs` ต่อจาก `sessionComplete`/`cheatRest` (ตาม tech-stack.md §6.1 "Logging & Streak" — trigger จาก Firestore `onWrite`) | Logging & Streak |
+| PLN-1 read-only (วันในอดีตที่มี `daily_log` แล้ว ห้ามแก้ `weekly_plan_entry`) | ต้องอ่าน `dailyLogs/{date}` ก่อนอนุญาตเขียน `weeklyPlanEntries/{date}` เอง — ไม่มีกลไกอัตโนมัติใดๆ (แม้ตอนเป็น relational ก็ต้อง enforce ที่ application layer อยู่แล้วตามหัวข้อ 4 เดิม ไม่ใช่เรื่องใหม่จาก Firestore) | Cloud Function ที่รับ `PUT /planner/days/{date}` (tech-stack.md §6.1 "Planner & Day-Status" — "Cloud Function คำนวณ read-only flag") | Planner & Day-Status |
+| PLN-2 "วันนี้เท่านั้น" (ทับ `daily_log` ที่มีอยู่แล้วได้เฉพาะ `status_date` = วันนี้) | ต้องอ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` | Cloud Function `cheatRest` (ชื่อทางการตาม tech-stack.md §6.1) | Planner & Day-Status |
+| Streak/Forecast snapshot ต้อง sync ใหม่ทุกครั้งที่ต้นทางเปลี่ยน | `streakSnapshot`/`weightForecastSnapshot` เป็น embedded field ใน `users/{userId}` — ไม่มี materialized view/trigger ของ DB ให้ใช้ฟรีเหมือนที่หัวข้อ 4 เดิมตั้งข้อสังเกตไว้แล้วว่าไม่มีแม้ตอนเป็น relational | Cloud Function ที่ trigger จาก Firestore `onWrite` ของ `dailyLogs`/`dayStatus` (Logging & Streak) และ Cloud Function `forecast` (Insights & Forecast) — ทั้งสองชื่อทางการตาม tech-stack.md §6.1 | Logging & Streak / Insights & Forecast |
+| **(ใหม่ — เกิดจาก Firestore ไม่มี FK เลย ไม่ใช่แค่ constraint ทางธุรกิจ)** Referential existence validation: ทุก field ที่เคยเป็น FK ในหัวข้อ 3 (เช่น `workout_session_id` ที่ wearable reading เดิมอ้างถึง) ต้องมีการตรวจสอบว่า document ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกัน ก่อนเขียนเสมอ | ส่วนใหญ่ถูกกำจัดไปแล้วด้วยการ embed (8.2) — ที่เหลือคือทุกครั้งที่ client ส่ง id ของ document อื่นมาใน request (เช่น `sessionId` ใน `POST /integrations/wearable/readings`) | ทุก Cloud Function ที่รับ id อ้างอิงจาก client ต้อง `get()` ยืนยันก่อนเขียนเสมอ (ดู tech-stack.md §6.3 สำหรับ mapping operation → Cloud Function แต่ละตัว) | เจ้าของแต่ละ Cloud Function ตาม operation นั้น (แปรผันตาม component) |
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, REST
-convention → Supabase routing) และเหตุผลการเลือก stack
+convention → Firebase Cloud Functions routing) และเหตุผลการเลือก stack

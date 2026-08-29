@@ -7,6 +7,14 @@ scenario และ **Alt/Edge Cases** ที่มีอยู่แล้วใ
 ไม่มีการสร้าง edge case ใหม่ที่ไม่มีอยู่ใน journey เดิม (จุดที่ journey ทิ้งไว้เป็น Open Question โดยไม่มี
 พฤติกรรมที่นิยามชัดเจน จะไม่ถูกแปลงเป็น scenario ในไฟล์นี้ — ดูหมายเหตุท้ายแต่ละ feature ที่เกี่ยวข้อง)
 
+**ข้อยกเว้นเดียว (เพิ่ม 2026-08-29)**: scenario ที่มาจาก Non-Functional Requirement ที่ตัดขวางหลาย Epic
+(เช่น NFR-12, NFR-13) ไม่ได้มาจาก Alt/Edge Case ของ `user-journeys.md` โดยตรง แต่มาจาก
+[01-spec/20260827-05-non-functional-requirements.md](01-spec/20260827-05-non-functional-requirements.md)
+ที่ `feature-list-journey` ยืนยัน mapping กับ Feature ID เฉพาะไว้แล้วใน [backlog.md NFR
+Traceability](backlog.md#non-functional-requirements-nfr-traceability) พร้อมหลักฐานตรงในเอกสารเทคนิค
+อื่น (`api-spec.md`, `database-schema.md`, `DESIGN.md`) — ไม่ใช่การเดา edge case ใหม่ แต่ละ scenario
+ประเภทนี้มีหมายเหตุกำกับไว้ชัดเจนว่าอ้างอิงจากที่ใด
+
 ต้นทาง: [01-spec/](01-spec/index.md) · [backlog.md](backlog.md) ·
 [user-journeys.md](../02-design/01-prototypes/user-journeys.md) ·
 ดูตัวอย่างหน้าจอที่เกี่ยวข้องได้ที่ [prototype v1](../02-design/01-prototypes/v1/README.md)
@@ -178,6 +186,22 @@ Spec: [01-spec/20260823-02-daily-youtube-recommendation.md](01-spec/20260823-02-
 - **When**: ผู้ใช้จบ/หยุดวิดีโอออกกำลังกาย
 - **Then**: ระบบใช้ค่าแคลอรี่จาก wearable แทนค่าประมาณจากสูตร MET ในการบันทึกแคลอรี่เผาผลาญของเซสชันนั้น
 - Prototype: [07-workout-result.html](../02-design/01-prototypes/v1/07-workout-result.html)
+
+#### AC-REC-2-04 — ส่ง sessionId ที่ไม่มีอยู่จริง ระบบต้อง reject ก่อนเขียนข้อมูล (REQ-05, NFR-12)
+- **Given**: Client ส่งคำขอจบ/หยุดเซสชันออกกำลังกายด้วย `sessionId` ที่ไม่ตรงกับ Workout Session ใดของ
+  ผู้ใช้คนนี้ในระบบ (เช่น session ถูกลบไปแล้ว หมดอายุ หรือเป็นของผู้ใช้อื่น)
+- **When**: Client เรียก `POST /workouts/sessions/{sessionId}/complete` ด้วย `sessionId` นั้น
+- **Then**: ระบบตรวจสอบว่า session ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนข้อมูลเสมอ
+  (referential existence validation ตาม NFR-12) เมื่อไม่พบ ระบบปฏิเสธคำขอด้วย `404 sessionId ไม่พบ`
+  (error case ที่ระบุไว้แล้วใน [api-spec.md §3.3](../02-design/02-technical/api-spec.md)) โดยไม่สร้าง
+  Actual Calorie Burn หรือ Daily Log ใด ๆ จากคำขอนี้
+- Prototype: ไม่มี — เป็น server-side validation ที่ไม่มี UI mockup เฉพาะใน `v1/`
+
+> หมายเหตุ: scenario นี้ไม่ได้มาจาก Alt/Edge Case ใน user-journeys.md (journey ของ REC-2 ไม่ได้ลงราย
+> ละเอียดระดับ API/backend) แต่มาจาก [NFR-12](01-spec/20260827-05-non-functional-requirements.md)
+> (เพิ่ม 2026-08-29) ซึ่ง `feature-list-journey` ยืนยันแล้วว่าผูกกับ REC-2 โดยตรง (ดู [backlog.md NFR
+> Traceability หมายเหตุ 1](backlog.md#non-functional-requirements-nfr-traceability)) และมีหลักฐาน error
+> case ที่ระบุไว้แล้วจริงใน api-spec.md §3.3 (`404 sessionId ไม่พบ`) — ไม่ใช่การเดา edge case ใหม่
 
 ### REC-3 — เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม
 
@@ -358,6 +382,22 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 - **Then**: ระบบแสดงข้อความแจ้งเตือนแทนวันที่คาดการณ์ (ไม่แสดงวันที่ที่คำนวณไม่ได้จริง)
 - Prototype: [10-progress-insights.html](../02-design/01-prototypes/v1/10-progress-insights.html)
 
+#### AC-INT-1-04 — กราฟแนวโน้มน้ำหนัก/แคลอรี่ใช้ earth-tone palette ไม่ใช้ red/green traffic-light (REQ-11, NFR-13)
+- **Given**: ผู้ใช้เปิดหน้า Progress/Insights ที่มีกราฟแนวโน้มน้ำหนัก/แคลอรี่แสดงอยู่ ไม่ว่าตัวเลขล่าสุดจะ
+  เพิ่มขึ้นหรือลดลงจากค่าก่อนหน้า
+- **When**: ระบบ render กราฟแนวโน้มนั้น
+- **Then**: กราฟใช้ palette earth tone เดียวกับ design system เท่านั้น — เส้นข้อมูลจริงใช้ `--color-clay`
+  เส้น/พื้นที่เป้าหมายใช้ `--color-sage` แบบจาง (opacity ~30%) — ห้ามใช้สี red/green แบบ traffic-light สื่อ
+  ความหมายว่าน้ำหนักขึ้น = แย่ (แดง) หรือลง = ดี (เขียว) ไม่ว่าตัวเลขจะเปลี่ยนทิศทางใด
+- Prototype: [10-progress-insights.html](../02-design/01-prototypes/v1/10-progress-insights.html)
+  (inline SVG line chart ใช้สี `--color-clay`/`--color-sage` ตรงตามกติกานี้)
+
+> หมายเหตุ: scenario นี้มาจาก [NFR-13](01-spec/20260827-05-non-functional-requirements.md) (เพิ่ม
+> 2026-08-29) ซึ่ง mirror [DESIGN.md §4.4](../02-design/01-prototypes/DESIGN.md) และยืนยันการ mapping
+> กับ INT-1 เท่านั้นจาก [backlog.md NFR Traceability
+> หมายเหตุ 2](backlog.md#non-functional-requirements-nfr-traceability) — ไม่ใช่ Alt/Edge Case ของ
+> user-journeys.md แต่มีหลักฐานตรงในเอกสารอื่นแล้ว จึงไม่ใช่การเดา
+
 ### INT-2 — ซิงค์ตาชั่งอัจฉริยะ
 
 #### AC-INT-2-01 — ซิงค์น้ำหนัก/องค์ประกอบร่างกายจากตาชั่งอัจฉริยะอัตโนมัติ (REQ-12)
@@ -396,6 +436,22 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > ต่างกันมาก ยังไม่ระบุวิธีจัดการความขัดแย้ง" — เป็นพฤติกรรมที่ยังไม่ถูกตัดสินใจ จึงไม่แปลงเป็น scenario
 > ในไฟล์นี้ (ดู [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions) ข้อ 5)
 
+#### AC-INT-3-03 — ส่ง sessionId ที่ไม่มีอยู่จริงมากับ wearable reading ระบบต้อง reject ก่อนเขียนข้อมูล (REQ-13, NFR-12)
+- **Given**: Wearable ส่งค่าแคลอรี่ที่เผาผลาญมาที่ระบบพร้อม `sessionId` ที่ไม่ตรงกับ Workout Session ใด
+  ของผู้ใช้คนนี้ (เช่น session ถูกลบ/หมดอายุ หรือผิดผู้ใช้)
+- **When**: Client เรียก `POST /integrations/wearable/readings` ด้วย `sessionId` นั้น
+- **Then**: ระบบตรวจสอบว่า session ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียน Wearable Reading
+  เสมอ (referential existence validation ตาม NFR-12) เมื่อไม่พบ ระบบปฏิเสธคำขอนี้ ไม่บันทึก Wearable
+  Reading และไม่นำค่านั้นไปแทนที่ค่าประมาณ MET ของ session ใด ๆ — ระบบยังคงใช้ค่าประมาณจากสูตร MET
+  (REC-2) ตามปกติสำหรับ session ที่แท้จริงต่อไป
+- Prototype: ไม่มี — เป็น server-side validation ที่ไม่มี UI mockup เฉพาะใน `v1/`
+
+> หมายเหตุ: เช่นเดียวกับ AC-REC-2-04 — มาจาก [NFR-12](01-spec/20260827-05-non-functional-requirements.md)
+> ไม่ใช่ Alt/Edge Case ของ user-journeys.md ยืนยันการ mapping กับ INT-3 จาก [backlog.md NFR Traceability
+> หมายเหตุ 1](backlog.md#non-functional-requirements-nfr-traceability) และหลักฐานตรงใน
+> [database-schema.md §8.3](../02-design/02-technical/database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function)
+> ที่ยกตัวอย่าง `sessionId` ใน `POST /integrations/wearable/readings` ไว้ชัดเจนว่าเป็นกรณีที่ต้องตรวจสอบ
+
 ---
 
 ## สรุปจำนวน Scenario ต่อ Feature
@@ -406,17 +462,20 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | ONB-2 | 3 |
 | ONB-3 | 5 |
 | REC-1 | 3 |
-| REC-2 | 3 |
+| REC-2 | 4 |
 | REC-3 | 2 |
 | REC-4 | 3 |
 | PLN-1 | 3 |
 | PLN-2 | 4 |
 | PLN-3 | 3 |
 | PLN-4 | 3 |
-| INT-1 | 3 |
+| INT-1 | 4 |
 | INT-2 | 2 |
-| INT-3 | 2 |
-| **รวม** | **42** |
+| INT-3 | 3 |
+| **รวม** | **45** |
+
+> อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
+> AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์
 
 ---
 

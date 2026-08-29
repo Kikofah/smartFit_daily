@@ -7,7 +7,7 @@
 
 เอกสารนี้ให้ step-by-step test case ของทุก Feature ใน Epic 4 (Smart Integrations: **INT-1, INT-2, INT-3**)
 สร้างจาก [acceptance-criteria.md](../../../01-requirements/acceptance-criteria.md) (Epic 4 section — AC-INT-1-01
-ถึง AC-INT-3-02) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก)
+ถึง AC-INT-3-03, อัปเดต 2026-08-29 ด้วย AC-INT-1-04/AC-INT-3-03 จาก NFR-13/NFR-12) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก)
 (คำอธิบาย feature), [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md)
 (REQ-11/12/13 และค่าคงที่ 7,700 kcal ≈ 1 กก.), และ
 [user-journeys.md](../../../02-design/01-prototypes/user-journeys.md#epic-4-smart-integrations) (flow/Alt-Edge
@@ -38,9 +38,9 @@ Activity Factor 1.55 (ตัวอย่างระดับกิจกรร�
 
 ## สารบัญ
 
-- [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 004
+- [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 005
 - [INT-2 — ซิงค์ตาชั่งอัจฉริยะ](#int-2--ซิงค์ตาชั่งอัจฉริยะ) — TC-INT-2-001 ถึง 002
-- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 002
+- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 003
 
 ---
 
@@ -114,6 +114,31 @@ Journey: [user-journeys.md#int-1--พยากรณ์วันถึงเป�
   ย่อยของ AC-INT-1-03: "เป็น 0" และ "สวนทางเป้าหมาย") ·
   [user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11](../../../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11) ·
   [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html)
+
+### TC-INT-1-005 — กราฟแนวโน้มน้ำหนัก/แคลอรี่ใช้ earth-tone palette ไม่ใช้ red/green traffic-light (NFR-13)
+
+> **หมายเหตุ scope**: เช่นเดียวกับ test case อื่นของ Epic 4 — test case นี้ **ยัง execute ไม่ได้ในรอบ
+> ทดสอบปัจจุบัน** เพราะ INT-1 อยู่นอกขอบเขต execution (Could ตาม [test-plan.md
+> §1](../test-plan.md#1-ขอบเขต-scope)) แม้เนื้อหา NFR-13 เองจะตรวจสอบได้ทันทีจาก prototype โดยไม่ต้องรอ
+> backend ก็ตาม — เตรียมไว้ล่วงหน้าให้พร้อม execute เมื่อ Epic 4 เข้า scope
+
+- **Pre-condition**: ผู้ใช้ (persona ด้านบน) เปิดหน้า Progress/Insights ที่มีกราฟแนวโน้มน้ำหนักแสดงอยู่
+  เตรียมข้อมูลทดสอบ 2 ชุด: (a) แนวโน้มน้ำหนักลดลง และ (b) แนวโน้มน้ำหนักเพิ่มขึ้น (เช่น หลัง Cheat Day
+  ต่อเนื่อง) เพื่อยืนยันว่าสีกราฟไม่เปลี่ยนตามทิศทางของตัวเลข
+- **Test Steps**:
+  1. เปิดหน้า Progress/Insights (prototype `10-progress-insights.html`) ด้วยชุดข้อมูล (a) แนวโน้มลดลง
+  2. ตรวจสอบสีของเส้นข้อมูลจริงและเส้น/พื้นที่เป้าหมายในกราฟ
+  3. สลับไปใช้ชุดข้อมูล (b) แนวโน้มเพิ่มขึ้น แล้วตรวจสอบสีของกราฟอีกครั้ง
+- **Expected Result**: ทั้งสองชุดข้อมูล กราฟใช้สีเดียวกันเสมอ — เส้นข้อมูลจริงใช้ `--color-clay` เส้น/
+  พื้นที่เป้าหมายใช้ `--color-sage` แบบจาง (opacity ~30%) ไม่มีการเปลี่ยนไปใช้สีแดง (red) เมื่อน้ำหนักเพิ่ม
+  ขึ้น หรือสีเขียว (green) เมื่อน้ำหนักลดลง ตรงตามที่ [DESIGN.md
+  §4.4](../../../02-design/01-prototypes/DESIGN.md) กำหนด
+- **Test Data**: ชุด (a) แนวโน้มลดลง: น้ำหนัก 80.0 → 79.2 → 78.5 กก.; ชุด (b) แนวโน้มเพิ่มขึ้น: น้ำหนัก
+  78.5 → 79.0 → 79.4 กก. — คาดหวังสีกราฟเดียวกัน (`--color-clay`/`--color-sage`) ในทั้งสองชุด
+- **References**: REQ-11, NFR-13 · AC-INT-1-04 · [DESIGN.md §4.4](../../../02-design/01-prototypes/DESIGN.md) ·
+  [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html) — ไม่มีลิงก์
+  user-journeys.md เพราะ scenario นี้มาจาก NFR-13 ไม่ใช่ Alt/Edge Case ของ journey (ดูหมายเหตุใต้
+  AC-INT-1-04 ใน acceptance-criteria.md)
 
 ---
 
@@ -208,6 +233,34 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
   [07-workout-result.html](../../../02-design/01-prototypes/v1/07-workout-result.html) (สถานะ "ประมาณจาก
   สูตร MET")
 
+### TC-INT-3-003 — ส่ง sessionId ที่ไม่มีอยู่จริงมากับ wearable reading ระบบต้อง reject ก่อนเขียนข้อมูล (NFR-12)
+
+> **หมายเหตุ testability**: เช่นเดียวกับ TC-REC-2-005 — ตาม [test-plan.md §4 Risk
+> R12](../test-plan.md#4-risk-management) test case นี้ **ยัง execute ไม่ได้ในรอบนี้** เพราะต้องการ
+> backend/Cloud Function จริงที่ยังไม่มีในโปรเจกต์ (นอกจากนี้ INT-3 เองก็อยู่นอกขอบเขต execution อยู่แล้ว
+> เพราะเป็น Epic 4/Could) — เตรียมไว้ล่วงหน้าตามหลักฐานใน database-schema.md §8.3
+
+- **Pre-condition**: ผู้ใช้เชื่อมต่อ wearable สำเร็จแล้ว (INT-3) แต่ wearable device ส่งค่าแคลอรี่มาพร้อม
+  `sessionId` ที่ไม่ตรงกับ Workout Session ใดของผู้ใช้ในระบบ เช่น session ถูกลบไปแล้วหรือหมดอายุ
+  (ตัวอย่าง `sessionId` = `"sess_x9y8z7"`)
+- **Test Steps**:
+  1. Wearable ส่งค่าแคลอรี่ที่เผาผลาญ (เช่น 300 kcal) มาที่ `POST /integrations/wearable/readings`
+     พร้อม `sessionId` = `"sess_x9y8z7"`
+  2. สังเกต response ของ endpoint
+  3. ตรวจสอบว่ามี Wearable Reading ใหม่ถูกบันทึกจากคำขอนี้หรือไม่
+  4. ตรวจสอบว่า workout result ของ session จริง (ถ้ามี) ยังใช้ค่าประมาณจากสูตร MET ตามปกติหรือไม่
+- **Expected Result**: ระบบตรวจสอบว่า session ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียน
+  Wearable Reading เสมอ (referential existence validation ตาม NFR-12 — ดู database-schema.md §8.3 ที่
+  ยกตัวอย่าง `sessionId` ใน endpoint นี้ไว้ตรง) พบว่าไม่มีอยู่จริง จึงปฏิเสธคำขอ ไม่บันทึก Wearable
+  Reading ใด ๆ และค่าที่ใช้แทนค่าประมาณ MET ของ session ที่แท้จริงจึงไม่ถูกเปลี่ยนแปลงจากคำขอนี้
+- **Test Data**: `sessionId` ทดสอบ = `"sess_x9y8z7"` (ไม่มีอยู่จริง), ค่าแคลอรี่จาก wearable ที่ส่งมา =
+  300 kcal (ค่าตัวอย่าง ไม่มีผลต่อผลลัพธ์เพราะคำขอถูก reject)
+- **References**: REQ-13, NFR-12 · AC-INT-3-03 ·
+  [database-schema.md §8.3](../../../02-design/02-technical/database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function) ·
+  [api-spec.md §3.7](../../../02-design/02-technical/api-spec.md) — ไม่มีลิงก์ user-journeys.md เพราะ
+  scenario นี้เป็นระดับ API/backend validation ไม่ใช่ Alt/Edge Case ของ journey (ดูหมายเหตุใต้
+  AC-INT-3-03 ใน acceptance-criteria.md)
+
 ---
 
 ## หมายเหตุ: Gap ที่ยังไม่มี test case (Open Question ที่ยังไม่ resolve)
@@ -234,11 +287,13 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 | INT-1 | AC-INT-1-01 | TC-INT-1-001 | 1:1 |
 | INT-1 | AC-INT-1-02 | TC-INT-1-002 | 1:1 |
 | INT-1 | AC-INT-1-03 | TC-INT-1-003, TC-INT-1-004 | 1 AC → 2 TC (variation: ขาดดุล = 0 / ขาดดุลสวนทางเป้าหมาย) |
+| INT-1 | AC-INT-1-04 (ใหม่, NFR-13, เพิ่ม 2026-08-29) | TC-INT-1-005 | 1:1 — "not testable in this round" (Epic 4/Could, ดู test-plan.md §1) |
 | INT-2 | AC-INT-2-01 | TC-INT-2-001 | 1:1 |
 | INT-2 | AC-INT-2-02 | TC-INT-2-002 | 1:1 |
 | INT-3 | AC-INT-3-01 | TC-INT-3-001 | 1:1 |
 | INT-3 | AC-INT-3-02 | TC-INT-3-002 | 1:1 |
-| **รวม** | **7 AC scenario** (ครบทุก AC ของ INT-1/2/3 ใน acceptance-criteria.md) | **8 test case** | |
+| INT-3 | AC-INT-3-03 (ใหม่, NFR-12, เพิ่ม 2026-08-29) | TC-INT-3-003 | 1:1 — "not testable in this round" (ดู test-plan.md R12) |
+| **รวม** | **9 AC scenario** (ครบทุก AC ของ INT-1/2/3 ใน acceptance-criteria.md) | **10 test case** | |
 
 ---
 

@@ -3,6 +3,10 @@
 - **ประเภทเอกสาร:** High Level Architecture — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — (1) sync หัวข้อ 10 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1
+  ฉบับ Firebase ใหม่ (2) เพิ่มการอ้างอิง NFR-12 (Reliability — Data Integrity) และ NFR-13 (Usability —
+  Data Visualization) เข้าหัวข้อ 7 ตามที่เพิ่มใหม่ใน NFR doc — audit หัวข้ออื่นทั้งหมดแล้วไม่พบ drift
+  เพิ่มเติม (ดู [log 2026-08-29](../../05-log/20260829-log.md))
 - **สร้างโดย:** skill `architecture-builder`
 - **อ้างอิงจาก:** [Product Backlog](../../01-requirements/backlog.md),
   [Requirement ทั้ง 4 epic + NFR](../../01-requirements/01-spec/index.md),
@@ -24,7 +28,7 @@ stack-specific (database schema, API design, tech choices) ในอนาคต
 เอกสารเหล่านั้นควร derive concept จากที่นี่ ไม่ใช่มาแทนที่เอกสารนี้
 
 ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 14 Feature ID ในทั้ง 4 Epic ตาม
-[backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–11 จาก
+[backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–13 จาก
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 ในฐานะ cross-cutting concern (ดูหัวข้อ 7)
 
@@ -357,12 +361,20 @@ flowchart TD
 - **Security/Privacy** (NFR-04, NFR-05, NFR-06): ข้อมูลสุขภาพส่วนบุคคลทุกจุด (โปรไฟล์, น้ำหนัก, ข้อมูล
   wearable) ต้องได้รับการปกป้องทั้งระหว่างส่งและจัดเก็บ การเชื่อมต่ออุปกรณ์ภายนอกต้องผ่าน consent ชัดเจน
   เสมอ และผู้ใช้ต้องขอลบข้อมูลของตัวเองได้
-- **Reliability** (NFR-07, NFR-08): ระบบต้อง fallback อย่างสงบเมื่อระบบภายนอกไม่พร้อมใช้งาน โดย core loop
-  รายวัน (Onboarding → Recommendation → Logging) ต้องไม่ผูกกับความพร้อมของ Smart Integrations (Epic 4,
-  Could ทั้งหมด) และข้อมูล log/streak ต้องไม่สูญหายจาก network ที่ไม่เสถียร
-- **Usability** (NFR-09, NFR-10): ทุกหน้าจอต้องผ่านเกณฑ์ accessibility ขั้นต่ำ (touch target, contrast,
-  ไม่สื่อสถานะด้วยสีอย่างเดียว, รองรับการปรับขนาดตัวอักษรของระบบ) และใช้ภาษาไทยเป็นหลักเสมอ (ศัพท์เทคนิค
-  ทับศัพท์ได้)
+- **Reliability** (NFR-07, NFR-08, NFR-12): ระบบต้อง fallback อย่างสงบเมื่อระบบภายนอกไม่พร้อมใช้งาน โดย
+  core loop รายวัน (Onboarding → Recommendation → Logging) ต้องไม่ผูกกับความพร้อมของ Smart Integrations
+  (Epic 4, Could ทั้งหมด) และข้อมูล log/streak ต้องไม่สูญหายจาก network ที่ไม่เสถียร นอกจากนี้ การเขียนข้อมูล
+  ฝั่ง server ที่อ้างอิงถึง entity อื่นด้วย id ที่ส่งมาจาก client (เช่น การปิดจบเซสชันใน **Exertion & Calorie
+  Calculation** สำหรับ REC-2, การบันทึกค่าที่ซิงค์มาใน **Integration Gateway** สำหรับ INT-3) ต้องตรวจสอบว่า
+  entity ปลายทางนั้นมีอยู่จริงก่อนเขียนเสมอ (referential existence validation) เพื่อป้องกัน
+  orphaned/dangling reference — เป็นข้อกำหนดที่สำคัญขึ้นเมื่อแหล่งเก็บข้อมูลที่เลือกใช้ไม่ได้บังคับ
+  ความสัมพันธ์ระหว่างข้อมูลระดับโครงสร้างเสมอไป (ต่างจากระบบฐานข้อมูลเชิงสัมพันธ์ทั่วไปที่มักมีกลไกนี้ในตัว)
+- **Usability** (NFR-09, NFR-10, NFR-13): ทุกหน้าจอต้องผ่านเกณฑ์ accessibility ขั้นต่ำ (touch target,
+  contrast, ไม่สื่อสถานะด้วยสีอย่างเดียว, รองรับการปรับขนาดตัวอักษรของระบบ) และใช้ภาษาไทยเป็นหลักเสมอ
+  (ศัพท์เทคนิคทับศัพท์ได้) นอกจากนี้ ผลลัพธ์เชิง data visualization ที่ผลิตโดย **Insights & Forecast**
+  (INT-1) — กราฟ/ภาพแนวโน้มน้ำหนักและแคลอรี่ — ต้องใช้ชุดสีที่เป็นกลางและสอดคล้องกับ design system เดียวกัน
+  ทั่วทั้งแอป ห้ามใช้โทนสีเชิงตัดสินคุณค่าแบบ traffic-light (เช่น แดง/เขียว) กับข้อมูลร่างกาย เพราะความ
+  ผันผวนของตัวเลขร่างกายเป็นเรื่องปกติ ไม่ควรถูกสื่อว่าเป็นความล้มเหลวหรือความสำเร็จ
 - **Legal/Regulatory Compliance** (NFR-11): ระบบต้องปฏิบัติตาม PDPA มาตรฐานทั่วไป ครอบคลุม consent
   record-keeping (เชื่อมกับ NFR-05), สิทธิ์เข้าถึง/แก้ไข/ลบข้อมูลของเจ้าของข้อมูล (เชื่อมกับ NFR-06), และ
   กระบวนการแจ้งเหตุข้อมูลรั่วไหล
@@ -411,18 +423,24 @@ flowchart TD
 > ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `architecture-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
-(2026-08-28):
+มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+(อัปเดต 2026-08-29 — เปลี่ยนจาก Supabase/PostgreSQL เป็น Firebase ตามคำขอของผู้ใช้งานโดยตรง ไม่ใช่ผลจาก
+Weighted Scoring Model เดิม ดู [tech-stack.md](tech-stack.md) §2 และ §5):
 
 | Conceptual Component (หัวข้อ 3) | Concrete Implementation |
 |---|---|
-| Personalization & Profile | ตาราง `user_profile`/`goal_selection`/`equipment_selection` + RLS policy ต่อผู้ใช้ + Edge Function `profile-update` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่ง |
-| Content Recommendation | Edge Function `recommendation` เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
-| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Edge Function `session-complete` validate + เขียน `actual_calorie_burn` |
-| Planner & Day-Status | ตาราง `weekly_plan_entry`/`day_status` + Postgres view คำนวณ read-only flag + Edge Function `cheat-rest` (nested check ตาม Detailed Design) |
-| Logging & Streak | ตาราง `daily_log`/`streak_snapshot` + Postgres function หรือ Edge Function สำหรับ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
-| Insights & Forecast | ตาราง `weight_forecast_snapshot` + Edge Function `forecast` คำนวณจากประวัติ `daily_log`/`weight_record` |
-| Integration Gateway | Edge Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
+| Personalization & Profile | Firestore collection `users/{userId}` เก็บ `profile`/`goalSelection`/`equipmentSelection` + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
+| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Cloud Function `sessionComplete` validate + เขียน `actualCalorieBurn` ลง Firestore |
+| Planner & Day-Status | Firestore collection `weeklyPlanEntries`/`dayStatus` + Cloud Function คำนวณ read-only flag (แทน Postgres view เดิม) + Cloud Function `cheatRest` (nested check ตาม Detailed Design) |
+| Logging & Streak | Firestore collection `dailyLogs`/`streakSnapshots` + Cloud Function ที่ trigger จาก Firestore `onWrite` เพื่อ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
+| Insights & Forecast | Firestore collection `weightForecastSnapshots` + Cloud Function `forecast` คำนวณจากประวัติ `dailyLogs`/`weightRecords` |
+| Integration Gateway | Cloud Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — ไม่เปลี่ยนจากเดิม |
 
-ดูรายละเอียดเหตุผลการเลือก stack และ mapping ที่เหลือ (logical type → PostgreSQL type, REST convention →
-Supabase routing) ที่ [tech-stack.md](tech-stack.md)
+⚠️ เช่นเดียวกับ `tech-stack.md` § 6: ตารางนี้เป็น**แนวทางเบื้องต้น**เท่านั้น — โครงสร้าง collection/document
+ที่สมบูรณ์ (denormalize จาก 15 ตาราง relational เดิมใน `database-schema.md`) ยังไม่ถูกออกแบบอย่างเป็นทางการ
+ต้องรอ `api-db-spec-builder` ปรับ `database-schema.md`/`api-spec.md` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามอีก
+ครั้งเมื่อ `api-spec.md`/`database-schema.md` มีเวอร์ชัน Firebase ที่สมบูรณ์
+
+ดูรายละเอียดเหตุผลการเลือก stack, ประวัติการตัดสินใจ 2026-08-29, และ mapping ที่เหลือ (logical type →
+Firestore field type, REST convention → Firebase Cloud Functions routing) ที่ [tech-stack.md](tech-stack.md)

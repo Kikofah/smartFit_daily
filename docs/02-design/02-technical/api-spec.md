@@ -3,6 +3,9 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.3
+  ฉบับ Firebase ใหม่ (audit เนื้อหาหลักหัวข้อ 1-5 แล้วไม่พบ drift อื่น — REST-style convention, operation
+  list, และ payload ยังใช้ได้เหมือนเดิมเพราะยังเป็น conceptual ล้วน)
 - **สร้างโดย:** skill `api-db-spec-builder`
 - **อ้างอิงจาก:** [High Level Architecture](high-level-architecture.md),
   [Product Backlog](../../01-requirements/backlog.md),
@@ -125,17 +128,26 @@ operation ใดที่ไม่มี component รองรับ
 > กติกาเดิมทุกประการ ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync
 > ตามในการรัน `api-db-spec-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--supabase-routing)
-(2026-08-28):
+> **อัปเดต 2026-08-29**: มิเรอร์ใหม่ทั้งหมดจาก Supabase/PostgREST เป็น Firebase Cloud Functions ตามการ
+> เปลี่ยน stack ใน `tech-stack.md` §2/§5 (2026-08-29) — หัวข้อ 1-5 ข้างต้น**ไม่ต้องแก้ไขเนื้อหาใดๆ**
+> เพราะยังเป็น REST-style convention เชิงแนวคิดล้วน ไม่ผูกกับว่า backend จริงมี auto-generated API หรือไม่
 
-- **Operation ที่เป็น CRUD ตรงไปตรงมา** (เช่น `GET /profile`, `GET /logs`, `GET /logs/{date}`,
-  `GET /planner/week`, `GET /streak`) → ใช้ **PostgREST auto-generated API** ของ Supabase โดยตรง (มี RLS
-  policy คุมสิทธิ์ต่อผู้ใช้)
-- **Operation ที่มี business logic/validation/เรียก external API** (เช่น `PUT /profile/goal`,
-  `GET /workouts/today/recommendation`, `POST /workouts/sessions/{sessionId}/complete`,
-  `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → implement เป็น
-  **Supabase Edge Function** (Deno/TypeScript) โดยคง HTTP verb + resource path เดิมตามที่หัวข้อ 3 กำหนด
-  ไว้เป็น convention การตั้งชื่อ route
+มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--firebase-cloud-functions-routing)
+(อัปเดต 2026-08-29):
+
+- **ทุก operation ในหัวข้อ 3 ต้อง implement เป็น Cloud Function เอง** — Firestore **ไม่มี auto-generated
+  REST API แบบ PostgREST ของ Supabase ให้ใช้ฟรี** ต่างจาก mapping เดิม (2026-08-28) ที่แยก CRUD ธรรมดา
+  ออกจาก business-logic operation ได้ชัดเจน ตอนนี้ทั้งสองกลุ่มต้องเขียนเป็น **Cloud Function (Callable
+  Function หรือ HTTPS Function)** เหมือนกันหมด โดย map 1:1 กับ resource path เดิมของหัวข้อ 3 เป็น function
+  name/route convention:
+  - **Operation ที่เป็น CRUD ตรงไปตรงมา** (เช่น `GET /profile`, `GET /logs`, `GET /logs/{date}`,
+    `GET /planner/week`, `GET /streak`) → Cloud Function ที่ทำหน้าที่อ่าน/เขียน Firestore ตรงไปตรงมา
+    (ไม่มีทางเลือก auto-generate เหมือน PostgREST เดิม เพิ่มปริมาณงาน dev เทียบกับ mapping เดิม)
+  - **Operation ที่มี business logic/validation/เรียก external API** (เช่น `PUT /profile/goal`,
+    `GET /workouts/today/recommendation`, `POST /workouts/sessions/{sessionId}/complete`,
+    `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → Cloud Function เดิม
+    ตามแนวทางเดียวกัน ไม่เปลี่ยนจากเดิม ต่างแค่ runtime (Firebase Cloud Functions แทน Supabase Edge
+    Function)
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, logical
-type → PostgreSQL type) และเหตุผลการเลือก stack
+type → Firestore field type) และเหตุผลการเลือก stack

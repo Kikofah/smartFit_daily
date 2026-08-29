@@ -3,6 +3,9 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่ และ
+  แก้ label ของ State Diagram (Integration Connection) ให้ตรงกับ `enum` จริงใน `database-schema.md` §3.15
+  (audit เนื้อหาหลัก sequence/state diagram/algorithm ของ INT-1/2/3 ส่วนอื่นแล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
   [Database Schema](../database-schema.md), [Product Backlog](../../../01-requirements/backlog.md),
@@ -25,8 +28,8 @@ stateDiagram-v2
     [*] --> ยังไม่เชื่อมต่อ
     ยังไม่เชื่อมต่อ --> เชื่อมต่อแล้ว: POST .../connect (สำเร็จ + consent)
     ยังไม่เชื่อมต่อ --> ยังไม่เชื่อมต่อ: POST .../connect (ล้มเหลว หรือถูกปฏิเสธ consent)
-    เชื่อมต่อแล้ว --> ยกเลิกการเชื่อมต่อ: DELETE .../disconnect
-    ยกเลิกการเชื่อมต่อ --> เชื่อมต่อแล้ว: POST .../connect (เชื่อมต่อใหม่)
+    เชื่อมต่อแล้ว --> ถอน consent แล้ว: DELETE .../disconnect
+    ถอน consent แล้ว --> เชื่อมต่อแล้ว: POST .../connect (เชื่อมต่อใหม่)
 ```
 
 ## INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก (REQ-11)
@@ -157,18 +160,25 @@ sequenceDiagram
 > เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `detailed-design-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
-(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-29**: มิเรอร์ใหม่จาก Supabase/PostgreSQL เป็น Firebase ตามการเปลี่ยน stack ใน
+> `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence/state diagram/algorithm ของ INT-1/2/3)
+> **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง (การแก้ label ของ State Diagram
+> ด้านบนจาก "ยกเลิกการเชื่อมต่อ" เป็น "ถอน consent แล้ว" เป็นการแก้ไขให้ตรงกับค่า `enum` จริงใน
+> `database-schema.md` §3.15 ที่พบระหว่าง audit ครั้งนี้ — ไม่เกี่ยวกับการเปลี่ยน stack)
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Insights & Forecast | ตาราง `weight_forecast_snapshot` + Edge Function `forecast` คำนวณจากประวัติ `daily_log`/`weight_record` |
-| Integration Gateway | Edge Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
+| Insights & Forecast | Firestore collection `weightForecastSnapshots` + Cloud Function `forecast` คำนวณจากประวัติ `dailyLogs`/`weightRecords` |
+| Integration Gateway | Cloud Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — ไม่เปลี่ยนจากเดิม |
 
 **Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **Forecast (INT-1)** เกิดขึ้นฝั่ง **React Native
-client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Supabase Edge Function
-`forecast`** เพื่อ validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server — ส่วน **INT-2/INT-3** (จับคู่/ซิงค์อุปกรณ์
-ภายนอก) ใช้ native module ฝั่ง client ตามที่ตารางข้างบนระบุ (`react-native-health` สำหรับ Apple HealthKit,
-`react-native-health-connect` สำหรับ Google Health Connect, `react-native-ble-plx` สำหรับ Bluetooth
-สมาร์ตสเกล) แล้วส่งข้อมูลที่ซิงค์ได้ผ่าน Edge Function `integrations`
+client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Firebase Cloud
+Function `forecast`** (แทนที่ Supabase Edge Function `forecast` เดิม) เพื่อ validate เป็นเกราะป้องกัน
+ชั้นที่สองฝั่ง server — ส่วน **INT-2/INT-3** (จับคู่/ซิงค์อุปกรณ์ภายนอก) ใช้ native module ฝั่ง client
+ตามที่ตารางข้างบนระบุเหมือนเดิม (`react-native-health` สำหรับ Apple HealthKit, `react-native-health-connect`
+สำหรับ Google Health Connect, `react-native-ble-plx` สำหรับ Bluetooth สมาร์ตสเกล) แล้วส่งข้อมูลที่ซิงค์ได้
+ผ่าน **Firebase Cloud Function `integrations`** (แทนที่ Supabase Edge Function `integrations` เดิม)

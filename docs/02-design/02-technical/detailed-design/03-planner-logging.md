@@ -3,6 +3,8 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+  (audit เนื้อหาหลัก sequence diagram/algorithm ของ PLN-1/2/3/4 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
   [Database Schema](../database-schema.md), [Product Backlog](../../../01-requirements/backlog.md),
@@ -171,17 +173,21 @@ sequenceDiagram
 > เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `detailed-design-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
-(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-29**: มิเรอร์ใหม่จาก Supabase/PostgreSQL เป็น Firebase ตามการเปลี่ยน stack ใน
+> `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence diagram/algorithm ของ PLN-1/2/3/4)
+> **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Planner & Day-Status | ตาราง `weekly_plan_entry`/`day_status` + Postgres view คำนวณ read-only flag + Edge Function `cheat-rest` (nested check ตาม Detailed Design) |
-| Logging & Streak | ตาราง `daily_log`/`streak_snapshot` + Postgres function หรือ Edge Function สำหรับ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
+| Planner & Day-Status | Firestore collection `weeklyPlanEntries`/`dayStatus` + Cloud Function คำนวณ read-only flag (แทน Postgres view เดิม) + Cloud Function `cheatRest` (nested check ตาม Detailed Design) |
+| Logging & Streak | Firestore collection `dailyLogs`/`streakSnapshots` + Cloud Function ที่ trigger จาก Firestore `onWrite` เพื่อ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
 
 **Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **Streak walk-back (PLN-4)** เกิดขึ้นฝั่ง **React
-Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน server-side —
-ตาม § 6.1 ด้านบน server-side ส่วนนี้อาจ implement เป็น Postgres function หรือ Supabase Edge Function
-(`tech-stack.md` ยังไม่ได้ฟันธงระหว่างสองแบบนี้ — คำว่า "หรือ" ปรากฏตรงตัวใน § 6.1) เพื่อ recompute/
-validate streak เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดียวกับ ONB-1/REC-2
+Native client โดยตรง** เพื่อไม่มี network latency ก่อน แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกลง Firestore —
+ฝั่ง server การ recompute/validate streak เป็นเกราะป้องกันชั้นที่สองนี้ตอนนี้ระบุชัดเจนแล้วว่าเป็น
+**Firebase Cloud Function ที่ trigger อัตโนมัติจาก Firestore `onWrite`** ของ `dailyLogs`/`dayStatus`
+(แทนที่ความคลุมเครือเดิมของ Supabase ที่ยังไม่ฟันธงระหว่าง Postgres function กับ Edge Function)

@@ -3,6 +3,8 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+  (audit เนื้อหาหลัก sequence diagram/algorithm ของ ONB-1/2/3 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
   [Database Schema](../database-schema.md), [Product Backlog](../../../01-requirements/backlog.md),
@@ -129,16 +131,21 @@ sequenceDiagram
 > เปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `detailed-design-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--supabase-implementation)
-(2026-08-28) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-29**: มิเรอร์ใหม่จาก Supabase/PostgreSQL เป็น Firebase ตามการเปลี่ยน stack ใน
+> `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence diagram/algorithm ของ ONB-1/ONB-2/ONB-3)
+> **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Personalization & Profile | ตาราง `user_profile`/`goal_selection`/`equipment_selection` + RLS policy ต่อผู้ใช้ + Edge Function `profile-update` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่ง |
+| Personalization & Profile | Firestore collection `users/{userId}` เก็บ `profile`/`goalSelection`/`equipmentSelection` + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
 
 **Execution ของ algorithm section**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **TDEE (ONB-1)** และ **Safety Floor (ONB-3)**
 เกิดขึ้นฝั่ง **React Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึก
-ผ่าน **Supabase Edge Function `profile-update`** (ไม่ใช่เขียนตรงเข้าตารางผ่าน PostgREST) เพื่อให้ Edge
-Function validate/บังคับกติกาธุรกิจ (เช่น safety floor, equipment mutual exclusion) เป็นเกราะป้องกันชั้น
-ที่สองฝั่ง server
+ผ่าน **Firebase Cloud Function `profileUpdate`** (แทนที่ Supabase Edge Function `profile-update` เดิม —
+ไม่ใช่เขียนตรงเข้า Firestore document `users/{userId}` จาก client เอง) เพื่อให้ Cloud Function
+validate/บังคับกติกาธุรกิจ (เช่น safety floor, equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง
+server เช่นเดิม
