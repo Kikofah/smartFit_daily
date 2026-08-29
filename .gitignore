@@ -17,6 +17,7 @@ npm-debug.log*
 # Expo (smartfit_daily_app/apps/mobile — companion app, INT-2/INT-3 only)
 smartfit_daily_app/apps/mobile/.expo/
 smartfit_daily_app/apps/mobile/web-build/
+smartfit_daily_app/apps/web/config/
 *.jks
 *.p8
 *.p12
