@@ -1,7 +1,8 @@
 # Acceptance Criteria — smartFit_daily
 
 เอกสารนี้แจกแจง Acceptance Criteria แบบ **Given-When-Then** ของทุก Feature ใน
-[backlog.md](backlog.md) (14 Feature ID ครบทุก Epic) โดยยึด **Success State** เป็น happy-path
+[backlog.md](backlog.md) (15 Feature ID ครบทุก Epic — เพิ่ม ONB-0 Authentication เมื่อ 2026-08-29) โดยยึด
+**Success State** เป็น happy-path
 scenario และ **Alt/Edge Cases** ที่มีอยู่แล้วใน
 [user-journeys.md](../02-design/01-prototypes/user-journeys.md) เป็น scenario เพิ่มเติมต่อ feature —
 ไม่มีการสร้าง edge case ใหม่ที่ไม่มีอยู่ใน journey เดิม (จุดที่ journey ทิ้งไว้เป็น Open Question โดยไม่มี
@@ -26,7 +27,7 @@ Traceability](backlog.md#non-functional-requirements-nfr-traceability) พร้
 
 ## สารบัญ
 
-- [Epic 1: Onboarding & Personalization](#epic-1-onboarding--personalization) — ONB-1, ONB-2, ONB-3
+- [Epic 1: Onboarding & Personalization](#epic-1-onboarding--personalization) — ONB-0, ONB-1, ONB-2, ONB-3
 - [Epic 2: Daily YouTube Recommendation](#epic-2-daily-youtube-recommendation) — REC-1, REC-2, REC-3, REC-4
 - [Epic 3: Planner & Logging](#epic-3-planner--logging) — PLN-1, PLN-2, PLN-3, PLN-4
 - [Epic 4: Smart Integrations](#epic-4-smart-integrations) — INT-1, INT-2, INT-3
@@ -36,6 +37,66 @@ Traceability](backlog.md#non-functional-requirements-nfr-traceability) พร้
 ## Epic 1: Onboarding & Personalization
 
 Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-onboarding-personalization.md)
+
+### ONB-0 — สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (เพิ่มใหม่ 2026-08-29)
+
+#### AC-ONB-0-01 — สมัครสมาชิกสำเร็จ สร้างบัญชีผู้ใช้ใหม่ก่อนเข้าสู่ ONB-1 (REQ-14)
+- **Given**: ผู้ใช้เปิดแอปครั้งแรกและยังไม่มีบัญชีผู้ใช้
+- **When**: ผู้ใช้เลือกวิธีสมัครสมาชิก 1 ใน 3 วิธี (email/password, Google OAuth, หรือ Sign in with Apple)
+  แล้วกรอก/ยืนยันข้อมูลที่จำเป็นครบถ้วน
+- **Then**: ระบบสร้างบัญชีผู้ใช้ใหม่ (`userId`) ก่อนเข้าสู่ขั้นตอนกรอกข้อมูลส่วนตัวเสมอ — ห้ามเริ่ม ONB-1
+  ก่อนมีบัญชีผู้ใช้จริง แล้วพาไปหน้ากรอกข้อมูลส่วนตัว (ONB-1) ทันที
+- Prototype: [00-auth-signup.html](../02-design/01-prototypes/v1/00-auth-signup.html)
+
+#### AC-ONB-0-02 — เข้าสู่ระบบสำเร็จด้วยวิธีเดียวกับที่สมัครไว้ ระบบจดจำสถานะ login (REQ-15)
+- **Given**: ผู้ใช้มีบัญชีผู้ใช้อยู่แล้ว (ผู้ใช้ประจำ/returning user)
+- **When**: ผู้ใช้เลือกวิธีเข้าสู่ระบบด้วยวิธีเดียวกับที่สมัครไว้ (email/password, Google, หรือ Apple)
+  และเข้าสู่ระบบสำเร็จ
+- **Then**: ระบบจดจำสถานะเข้าสู่ระบบไว้ (session persistence) แล้วพาผู้ใช้เข้าแอปต่อทันที (ไปยัง Daily
+  Dashboard ถ้าผ่าน onboarding ครบแล้ว หรือกลับไปทำ ONB-1 ต่อถ้ายังไม่เคยผ่าน) โดยไม่ต้อง login ซ้ำจนกว่า
+  จะออกจากระบบเอง (REQ-17) หรือ session หมดอายุ
+- Prototype: [00-auth-login.html](../02-design/01-prototypes/v1/00-auth-login.html)
+
+#### AC-ONB-0-03 — ผู้ใช้ที่สมัครด้วย email/password ขอรีเซ็ตรหัสผ่านผ่านอีเมลได้ (REQ-16)
+- **Given**: ผู้ใช้สมัครสมาชิกด้วยวิธี email/password และลืมรหัสผ่านขณะเข้าสู่ระบบ
+- **When**: ผู้ใช้กดลิงก์ "ลืมรหัสผ่าน?" แล้วกรอกอีเมลที่ลงทะเบียนไว้และกดยืนยัน
+- **Then**: ระบบแสดงข้อความยืนยันว่าคำขอรีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลนั้นแล้ว แล้วให้ผู้ใช้กลับไปเข้าสู่ระบบ
+  ใหม่หลังตั้งรหัสผ่านใหม่
+- Prototype: [00-auth-forgot-password.html](../02-design/01-prototypes/v1/00-auth-forgot-password.html)
+
+#### AC-ONB-0-04 — บัญชีที่สมัครด้วย Google/Apple ขอรีเซ็ตรหัสผ่านไม่ได้ (REQ-16)
+- **Given**: ผู้ใช้สมัครสมาชิกด้วย Google OAuth หรือ Sign in with Apple (ไม่มีรหัสผ่านในระบบ)
+- **When**: ผู้ใช้เปิดหน้าลืมรหัสผ่าน
+- **Then**: ระบบแจ้งว่าบัญชีที่เชื่อมกับ Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต และแนะนำให้เข้าสู่ระบบด้วยวิธี
+  เดิมที่สมัครไว้แทน
+- Prototype: [00-auth-forgot-password.html](../02-design/01-prototypes/v1/00-auth-forgot-password.html)
+
+#### AC-ONB-0-05 — ออกจากระบบจากหน้าโปรไฟล์ ล้าง session ทันที (REQ-17)
+- **Given**: ผู้ใช้เข้าสู่ระบบอยู่ (มี session ที่จดจำไว้ตาม REQ-15)
+- **When**: ผู้ใช้กดปุ่ม "ออกจากระบบ" จากหน้าโปรไฟล์
+- **Then**: ระบบล้าง session ที่จดจำไว้ทันที แล้วพากลับไปหน้าจอสมัครสมาชิก/เข้าสู่ระบบเริ่มต้น
+- Prototype: [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+  (ปุ่ม "ออกจากระบบ" ในส่วนบัญชีผู้ใช้)
+
+#### AC-ONB-0-06 — Session หมดอายุ ต้องเข้าสู่ระบบใหม่ (REQ-15)
+- **Given**: ผู้ใช้เคยเข้าสู่ระบบไว้ แต่ session ที่จดจำไว้หมดอายุแล้ว (ระยะเวลาที่แน่นอนยังไม่ระบุ — ดู
+  "จุดที่ยังไม่ได้ระบุ" ของ Onboarding spec)
+- **When**: ผู้ใช้เปิดแอปอีกครั้ง
+- **Then**: ระบบตรวจไม่พบ session ที่ยังใช้ได้ จึงพาไปหน้าเข้าสู่ระบบให้ผู้ใช้ยืนยันตัวตนใหม่ แทนที่จะปล่อยให้
+  เข้าแอปต่อ
+- Prototype: ไม่มี — prototype v1 ยังไม่ implement การตรวจสอบ session จริง (ดูหมายเหตุใน
+  `00-auth-welcome.html` ที่ระบุว่า "no real session check here") เป็น documentation-level scenario
+  รอ backend จริง
+
+> หมายเหตุ: journey ของ ONB-0 ยังมี Alt/Edge Case อีก 2 จุดที่ไม่ได้ถูกแปลงเป็น scenario ในไฟล์นี้ เพราะยัง
+> เป็น Open Point ที่ upstream ไม่ได้ระบุ**พฤติกรรม**ไว้ชัดเจน (ต่างจาก AC-ONB-0-06 ที่พฤติกรรมชัดเจนแล้ว
+> เพียงแต่ตัวเลข parameter ยังไม่ระบุ): (1) ต้องมีขั้นตอนยืนยันอีเมล (email verification) ก่อนใช้งานได้จริง
+> หรือไม่ — กระทบว่าเข้าสู่ ONB-1 ได้ทันทีหลังสมัครหรือต้องรอยืนยันอีเมลก่อน (2) กติกาความซับซ้อนของรหัสผ่าน
+> (password policy) สำหรับ email/password — ทั้งสองยังไม่มีพฤติกรรมที่นิยามชัดเจนให้แปลงเป็น scenario ได้
+> ดู [จุดที่ยังไม่ได้ระบุของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม)
+> (ดูรายงานผลของ `test-suite-builder`)
+
+---
 
 ### ONB-1 — กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่
 
@@ -458,6 +519,7 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 
 | Feature ID | จำนวน AC Scenario |
 |---|---|
+| ONB-0 | 6 |
 | ONB-1 | 3 |
 | ONB-2 | 3 |
 | ONB-3 | 5 |
@@ -472,10 +534,14 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | INT-1 | 4 |
 | INT-2 | 2 |
 | INT-3 | 3 |
-| **รวม** | **45** |
+| **รวม** | **51** |
 
 > อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
 > AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์
+>
+> อัปเดต 2026-08-29 (เพิ่มเติม): +6 scenario จาก **ONB-0** (Authentication) ที่เพิ่มเข้า backlog.md เป็น
+> Feature ID ใหม่ (Must) — AC-ONB-0-01 ถึง AC-ONB-0-06 ครอบคลุม REQ-14/15/16/17 ทั้งหมด รวม Feature ID
+> ทั้งหมดในไฟล์นี้จาก 14 เป็น **15** และรวม scenario จาก 45 เป็น **51**
 
 ---
 

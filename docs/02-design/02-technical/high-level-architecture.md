@@ -3,7 +3,12 @@
 - **ประเภทเอกสาร:** High Level Architecture — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — (1) sync หัวข้อ 10 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1
+- **อัปเดตล่าสุด:** 2026-08-29 (รอบใหม่) — sync แถว "Account & Session Management" ในหัวข้อ 10 (ภาคผนวก:
+  Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1/§6.3.1 ฉบับสมบูรณ์ที่เพิ่งขยาย mapping ระดับ operation เสร็จ
+  (เดิมทิ้ง ⚠️ placeholder ไว้ว่า "รอ `tech-stack-builder` ขยาย") — เป็น mechanical re-sync ล้วนๆ ตามกติกา
+  Stack Mapping Appendix freshness ไม่ใช่การตัดสินใจเนื้อหาใหม่ ไม่กระทบหัวข้อ 1-9 (ดู log
+  [2026-08-29](../../05-log/20260829-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-29 — (1) sync หัวข้อ 10 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1
   ฉบับ Firebase ใหม่ (2) เพิ่มการอ้างอิง NFR-12 (Reliability — Data Integrity) และ NFR-13 (Usability —
   Data Visualization) เข้าหัวข้อ 7 ตามที่เพิ่มใหม่ใน NFR doc (3) รอบ audit ล่าสุด — ตรวจ sync กับ
   `backlog.md` ฉบับที่เพิ่งเพิ่ม 2 แถวในตาราง NFR Traceability (NFR-12→REC-2/INT-3, NFR-13→INT-1) พบว่า
@@ -11,6 +16,15 @@
   ก่อนอ้างเวอร์ชัน `tech-stack.md` §6.1 แบบเบื้องต้น ทั้งที่ `tech-stack-builder` ปรับ §6.1 ให้ละเอียดระดับ
   per-table/collection ไปแล้วในรอบถัดมา (Stack Mapping Appendix freshness — แก้ได้เองไม่ต้องถามผู้ใช้) จึง
   เขียนหัวข้อ 10 ใหม่ให้ตรงกับ §6.1 ฉบับละเอียดปัจจุบัน — audit หัวข้ออื่นทั้งหมด (1-9) แล้วไม่พบ drift อื่น
+  (4) **เพิ่ม Conceptual Component ใหม่ "Account & Session Management" (§3.1)** ครอบคลุม **ONB-0**
+  (REQ-14–17 — สมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ) ที่เพิ่งถูกเพิ่มเข้า `01-spec/`/`backlog.md`/
+  `user-journeys.md` วันเดียวกันนี้ แต่ยังไม่มี component ใดครอบคลุมในเอกสารนี้เลย — renumber component เดิม
+  §3.1–3.7 เป็น §3.2–3.8, ขยาย §2 (System Context) และเพิ่ม §6.4 (External Integration Boundary ใหม่:
+  ผู้ให้บริการยืนยันตัวตนภายนอก Google/Apple ตามที่ REQ-14 กำหนดไว้เป็นข้อเท็จจริง), เพิ่ม subgraph ONB-0
+  นำหน้า Flow 1 ใน §4.1, เพิ่ม entity **User Account** ใน §5, ปรับปรุง §7 (NFR-04/06/11 ที่เคยอ้าง "เมื่อมี
+  ระบบบัญชีผู้ใช้จริง" เป็นเงื่อนไขอนาคต — ตอนนี้เป็นจริงแล้ว), เพิ่มจุดที่ยังไม่ได้ระบุใหม่ใน §8 (ขอบเขต
+  NFR-05 ต่อผู้ให้บริการยืนยันตัวตน), และเพิ่มแถวใหม่ใน §10 (ภาคผนวก Stack Mapping — บันทึกว่า
+  `tech-stack.md` §6.1 ยังไม่มี mapping ระดับ operation ของ component นี้ รอ `tech-stack-builder` ขยาย)
   (ดู [log 2026-08-29](../../05-log/20260829-log.md))
 - **สร้างโดย:** skill `architecture-builder`
 - **อ้างอิงจาก:** [Product Backlog](../../01-requirements/backlog.md),
@@ -32,25 +46,30 @@ provider, ภาษาโปรแกรม, หรือรูปแบบ API 
 stack-specific (database schema, API design, tech choices) ในอนาคต — เมื่อทีมเลือก stack จริงแล้ว
 เอกสารเหล่านั้นควร derive concept จากที่นี่ ไม่ใช่มาแทนที่เอกสารนี้
 
-ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 14 Feature ID ในทั้ง 4 Epic ตาม
-[backlog.md](../../01-requirements/backlog.md) ณ วันที่สร้าง รวมถึง NFR-01–13 จาก
+ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 15 Feature ID ในทั้ง 4 Epic ตาม
+[backlog.md](../../01-requirements/backlog.md) (รวม **ONB-0** ที่เพิ่มเข้ามาเมื่อ 2026-08-29 — ดู §3.1)
+รวมถึง NFR-01–13 จาก
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 ในฐานะ cross-cutting concern (ดูหัวข้อ 7)
 
 ## 2. System Context
 
-ผู้ใช้โต้ตอบกับ smartFit_daily เป็นระบบเดียว (กล่องเดียว จากมุมมองภายนอก) ซึ่งเชื่อมต่อกับระบบภายนอก 3
-ระบบตามที่ requirement กำหนดไว้ — ไม่มีระบบภายนอกอื่นนอกเหนือจากนี้ในขอบเขตปัจจุบันของ backlog
+ผู้ใช้โต้ตอบกับ smartFit_daily เป็นระบบเดียว (กล่องเดียว จากมุมมองภายนอก) ซึ่งเชื่อมต่อกับระบบภายนอก 4
+ระบบตามที่ requirement กำหนดไว้ (เพิ่มผู้ให้บริการยืนยันตัวตนภายนอกเข้ามาเมื่อ 2026-08-29 ตาม REQ-14 —
+ดู §6.4) — ไม่มีระบบภายนอกอื่นนอกเหนือจากนี้ในขอบเขตปัจจุบันของ backlog
 
 ```mermaid
 flowchart LR
     U["ผู้ใช้ (User)"]
     SYS["smartFit_daily"]
+    IDP["ผู้ให้บริการยืนยันตัวตนภายนอก — Google / Apple"]
     YT["YouTube — คลังวิดีโอออกกำลังกาย"]
     HEALTH["Apple Health / Google Health Connect — ข้อมูล wearable"]
     SCALE["ตาชั่งอัจฉริยะ — เชื่อมต่อผ่าน Bluetooth/Health API"]
 
     U <-->|กรอกข้อมูล, ดูผล, บันทึก log, วางแผน| SYS
+    SYS -->|คำขอสมัคร/เข้าสู่ระบบ| IDP
+    IDP -->|ยืนยันตัวตน + อีเมล| SYS
     SYS -->|เกณฑ์ค้นหา: อุปกรณ์ + เป้าหมายแคลอรี่| YT
     YT -->|วิดีโอ + metadata: ประเภท/ความเข้มข้น/ระยะเวลา| SYS
     SYS -->|ขอ consent| HEALTH
@@ -59,28 +78,45 @@ flowchart LR
     SCALE -->|น้ำหนัก/องค์ประกอบร่างกาย| SYS
 ```
 
-ทิศทางการสื่อสารระดับสูงสุด: ผู้ใช้เป็นผู้ริเริ่มทุก interaction หลัก (กรอกข้อมูล, เริ่มออกกำลังกาย,
-วางแผน, ดู insight) ระบบภายนอกทั้ง 3 เป็นแหล่งข้อมูลเสริม/ทางเลือก (YouTube จำเป็นสำหรับ core loop,
-ส่วน Health API/wearable และตาชั่งอัจฉริยะเป็น Could-priority ตาม `backlog.md` — ระบบต้องทำงานได้แม้ไม่มี
-2 อย่างหลังนี้ ตาม NFR-07)
+ทิศทางการสื่อสารระดับสูงสุด: ผู้ใช้เป็นผู้ริเริ่มทุก interaction หลัก (สมัคร/เข้าสู่ระบบ, กรอกข้อมูล,
+เริ่มออกกำลังกาย, วางแผน, ดู insight) ระบบภายนอกทั้ง 4 มีระดับความจำเป็นต่างกัน: ผู้ให้บริการยืนยันตัวตน
+ภายนอก (Google/Apple) เป็น**ทางเลือกหนึ่งใน 3 วิธี**ของ ONB-0 (Must) — email/password เป็น fallback ที่ใช้
+ได้เสมอโดยไม่ต้องพึ่งระบบภายนอกเลย จึงไม่ผูก core loop เข้ากับความพร้อมของผู้ให้บริการเหล่านี้โดยตรง, YouTube
+จำเป็นสำหรับ core loop รายวัน, ส่วน Health API/wearable และตาชั่งอัจฉริยะเป็น Could-priority ตาม
+`backlog.md` — ระบบต้องทำงานได้แม้ไม่มี 2 อย่างหลังนี้ ตาม NFR-07
 
 ## 3. Conceptual Components / Modules
 
 แต่ละ component ตั้งชื่อตามหน้าที่ ไม่ใช่ตามเทคโนโลยี — ระบุ Feature ID/Epic ที่รับผิดชอบ และ component
 อื่นที่คุยด้วยในระดับแนวคิด (ไม่ใช่ API endpoint จริง)
 
-### 3.1 Personalization & Profile
+### 3.1 Account & Session Management
 
-- **รับผิดชอบ**: ONB-1, ONB-2, ONB-3 (Epic 1 ทั้งหมด)
+- **รับผิดชอบ**: ONB-0 (REQ-14–17 — เพิ่มเข้า backlog 2026-08-29)
+- **หน้าที่**: จัดการวงจรชีวิตทั้งหมดของบัญชีผู้ใช้ — สร้างบัญชีใหม่ผ่านหลายวิธี (สมัครด้วยอีเมล/รหัสผ่าน
+  หรือผ่านผู้ให้บริการยืนยันตัวตนภายนอก — ดูหัวข้อ 6.4), ยืนยันตัวตนเพื่อเข้าสู่ระบบด้วยวิธีเดียวกับที่สมัคร
+  ไว้, คงสถานะเข้าสู่ระบบไว้ข้ามการเปิดแอปแต่ละครั้ง (session persistence) จนกว่าจะออกจากระบบเองหรือ
+  session หมดอายุ, จัดการคำขอรีเซ็ตข้อมูลยืนยันตัวตนสำหรับบัญชีที่ใช้อีเมล/รหัสผ่านเท่านั้น (ใช้ไม่ได้กับ
+  บัญชีที่ผูกกับผู้ให้บริการภายนอก), และล้างสถานะเข้าสู่ระบบทันทีเมื่อผู้ใช้ออกจากระบบ เป็น**เกตเวย์แรกสุด
+  ของทั้งระบบ** — ต้องสร้างบัญชีผู้ใช้จริงก่อนเสมอ ก่อนที่ Personalization & Profile หรือ component อื่นใด
+  จะเริ่มอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนนั้นได้
+- **คุยกับ**: Personalization & Profile (ส่งต่อบัญชีผู้ใช้ที่ยืนยันตัวตนสำเร็จแล้ว เพื่อเริ่มกรอกข้อมูล
+  ส่วนตัวครั้งแรก หรือพาเข้าสู่ Daily Dashboard ต่อถ้าเคยผ่าน onboarding มาแล้ว) — และเป็น**precondition
+  โดยอ้อมของทุก component ที่เหลือทั้งหมด** เพราะทุก component อื่นอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนหนึ่ง
+  เสมอ ซึ่งต้องผ่านที่นี่ก่อนจึงจะมีตัวตนให้ผูกข้อมูลด้วย
+
+### 3.2 Personalization & Profile
+
+- **รับผิดชอบ**: ONB-1, ONB-2, ONB-3 (Epic 1 ที่เหลือ)
 - **หน้าที่**: รับข้อมูลร่างกาย/ประชากรศาสตร์ของผู้ใช้ คำนวณ TDEE คำนวณเป้าหมายแคลอรี่รายวันจากประเภท
   เป้าหมายที่เลือก (พร้อมน้ำหนักเป้าหมายเมื่อเกี่ยวข้อง — ดูหัวข้อ 8.1) และเก็บโปรไฟล์อุปกรณ์ที่ใช้เป็น
   filter ของการแนะนำวิดีโอ เป็น**ฐาน (baseline)** ที่แทบทุก component อื่นต้องอ่านค่าจากที่นี่
-- **คุยกับ**: Content Recommendation (ส่งโปรไฟล์อุปกรณ์ + เป้าหมายแคลอรี่รายวัน), Exertion & Calorie
-  Calculation (ส่งน้ำหนักตัว), Planner & Day-Status (ส่งเป้าหมายแคลอรี่รายวันสำหรับแสดงผล/ปรับ), Insights
-  & Forecast (ส่งน้ำหนักเป้าหมาย + ทิศทางเป้าหมาย + ค่าคงที่ 7,700 kcal), Integration Gateway (รับน้ำหนัก
-  ที่ซิงค์มาเพื่อคำนวณ TDEE ใหม่)
+- **คุยกับ**: Account & Session Management (รับบัญชีผู้ใช้ที่ยืนยันตัวตนแล้วเป็นจุดเริ่มต้น), Content
+  Recommendation (ส่งโปรไฟล์อุปกรณ์ + เป้าหมายแคลอรี่รายวัน), Exertion & Calorie Calculation (ส่งน้ำหนักตัว),
+  Planner & Day-Status (ส่งเป้าหมายแคลอรี่รายวันสำหรับแสดงผล/ปรับ), Insights & Forecast (ส่งน้ำหนักเป้าหมาย
+  + ทิศทางเป้าหมาย + ค่าคงที่ 7,700 kcal), Integration Gateway (รับน้ำหนักที่ซิงค์มาเพื่อคำนวณ TDEE ใหม่)
 
-### 3.2 Content Recommendation
+### 3.3 Content Recommendation
 
 - **รับผิดชอบ**: REC-1, REC-3, REC-4
 - **หน้าที่**: เลือก/สลับ/ประกอบวิดีโอออกกำลังกาย (รวมวอร์มอัพ-คูลดาวน์เมื่อความเข้มข้นสูง) ให้ตรงกับ
@@ -89,7 +125,7 @@ flowchart LR
   Day-Status (อ่านว่าวันนี้เป็น Cheat/Rest Day หรือไม่ — ถ้าใช่ ข้ามการแนะนำ), Exertion & Calorie
   Calculation (ส่ง metadata ของวิดีโอที่เลือก: ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา)
 
-### 3.3 Exertion & Calorie Calculation
+### 3.4 Exertion & Calorie Calculation
 
 - **รับผิดชอบ**: REC-2
 - **หน้าที่**: คำนวณแคลอรี่ที่เผาผลาญจริงหลังจบ/หยุดเซสชันด้วยสูตร MET โดยมีจุดแทนที่ค่าด้วยข้อมูลจาก
@@ -98,7 +134,7 @@ flowchart LR
   (อ่านน้ำหนักตัว), Integration Gateway (รับค่าแทนที่จาก wearable), Logging & Streak (ส่งแคลอรี่ที่
   เผาผลาญจริง + ระยะเวลา)
 
-### 3.4 Planner & Day-Status
+### 3.5 Planner & Day-Status
 
 - **รับผิดชอบ**: PLN-1, PLN-2
 - **หน้าที่**: แสดงปฏิทินรายสัปดาห์แบบ fixed calendar week (จันทร์-อาทิตย์) ให้ผู้ใช้วางแผนกิจกรรมล่วงหน้า
@@ -108,7 +144,7 @@ flowchart LR
   วันนั้นมี log อยู่แล้วหรือไม่ เพื่อตัดสิน read-only/บังคับสถานะ "ครบเป้าหมาย"), Personalization & Profile
   (อ่านเป้าหมายแคลอรี่รายวันเพื่อแสดงผล)
 
-### 3.5 Logging & Streak
+### 3.6 Logging & Streak
 
 - **รับผิดชอบ**: PLN-3, PLN-4
 - **หน้าที่**: บังคับใช้กติกา all-or-nothing เข้มงวด (ไม่มี partial credit) เทียบแคลอรี่ที่เผาผลาญจริงกับ
@@ -117,7 +153,7 @@ flowchart LR
   เป้าหมายแคลอรี่รายวัน), Planner & Day-Status (อ่าน/รับสถานะ "ครบเป้าหมาย" บังคับจาก Cheat/Rest Day),
   Insights & Forecast (ส่งประวัติแคลอรี่ขาดดุล/เกินดุลจริง)
 
-### 3.6 Insights & Forecast
+### 3.7 Insights & Forecast
 
 - **รับผิดชอบ**: INT-1
 - **หน้าที่**: พยากรณ์วันที่คาดว่าจะถึงน้ำหนักเป้าหมาย จากอัตราขาดดุล/เกินดุลแคลอรี่เฉลี่ยที่บันทึกจริง
@@ -125,7 +161,7 @@ flowchart LR
 - **คุยกับ**: Logging & Streak (อ่านประวัติ log), Personalization & Profile (อ่านน้ำหนักเป้าหมาย +
   ทิศทางเป้าหมาย + ค่าคงที่ 7,700 kcal), Integration Gateway (อ่านน้ำหนักปัจจุบันล่าสุดที่ซิงค์มา)
 
-### 3.7 Integration Gateway
+### 3.8 Integration Gateway
 
 - **รับผิดชอบ**: INT-2, INT-3
 - **หน้าที่**: เป็นสะพานเชื่อมอุปกรณ์/แพลตฟอร์มภายนอกที่เป็นทางเลือก (ตาชั่งอัจฉริยะผ่าน Bluetooth,
@@ -134,7 +170,7 @@ flowchart LR
 - **คุยกับ**: Personalization & Profile (เขียนน้ำหนัก/องค์ประกอบร่างกายที่ซิงค์มา), Exertion & Calorie
   Calculation (เขียนค่าแทนที่จาก wearable), Insights & Forecast (ทางอ้อม ผ่านน้ำหนักที่ซิงค์)
 
-> NFR-01–11 ไม่ใช่ component ของตัวเอง — เป็น cross-cutting concern ที่พาดผ่านทั้ง 7 component ข้างต้น
+> NFR-01–13 ไม่ใช่ component ของตัวเอง — เป็น cross-cutting concern ที่พาดผ่านทั้ง 8 component ข้างต้น
 > (ดูหัวข้อ 7)
 
 ## 4. Data Flow ตาม User Journey
@@ -143,10 +179,21 @@ flowchart LR
 [user-journeys.md](../01-prototypes/user-journeys.md) — เลขอ้างอิง "Step N" ด้านล่างตรงกับลำดับ
 "คำอธิบายตามลำดับ diagram" ของแต่ละ feature ในเอกสารนั้น
 
-### 4.1 Flow 1 — Onboarding Flow (ONB-1 → ONB-2 → ONB-3)
+### 4.1 Flow 1 — Authentication & Onboarding Flow (ONB-0 → ONB-1 → ONB-2 → ONB-3)
 
 ```mermaid
 flowchart TD
+    subgraph ONB0["ONB-0: Account & Session Management"]
+        Z1["เปิดแอป (input)"] --> Z2{"มีบัญชีผู้ใช้อยู่แล้วหรือไม่?"}
+        Z2 -- ยังไม่มี --> Z3["สมัครสมาชิก: email/password หรือผู้ให้บริการยืนยันตัวตนภายนอก"]
+        Z3 --> Z4["สร้างบัญชีผู้ใช้ใหม่ (userId)"]
+        Z2 -- มีอยู่แล้ว --> Z5["เข้าสู่ระบบด้วยวิธีเดียวกับที่สมัคร"]
+        Z5 -- ลืมรหัสผ่าน (เฉพาะ email/password) --> Z6["ขอรีเซ็ตรหัสผ่านผ่านอีเมล"]
+        Z6 --> Z5
+        Z5 -- สำเร็จ --> Z7["จดจำสถานะเข้าสู่ระบบ (session persistence)"]
+        Z4 --> Z7
+    end
+    Z7 --> A1
     subgraph ONB1["ONB-1: Personalization & Profile"]
         A1["ข้อมูลร่างกาย + ระดับกิจกรรม (input)"] --> A2["คำนวณ BMR × Activity Factor = TDEE"]
     end
@@ -158,12 +205,22 @@ flowchart TD
     end
     A2 --> B1
     B2 --> C1
-    C2 --> OUT["โปรไฟล์ผู้ใช้ครบ: TDEE, อุปกรณ์, เป้าหมายแคลอรี่รายวัน, น้ำหนักเป้าหมาย (ถ้ามี) → ส่งต่อ Flow 2"]
+    C2 --> OUT["โปรไฟล์ผู้ใช้ครบ: บัญชีผู้ใช้ยืนยันตัวตนแล้ว, TDEE, อุปกรณ์, เป้าหมายแคลอรี่รายวัน, น้ำหนักเป้าหมาย (ถ้ามี) → ส่งต่อ Flow 2"]
 ```
 
+- **ONB-0** (Step 1-11): ผู้ใช้เปิดแอป ระบบตรวจสอบว่ามีบัญชีผู้ใช้อยู่แล้วหรือไม่ (Step 1) →
+  **กรณียังไม่มีบัญชี**: เลือกวิธีสมัครสมาชิก 1 ใน 3 วิธี — email/password, Google OAuth, หรือ Sign in
+  with Apple (Step 2) → สร้างบัญชีผู้ใช้ใหม่ (`userId`) ก่อนเข้าสู่ ONB-1 เสมอ (Step 3-4) →
+  **กรณีมีบัญชีอยู่แล้ว**: เลือกวิธีเข้าสู่ระบบด้วยวิธีเดียวกับที่สมัครไว้ (Step 5) → ตรวจสอบว่าเข้าสู่ระบบ
+  สำเร็จหรือไม่ (Step 6) → สำเร็จ: จดจำสถานะเข้าสู่ระบบไว้ (session persistence) (Step 7) → เข้าแอปต่อ
+  (Daily Dashboard ถ้าผ่าน onboarding แล้ว หรือกลับไปทำ ONB-1 ต่อถ้ายังไม่เคยผ่าน) (Step 8) →
+  **กรณีลืมรหัสผ่าน** (เฉพาะบัญชี email/password): ขอรีเซ็ตรหัสผ่านผ่านอีเมลที่ลงทะเบียนไว้ แล้ววนกลับไป
+  เข้าสู่ระบบใหม่ (Step 9) → ผู้ใช้ออกจากระบบได้ทุกเมื่อจากหน้าโปรไฟล์ (Step 10) → ล้าง session ทันที แล้ว
+  กลับไปจุดเริ่มต้น (Step 11, ไม่ได้วาดเป็นลูปแยกในไดอะแกรมข้างต้นเพื่อไม่ให้ปนกับ flow หลักที่นำไปสู่
+  onboarding)
 - **ONB-1** (Step 1-7): ผู้ใช้กรอกอายุ/เพศ/น้ำหนัก/ส่วนสูง/ระดับกิจกรรม → validate (Step 2-3, วนกลับถ้า
   ไม่ผ่าน) → คำนวณ BMR ด้วยสูตร Mifflin-St Jeor (Step 4-5) → คูณ Activity Factor ได้ TDEE (Step 6) →
-  บันทึกลงโปรไฟล์ (Step 7) → ส่งต่อ ONB-2
+  บันทึกลงโปรไฟล์ (Step 7) → ส่งต่อ ONB-2 (Precondition: มีบัญชีผู้ใช้จริงแล้วจาก ONB-0 เสมอ)
 - **ONB-2** (Step 1-5): ผู้ใช้เลือกอุปกรณ์ที่มี (ไม่มี/ดัมเบล/ยิมครบชุด, เลือกได้มากกว่า 1) → บันทึกเป็น
   โปรไฟล์อุปกรณ์ (Step 3-5) → ใช้เป็น filter มาตรฐานของ REC-1 ทุกครั้ง
 - **ONB-3** (Step 1-5): ผู้ใช้เลือกประเภทเป้าหมาย → ระบบแปลงเป็นค่าคงที่ (TDEE−500/TDEE+0/TDEE+300)
@@ -171,8 +228,8 @@ flowchart TD
   kcal (Step 3) → ปรับถ้าต่ำกว่า floor (Step 4) → บันทึกเป้าหมายแคลอรี่รายวัน + น้ำหนักเป้าหมาย onboarding
   เสร็จสมบูรณ์ (Step 5)
 
-ผลลัพธ์ของ Flow นี้ (TDEE, โปรไฟล์อุปกรณ์, เป้าหมายแคลอรี่รายวัน, น้ำหนักเป้าหมาย) เป็น **input ตั้งต้น**
-ของ Flow 2, 3, 5 ทั้งหมด
+ผลลัพธ์ของ Flow นี้ (บัญชีผู้ใช้ที่ยืนยันตัวตนแล้ว, TDEE, โปรไฟล์อุปกรณ์, เป้าหมายแคลอรี่รายวัน,
+น้ำหนักเป้าหมาย) เป็น **input ตั้งต้น** ของ Flow 2, 3, 5 ทั้งหมด
 
 ### 4.2 Flow 2 — Daily Recommendation & Exercise Session Flow (REC-1 → REC-3 → REC-4 → REC-2)
 
@@ -305,7 +362,8 @@ flowchart TD
 
 | Entity | เก็บอะไร | ความสัมพันธ์ |
 |---|---|---|
-| **User Profile** | อายุ, เพศ, น้ำหนัก, ส่วนสูง, ระดับกิจกรรม, TDEE | 1 มี 1 Equipment Profile, 1 มี 1 Goal Selection ปัจจุบัน, 1 มีได้หลาย Weight Record และหลาย Daily Log |
+| **User Account** | วิธีที่ใช้สร้างบัญชี (email/password หรือผู้ให้บริการยืนยันตัวตนภายนอก), ข้อมูลอ้างอิงยืนยันตัวตน (ไม่ใช่รหัสผ่านจริง — สำหรับบัญชี email/password เป็นข้อมูลอ้างอิงที่ใช้ตรวจสอบเท่านั้น กรณีผูกกับผู้ให้บริการภายนอกเป็นข้อมูลอ้างอิงไปยังผู้ให้บริการนั้น), สถานะเข้าสู่ระบบปัจจุบัน (session) | 1 User Account มี 1 User Profile เสมอ — เป็นบัญชีที่ต้องถูกสร้าง/ยืนยันตัวตนสำเร็จก่อนเป็นอันดับแรกสุด และเป็น "เจ้าของ" โดยอ้อมของทุก entity อื่นที่เหลือในตารางนี้ (ทุก entity ผูกกับผู้ใช้คนหนึ่งเสมอ) |
+| **User Profile** | อายุ, เพศ, น้ำหนัก, ส่วนสูง, ระดับกิจกรรม, TDEE | อยู่ภายใต้ User Account เดียว (สร้างหลังยืนยันตัวตนสำเร็จเสมอ) — 1 มี 1 Equipment Profile, 1 มี 1 Goal Selection ปัจจุบัน, 1 มีได้หลาย Weight Record และหลาย Daily Log |
 | **Equipment Profile** | ชุดอุปกรณ์ที่เลือก (ไม่มี/ดัมเบล/ยิมครบชุด, เลือกได้หลายอัน) | 1:1 กับ User Profile — เป็น filter ของ Video/Workout Content |
 | **Goal Selection & Daily Calorie Target** | ประเภทเป้าหมายที่เลือก, เป้าหมายแคลอรี่รายวันหลังปรับ safety floor, น้ำหนักเป้าหมาย (บังคับเมื่อเลือก "ลดน้ำหนัก" ไม่บังคับสำหรับเป้าหมายอื่น) | 1:1(ปัจจุบัน) กับ User Profile — Weekly Plan, Daily Log, และ Insights & Forecast อ่านค่านี้ |
 | **Video/Workout Content** | id/metadata ของวิดีโอ: ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา | ถูก filter ด้วย Equipment Profile — ถูกอ้างถึงโดย Workout Session ในฐานะวิดีโอหลัก (และวอร์มอัพ/คูลดาวน์ถ้ามี) |
@@ -352,8 +410,22 @@ flowchart TD
   **mobile client (iOS/Android) เท่านั้น** บน web client ให้แสดงว่า "ไม่รองรับ" อย่างสงบ (fallback ตาม
   NFR-07 เดียวกัน) ผู้ใช้บน web ยังคงกรอกน้ำหนักเองได้ผ่านช่องทางปกติ (ไม่ใช่ผ่าน boundary นี้)
 
+### 6.4 ผู้ให้บริการยืนยันตัวตนภายนอก — Google / Apple (ONB-0)
+
+- **ข้อมูลที่ไหลผ่าน**: ออก — คำขอสมัคร/เข้าสู่ระบบ (redirect ไปยังผู้ให้บริการ) / เข้า — ผลการยืนยันตัวตน
+  พร้อมอีเมลที่ยืนยันแล้ว ซึ่งระบบใช้สร้าง/จับคู่บัญชีผู้ใช้ (`userId`)
+- **NFR ที่เกี่ยวข้อง**: NFR-04 (ข้อมูลบัญชี/ผลการยืนยันตัวตนต้องส่งผ่านการเชื่อมต่อที่เข้ารหัสเช่นเดียวกับ
+  ข้อมูลสุขภาพอื่น), NFR-11 (การเก็บข้อมูลบัญชีผู้ใช้จริงเข้าเงื่อนไข PDPA — consent record-keeping และ
+  สิทธิ์เจ้าของข้อมูล)
+- **ความแตกต่างจาก boundary อื่นใน 6.1–6.3**: boundary นี้**ไม่มี fallback แบบ "เชื่อมต่อไม่ได้แล้วข้าม
+  ไปเลย"** เหมือน NFR-07 ของ INT-2/INT-3 — ผู้ใช้ที่เลือกสมัคร/เข้าสู่ระบบผ่านผู้ให้บริการภายนอกแล้วไม่สำเร็จ
+  จะต้องลองใหม่หรือเปลี่ยนไปใช้อีกวิธี (เช่น email/password) แทน เนื่องจาก ONB-0 เป็น Must-priority ที่ทุก
+  feature อื่นต้องพึ่งพา ไม่ใช่ Could-priority แบบ Epic 4 — **NFR-05 ปัจจุบันเขียนไว้เจาะจงเฉพาะการเชื่อมต่อ
+  INT-2/INT-3 เท่านั้น ยังไม่ได้ระบุว่าครอบคลุม consent ของการยืนยันตัวตนผ่านผู้ให้บริการภายนอกนี้ด้วยหรือไม่
+  — ดูหัวข้อ 8 ข้อ 6**
+
 > NFR-06 (data deletion) และ NFR-08 (local persistence ก่อน sync) ไม่ผูกกับ boundary ใดโดยเฉพาะ แต่เป็น
-> กติกากว้างที่ครอบคลุมข้อมูลที่ไหลผ่านทั้ง 3 boundary นี้ด้วยเช่นกัน
+> กติกากว้างที่ครอบคลุมข้อมูลที่ไหลผ่านทั้ง 4 boundary นี้ด้วยเช่นกัน (รวม 6.4 ที่เพิ่มใหม่)
 
 ## 7. Cross-cutting Concerns (เชิงแนวคิด)
 
@@ -365,7 +437,14 @@ flowchart TD
   การคำนวณหลัก (TDEE, เป้าหมายแคลอรี่, MET) ต้องไม่มี latency จากภายนอกเกี่ยวข้อง
 - **Security/Privacy** (NFR-04, NFR-05, NFR-06): ข้อมูลสุขภาพส่วนบุคคลทุกจุด (โปรไฟล์, น้ำหนัก, ข้อมูล
   wearable) ต้องได้รับการปกป้องทั้งระหว่างส่งและจัดเก็บ การเชื่อมต่ออุปกรณ์ภายนอกต้องผ่าน consent ชัดเจน
-  เสมอ และผู้ใช้ต้องขอลบข้อมูลของตัวเองได้
+  เสมอ และผู้ใช้ต้องขอลบข้อมูลของตัวเองได้ — ตั้งแต่มี **Account & Session Management** (ONB-0) เงื่อนไข
+  "เมื่อมีระบบบัญชีผู้ใช้จริง" ที่ NFR-04/NFR-06 เคยอ้างไว้เป็นสมมติฐานล่วงหน้าเป็นจริงแล้ว ไม่ใช่เงื่อนไข
+  ในอนาคตอีกต่อไป — component นี้คือเจ้าของการบังคับใช้ NFR-06 จริง (จุดที่ผู้ใช้ขอเข้าถึง/ลบข้อมูลบัญชีของ
+  ตนเอง) และข้อมูลยืนยันตัวตน/credential ที่ไหลผ่าน component นี้ต้องเข้ารหัสระหว่างส่งเช่นเดียวกับข้อมูล
+  สุขภาพอื่นตามเจตนารมณ์ของ NFR-04 แม้เนื้อหา NFR-04 ปัจจุบันจะระบุเจาะจงเฉพาะ "ข้อมูลสุขภาพส่วนบุคคล" ยังไม่
+  ได้เขียนรวม credential ไว้ตรงๆ (ดู [หมายเหตุ 3 ของ backlog.md NFR Traceability](../../01-requirements/backlog.md#non-functional-requirements-nfr-traceability))
+  — เนื้อหา NFR-04/06/11 ยังต้องถูก audit เพิ่มเติมว่าครบถ้วนสำหรับระบบบัญชีผู้ใช้จริงหรือไม่ เป็นงานของ
+  `test-suite-builder` ไม่ใช่การตัดสินใจของเอกสารนี้
 - **Reliability** (NFR-07, NFR-08, NFR-12): ระบบต้อง fallback อย่างสงบเมื่อระบบภายนอกไม่พร้อมใช้งาน โดย
   core loop รายวัน (Onboarding → Recommendation → Logging) ต้องไม่ผูกกับความพร้อมของ Smart Integrations
   (Epic 4, Could ทั้งหมด) และข้อมูล log/streak ต้องไม่สูญหายจาก network ที่ไม่เสถียร นอกจากนี้ การเขียนข้อมูล
@@ -382,7 +461,12 @@ flowchart TD
   ผันผวนของตัวเลขร่างกายเป็นเรื่องปกติ ไม่ควรถูกสื่อว่าเป็นความล้มเหลวหรือความสำเร็จ
 - **Legal/Regulatory Compliance** (NFR-11): ระบบต้องปฏิบัติตาม PDPA มาตรฐานทั่วไป ครอบคลุม consent
   record-keeping (เชื่อมกับ NFR-05), สิทธิ์เข้าถึง/แก้ไข/ลบข้อมูลของเจ้าของข้อมูล (เชื่อมกับ NFR-06), และ
-  กระบวนการแจ้งเหตุข้อมูลรั่วไหล
+  กระบวนการแจ้งเหตุข้อมูลรั่วไหล — เช่นเดียวกับ NFR-04/NFR-06 ข้างต้น เงื่อนไข "เมื่อมีระบบบัญชีผู้ใช้/
+  backend จริง" ที่ NFR-11 อ้างไว้เป็นจริงแล้วตั้งแต่มี **Account & Session Management** (ONB-0) — บัญชี
+  ผู้ใช้และวิธีการยืนยันตัวตนที่ component นี้สร้าง/เก็บไว้ (email/รหัสผ่านอ้างอิง/การผูกกับผู้ให้บริการ
+  ยืนยันตัวตนภายนอก) เป็นข้อมูลส่วนบุคคลตามเกณฑ์เดียวกับที่ NFR-11 อยู่แล้ว ตาม
+  [หมายเหตุ 3 ของ backlog.md](../../01-requirements/backlog.md#non-functional-requirements-nfr-traceability)
+  ที่ผูก ONB-0 เข้า NFR-11 traceability แล้ว
 
 ## 8. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
@@ -404,6 +488,12 @@ flowchart TD
    ช่องน้ำหนักเป้าหมาย (ไม่บังคับ) — ยังไม่ระบุว่าระบบควรเตือน/แนะนำให้กรอกภายหลังผ่านช่องทางไหน — กระทบ
    ว่า Personalization & Profile ควรมี mechanism แจ้งเตือนย้อนกลับหรือไม่ (เพิ่งถูกบันทึกเป็น open point
    เมื่อ 2026-08-28 จากการเตรียมเอกสารนี้)
+6. **ONB-0/NFR-05** (Account & Session Management): NFR-05 ปัจจุบันเขียนไว้เจาะจงเฉพาะการเชื่อมต่อ Health
+   API/wearable (INT-3) และตาชั่งอัจฉริยะผ่าน Bluetooth (INT-2) ยังไม่ได้ระบุว่าครอบคลุม consent ของการ
+   สมัคร/เข้าสู่ระบบผ่านผู้ให้บริการยืนยันตัวตนภายนอก (Google/Apple — ดูหัวข้อ 6.4) ด้วยหรือไม่ — กระทบว่า
+   Account & Session Management ต้องมีกระบวนการ consent record-keeping แยกต่างหากสำหรับ OAuth/Sign in
+   with Apple หรือไม่ (เอกสารนี้จงใจไม่ฟันธงแทน เป็นเรื่องที่ควรยืนยันกับ `test-suite-builder`/เจ้าของ NFR
+   doc ต่อ)
 
 ## 9. ความสัมพันธ์กับเอกสารอื่น
 
@@ -431,7 +521,10 @@ flowchart TD
 มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
 (sync ล่าสุด 2026-08-29 — ฉบับละเอียดระดับ per-table/collection ตามแนวทาง Hybrid ที่ `api-db-spec-builder`
 และ `tech-stack-builder` ยืนยันร่วมกันแล้ว ไม่ใช่แนวทางเบื้องต้นแบบเดิมอีกต่อไป ดู [tech-stack.md](tech-stack.md)
-§2 และ §5 สำหรับเหตุผลการเลือก Firebase เอง):
+§2 และ §5 สำหรับเหตุผลการเลือก Firebase เอง — แถวแรก "Account & Session Management" ก็ sync ครบแล้วเช่นกัน
+(รอบใหม่ 2026-08-29) มิเรอร์ทั้งจาก [tech-stack.md §6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
+แถวแรก และ [§6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น) ที่ขยาย
+mapping ระดับ operation ทั้ง 8 ตัวของ `api-spec.md` §3.1 เสร็จสมบูรณ์แล้ว):
 
 > เกณฑ์ embed vs. subcollection ที่ใช้ด้านล่าง (mirror จาก `database-schema.md` §8.2): ข้อมูล **bounded**
 > (ขอบเขตจำกัดชัดเจน, 1:1/multi-select เล็กกับผู้ใช้หรือ 1 เซสชัน, ไม่มี pattern query อิสระ) → **embed**
@@ -440,7 +533,8 @@ flowchart TD
 
 | Conceptual Component (หัวข้อ 3) | Concrete Implementation |
 |---|---|
-| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` อยู่ใน document เดียวกัน (bounded) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
+| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยกสำหรับ credential** เพราะ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) map ตรงกับ Firebase Auth's `UserRecord` เองครบทุก field: `id` = Firebase Auth UID (`uid`) — ค่าเดียวกับที่ `users/{userId}` ของ Personalization & Profile (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว จึงไม่มี FK lookup จริงให้ต้องทำ; `signup_method` derive จาก `UserRecord.providerData[0].providerId`; `email` = `UserRecord.email`; `credential_reference` ไม่มี field ให้เข้าถึงแม้ผ่าน Admin SDK เพราะ Firebase Auth เก็บ password hash ไว้ภายในเองทั้งหมด; `external_provider_reference` = `UserRecord.providerData[0].uid`; `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบปัจจุบัน (session)" = Firebase Auth ID Token + Refresh Token ที่ client SDK เก็บ persistence เอง ไม่มี server-side session store ให้ query (อ่านได้จาก Cloud Function ผ่าน Firebase Admin SDK เท่านั้น) — **ระดับ operation** (8 operation ของ `api-spec.md` §3.1): 7 ใน 8 เป็น **client SDK call ตรง** (สมัคร/เข้าสู่ระบบด้วย email-password, Google, Apple, และออกจากระบบ — ไม่ต้องมี Cloud Function เพราะ Firebase Auth SDK ทำหน้าที่นี้ให้เองอยู่แล้ว) มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น **Cloud Function `forgotPassword`** เพื่อ enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) ซึ่ง client SDK เพียงอย่างเดียวไม่รองรับ — รายละเอียดเต็มดู [tech-stack.md §6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น) |
+| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}` — สร้างโดย **Account & Session Management** ด้านบนเสมอ) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` อยู่ใน document เดียวกัน (bounded) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
 | Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry — สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (bounded); ระหว่างสลับวิดีโอ (REC-3) อัปเดต embedded array field `rejectedVideoIds: []` ใน document เดียวกัน |
 | Exertion & Calorie Calculation | คำนวณ MET ที่ client ตาม NFR-01/03 → Cloud Function `sessionComplete` validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เก็บเป็น embedded map field `wearableReading` ใน document เดียวกัน — ทุก operation ที่รับ `sessionId` จาก client ต้อง `get()` ยืนยันว่า document นั้นมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ (**referential existence validation** — NFR-12, เพราะ Firestore ไม่มี FK) |
 | Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) ใช้ ID เดียวกับ `dailyLogs/{date}` เพื่ออ่าน 3 เอกสารของวันเดียวกันด้วย `get()` ตรง; Cloud Function ของ `PUT /planner/days/{date}` อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag; Cloud Function `cheatRest` อ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` เพื่อ enforce กติกา "วันนี้เท่านั้น" |
@@ -453,5 +547,6 @@ Reliability/NFR-12) — ทุก Cloud Function ที่รับ id อ้า
 มีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ
 
 ดูรายละเอียดเหตุผลการเลือก stack, ประวัติการตัดสินใจ 2026-08-29, mapping ที่เหลือ (logical type → Firestore
-field type ที่ §6.2, REST convention → Firebase Cloud Functions routing ที่ §6.3), และรายละเอียด per-table
-เต็มรูปแบบ (สอดคล้องกับ [`database-schema.md` §8.2/§8.3](database-schema.md)) ที่ [tech-stack.md](tech-stack.md)
+field type ที่ §6.2, REST convention → Firebase Cloud Functions routing ที่ §6.3, mapping ระดับ operation
+ทั้ง 8 ตัวของ Account & Session Management ที่ §6.3.1), และรายละเอียด per-table เต็มรูปแบบ (สอดคล้องกับ
+[`database-schema.md` §8.2/§8.3](database-schema.md)) ที่ [tech-stack.md](tech-stack.md)

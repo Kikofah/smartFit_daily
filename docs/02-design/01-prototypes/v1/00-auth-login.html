@@ -1,0 +1,205 @@
+<!-- Feature: ONB-0 | REQ: REQ-15, REQ-16 -->
+<!-- Login screen. Same 3 methods as sign-up (email/password, Google, Apple -- Google/Apple
+     simulated as instant success, no real OAuth exists yet). The user journey's flowchart only
+     models two branches out of the "เข้าสู่ระบบสำเร็จ?" decision node: success, or "ลืมรหัสผ่าน"
+     (an independent link, not a failed-attempt retry state) -- so this prototype deliberately does
+     NOT invent a generic "wrong email/password" error UI, since that behavior isn't described
+     anywhere in user-journeys.md's ONB-0 Alt/Edge Cases. Client-side validation here only checks
+     that both fields are non-empty (there is no backend to check real credentials against).
+     On success, simulates REQ-15's session persistence (writes smartfit_auth_user to localStorage)
+     and routes based on whether this browser has any onboarding data saved already: if
+     smartfit_onb_personal exists (a returning user who has been through at least
+     01-onboarding-personal-info.html before), go straight to 05-daily-dashboard.html; otherwise
+     treat as not-yet-onboarded and continue at 01-onboarding-personal-info.html. This
+     localStorage-presence heuristic is a prototype-only stand-in for a real "has completed
+     onboarding" flag (no backend exists to store one) -- a content decision, not a spec value. -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เข้าสู่ระบบ — smartfit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+
+/* --- page-specific additions (shared pattern across the 3 auth sub-screens) --- */
+.top-bar { margin-bottom: var(--space-6); }
+.back-btn { display:inline-flex; align-items:center; gap: var(--space-1); min-height:44px; padding:0 var(--space-1); }
+.field-group { margin-bottom: var(--space-4); }
+.field-group label { display:block; margin-bottom:var(--space-2); }
+.text-input-wrap { position:relative; }
+.text-input { width:100%; box-sizing:border-box; min-height:44px; padding:0 var(--space-4); background:var(--color-paper-sunken); border:var(--border-width) solid transparent; border-radius:var(--radius-md); font-size:15px; font-family:inherit; color:var(--color-ink); }
+.text-input:focus { outline:none; border-color:var(--color-clay); }
+.text-input.error { border-color:var(--color-danger); }
+.text-input::placeholder { color:var(--color-ink-faint); }
+.text-input.has-toggle { padding-right:48px; }
+.password-toggle { position:absolute; right:0; top:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:transparent; border:none; color:var(--color-ink-muted); cursor:pointer; }
+.error-text { color:var(--color-danger); margin-top:var(--space-1); display:block; }
+.error-text[hidden] { display:none; }
+.forgot-link-row { display:flex; justify-content:flex-end; margin-top:calc(var(--space-1) * -1); margin-bottom:var(--space-2); }
+.forgot-link-row a { color:var(--color-ink-muted); font-size:13px; text-decoration:none; }
+.forgot-link-row a:hover { text-decoration:underline; }
+.divider { display:flex; align-items:center; gap:var(--space-3); margin:var(--space-6) 0; }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--color-border); }
+.divider span { color:var(--color-ink-muted); font-size:12px; }
+.btn-social { width:100%; gap:var(--space-2); }
+.btn-social + .btn-social { margin-top:var(--space-2); }
+.oauth-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:1.5px solid currentColor; font-size:11px; font-weight:600; line-height:1; flex-shrink:0; }
+.footer-note { text-align:center; margin-top:var(--space-6); }
+.footer-note a { color:var(--color-clay); text-decoration:none; font-weight:500; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="screen-content">
+
+    <div class="top-bar">
+      <a href="00-auth-welcome.html" class="btn btn-ghost back-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 5l-7 7 7 7"></path></svg>
+        ย้อนกลับ
+      </a>
+    </div>
+
+    <h1 class="text-h1">เข้าสู่ระบบ</h1>
+    <p class="text-body" style="color:var(--color-ink-muted); margin-top:var(--space-2)">
+      ยินดีต้อนรับกลับมา
+    </p>
+
+    <form id="loginForm" novalidate style="margin-top:var(--space-8)">
+      <div class="field-group">
+        <label class="text-h3" for="email">อีเมล</label>
+        <div class="text-input-wrap">
+          <input type="email" id="email" name="email" class="text-input" placeholder="name@email.com" autocomplete="email" aria-describedby="email-error">
+        </div>
+        <span class="text-caption error-text" id="email-error" hidden>กรุณากรอกอีเมล</span>
+      </div>
+
+      <div class="field-group">
+        <label class="text-h3" for="password">รหัสผ่าน</label>
+        <div class="text-input-wrap">
+          <input type="password" id="password" name="password" class="text-input has-toggle" placeholder="รหัสผ่านของคุณ" autocomplete="current-password" aria-describedby="password-error">
+          <button type="button" class="password-toggle" id="passwordToggle" aria-label="แสดงรหัสผ่าน">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </button>
+        </div>
+        <span class="text-caption error-text" id="password-error" hidden>กรุณากรอกรหัสผ่าน</span>
+        <div class="forgot-link-row">
+          <a href="00-auth-forgot-password.html">ลืมรหัสผ่าน?</a>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="margin-top:var(--space-2)">เข้าสู่ระบบ</button>
+    </form>
+
+    <div class="divider"><span>หรือ</span></div>
+
+    <button type="button" class="btn btn-secondary btn-social" id="googleBtn">
+      <span class="oauth-icon" aria-hidden="true">G</span>
+      เข้าสู่ระบบด้วย Google
+    </button>
+    <button type="button" class="btn btn-secondary btn-social" id="appleBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M16.5 8.5c-.9-1-2.1-1.6-3.4-1.6-1 0-1.7.3-2.4.3-.7 0-1.5-.3-2.4-.3-2.7 0-5.3 2.2-5.3 6 0 3.2 2.4 7.6 4.3 7.6.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1.4 0 2.6-1.8 3.4-3.3-2.2-1-2.6-4.1-.5-5.4a4 4 0 0 0 1.5-3.3z"></path>
+        <path d="M13.2 5.2c.5-.7.9-1.7.7-2.7-.9.1-1.9.6-2.5 1.3-.5.6-1 1.6-.8 2.6 1 .1 1.9-.5 2.6-1.2z"></path>
+      </svg>
+      เข้าสู่ระบบด้วย Apple
+    </button>
+
+    <p class="text-body-sm footer-note">ยังไม่มีบัญชี? <a href="00-auth-signup.html">สมัครสมาชิก</a></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  function byId(id){ return document.getElementById(id); }
+
+  var passwordInput = byId('password');
+  var passwordToggle = byId('passwordToggle');
+  var EYE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+  var EYE_OFF_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l18 18"></path><path d="M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 6 10 6a15.6 15.6 0 0 1-3.3 3.9M6.5 6.6C4 8.3 2 11 2 11s3.5 6 10 6c1.3 0 2.5-.2 3.6-.6"></path><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"></path></svg>';
+  passwordToggle.addEventListener('click', function(){
+    var showing = passwordInput.type === 'text';
+    passwordInput.type = showing ? 'password' : 'text';
+    passwordToggle.innerHTML = showing ? EYE_ICON : EYE_OFF_ICON;
+    passwordToggle.setAttribute('aria-label', showing ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน');
+  });
+
+  function completeLoginAndRoute(method){
+    try {
+      localStorage.setItem('smartfit_auth_user', JSON.stringify({
+        method: method,
+        email: byId('email').value || null,
+        loggedInAt: Date.now()
+      }));
+    } catch (err) {}
+    var hasOnboarded = false;
+    try { hasOnboarded = !!localStorage.getItem('smartfit_onb_personal'); } catch (err) {}
+    window.location.href = hasOnboarded ? '05-daily-dashboard.html' : '01-onboarding-personal-info.html';
+  }
+
+  byId('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var email = byId('email');
+    var password = byId('password');
+    var validEmailVal = email.value.trim() !== '';
+    var validPasswordVal = password.value !== '';
+    email.classList.toggle('error', !validEmailVal);
+    byId('email-error').hidden = validEmailVal;
+    password.classList.toggle('error', !validPasswordVal);
+    byId('password-error').hidden = validPasswordVal;
+    if (!(validEmailVal && validPasswordVal)) {
+      var firstInvalid = document.querySelector('.text-input.error');
+      if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    completeLoginAndRoute('email');
+  });
+
+  byId('googleBtn').addEventListener('click', function(){ completeLoginAndRoute('google'); });
+  byId('appleBtn').addEventListener('click', function(){ completeLoginAndRoute('apple'); });
+})();
+</script>
+</body>
+</html>

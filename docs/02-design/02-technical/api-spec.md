@@ -3,9 +3,22 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.3
-  ฉบับ Firebase ใหม่ (audit เนื้อหาหลักหัวข้อ 1-5 แล้วไม่พบ drift อื่น — REST-style convention, operation
-  list, และ payload ยังใช้ได้เหมือนเดิมเพราะยังเป็น conceptual ล้วน)
+- **อัปเดตล่าสุด:** 2026-08-29 (รอบ 3) — sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md`
+  §6.3.1 ฉบับสมบูรณ์ (mechanical re-sync ล้วน ไม่ใช่การตัดสินใจใหม่ — ไม่แตะเนื้อหาหลักหัวข้อ 1-5): เพิ่ม
+  หัวข้อย่อย **6.3.1** สรุป mapping ระดับ operation ของทั้ง 8 operation ในหัวข้อ 3.1 (Account & Session
+  Management) — resolve ⚠️ placeholder เดิมที่ทิ้งไว้ในรอบ 2 (7 ใน 8 operation เป็น client SDK call ตรง
+  ของ Firebase Authentication มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น Cloud Function)
+- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบ 2) — audit พบว่า `high-level-architecture.md` เพิ่ง add Conceptual
+  Component ใหม่ **"Account & Session Management" (§3.1)** ครอบคลุม ONB-0 (REQ-14–17) พร้อม entity
+  **User Account** ใหม่ (§5) แต่เอกสารนี้ยังไม่มี operation รองรับเลย (เอกสารล้าหลัง ไม่ใช่ข้อขัดแย้ง) —
+  เพิ่มหัวข้อ **3.1 Account & Session Management** (8 operations: signup/login แยก 3 วิธี +
+  forgot-password + logout — ยืนยันจากผู้ใช้ 2026-08-29 ว่าแยก endpoint ต่อวิธีแทนการรวมเป็น endpoint
+  เดียว) แล้ว renumber หัวข้อเดิม 3.1–3.7 → 3.2–3.8 ให้ตรงกับการ renumber component ของ HLA, เพิ่มจุดที่
+  ยังไม่ได้ระบุใหม่ 6 ข้อในหัวข้อ 4 (email verification, password policy, session timeout, ขอบเขต NFR-05,
+  account enumeration policy, การชนกันของอีเมลจากผู้ให้บริการภายนอก), และปรับหัวข้อ 6 (ภาคผนวก: Stack
+  Mapping) ให้ระบุว่า operation ใหม่ของ component นี้ยังไม่มี mapping ทางการใน `tech-stack.md` §6.1/§6.3
+  (เอกสารล้าหลังจุดเดียวกับที่ HLA §10 เองก็ทิ้ง ⚠️ ไว้) — audit หัวข้อ 1-2 (Scope/Conventions) และ 5
+  (ความสัมพันธ์กับเอกสารอื่น) แล้วไม่พบ drift อื่น (ดู [log 2026-08-29](../../05-log/20260829-log.md))
 - **สร้างโดย:** skill `api-db-spec-builder`
 - **อ้างอิงจาก:** [High Level Architecture](high-level-architecture.md),
   [Product Backlog](../../01-requirements/backlog.md),
@@ -43,7 +56,20 @@ operation ใดที่ไม่มี component รองรับ
 
 ## 3. API Resources & Operations
 
-### 3.1 Personalization & Profile
+### 3.1 Account & Session Management
+
+| Operation | Verb + Path | Feature/REQ | Request (เชิงแนวคิด) | Response (เชิงแนวคิด) | Error/Edge Case | NFR |
+|---|---|---|---|---|---|---|
+| สมัครสมาชิกด้วยอีเมล/รหัสผ่าน | `POST /auth/signup/email` | ONB-0/REQ-14 | อีเมล, รหัสผ่าน (credential เชิงแนวคิด) | User Account ที่สร้างใหม่ (`signup_method = email_password`) → พาไปขั้นตอน ONB-1 ต่อทันที | `409` อีเมลนี้มีบัญชีอยู่แล้ว, `400` รูปแบบอีเมล/รหัสผ่านไม่ถูกต้อง (เกณฑ์ password policy ยังไม่ระบุ — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 (เข้ารหัสระหว่างส่ง), NFR-11 (PDPA — บันทึกการสร้างบัญชี) |
+| สมัครสมาชิกผ่าน Google | `POST /auth/signup/google` | ONB-0/REQ-14 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก (เชิงแนวคิด — ไม่ระบุรูปแบบ token/redirect) | User Account ที่สร้างใหม่ (`signup_method = google`) พร้อมอีเมลที่ยืนยันแล้วจากผู้ให้บริการ → พาไปขั้นตอน ONB-1 ต่อทันที | การยืนยันตัวตนกับผู้ให้บริการล้มเหลว → ไม่สร้างบัญชี ไม่มี fallback แบบ "ข้ามไปเลย" ตาม HLA §6.4 (ผู้ใช้ต้องลองใหม่/เปลี่ยนวิธี), อีเมลจากผู้ให้บริการนี้ตรงกับบัญชีที่มีอยู่แล้วด้วยวิธีอื่น → พฤติกรรมยังไม่ระบุ (ดูจุดที่ยังไม่ได้ระบุ) | NFR-04, NFR-11 (NFR-05 ยังเป็น open point ต่อ boundary นี้ — ดู HLA §8 ข้อ 6) |
+| สมัครสมาชิกผ่าน Apple | `POST /auth/signup/apple` | ONB-0/REQ-14 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก (เชิงแนวคิด) | User Account ที่สร้างใหม่ (`signup_method = apple`) พร้อมอีเมลที่ยืนยันแล้ว → พาไปขั้นตอน ONB-1 ต่อทันที | เหมือน `POST /auth/signup/google` ข้างต้นทุกประการ | เหมือน `POST /auth/signup/google` ข้างต้น |
+| เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน | `POST /auth/login/email` | ONB-0/REQ-15 | อีเมล, รหัสผ่าน | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ (session persistence) → พาไปหน้าที่เหมาะสม (ONB-1 ถ้ายังไม่เคยผ่าน หรือ Daily Dashboard ถ้าผ่านแล้ว) | `401` credential ไม่ถูกต้อง, พฤติกรรมเมื่ออีเมลไม่มีอยู่ในระบบเลยยังไม่ระบุแยกจากกรณีรหัสผ่านผิด (account enumeration policy — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 |
+| เข้าสู่ระบบผ่าน Google | `POST /auth/login/google` | ONB-0/REQ-15 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ | การยืนยันตัวตนกับผู้ให้บริการล้มเหลว → ต้องลองใหม่/เปลี่ยนวิธี (ไม่มี fallback ตาม HLA §6.4) | NFR-04 |
+| เข้าสู่ระบบผ่าน Apple | `POST /auth/login/apple` | ONB-0/REQ-15 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ | เหมือน `POST /auth/login/google` ข้างต้น | NFR-04 |
+| ขอรีเซ็ตรหัสผ่าน | `POST /auth/forgot-password` | ONB-0/REQ-16 | อีเมลที่ลงทะเบียนไว้ | `204`/`202` คำขอรีเซ็ตถูกส่งแล้ว (ช่องทางส่งจริงไม่ระบุ) | `422` ถ้าบัญชีของอีเมลนั้นสมัครผ่าน Google/Apple (ไม่มีรหัสผ่านให้รีเซ็ตตาม REQ-16), พฤติกรรมเมื่ออีเมลไม่มีอยู่ในระบบเลยยังไม่ระบุ (account enumeration policy — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 |
+| ออกจากระบบ | `POST /auth/logout` | ONB-0/REQ-17 | — | `204` ล้าง session ที่จดจำไว้ทันที | — | — |
+
+### 3.2 Personalization & Profile
 
 | Operation | Verb + Path | Feature/REQ | Request (เชิงแนวคิด) | Response (เชิงแนวคิด) | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
@@ -52,21 +78,21 @@ operation ใดที่ไม่มี component รองรับ
 | ตั้ง/แก้อุปกรณ์ที่มี | `PUT /profile/equipment` | ONB-2/REQ-03 | รายการอุปกรณ์ที่เลือก (multi-select: ไม่มี/ดัมเบล/ยิมครบชุด) | Equipment Profile ที่บันทึกแล้ว | `400` เลือก "ไม่มีอุปกรณ์" พร้อมตัวอื่น (mutual exclusion ตาม decision ที่ resolve แล้ว) | — |
 | ตั้ง/แก้เป้าหมายหลัก | `PUT /profile/goal` | ONB-3/REQ-02 | ประเภทเป้าหมาย, น้ำหนักเป้าหมาย (บังคับเมื่อ "ลดน้ำหนัก") | Goal Selection พร้อมเป้าหมายแคลอรี่รายวันหลังปรับ safety floor | `400` ขาดน้ำหนักเป้าหมายตอนเลือก "ลดน้ำหนัก" | — |
 
-### 3.2 Content Recommendation
+### 3.3 Content Recommendation
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
 | ดูวิดีโอแนะนำวันนี้ | `GET /workouts/today/recommendation` | REC-1, REC-4/REQ-04, REQ-07 | — | Video/Workout Content ที่จับคู่ (รวม warmup/cooldown ถ้าความเข้มข้นสูง) พร้อมเป้าหมายแคลอรี่วันนี้ | `204` ถ้าวันนี้เป็น Cheat/Rest Day (ไม่มีวิดีโอแนะนำ) | NFR-01 (ต้องไม่มี latency ที่สังเกตได้) |
 | เปลี่ยนวิดีโอ | `POST /workouts/today/recommendation/swap` | REC-3/REQ-06 | id ของวิดีโอที่เพิ่งถูกปฏิเสธ (สะสมจาก client) | Video/Workout Content ใหม่ คงเป้าหมายเดิม | `409` ถ้าหาวิดีโอใหม่ไม่ได้อีก (ขยายเกณฑ์แล้ว) — tolerance ตัวเลขยังไม่ระบุ (ดูจุดที่ยังไม่ได้ระบุ) | — |
 
-### 3.3 Exertion & Calorie Calculation
+### 3.4 Exertion & Calorie Calculation
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
 | เริ่มเซสชันออกกำลังกาย | `POST /workouts/sessions` | REC-1, REC-4/REQ-04, REQ-07 | id วิดีโอหลัก (จาก recommendation หรือ swap) | Workout Session ที่สร้างใหม่ (รวม session_video ของ warmup/หลัก/cooldown ถ้ามี) | — | — |
 | จบ/หยุดเซสชัน | `POST /workouts/sessions/{sessionId}/complete` | REC-2/REQ-05 | เวลาที่ใช้จริง (วินาที/นาที) | Actual Calorie Burn (kcal ที่คำนวณจาก MET หรือแทนที่ด้วยค่า wearable ถ้ามี) — สร้าง Daily Log ต่อโดยอัตโนมัติ (ดู 3.5) | `404` sessionId ไม่พบ | NFR-02 (feedback ทันทีภายใน 250ms) |
 
-### 3.4 Planner & Day-Status
+### 3.5 Planner & Day-Status
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
@@ -75,7 +101,7 @@ operation ใดที่ไม่มี component รองรับ
 | ตั้ง Cheat/Rest Day | `POST /planner/days/{date}/cheat-rest` | PLN-2/REQ-09 | — | Day Status = Cheat/Rest, สถานะวันนั้นถูก mark "ครบเป้าหมาย" | `409` ถ้า `date` ไม่ใช่วันนี้และมี log อยู่ก่อน (decision ที่ resolve แล้ว: ทับ log ได้เฉพาะวันนี้เท่านั้น), `409` ถ้าเป็นวันในอดีตของสัปดาห์ (read-only ตาม PLN-1 ไม่มีข้อยกเว้น) | NFR-02 |
 | ยกเลิก Cheat/Rest Day | `DELETE /planner/days/{date}/cheat-rest` | PLN-2/REQ-09 | — | `204` วันนั้นกลับไปนับเป้าหมายตามปกติ | ใช้ได้เฉพาะก่อนสิ้นวันของ `date` นั้น | NFR-02 |
 
-### 3.5 Logging & Streak
+### 3.6 Logging & Streak
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
@@ -83,13 +109,13 @@ operation ใดที่ไม่มี component รองรับ
 | ดู log ของวันหนึ่ง | `GET /logs/{date}` | PLN-3/REQ-10 | — | Daily Log ของวันนั้น (นาทีที่ออกกำลังกาย, kcal สะสม, สถานะครบ/ไม่ครบเป้าหมาย) | `404` ยังไม่มี log ของวันนั้น | — |
 | ดู streak ปัจจุบัน | `GET /streak` | PLN-4/REQ-09, REQ-10 | — | Streak count ปัจจุบัน (จาก Streak cache — ดู database-schema.md) | — | — |
 
-### 3.6 Insights & Forecast
+### 3.7 Insights & Forecast
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
 | ดูพยากรณ์เป้าหมายน้ำหนัก | `GET /insights/forecast` | INT-1/REQ-11 | — | วันที่คาดว่าจะถึงเป้าหมาย, อัตราขาดดุลเฉลี่ย | `422` ถ้ายังไม่มีน้ำหนักเป้าหมาย (ต้องกรอกที่ ONB-3 ก่อน), `422` ถ้า log สะสมไม่พอ (จำนวนวันขั้นต่ำยังไม่ระบุ — ดูจุดที่ยังไม่ได้ระบุ) | — |
 
-### 3.7 Integration Gateway
+### 3.8 Integration Gateway
 
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
@@ -112,6 +138,21 @@ operation ใดที่ไม่มี component รองรับ
    ยังไม่ระบุ — กระทบว่า `POST /integrations/smart-scale/sync` ควรมีพฤติกรรมอย่างไรเมื่อเรียกซ้ำในวันเดียวกัน
 5. **Rate limiting / pagination**: ยังไม่มี requirement ใดระบุถึงเรื่องนี้ — `GET /logs` ที่คืนประวัติ
    ทั้งหมดอาจต้องมี pagination เมื่อข้อมูลมากขึ้น แต่ยังไม่ได้ตัดสินใจรูปแบบ
+6. **ONB-0/REQ-14 (สมัครสมาชิก)**: ยังไม่ระบุว่าต้องมีขั้นตอนยืนยันอีเมล (email verification) ก่อนใช้งานได้
+   จริงหรือไม่ — กระทบว่า `POST /auth/signup/email` ควรพาผู้ใช้ไปต่อ ONB-1 ทันทีหรือต้องรอยืนยันอีเมลก่อน
+7. **ONB-0/REQ-14 (สมัครสมาชิก)**: ยังไม่ระบุกติกาความซับซ้อนของรหัสผ่าน (password policy) สำหรับ
+   email/password — กระทบเงื่อนไข `400` ของ `POST /auth/signup/email`
+8. **ONB-0/REQ-15 (เข้าสู่ระบบ)**: ยังไม่ระบุระยะเวลาหมดอายุของ session (session timeout) ที่แน่นอน
+9. **ONB-0/NFR-05**: ยังไม่ชัดว่า NFR-05 (ต้องขอ consent ชัดเจนก่อนเชื่อมต่อระบบภายนอก) ครอบคลุมการสมัคร/
+   เข้าสู่ระบบผ่านผู้ให้บริการยืนยันตัวตนภายนอก (Google/Apple) ด้วยหรือไม่ (HLA §8 ข้อ 6 ทิ้ง open point
+   นี้ไว้เช่นกัน) — กระทบว่า `POST /auth/signup/google`, `/apple` และ `POST /auth/login/google`, `/apple`
+   ต้องมี consent-prompt step แยกต่างหากในเชิงแนวคิดหรือไม่
+10. **ONB-0**: พฤติกรรมของ `POST /auth/login/email` และ `POST /auth/forgot-password` เมื่ออีเมลไม่มีอยู่
+    ในระบบเลย (ไม่ใช่แค่รหัสผ่านผิด) ยังไม่ระบุ — เกี่ยวข้องกับนโยบาย account enumeration ที่ upstream ยัง
+    ไม่ได้ตัดสินใจ
+11. **ONB-0/REQ-14 (Google/Apple)**: พฤติกรรมเมื่ออีเมลจากผู้ให้บริการภายนอกตรงกับบัญชีที่มีอยู่แล้วด้วยวิธี
+    อื่น (เช่น เคยสมัครด้วย email/password มาก่อน) ยังไม่ระบุ — ควร merge เข้าบัญชีเดียวกันหรือปฏิเสธการ
+    สมัครซ้ำ
 
 ## 5. ความสัมพันธ์กับเอกสารอื่น
 
@@ -131,6 +172,14 @@ operation ใดที่ไม่มี component รองรับ
 > **อัปเดต 2026-08-29**: มิเรอร์ใหม่ทั้งหมดจาก Supabase/PostgREST เป็น Firebase Cloud Functions ตามการ
 > เปลี่ยน stack ใน `tech-stack.md` §2/§5 (2026-08-29) — หัวข้อ 1-5 ข้างต้น**ไม่ต้องแก้ไขเนื้อหาใดๆ**
 > เพราะยังเป็น REST-style convention เชิงแนวคิดล้วน ไม่ผูกกับว่า backend จริงมี auto-generated API หรือไม่
+>
+> **อัปเดต 2026-08-29 (รอบ 3 — resolve mapping ระดับ operation ของ Account & Session Management)**:
+> `tech-stack.md` §6.3.1 ขยาย mapping ระดับ operation ของทั้ง 8 operation ในหัวข้อ 3.1 ให้สมบูรณ์แล้ว —
+> sync มาไว้ที่หัวข้อ 6.3.1 ด้านล่าง (mechanical re-sync ล้วน ไม่ใช่การตัดสินใจใหม่) resolve ⚠️
+> placeholder เดิมของรอบ 2 ได้: 7 ใน 8 operation (`POST /auth/signup/{email,google,apple}`,
+> `POST /auth/login/{email,google,apple}`, `POST /auth/logout`) เป็น **client SDK call ตรง** ของ Firebase
+> Authentication ไม่ต้องมี Cloud Function ครอบ มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น
+> Cloud Function (`forgotPassword`) เพราะต้อง enforce เงื่อนไข `422` ที่ client SDK เพียงอย่างเดียวไม่รองรับ
 
 มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--firebase-cloud-functions-routing)
 (อัปเดต 2026-08-29):
@@ -148,6 +197,29 @@ operation ใดที่ไม่มี component รองรับ
     `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → Cloud Function เดิม
     ตามแนวทางเดียวกัน ไม่เปลี่ยนจากเดิม ต่างแค่ runtime (Firebase Cloud Functions แทน Supabase Edge
     Function)
+
+### 6.3.1 หัวข้อ 3.1 Account & Session Management — ข้อยกเว้นของกติกาข้างต้น
+
+มิเรอร์จาก [tech-stack.md § 6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น)
+(อัปเดต 2026-08-29): **8 operation ของหัวข้อ 3.1 ส่วนใหญ่ไม่เข้ากติกา "ทุก operation ต้องเป็น Cloud
+Function" ข้างต้น** — เพราะ Firebase Authentication (ต่างจาก Firestore) มี client SDK ที่ทำหน้าที่นี้ให้
+โดยตรงอยู่แล้ว:
+
+| Operation (หัวข้อ 3.1) | Firebase Implementation |
+|---|---|
+| `POST /auth/signup/email` | **Client SDK โดยตรง** — ไม่ต้องมี Cloud Function |
+| `POST /auth/signup/google` | **Client SDK โดยตรง** — เป็น SDK call เดียวกันเป๊ะกับ `POST /auth/login/google` (Firebase ไม่มี endpoint แยก signup/login สำหรับ OAuth provider — client อ่าน flag "ผู้ใช้ใหม่หรือไม่" ที่ SDK คืนมาเพื่อตัดสินเส้นทางต่อแทนการแยก route) |
+| `POST /auth/signup/apple` | **Client SDK โดยตรง** — เป็น SDK call เดียวกันเป๊ะกับ `POST /auth/login/apple` เช่นเดียวกับ Google ข้างต้น |
+| `POST /auth/login/email` | **Client SDK โดยตรง** — ไม่ต้องมี Cloud Function |
+| `POST /auth/login/google` | **Client SDK เดียวกับ `POST /auth/signup/google`** เป๊ะ |
+| `POST /auth/login/apple` | **Client SDK เดียวกับ `POST /auth/signup/apple`** เป๊ะ |
+| `POST /auth/forgot-password` | **Cloud Function (Callable) `forgotPassword`** — operation เดียวในหัวข้อ 3.1 ที่ต้องเป็น Cloud Function เพราะต้อง enforce เงื่อนไข `422` ("บัญชีนี้สมัครผ่าน Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต") ซึ่ง client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ |
+| `POST /auth/logout` | **Client SDK โดยตรง** — ล้าง token ที่ client เก็บไว้ทันที ไม่มี server-side session ให้ invalidate ฝั่ง Cloud Function จึงไม่ต้องมี Cloud Function |
+
+**สรุป**: จาก 8 operation มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น Cloud Function — ที่เหลือ
+เป็น client SDK call ตรงทั้งหมด ต่างจาก component อื่นทุกตัวในหัวข้อ 6.3 ที่ต้องเขียน Cloud Function ครอบทุก
+operation เพราะ Firestore ไม่มี auto-generated API — เป็นข้อยกเว้นโดยธรรมชาติของบริการ Firebase
+Authentication เอง ไม่ใช่การเลือก stack ใหม่
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, logical
 type → Firestore field type) และเหตุผลการเลือก stack

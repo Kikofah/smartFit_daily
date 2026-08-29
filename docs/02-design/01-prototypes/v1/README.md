@@ -5,11 +5,15 @@
 
 ## Scope
 
-ครอบคลุมทั้ง 14 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่สร้าง 2026-08-27) รวม 12 หน้าจอ HTML
-ดูสารบัญเต็มที่ [index.html](index.html)
+ครอบคลุมทั้ง 15 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่แก้ล่าสุด 2026-08-29 — เพิ่ม ONB-0
+เข้ามาใหม่) รวม 16 หน้าจอ HTML ดูสารบัญเต็มที่ [index.html](index.html)
 
 | # | ไฟล์ | Feature ID | REQ |
 |---|---|---|---|
+| 00 | `00-auth-welcome.html` | ONB-0 | REQ-14, REQ-15 |
+| 00 | `00-auth-signup.html` | ONB-0 | REQ-14 |
+| 00 | `00-auth-login.html` | ONB-0 | REQ-15, REQ-16 |
+| 00 | `00-auth-forgot-password.html` | ONB-0 | REQ-16 |
 | 01 | `01-onboarding-personal-info.html` | ONB-1 | REQ-01 |
 | 02 | `02-onboarding-equipment.html` | ONB-2 | REQ-03 |
 | 03 | `03-onboarding-goal-select.html` | ONB-3 | REQ-02 |
@@ -20,11 +24,12 @@
 | 08 | `08-weekly-planner.html` | PLN-1, PLN-2 | REQ-08, REQ-09 |
 | 09 | `09-log-history.html` | PLN-3 | REQ-10 |
 | 10 | `10-progress-insights.html` | INT-1 | REQ-11 |
-| 11 | `11-device-integrations.html` | INT-2, INT-3 | REQ-12, REQ-13 |
+| 11 | `11-device-integrations.html` | ONB-0, INT-2, INT-3 | REQ-17, REQ-12, REQ-13 |
 | 12 | `12-device-pairing.html` | INT-2, INT-3 | REQ-12, REQ-13 |
 
 หลาย feature ที่เป็น "state/action บนหน้าเดิม" ไม่ได้แยกเป็นไฟล์ใหม่ (สอดคล้องกับ user journey ที่ไม่ได้แยก
-screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ PLN-2/PLN-4 อยู่บนไฟล์ 05, PLN-2 (toggle) อยู่บน bottom sheet ของไฟล์ 08
+screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ PLN-2/PLN-4 อยู่บนไฟล์ 05, PLN-2 (toggle) อยู่บน bottom sheet ของไฟล์ 08,
+Logout (ONB-0/REQ-17) อยู่บนไฟล์ 11 (หน้าโปรไฟล์เดิม) ตามที่ REQ-17 ระบุว่า logout เกิดจากหน้าโปรไฟล์เท่านั้น
 
 ## แหล่งข้อมูลที่อ้างอิง
 
@@ -179,3 +184,59 @@ version นี้ยังไม่ผ่าน review เป็นทางก�
   (บังคับ/ไม่บังคับตามเป้าหมายที่เลือก) — ตกหล่นเพราะ AC ไฟล์นี้เขียนก่อน decision ของ ONB-3 เรื่องนี้จะ resolve
 - `test-cases/01-onboarding-personalization.md` ยังไม่มี test case สำหรับ validate ช่องน้ำหนักเป้าหมาย
   (บังคับเมื่อเลือก "ลดน้ำหนัก", ไม่บังคับเมื่อเลือกอื่น) ด้วยเหตุผลเดียวกัน
+
+## เปลี่ยนแปลงจาก audit (Prototype Consistency Audit, 2026-08-29 — เพิ่ม ONB-0)
+
+หลังจาก `feature-list-journey` เพิ่ม Feature ใหม่ **ONB-0** (สมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ
+— REQ-14–17, Must) เข้า `backlog.md`/`01-spec/20260823-01-onboarding-personalization.md`/
+`user-journeys.md` เมื่อ 2026-08-29 `prototype-builder` รัน consistency audit เทียบ v1 กับ ONB-0 (scope
+เฉพาะ ONB-0 ตามที่ผู้ใช้ระบุ) พบว่า **ไม่มีหน้าจอ Login/Sign-up/Forgot Password เลย** — onboarding flow เดิม
+(`01-onboarding-personal-info.html`) เริ่มทันทีโดยไม่มีการยืนยันตัวตนก่อน ทั้งที่ ONB-0 ต้องเกิดก่อน ONB-1
+เสมอ (REQ-14: "ห้ามเริ่มกรอกข้อมูลส่วนตัวก่อนมีบัญชีผู้ใช้จริง") และหน้าโปรไฟล์ (`11-device-integrations.html`)
+ไม่มีปุ่ม logout เลยทั้งที่ REQ-17 ระบุว่า logout ต้องทำได้จากหน้านี้ — ทั้งสองจุดเป็น **prototype ล้าหลัง**
+เท่านั้น (ไม่ขัดแย้งกับเอกสารใด เพราะ ONB-0 เพิ่งถูกเพิ่มเข้ามาใหม่) ผู้ใช้ยืนยันให้แก้ `v1/` ตรง ๆ (ไม่สร้าง
+`v2/`) แม้เป็นการเพิ่ม Feature ใหม่ทั้ง feature เพราะเป็นการตัดสินใจของผู้ใช้เอง หลังพิจารณาข้อดี/ข้อเสียทั้ง
+2 ทางแล้ว:
+
+1. **เพิ่มหน้าจอใหม่ 4 หน้า** (`00-auth-welcome.html`, `00-auth-signup.html`, `00-auth-login.html`,
+   `00-auth-forgot-password.html`) — ใช้ prefix `00-` ร่วมกันแทนการ renumber ไฟล์ 01–12 เดิม เพื่อไม่ให้
+   กระทบลิงก์ที่มีอยู่แล้วใน `acceptance-criteria.md`/`test-cases/`/`index.html` เป็นวงกว้างเกินจำเป็น
+   (ONB-0 เกิดก่อน ONB-1 เสมอในลำดับจริง ตรงกับที่ `backlog.md` เองก็จัดแถว ONB-0 ไว้บนสุดของ Epic 1 ด้วย
+   เหตุผลเดียวกัน)
+   - `00-auth-welcome.html` แทน node "เปิดแอป" + "มีบัญชีผู้ใช้อยู่แล้วหรือไม่?" ของ diagram ONB-0 (ปุ่ม
+     "สมัครสมาชิก" primary + ลิงก์ "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ")
+   - `00-auth-signup.html` (REQ-14): email/password + ปุ่ม Google/Apple (จำลอง instant success เพราะยัง
+     ไม่มี backend จริง) — สำเร็จแล้วพาไป `01-onboarding-personal-info.html` เสมอ ไม่มีขั้นตอนยืนยันอีเมล
+     เพราะยังเป็น open question ใน spec
+   - `00-auth-login.html` (REQ-15, REQ-16): เหมือน signup แต่มีลิงก์ "ลืมรหัสผ่าน?" — ตั้งใจ **ไม่ทำ** UI
+     "อีเมล/รหัสผ่านไม่ถูกต้อง" เพราะ diagram ของ ONB-0 ใน `user-journeys.md` ไม่ได้ระบุ branch นี้ไว้ (มีแค่
+     สำเร็จ/ลืมรหัสผ่าน) จึงไม่เดาพฤติกรรมที่ไม่มีอยู่ในเอกสาร — validate แค่ช่องว่างเปล่าเท่านั้น หลัง login
+     สำเร็จ ตรวจ `localStorage` key `smartfit_onb_personal` (heuristic ของ prototype เท่านั้น ไม่ใช่ flag
+     จริงจาก backend) ถ้ามีอยู่แล้วถือว่าเป็นผู้ใช้เดิมพาไป `05-daily-dashboard.html` ถ้าไม่มีพาไปต่อที่
+     `01-onboarding-personal-info.html`
+   - `00-auth-forgot-password.html` (REQ-16): มี hint ว่าใช้ไม่ได้กับบัญชี Google/Apple ตาม REQ-16 ตรง ๆ
+     และ confirmation state เป็นข้อความกลาง ("หากอีเมลนี้มีอยู่ในระบบ...") ไม่ยืนยัน/ปฏิเสธว่ามีบัญชีจริง
+     หรือไม่ — เป็น content decision ของ prototype-builder ไม่ใช่ requirement ที่ resolve แล้ว
+   - **Content decision เรื่อง icon Google/Apple** (ยืนยันกับผู้ใช้แล้ว 2026-08-29): ใช้ line icon สีเดียว
+     (`--color-ink`, ตัวอักษร "G" ในวงกลม outline สำหรับ Google และ apple silhouette แบบ stroke-only
+     สำหรับ Apple) แทนโลโก้หลายสีทางการ เพราะสีสดของโลโก้จริงขัดกับกฎ earth-tone/1-accent-color ของ
+     DESIGN.md 2.1 ตรง ๆ — เป็นการใช้กติกา Iconography เดิม (1.4/2.5: line icon, ห้าม filled/gradient/
+     brand color) กับ context ใหม่ ไม่ใช่ token ใหม่ที่ต้องเพิ่มเข้า DESIGN.md
+2. **แก้ `11-device-integrations.html`** (หน้าโปรไฟล์เดิม) — เพิ่ม section "บัญชีผู้ใช้" (แสดงอีเมล/วิธี
+   login จำลองจาก `smartfit_auth_user`) และปุ่ม Destructive "ออกจากระบบ" (REQ-17) ที่ล้าง session แล้ว
+   กลับไป `00-auth-welcome.html` — comment เดิมของไฟล์นี้ที่เขียนว่า "ไม่มีระบบ auth ยังไม่มี" ไม่จริงอีกต่อไป
+   จึงแก้ comment ให้สอดคล้อง อัปเดต header tag เป็น `Feature: INT-2, INT-3, ONB-0 | REQ: REQ-12, REQ-13,
+   REQ-17`
+3. **ไม่แตะ** `01-`, `02-`, `03-onboarding-*.html` ตาม scope ที่ผู้ใช้ระบุ — จุดเชื่อมจาก signup ไป ONB-1
+   ทำผ่านการเปลี่ยน `window.location.href` ในไฟล์ใหม่เท่านั้น ไม่ต้องแก้ไฟล์ปลายทาง
+4. อัปเดต `index.html` (เพิ่มการ์ด 4 ใบใหม่ใน Epic 1, แก้ตัวเลขรวมเป็น "16 หน้าจอ/15 Feature", แก้ meta ของ
+   การ์ด 11) และ `README.md` ไฟล์นี้ (ตารางสรุป, scope, section นี้)
+
+**ส่งต่อให้ `test-suite-builder` แก้แยกต่างหาก** (ไม่ใช่งานของ `prototype-builder`) — audit รอบนี้พบว่า
+`acceptance-criteria.md`/`test-plan.md`/`test-cases/01-onboarding-personalization.md` ยังไม่มีเนื้อหาของ
+ONB-0 เลย (มีอยู่ก่อนแล้วแต่ไม่ได้เพิ่มตอน ONB-0 ถูกเพิ่มเข้า backlog):
+
+- `acceptance-criteria.md` § Epic 1 ยังไม่มี `AC-ONB-0-*` (REQ-14–17) และสารบัญ/header count ยังไม่รวม ONB-0
+- `test-plan.md` §1 Scope ยังเขียน "Must (8 features)" (ควรเป็น 9 รวม ONB-0) และตาราง Usability Testing
+  ยังเริ่มจาก "ONB-1 → ONB-2 → ONB-3" (ควรเริ่มจาก ONB-0 เพราะเป็น first-run flow ตัวจริง)
+- `test-cases/01-onboarding-personalization.md` ยังไม่มี `TC-ONB-0-*` อ้างอิงหน้าจอใหม่ 4 หน้านี้

@@ -3,7 +3,18 @@
 - **ประเภทเอกสาร:** Tech Stack — Concrete/Stack-Specific
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — เปลี่ยน Database/Backend/Authentication/Hosting เป็น Firebase ตามคำขอ
+- **อัปเดตล่าสุด:** 2026-08-29 (รอบใหม่) — sync ให้ครอบคลุม Feature ใหม่ **ONB-0 (Authentication)**
+  ที่ upstream ทั้ง 4 ชั้น (HLA §3.1/§5/§6.4, `api-spec.md` §3.1 — 8 operations, `database-schema.md` §3.1
+  ตาราง `user_account`, `detailed-design/01-onboarding-personalization.md` — 3 sequence diagram) เพิ่ม
+  เข้ามาแล้วเมื่อวันเดียวกัน โดยทิ้ง ⚠️ ไว้ในภาคผนวก Stack Mapping ของตัวเองว่ารอหัวข้อนี้ขยาย mapping ระดับ
+  operation — **เป็นการ mechanical mapping ของ component/operation ที่มีอยู่แล้วจริงไปสู่ Firebase (stack
+  ที่เลือกไว้แล้วตั้งแต่ 2026-08-29 รอบก่อน) ไม่ใช่การเลือกเทคโนโลยีใหม่** จึงไม่ต้องรัน Discovery
+  Questionnaire ซ้ำ — เพิ่มแถว "Account & Session Management" ในหัวข้อ 6.1 (map `user_account` เข้ากับ
+  Firebase Auth's `UserRecord` โดยตรง ไม่ต้องมี Firestore document แยก), เพิ่มหัวข้อย่อย 6.3.1 สำหรับ mapping
+  ทั้ง 8 operation (ส่วนใหญ่เป็น client SDK call ตรง ยกเว้น `forgot-password` ที่ต้องเป็น Cloud Function),
+  เพิ่มเหตุผลในหัวข้อ 4, และเพิ่มจุดที่ยังไม่ได้ตัดสินใจใหม่ 3 ข้อในหัวข้อ 7 (ดู log
+  `docs/05-log/20260829-log.md`)
+- **อัปเดตก่อนหน้า:** 2026-08-29 — เปลี่ยน Database/Backend/Authentication/Hosting เป็น Firebase ตามคำขอ
   ของผู้ใช้งานโดยตรง (ดูหัวข้อ 2 และ 5); sync หัวข้อ 6.1 ให้ละเอียดตรงกับ `database-schema.md` §8.2/8.3
   ฉบับ Hybrid (per-table Firestore collection/document mapping + FK/constraint enforcement migration —
   เป็นการ mechanical re-sync ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การเปลี่ยนตัวเลือก stack จริงใหม่ จึงไม่
@@ -87,6 +98,16 @@ skill นี้ ก่อนแก้ไฟล์จริง:
 - **Firebase Authentication**: มาพร้อม Firebase อยู่แล้ว ทดแทน Supabase Auth ด้วยความสามารถเทียบเท่า —
   Google OAuth + Sign in with Apple ครอบคลุมผู้ใช้ทั้งสองแพลตฟอร์มหลักเหมือนเดิม ลดเวลา dev ตรงกับ
   timeline ที่จำกัด
+- **Account & Session Management (ONB-0, เพิ่ม 2026-08-29)**: การเลือก Firebase Authentication ไว้แล้ว
+  ข้างต้นครอบคลุม ONB-0 (REQ-14–17) ได้ตรงตัวโดยไม่ต้องตัดสินใจ stack ใหม่ — ทั้ง 3 วิธีสมัคร/เข้าสู่ระบบที่
+  `api-spec.md` §3.1 กำหนด (email/password, Google, Apple) เป็นความสามารถมาตรฐานของ Firebase Auth SDK
+  อยู่แล้ว และ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) ไม่ต้องมี Firestore
+  document แยกเพราะ field ทั้งหมด (`signup_method`/`email`/`credential_reference`/
+  `external_provider_reference`/`created_at`) map ตรงกับ Firebase Auth's `UserRecord` เองครบถ้วน (ดูหัวข้อ
+  6.1 แถวแรก) — ลด surface ที่ต้องดูแลเองลงไปอีก ตรงกับหลักการ "ย้ายทั้งระบบไป Firebase ecosystem" เดิม;
+  ข้อยกเว้นเดียวคือ `POST /auth/forgot-password` ที่ต้องมี Cloud Function เพิ่มเพื่อ enforce เงื่อนไข `422`
+  (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) เพราะ client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ (ดูหัวข้อ
+  6.3.1)
 - **Firebase Cloud Functions (แทนที่ Supabase Edge Function)**: เป็น serverless compute ของ Firebase
   ที่ทำหน้าที่เดียวกับ Supabase Edge Function เดิม — รับผลการคำนวณจาก client แล้ว validate/บังคับกติกา
   ธุรกิจก่อนเขียนลง Firestore เป็นเกราะป้องกันชั้นที่สองฝั่ง server เหมือนเดิม ต่างกันที่ Firestore ไม่มี
@@ -219,6 +240,16 @@ skill นี้ ก่อนแก้ไฟล์จริง:
 > (per-table embed vs. subcollection) และ [§8.3](database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function)
 > (FK/constraint enforcement migration) แล้ว ถือเป็น**เนื้อหาที่สมบูรณ์ระดับ per-table** ไม่ใช่แนวทาง
 > เบื้องต้นอีกต่อไป — หัวข้อ 6.2/6.3 ไม่เปลี่ยนแปลงจากรอบก่อน
+>
+> **อัปเดต 2026-08-29 (รอบใหม่ — เพิ่ม Account & Session Management)**: เพิ่มแถวแรกในตารางหัวข้อ 6.1
+> ด้านล่าง และหัวข้อย่อย 6.3.1 ใหม่ สำหรับ Component ใหม่ **"Account & Session Management" (HLA §3.1,
+> ONB-0/REQ-14–17)** ที่ก่อนหน้านี้ทุกภาคผนวก Stack Mapping ต้นทาง (HLA §10, `api-spec.md` §6,
+> `database-schema.md` §8.2, `detailed-design/01-onboarding-personalization.md` ภาคผนวก) ทิ้ง ⚠️ ไว้ว่า
+> ยังไม่มี mapping ระดับนี้ — **เป็นการ mechanical mapping ไปสู่ Firebase ที่เลือกไว้แล้ว ไม่ใช่การเลือก
+> เทคโนโลยีใหม่** ผลสรุป: `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) ไม่ต้องมี
+> Firestore document แยกเลย เพราะ field ทั้งหมดของมัน map ตรงกับ Firebase Auth's `UserRecord` เองอยู่แล้ว
+> (ดูรายละเอียดในแถวตาราง) — resolve ⚠️ ในหัวข้อ 8.2 ของ `database-schema.md` ได้ในทางปฏิบัติ (ต้องรอ
+> `api-db-spec-builder` sync ภาคผนวกฝั่งนั้นเองในการรันครั้งถัดไป — ดูหัวข้อ 8 ด้านล่าง)
 
 ### 6.1 HLA's Conceptual Component → Firebase Implementation
 
@@ -230,6 +261,7 @@ skill นี้ ก่อนแก้ไฟล์จริง:
 
 | Conceptual Component (HLA §3) | Concrete Implementation |
 |---|---|
+| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยกสำหรับ credential** เพราะ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) map ตรงกับ Firebase Auth's `UserRecord` เองครบทุก field: `id` = Firebase Auth UID (`uid`) — **ค่าเดียวกับที่ `users/{userId}` ของ Personalization & Profile (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว** จึงไม่ต้องเก็บ `user_profile.user_account_id` (FK 1:1 ใน `database-schema.md` §3.2) เป็น field แยกใน Firestore เลย — identity เดียวกันคือ key เดียวกัน ไม่มี FK lookup จริงให้ต้องทำ; `signup_method` (enum `email_password`/`google`/`apple`) derive จาก `UserRecord.providerData[0].providerId` (`password`/`google.com`/`apple.com`) ไม่ persist ซ้ำที่ไหน; `email` = `UserRecord.email`; `credential_reference` ไม่มี field ให้เข้าถึงแม้ผ่าน Admin SDK เพราะ Firebase Auth เก็บ password hash ไว้ภายในเองทั้งหมด (ตรงกับเจตนา "ไม่ระบุวิธีจัดเก็บ/เข้ารหัส" ของ `database-schema.md` §3.1 พอดี); `external_provider_reference` = `UserRecord.providerData[0].uid`; `created_at` = `UserRecord.metadata.creationTime`; **"สถานะเข้าสู่ระบบปัจจุบัน (session)"** (ephemeral ตาม `database-schema.md` §3.1) = Firebase Auth ID Token + Refresh Token ที่ React Native Firebase SDK เก็บ persistence เองฝั่ง client ไม่มี server-side session store ให้ query — field ทั้งหมดอ่านได้จาก Cloud Function ผ่าน Firebase Admin SDK (`admin.auth().getUser(uid)`) เท่านั้น (client SDK เข้าถึงได้เฉพาะ `auth.currentUser` ของตัวเอง); Firestore Security Rule ของทุก collection ใต้ `users/{userId}` ยังคงอิง `request.auth.uid` (มาจาก ID Token ที่ตรวจสอบแล้ว) เหมือนเดิม — ดูหัวข้อ 6.3.1 สำหรับ mapping ทั้ง 8 operation |
 | Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` (สูงสุด 3 ค่าตาม ONB-2) อยู่ใน document เดียวกัน (bounded, 1:1/multi-select เล็ก ไม่มี pattern query แยก) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ (`request.auth.uid == userId`) + Cloud Function `profileUpdate` enforce equipment mutual exclusion และ safety floor (`goalSelection.dailyCalorieTargetKcal` ≥ 1,200–1,500 kcal) — ยังไม่ยืนยันว่า operation `PUT /profile/goal` ใช้ฟังก์ชันเดียวกับ `profileUpdate` หรือแยกต่างหาก — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
 | Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry — สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (1-3 รายการ หลัก+วอร์มอัพ/คูลดาวน์ ตาม REC-1/REC-4 เขียนครั้งเดียวตอนสร้าง session, bounded ไม่มี pattern query แยก); ระหว่างสลับวิดีโอ (REC-3) อัปเดต embedded array field `rejectedVideoIds: []` (แต่ละรายการเป็น map `{externalVideoId, rejectedAt}`) ใน document เดียวกัน เพื่อกันแนะนำวิดีโอซ้ำในเซสชันเดียวกัน |
 | Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Cloud Function `sessionComplete` validate แล้วเขียน embedded map field `actualCalorieBurn` (`source`/`metValue`/`calculatedKcal`) ลงใน document `workoutSessions/{sessionId}` เดียวกัน (1:1 กับ session ไม่มี pattern query อิสระ); ค่าจาก wearable (INT-3) เก็บเป็น embedded map field `wearableReading` (`platform`/`calorieValueKcal`/`recordedAt`) ใน document เดียวกัน เขียนได้ทั้งก่อน/หลัง `sessionComplete` ตามลำดับที่ INT-3 มาถึงจริง — ถ้ามาถึงก่อน complete ให้ `sessionComplete` อ่านมาใช้แทนค่าประมาณ MET; ทุก operation ที่รับ `sessionId` จาก client (เช่น `POST /integrations/wearable/readings`) ต้อง `get()` ยืนยันว่า document นั้นมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ (**referential existence validation** — กติกาใหม่จาก NFR-12/`database-schema.md` §8.3 เพราะ Firestore ไม่มี FK เลย) |
@@ -274,6 +306,29 @@ document ปลายทางมีอยู่จริงและเป็�
   **Cloud Function (HTTPS Function หรือ Callable Function)** โดยคง HTTP verb + resource path เดิมตามที่
   `api-spec.md` กำหนดไว้เป็น convention การตั้งชื่อ
 
+#### 6.3.1 Account & Session Management (ONB-0) — ข้อยกเว้นของกติกาข้างต้น
+
+**8 operation ของ `api-spec.md` §3.1 ส่วนใหญ่ไม่เข้ากติกา "ทุก operation ต้องเป็น Cloud Function" ข้างต้น**
+— เพราะ Firebase Authentication (ต่างจาก Firestore) มี **client SDK ที่ทำหน้าที่นี้ให้โดยตรงอยู่แล้ว**
+ไม่ต้องเขียน Cloud Function ครอบทุกตัวเหมือน CRUD ของ Firestore:
+
+| Operation (`api-spec.md` §3.1) | Firebase Implementation |
+|---|---|
+| `POST /auth/signup/email` | **Client SDK โดยตรง** — Firebase Authentication `createUserWithEmailAndPassword(auth, email, password)` (React Native Firebase: `auth().createUserWithEmailAndPassword(...)`) — Firebase คืน `409`-เทียบเท่า (`auth/email-already-in-use`) และ `400`-เทียบเท่า (`auth/invalid-email`, `auth/weak-password`) ให้เองที่ระดับ SDK ไม่ต้องมี Cloud Function |
+| `POST /auth/signup/google` | **Client SDK โดยตรง** — `@react-native-google-signin/google-signin` ขอ ID token จาก native Google Sign-In flow แล้วแลกเป็น Firebase credential ด้วย `GoogleAuthProvider.credential(idToken)` → `signInWithCredential(auth, credential)` — **หมายเหตุสำคัญ**: Firebase Auth ไม่มี endpoint แยก "signup" กับ "login" สำหรับ OAuth provider เป็นการเรียก SDK ตัวเดียวกันกับ `POST /auth/login/google` ทุกประการ Firebase สร้างบัญชีใหม่ให้อัตโนมัติถ้ายังไม่เคยมี — client อ่าน field `userCredential.additionalUserInfo.isNewUser` ที่ SDK คืนมาเพื่อตัดสินว่าจะพาไป ONB-1 (ใหม่) หรือ Daily Dashboard (เคยมีอยู่แล้ว) แทนการแยก route |
+| `POST /auth/signup/apple` | **Client SDK โดยตรง** — `expo-apple-authentication` ดึง identity token จาก Sign in with Apple (iOS) แล้วแลกเป็น Firebase credential ด้วย `OAuthProvider('apple.com').credential(...)` → `signInWithCredential` — เป็น SDK call เดียวกันกับ `POST /auth/login/apple` เช่นเดียวกับ Google (ดู `isNewUser` ข้างต้น) |
+| `POST /auth/login/email` | **Client SDK โดยตรง** — `signInWithEmailAndPassword(auth, email, password)` — Firebase คืน `401`-เทียบเท่า (`auth/wrong-password`, `auth/user-not-found`) ที่ระดับ SDK |
+| `POST /auth/login/google` | **Client SDK เดียวกับ `POST /auth/signup/google`** เป๊ะ (ดูหมายเหตุแถวนั้น) |
+| `POST /auth/login/apple` | **Client SDK เดียวกับ `POST /auth/signup/apple`** เป๊ะ (ดูหมายเหตุแถว signup/google) |
+| `POST /auth/forgot-password` | **Cloud Function (Callable) `forgotPassword`** — operation เดียวใน component นี้ที่ต้องเป็น Cloud Function เพราะต้อง enforce เงื่อนไข `422` ("บัญชีนี้สมัครผ่าน Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต" ตาม `api-spec.md` §3.1) ซึ่ง client SDK's `sendPasswordResetEmail()` เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ — Cloud Function ใช้ Firebase Admin SDK's `getUserByEmail(email)` ตรวจ `providerData` ก่อนว่ามี provider `password` อยู่จริงหรือไม่ ถ้าไม่มีคืน `422` ถ้ามีจึงเรียก `generatePasswordResetLink()` (หรืออนุญาตให้ client เรียก `sendPasswordResetEmail()` ต่อ) |
+| `POST /auth/logout` | **Client SDK โดยตรง** — `signOut(auth)` ล้าง ID token/refresh token ที่ client เก็บไว้ทันที (Firebase ID token เป็น stateless JWT ไม่มี server-side session ให้ invalidate ฝั่ง Cloud Function) — ไม่ต้องมี Cloud Function |
+
+**สรุป**: จาก 8 operation มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น Cloud Function — ที่เหลือ
+เป็น client SDK call ตรงทั้งหมด (Google/Apple signup กับ login เป็น SDK call เดียวกันจริงๆ นับซ้ำ) ต่างจาก
+component อื่นทุกตัวในหัวข้อ 6.1/6.3 ที่ต้องเขียน Cloud Function ครอบทุก operation เพราะ Firestore ไม่มี
+auto-generated API — **Firebase Authentication มี client SDK ให้ใช้ตรงอยู่แล้ว จึงเป็นข้อยกเว้นของกติกา
+ทั่วไปข้างต้นโดยธรรมชาติของบริการนี้เอง ไม่ใช่การเลือก stack ใหม่**
+
 ## 7. จุดที่ยังไม่ได้ตัดสินใจ / ควรยืนยันเพิ่มเติม
 
 1. **database-schema.md collection/document design — RESOLVED (2026-08-29)**: เดิมข้อนี้ระบุว่าหัวข้อ
@@ -305,24 +360,45 @@ document ปลายทางมีอยู่จริงและเป็�
 7. **สอดคล้องกับ Open Points เดิมของ conceptual docs**: ค่า Activity Factor/MET lookup table จริง,
    ตัวเลข tolerance ของ REC-1, จำนวนวัน log ขั้นต่ำของ INT-1 ฯลฯ ยังไม่ resolve — ต้องแก้ที่ต้นทาง
    (`01-spec/`) ก่อน ไม่ใช่ตัดสินใจในเอกสารนี้
+8. **Firebase project OAuth client setup สำหรับ Google/Apple Sign-In (ใหม่ 2026-08-29, ONB-0)**: ยังไม่ได้
+   ทำ configuration จริงใน Firebase Console/Google Cloud Console (SHA-1/SHA-256 fingerprint สำหรับ Android
+   Google Sign-In, OAuth client ID ของ iOS/Android/Web แยกกัน) และใน Apple Developer portal (Services ID +
+   Sign in with Apple capability) — ต้องทำก่อน provision จริง ไม่กระทบตัวเลือก stack (ยังเป็น Firebase
+   Authentication เหมือนเดิม)
+9. **NFR-11 audit/consent record-keeping สำหรับการสร้างบัญชี (ใหม่ 2026-08-29, ONB-0)**: `database-schema.md`
+   §3.1 ระบุว่า `user_account.created_at` "ใช้ประกอบ consent record-keeping ตาม NFR-11" แต่ยังไม่มีการออกแบบ
+   ว่ากลไก audit trail จริงเป็นอย่างไร (เช่น Cloud Function ที่ trigger จาก Firebase Auth's `onCreate` Auth
+   Trigger เพื่อเขียน audit log แยกใน Firestore) — ยังไม่ตัดสินใจในเอกสารนี้เพราะรูปแบบ consent
+   record-keeping ที่แน่นอนยังเป็น open point ที่ต้นทาง (`01-spec/`/HLA §8) ก่อน ไม่ใช่ประเด็นของการเลือก
+   stack
+10. **Account merge ข้ามวิธีสมัคร (ใหม่ 2026-08-29, ONB-0)**: `api-spec.md` §4 ข้อ 11 ทิ้ง open point ไว้ว่า
+    พฤติกรรมเมื่ออีเมลจากผู้ให้บริการภายนอกตรงกับบัญชีที่มีอยู่แล้วด้วยวิธีอื่นยังไม่ระบุ — ถ้า resolve เป็น
+    "merge เข้าบัญชีเดียวกัน" ในอนาคต จะต้องมี Cloud Function เพิ่ม (เช่น ใช้ Firebase Admin SDK's
+    `linkWithCredential` หรือ custom merge logic) ซึ่งยังไม่ได้ออกแบบเพราะรอ resolve ที่ต้นทางก่อนตาม
+    กติกาบังคับของ skill นี้ (ห้ามตัดสินใจ business rule แทนเอกสารต้นทาง)
 
 ## 8. ความสัมพันธ์กับเอกสารอื่น
 
-- [High Level Architecture](high-level-architecture.md) — ที่มาของ Conceptual Component ทั้ง 7 ตัวที่
-  map ในหัวข้อ 6.1 — **ภาคผนวก Stack Mapping (หัวข้อ 10) ของไฟล์นี้ sync กับหัวข้อ 6.1 ฉบับ Firebase แล้ว**
-  (อัปเดตโดย `architecture-builder` เมื่อ 2026-08-29 — ดู `docs/05-log/20260829-log.md`) ไม่มีงานค้าง
-- [API Spec](api-spec.md) — ที่มาของ operation ทั้งหมดที่ map เป็น Cloud Function ในหัวข้อ 6.3 —
-  **ภาคผนวก Stack Mapping (หัวข้อ 6) ของไฟล์นี้ sync กับหัวข้อ 6.3 ฉบับ Firebase แล้ว** (อัปเดตโดย
-  `api-db-spec-builder` เมื่อ 2026-08-29) ไม่มีงานค้าง
+- [High Level Architecture](high-level-architecture.md) — ที่มาของ Conceptual Component ทั้ง **8 ตัว**
+  (เพิ่ม "Account & Session Management" §3.1 เมื่อ 2026-08-29) ที่ map ในหัวข้อ 6.1 — **ภาคผนวก Stack
+  Mapping (หัวข้อ 10) ของไฟล์นี้เพิ่งเพิ่มแถว "Account & Session Management" พร้อม ⚠️ ว่ารอหัวข้อนี้ขยาย
+  mapping — ตอนนี้ resolve แล้วในหัวข้อ 6.1/6.3.1 ข้างต้น จึง stale ไปแล้ว ควรรัน `architecture-builder`
+  ต่อเพื่อ sync ภาคผนวกหัวข้อ 10 ให้ตรงกับเนื้อหาใหม่นี้** (การ sync appendix เป็น mechanical ไม่ใช่
+  ask-user ตามกติกาของ `architecture-builder` เอง)
+- [API Spec](api-spec.md) — ที่มาของ operation ทั้งหมดที่ map เป็น Cloud Function/Client SDK ในหัวข้อ
+  6.3/6.3.1 (รวม 8 operation ใหม่ของ §3.1 Account & Session Management) — **ภาคผนวก Stack Mapping
+  (หัวข้อ 6) ของไฟล์นี้ยังทิ้ง ⚠️ ไว้ว่ารอ mapping ระดับ operation ของ component นี้ — ตอนนี้ resolve
+  แล้วในหัวข้อ 6.3.1 ข้างต้น จึง stale ไปแล้ว ควรรัน `api-db-spec-builder` ต่อเพื่อ sync ภาคผนวกหัวข้อ 6**
 - [Database Schema](database-schema.md) — ที่มาของตาราง/logical type เดิมที่ map เป็น Firestore ในหัวข้อ
-  6.2 — **ภาคผนวกหัวข้อ 8 เสร็จสมบูรณ์แล้วในแนวทาง Hybrid** ที่ยืนยันจากผู้ใช้ (2026-08-29): 8.1 (logical
-  type → Firestore field type), 8.2 (per-table → Firestore collection/document mapping ครบ 15 ตาราง),
-  8.3 (FK/constraint enforcement migration ไป Cloud Function) — เนื้อหาหลักหัวข้อ 1-7 ยังคงเป็น
-  logical/relational model + ER Diagram เดิมทั้งหมดตามกติกาบังคับของ `api-db-spec-builder` (ดูหัวข้อ 7
-  ข้อ 1 ด้านบน) ไม่มีงานค้าง
+  6.2 — ภาคผนวกหัวข้อ 8.1 เสร็จสมบูรณ์แล้วในแนวทาง Hybrid ที่ยืนยันจากผู้ใช้ (2026-08-29) — **แต่หัวข้อ 8.2
+  แถว `user_account` ยังทิ้ง ⚠️ ไว้ว่ารอ mapping ระดับ document อย่างเป็นทางการ — ตอนนี้ resolve แล้วที่
+  หัวข้อ 6.1 แถวแรกของไฟล์นี้ (สรุป: ไม่ต้องมี Firestore document แยก, map ตรงกับ Firebase Auth's
+  `UserRecord`) ควรรัน `api-db-spec-builder` ต่อเพื่อ sync ภาคผนวกหัวข้อ 8.2/8.3 ให้ตรงกัน**
 - [Detailed Design](detailed-design/) — ที่มาของ NFR-01/03 client-side computation ที่กำหนดการแบ่งงาน
-  ระหว่าง React Native app กับ Firebase Cloud Function — **ภาคผนวก Stack Mapping ของทั้ง 4 ไฟล์ epic sync
-  กับหัวข้อ 6.1/6.3 ฉบับ Firebase แล้ว** (อัปเดตโดย `detailed-design-builder` เมื่อ 2026-08-29, ใช้ชื่อ
-  Cloud Function เดียวกับหัวข้อ 6.1: `profileUpdate`/`sessionComplete`/`cheatRest`/`recommendation`/
-  `forecast`/`integrations`) ไม่มีงานค้าง
+  ระหว่าง React Native app กับ Firebase Cloud Function — **ภาคผนวก Stack Mapping ของ
+  `01-onboarding-personalization.md` เพิ่งเพิ่มแถว "Account & Session Management" พร้อม ⚠️ เดียวกัน — ตอนนี้
+  resolve แล้วในหัวข้อ 6.1/6.3.1 ข้างต้น (ไม่มี Cloud Function ชื่อทางการสำหรับ ONB-0 ยกเว้น
+  `forgotPassword` — ที่เหลือเป็น client SDK ตรง จึงไม่มี client-side/Edge Function split แบบ
+  NFR-01/03 ให้ระบุเพิ่มเหมือน component อื่น) ควรรัน `detailed-design-builder` ต่อเพื่อ sync ภาคผนวกของ
+  epic นี้** — อีก 3 ไฟล์ epic ไม่กระทบ (ไม่มี component ใหม่นี้ในไดอะแกรมของ epic อื่น)
 - [Product Backlog](../../01-requirements/backlog.md), [Requirement 4 epic + NFR](../../01-requirements/01-spec/index.md)

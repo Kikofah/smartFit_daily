@@ -1,0 +1,87 @@
+<!-- Feature: ONB-0 | REQ: REQ-14, REQ-15 -->
+<!-- Entry-point screen for the whole app, before any onboarding. Represents flowchart nodes
+     A ("เปิดแอป") + B ("มีบัญชีผู้ใช้อยู่แล้วหรือไม่?") from ONB-0's user journey, collapsed into one
+     static landing screen for the "no active session" case (no backend exists yet, so there is no
+     real session check here -- a real app would skip this screen entirely and route straight to
+     Login or the Daily Dashboard when a session already exists, per REQ-15's session persistence
+     rule). Two entry points only: create a new account, or sign in to an existing one. -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>smartfit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+
+/* --- page-specific additions --- */
+.welcome-content { min-height:100vh; box-sizing:border-box; display:flex; flex-direction:column; justify-content:space-between; }
+.welcome-top { padding-top: var(--space-4); }
+.welcome-middle { flex:1; display:flex; flex-direction:column; justify-content:center; }
+.welcome-bottom { padding-bottom: var(--space-8); }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="screen-content welcome-content">
+    <div class="welcome-top">
+      <p class="text-caption" style="text-transform:none; letter-spacing:0;">smartfit daily</p>
+    </div>
+
+    <div class="welcome-middle">
+      <h1 class="text-display">smartfit daily</h1>
+      <p class="text-body" style="color:var(--color-ink-muted); margin-top:var(--space-3)">
+        เพื่อนคู่ใจที่ช่วยสร้างวินัยออกกำลังกายรายวันแบบยั่งยืน — พอดีกับร่างกายและเวลาที่มีจริงของคุณ
+      </p>
+    </div>
+
+    <div class="welcome-bottom">
+      <button type="button" class="btn btn-primary" onclick="location.href='00-auth-signup.html'">สมัครสมาชิก</button>
+      <button type="button" class="btn btn-ghost" style="width:100%; margin-top:var(--space-3);" onclick="location.href='00-auth-login.html'">มีบัญชีอยู่แล้ว? เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

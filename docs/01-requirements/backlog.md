@@ -23,6 +23,7 @@
 
 | Feature ID | ชื่อ Feature | Epic | MoSCoW Priority | REQ ที่เกี่ยวข้อง | Spec Doc |
 |---|---|---|---|---|---|
+| ONB-0 | สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (Authentication) | Onboarding & Personalization | **Must** | REQ-14, REQ-15, REQ-16, REQ-17 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | Onboarding & Personalization | **Must** | REQ-01 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | ONB-2 | เลือกอุปกรณ์ที่มี | Onboarding & Personalization | **Must** | REQ-03 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor) | Onboarding & Personalization | **Must** | REQ-02 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
@@ -39,7 +40,11 @@
 | INT-3 | ซิงค์ข้อมูล Wearable | Smart Integrations | **Could** | REQ-13 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
 
 ตารางเรียงตามลำดับ Epic ที่ปรากฏใน backlog (Onboarding → Recommendation → Planner → Integration)
-และภายในแต่ละ Epic เรียง Must → Should → Could ตรงตาม Priority ในต้นฉบับ backlog ทุกจุด
+และภายในแต่ละ Epic เรียง Must → Should → Could ตรงตาม Priority ในต้นฉบับ backlog ทุกจุด **ONB-0
+ถูกจัดไว้เป็นแถวแรกสุดของ Onboarding แม้ REQ-14–17 จะปรากฏหลัง REQ-01–03 ใน Business Rules ของเอกสาร
+spec ก็ตาม เพราะ Authentication เป็น step แรกสุดที่เกิดขึ้นจริงในลำดับ user flow (ก่อน ONB-1 เสมอ ตาม
+[รายละเอียดของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#รายละเอียด-description))
+ไม่ใช่ลำดับที่ปรากฏในเอกสาร**
 
 ---
 
@@ -47,12 +52,32 @@
 
 ### Epic 1: Onboarding & Personalization
 
+#### ONB-0 — สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (Authentication)
+
+- **Priority**: Must — และเป็น precondition ระดับพื้นฐานที่สุดของทั้งโปรเจกต์ ยิ่งกว่า ONB-1/2/3 เสียอีก
+  เพราะทุก REQ ในทุก Epic (ไม่ใช่แค่ Onboarding) ต้องมีบัญชีผู้ใช้ (`userId`) จริงก่อนจึงจะบันทึกข้อมูลใดๆ
+  ได้เลย ถ้าไม่มี feature นี้ ระบบทั้งหมดจะไม่มีที่ผูกข้อมูลผู้ใช้แต่ละคนเข้าด้วยกัน
+- **REQ ที่เกี่ยวข้อง**: REQ-14, REQ-15, REQ-16, REQ-17
+- **คำอธิบาย**: ผู้ใช้สมัครสมาชิก (Sign-up) ได้ 3 วิธี — email/password, Google OAuth, หรือ Sign in with
+  Apple (ตามที่ [tech-stack.md](../02-design/02-technical/tech-stack.md) เลือก Firebase Authentication
+  ไว้แล้ว) เพื่อสร้างบัญชีผู้ใช้ใหม่ก่อนเข้าสู่ ONB-1 เสมอ (REQ-14) จากนั้นเข้าสู่ระบบ (Login) ด้วยวิธี
+  เดียวกับที่สมัครไว้ได้ทุกครั้งที่กลับมาเปิดแอป โดยระบบจดจำสถานะ login ไว้ (session persistence) ไม่ต้อง
+  login ซ้ำจนกว่าจะออกจากระบบเองหรือ session หมดอายุ (REQ-15) ผู้ใช้ที่สมัครด้วย email/password และลืม
+  รหัสผ่านขอรีเซ็ตผ่านอีเมลที่ลงทะเบียนไว้ได้ (ใช้ไม่ได้กับบัญชี Google/Apple เพราะไม่มีรหัสผ่านให้รีเซ็ต)
+  (REQ-16) และออกจากระบบได้ทุกเมื่อจากหน้าโปรไฟล์ ซึ่งล้าง session ทันที (REQ-17) — bundled เป็น Feature
+  ID เดียวเพราะผู้ใช้งานยืนยันขอบเขตทั้ง 4 ส่วนนี้เป็นแพ็กเกจเดียวกัน ("ครบวงจร") ในการตัดสินใจครั้งเดียว
+  เมื่อ 2026-08-29 (เทียบเคียงกับ PLN-4 ที่ผูก REQ-09+REQ-10 ไว้ใน Feature ID เดียวกันในลักษณะเดียวกัน)
+  ดูรายละเอียดเต็มของการตัดสินใจ Epic placement/ขอบเขต/วิธี authentication ที่ยืนยันแล้วใน
+  [ข้อสมมติฐาน/การตัดสินใจของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  — ผลลัพธ์ (`userId`) เป็น input ให้ ONB-1 และทุก feature อื่นในทุก Epic ใช้ต่อ
+
 #### ONB-1 — กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่
 
 - **Priority**: Must — เพราะทุก feature อื่นที่เกี่ยวกับแคลอรี่ (ONB-3, REC-1, REC-2, PLN-3) ต้องใช้ค่า
   TDEE ของผู้ใช้เป็น baseline ถ้าไม่มีขั้นตอนนี้ ระบบจะคำนวณเป้าหมายแคลอรี่ให้ใครไม่ได้เลย
 - **REQ ที่เกี่ยวข้อง**: REQ-01
-- **คำอธิบาย**: ผู้ใช้ใหม่กรอกอายุ เพศ น้ำหนัก ส่วนสูง และระดับกิจกรรม ระบบคำนวณ BMR ด้วยสูตร
+- **คำอธิบาย**: เกิดขึ้นหลังผู้ใช้มีบัญชีผู้ใช้จริงแล้วจาก ONB-0 (สมัครสมาชิก/เข้าสู่ระบบ) เสมอ ผู้ใช้ใหม่
+  กรอกอายุ เพศ น้ำหนัก ส่วนสูง และระดับกิจกรรม ระบบคำนวณ BMR ด้วยสูตร
   Mifflin-St Jeor แล้วคูณด้วย Activity Factor เพื่อได้ TDEE บันทึกลงโปรไฟล์ ค่า TDEE นี้เป็นฐานให้
   ONB-3 แปลงเป็นเป้าหมายแคลอรี่รายวัน และเป็นอินพุตให้ REC-1/REC-2 ใช้จับคู่และคำนวณแคลอรี่เผาผลาญ
 
@@ -213,8 +238,14 @@
 | REQ-11 | พยากรณ์วันถึงเป้าหมาย | INT-1 |
 | REQ-12 | ซิงค์ตาชั่งอัจฉริยะ | INT-2 |
 | REQ-13 | ซิงค์ wearable แทนค่าประมาณ | INT-3 |
+| REQ-14 | สมัครสมาชิก (email/password, Google, Apple) | ONB-0 |
+| REQ-15 | เข้าสู่ระบบ + จดจำสถานะ login (session persistence) | ONB-0 |
+| REQ-16 | ลืมรหัสผ่าน — รีเซ็ตผ่านอีเมล (เฉพาะ email/password) | ONB-0 |
+| REQ-17 | ออกจากระบบ — ล้าง session ทันที | ONB-0 |
 
-REQ-01 ถึง REQ-13 ครบทุกข้อ — ไม่มี REQ ที่ต้องส่งไปที่ Open Questions
+REQ-01 ถึง REQ-17 ครบทุกข้อ (REQ-14–17 เพิ่มเข้า Onboarding & Personalization spec เมื่อ 2026-08-29 —
+ดู [ONB-0](#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-authentication) ด้านบน) —
+ไม่มี REQ ที่ต้องส่งไปที่ Open Questions
 (ดูรายละเอียดสมมติฐาน/ช่องว่างที่ยังไม่ชัดเจน ซึ่งไม่ใช่ส่วนหนึ่งของ 4 decision ที่ resolve แล้ว
 ได้ใน [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions)
 หรือใน section "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของแต่ละเอกสารใน [01-spec/](01-spec/index.md))
@@ -242,7 +273,7 @@ Firebase/Firestore) เป็นคุณภาพเชิงระบบที
 | NFR-08 | Reliability | PLN-3, PLN-4 (log/streak ไม่หายเมื่อ network ไม่เสถียร) |
 | NFR-09 | Usability (Accessibility) | ทุก Feature ID (UI-level cross-cutting — touch target, contrast, font scaling ของทุกหน้าจอ) |
 | NFR-10 | Usability (Localization) | ทุก Feature ID (UI-level cross-cutting — ภาษาไทยเป็นหลักของทุกหน้าจอ) |
-| NFR-11 | Legal/Regulatory Compliance | ONB-1, ONB-2, ONB-3, INT-2, INT-3 (เก็บ/เชื่อมต่อข้อมูลส่วนบุคคล — PDPA consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) |
+| NFR-11 | Legal/Regulatory Compliance | ONB-0, ONB-1, ONB-2, ONB-3, INT-2, INT-3 (เก็บ/เชื่อมต่อข้อมูลส่วนบุคคล — PDPA consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification; เพิ่ม ONB-0 2026-08-29 ดูหมายเหตุ 3) |
 | NFR-12 | Reliability (Data Integrity) | REC-2, INT-3 (ดูหมายเหตุ 1) |
 | NFR-13 | Usability (Data Visualization) | INT-1 (ดูหมายเหตุ 2) |
 
@@ -266,6 +297,16 @@ line chart แนวโน้มน้ำหนัก ใช้สี `--color-c
 `<!-- Feature: INT-1 -->` ไว้ชัดเจน — ตรวจแล้วไม่พบกราฟลักษณะเดียวกันในหน้าที่เกี่ยวกับ INT-2/INT-3
 (`11-device-integrations.html`, `12-device-pairing.html` เป็น UI เชื่อมต่ออุปกรณ์ล้วน ไม่มี chart) จึงคง
 ผูกเฉพาะ INT-1 ตามที่เอกสาร NFR เองแนะนำไว้แล้ว (ยืนยันตรงกับหลักฐาน ไม่ต้องแก้)
+
+**หมายเหตุ 3 (NFR-11 → ONB-0)**: เพิ่ม ONB-0 เข้า mapping ของ NFR-11 เมื่อ 2026-08-29 ตามเกณฑ์เดียวกับที่ใช้
+รวม ONB-1/2/3 อยู่แล้วเดิม (feature ที่ "เก็บ/เชื่อมต่อข้อมูลส่วนบุคคล") — REQ-14–17 (ONB-0) สร้างบัญชีผู้ใช้
+จริงและเก็บอีเมล/ข้อมูลยืนยันตัวตน ซึ่งเป็นข้อมูลส่วนบุคคลตามนิยามเดียวกัน ไม่ใช่การขยายขอบเขต NFR-11 ใหม่
+([Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม)
+เองก็ระบุไว้แล้วว่า NFR-04/06/11 ควรถูก audit เนื้อหาอีกครั้งเพราะตอนนี้มีระบบบัญชีผู้ใช้จริงแล้ว — การอัปเดต
+mapping นี้เป็นแค่ traceability ไม่ใช่การแก้เนื้อหา NFR ซึ่งเป็นงานของ `test-suite-builder`) ไม่ได้เพิ่ม ONB-0
+ให้ NFR-04 เพราะเนื้อหา NFR-04 ที่ resolve แล้วระบุเจาะจงว่าเป็น "ข้อมูลสุขภาพส่วนบุคคล" (อายุ เพศ น้ำหนัก
+ส่วนสูง เป้าหมาย ข้อมูลจาก wearable/ตาชั่งอัจฉริยะ) ไม่รวมถึง credential/รหัสผ่านโดยตรง — การเพิ่ม ONB-0 เข้า
+NFR-04 จะเป็นการตีความขยายเนื้อหาที่ยังไม่ resolve แทน ไม่ใช่ mapping ตามเกณฑ์ที่มีอยู่แล้วเหมือน NFR-11
 
 รายละเอียดแบบเต็มของแต่ละ NFR (threshold, เหตุผล, จุดที่ยังไม่ได้ระบุ) อยู่ใน
 [01-spec/20260827-05-non-functional-requirements.md](01-spec/20260827-05-non-functional-requirements.md)

@@ -1,4 +1,4 @@
-# Test Cases — Onboarding & Personalization (ONB-1, ONB-2, ONB-3)
+# Test Cases — Onboarding & Personalization (ONB-0, ONB-1, ONB-2, ONB-3)
 
 - **ประเภทเอกสาร:** Test Cases (ต่อ Epic — Onboarding & Personalization)
 - **สถานะเอกสาร:** Draft
@@ -11,15 +11,120 @@
 [01-spec/20260823-01-onboarding-personalization.md](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md) ·
 [user-journeys.md](../../../02-design/01-prototypes/user-journeys.md) ·
 ดูภาพหน้าจอประกอบได้ที่ prototype
+[v1/00-auth-welcome.html](../../../02-design/01-prototypes/v1/00-auth-welcome.html),
+[v1/00-auth-signup.html](../../../02-design/01-prototypes/v1/00-auth-signup.html),
+[v1/00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html),
+[v1/00-auth-forgot-password.html](../../../02-design/01-prototypes/v1/00-auth-forgot-password.html)
+(เพิ่ม 2026-08-29, ONB-0),
+[v1/11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html)
+(ปุ่มออกจากระบบของ ONB-0),
 [v1/01-onboarding-personal-info.html](../../../02-design/01-prototypes/v1/01-onboarding-personal-info.html),
 [v1/02-onboarding-equipment.html](../../../02-design/01-prototypes/v1/02-onboarding-equipment.html),
 [v1/03-onboarding-goal-select.html](../../../02-design/01-prototypes/v1/03-onboarding-goal-select.html),
 [v1/04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html)
 
 ดูภาพรวม scope/risk/entry-exit criteria ของทั้งโปรเจกต์ที่
-[test-plan.md](../test-plan.md) — ทั้ง ONB-1, ONB-2, ONB-3 อยู่ใน scope **Must** ของรอบทดสอบนี้
+[test-plan.md](../test-plan.md) — ทั้ง **ONB-0**, ONB-1, ONB-2, ONB-3 อยู่ใน scope **Must** ของรอบทดสอบนี้
 
 รูปแบบ ID: `TC-{FeatureID}-{3-digit}` เช่น `TC-ONB-1-001`
+
+---
+
+## ONB-0 — สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (REQ-14, REQ-15, REQ-16, REQ-17)
+
+Journey: [user-journeys.md § ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) ·
+AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--สมัครสมาชิกสำเร็จ-สร้างบัญชีผู้ใช้ใหม่ก่อนเข้าสู่-onb-1-req-14),
+[AC-ONB-0-02](../../../01-requirements/acceptance-criteria.md#ac-onb-0-02--เข้าสู่ระบบสำเร็จด้วยวิธีเดียวกับที่สมัครไว้-ระบบจดจำสถานะ-login-req-15),
+[AC-ONB-0-03](../../../01-requirements/acceptance-criteria.md#ac-onb-0-03--ผู้ใช้ที่สมัครด้วย-emailpassword-ขอรีเซ็ตรหัสผ่านผ่านอีเมลได้-req-16),
+[AC-ONB-0-04](../../../01-requirements/acceptance-criteria.md#ac-onb-0-04--บัญชีที่สมัครด้วย-googleapple-ขอรีเซ็ตรหัสผ่านไม่ได้-req-16),
+[AC-ONB-0-05](../../../01-requirements/acceptance-criteria.md#ac-onb-0-05--ออกจากระบบจากหน้าโปรไฟล์-ล้าง-session-ทันที-req-17),
+[AC-ONB-0-06](../../../01-requirements/acceptance-criteria.md#ac-onb-0-06--session-หมดอายุ-ต้องเข้าสู่ระบบใหม่-req-15)
+
+> **หมายเหตุการทดสอบ ONB-0**: AC-ONB-0-01 (สมัครสมาชิก) และ AC-ONB-0-02 (เข้าสู่ระบบ) แต่ละอันมี **1 test
+> case** ใช้ **email/password เป็นตัวแทน** เท่านั้น ไม่แยก 3 test case ตามวิธี (email/password, Google,
+> Apple) เพราะ prototype (`00-auth-signup.html`/`00-auth-login.html`) จำลอง Google OAuth/Sign in with
+> Apple เป็น instant success แบบเดียวกันทุกวิธี (ไม่มี OAuth จริง) และผลลัพธ์ปลายทาง (สร้าง/ยืนยัน `userId`
+> แล้วไปขั้นตอนถัดไป) เหมือนกันทุกวิธี ไม่ใช่ variation ที่มีค่าต่างกันจริงแบบ AC-ONB-3-01 (ที่ค่าคงที่ต่างกัน
+> ตามเป้าหมาย) — ต่างจากรูปแบบ variation ปกติของไฟล์นี้
+>
+> AC-ONB-0-06 (session หมดอายุ) เป็น **documentation-level test case** เพราะ prototype v1 ยังไม่ implement
+> การตรวจสอบ session จริงข้ามการเปิดแอป (ดูหมายเหตุใน `00-auth-welcome.html`) และระยะเวลา session timeout
+> ที่แน่นอนยังไม่ระบุใน spec — จัด "not testable in this round" ตาม [test-plan.md §4 R13](../test-plan.md)
+> เหมือน R7/R11/R12 รอ backend จริง
+
+### TC-ONB-0-001 — สมัครสมาชิกด้วย email/password สำเร็จ สร้างบัญชีใหม่และเข้าสู่ ONB-1
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-001 |
+| Test Case Name | สมัครสมาชิกด้วย email/password ครบถ้วน ระบบสร้างบัญชีผู้ใช้ใหม่และพาไปขั้นตอนกรอกข้อมูลส่วนตัว (ONB-1) ทันที |
+| Pre-condition | ผู้ใช้เปิดแอปครั้งแรก ยังไม่มีบัญชีผู้ใช้ อยู่ที่หน้า `00-auth-welcome.html` แล้วกดปุ่ม "สร้างบัญชีใหม่" มาถึงหน้า `00-auth-signup.html` |
+| Test Steps | 1. เลือกวิธีสมัครสมาชิกด้วย email/password<br>2. กรอกอีเมล = `newuser@example.com`<br>3. กรอกรหัสผ่าน = `Passw0rd!23`<br>4. กดปุ่ม "สมัครสมาชิก" |
+| Expected Result | ระบบสร้างบัญชีผู้ใช้ใหม่ (`userId` จำลอง) บันทึกสถานะ signed-in ไว้ (`localStorage` key `smartfit_auth_user`) แล้วพาไปหน้า `01-onboarding-personal-info.html` (ONB-1) ทันที โดยไม่มีขั้นตอนอื่นคั่นกลาง |
+| Test Data | อีเมล = `newuser@example.com`, รหัสผ่าน = `Passw0rd!23` — ไม่มี password policy ที่ยืนยันแล้วใน spec (Open Point) เลือกใช้ตัวอย่างที่มีทั้งตัวเลข/ตัวพิมพ์ใหญ่-เล็ก/สัญลักษณ์เป็น content decision ของเอกสารนี้เอง |
+| References | REQ-14 · AC-ONB-0-01 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · prototype [00-auth-signup.html](../../../02-design/01-prototypes/v1/00-auth-signup.html) |
+
+### TC-ONB-0-002 — เข้าสู่ระบบด้วย email/password สำเร็จ ระบบจดจำสถานะ login
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-002 |
+| Test Case Name | เข้าสู่ระบบด้วย email/password ที่สมัครไว้แล้ว ระบบจดจำสถานะ login (session persistence) |
+| Pre-condition | ผู้ใช้มีบัญชีอยู่แล้ว (สมัครด้วย email/password ไว้ก่อน เช่นจาก TC-ONB-0-001) และอยู่ที่หน้า `00-auth-login.html` |
+| Test Steps | 1. กรอกอีเมล = `newuser@example.com`<br>2. กรอกรหัสผ่าน = `Passw0rd!23`<br>3. กดปุ่ม "เข้าสู่ระบบ" |
+| Expected Result | ระบบยืนยันข้อมูลผ่าน บันทึกสถานะ signed-in ไว้ที่ `localStorage` (`smartfit_auth_user`) จำลอง session persistence แล้วพาผู้ใช้เข้าแอปต่อทันที — ถ้ายังไม่เคยผ่าน onboarding มาก่อน พาไปหน้า ONB-1 ต่อ ถ้าผ่านแล้วพาไป Daily Dashboard โดยไม่ต้อง login ซ้ำ |
+| Test Data | อีเมล = `newuser@example.com`, รหัสผ่าน = `Passw0rd!23` |
+| References | REQ-15 · AC-ONB-0-02 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · prototype [00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html) |
+
+### TC-ONB-0-003 — ขอรีเซ็ตรหัสผ่านผ่านอีเมล (บัญชี email/password)
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-003 |
+| Test Case Name | ผู้ใช้บัญชี email/password ลืมรหัสผ่าน ขอรีเซ็ตผ่านอีเมลที่ลงทะเบียนไว้สำเร็จ |
+| Pre-condition | ผู้ใช้สมัครด้วย email/password ไว้แล้ว (`newuser@example.com`) และลืมรหัสผ่าน อยู่ที่หน้า `00-auth-login.html` |
+| Test Steps | 1. กดลิงก์ "ลืมรหัสผ่าน?"<br>2. มาถึงหน้า `00-auth-forgot-password.html`<br>3. กรอกอีเมล = `newuser@example.com`<br>4. กดปุ่มยืนยัน/ส่งคำขอ |
+| Expected Result | ระบบแสดงข้อความยืนยันว่าคำขอรีเซ็ตรหัสผ่านถูกส่งไปยังอีเมลนั้นแล้ว (ไม่มีการส่งอีเมลจริงเพราะยังไม่มี backend) พร้อมทางกลับไปหน้าเข้าสู่ระบบ |
+| Test Data | อีเมล = `newuser@example.com` |
+| References | REQ-16 · AC-ONB-0-03 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · prototype [00-auth-forgot-password.html](../../../02-design/01-prototypes/v1/00-auth-forgot-password.html) |
+
+### TC-ONB-0-004 — บัญชี Google/Apple เปิดหน้าลืมรหัสผ่าน เห็นข้อความว่าใช้ไม่ได้
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-004 |
+| Test Case Name | ผู้ใช้บัญชี Google/Apple เปิดหน้าลืมรหัสผ่าน ระบบแจ้งว่าใช้ไม่ได้กับบัญชีประเภทนี้ |
+| Pre-condition | ผู้ใช้สมัครสมาชิกด้วย Google OAuth หรือ Sign in with Apple (ไม่มีรหัสผ่านในระบบ) |
+| Test Steps | 1. เปิดหน้าเข้าสู่ระบบ (`00-auth-login.html`)<br>2. กดลิงก์ "ลืมรหัสผ่าน?"<br>3. มาถึงหน้า `00-auth-forgot-password.html` |
+| Expected Result | หน้าจอแสดงข้อความแจ้งชัดเจนว่า "ใช้ได้เฉพาะบัญชีที่สมัครด้วยอีเมล/รหัสผ่าน — บัญชีที่เชื่อมกับ Google หรือ Apple ไม่มีรหัสผ่านให้รีเซ็ต เข้าสู่ระบบด้วยวิธีเดิมที่สมัครไว้ได้เลย" |
+| Test Data | บัญชีตัวอย่าง = สมัครด้วย Google OAuth (ไม่มีรหัสผ่าน) |
+| References | REQ-16 · AC-ONB-0-04 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · prototype [00-auth-forgot-password.html](../../../02-design/01-prototypes/v1/00-auth-forgot-password.html) |
+
+### TC-ONB-0-005 — ออกจากระบบจากหน้าโปรไฟล์ ล้าง session ทันที
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-005 |
+| Test Case Name | ผู้ใช้กดออกจากระบบจากหน้าโปรไฟล์/device integrations ระบบล้าง session ทันที |
+| Pre-condition | ผู้ใช้เข้าสู่ระบบอยู่ (มี `smartfit_auth_user` ใน `localStorage` เช่นจาก TC-ONB-0-002) และอยู่ที่หน้า `11-device-integrations.html` |
+| Test Steps | 1. เปิดหน้าโปรไฟล์/device integrations<br>2. กดปุ่ม "ออกจากระบบ" |
+| Expected Result | ระบบลบ `smartfit_auth_user` ออกจาก `localStorage` ทันที (ล้าง session) แล้วพาผู้ใช้กลับไปหน้าจอเริ่มต้น (`00-auth-welcome.html`) |
+| Test Data | session เดิม = signed-in ด้วย `newuser@example.com` → หลัง logout = ไม่มี session |
+| References | REQ-17 · AC-ONB-0-05 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · prototype [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html) |
+
+### TC-ONB-0-006 — Session หมดอายุ ผู้ใช้ต้องเข้าสู่ระบบใหม่ (documentation-level)
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-006 |
+| Test Case Name | Session ที่จดจำไว้หมดอายุ ระบบพาผู้ใช้กลับไปหน้าเข้าสู่ระบบแทนที่จะเข้าแอปต่อ |
+| Pre-condition | ผู้ใช้เคยเข้าสู่ระบบไว้ แต่ session ถูกถือว่าหมดอายุแล้ว (จำลองว่า backend/session store invalidate ค่าที่เคยออกให้ — prototype v1 ไม่ได้ implement การตรวจสอบวันหมดอายุจริง ดูหมายเหตุใน `00-auth-welcome.html`) |
+| Test Steps | 1. เปิดแอปอีกครั้งหลัง session ถูกถือว่าหมดอายุ |
+| Expected Result | ระบบตรวจไม่พบ session ที่ยังใช้ได้ พาผู้ใช้ไปหน้าเข้าสู่ระบบ (`00-auth-login.html`) แทนที่จะเข้าแอปต่อได้เลย |
+| Test Data | ไม่มีตัวเลขระยะเวลา session timeout ที่แน่นอน (Open Point ยังไม่ resolve ใน spec) — test นี้ตรวจเฉพาะ behavior เมื่อ session ถูกถือว่าหมดอายุแล้ว ไม่ตรวจจับเวลาที่แน่นอน |
+| References | REQ-15 · AC-ONB-0-06 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) — **หมายเหตุ**: ยังไม่มี prototype ที่ implement การตรวจสอบ session จริง (gap, documentation-level test case รอ backend จริงตาม [test-plan.md §4 R13](../test-plan.md)) |
+
+---
 
 > **หมายเหตุการคำนวณ**: ONB-1/REQ-01 อ้างสูตร Mifflin-St Jeor ตรง ๆ (ชื่อสูตรที่นิยามค่าคงที่ตายตัวอยู่แล้ว
 > ในสูตรมาตรฐาน) จึงใช้ค่าคงที่มาตรฐานของสูตรนี้ในการคำนวณ Test Data ด้านล่าง:
@@ -287,6 +392,12 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 
 | Feature ID | AC Scenario | จำนวน Test Case | Test ID |
 |---|---|---|---|
+| ONB-0 | AC-ONB-0-01 | 1 (email/password เป็นตัวแทน) | TC-ONB-0-001 |
+| ONB-0 | AC-ONB-0-02 | 1 (email/password เป็นตัวแทน) | TC-ONB-0-002 |
+| ONB-0 | AC-ONB-0-03 | 1 | TC-ONB-0-003 |
+| ONB-0 | AC-ONB-0-04 | 1 | TC-ONB-0-004 |
+| ONB-0 | AC-ONB-0-05 | 1 | TC-ONB-0-005 |
+| ONB-0 | AC-ONB-0-06 | 1 (documentation-level, not testable in this round) | TC-ONB-0-006 |
 | ONB-1 | AC-ONB-1-01 | 2 (variation: ชาย/หญิง) | TC-ONB-1-001, TC-ONB-1-002 |
 | ONB-1 | AC-ONB-1-02 | 2 (variation: ข้อมูลไม่ครบ/ไม่ถูกต้อง) | TC-ONB-1-003, TC-ONB-1-004 |
 | ONB-1 | AC-ONB-1-03 | 1 | TC-ONB-1-005 |
@@ -298,15 +409,19 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-3 | AC-ONB-3-03 | 1 | TC-ONB-3-005 |
 | ONB-3 | AC-ONB-3-04 | 1 | TC-ONB-3-006 |
 | ONB-3 | AC-ONB-3-05 | 1 | TC-ONB-3-007 |
-| **รวม** | **11 AC scenario** | **16 test case** | TC-ONB-1-001 … TC-ONB-3-007 |
+| **รวม** | **17 AC scenario** | **22 test case** | TC-ONB-0-001 … TC-ONB-3-007 |
 
-ครบทุก AC scenario ของ ONB-1/ONB-2/ONB-3 ตาม
+ครบทุก AC scenario ของ ONB-0/ONB-1/ONB-2/ONB-3 ตาม
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization)
-(11/11 scenario มี test case อย่างน้อย 1 รายการ) — **มี gap ที่บันทึกไว้ 1 จุด (ไม่มี test case ให้)**:
-กรณี "เลือกเป้าหมาย 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมายทั้งที่เป็นช่องบังคับ" ไม่มี AC scenario รองรับ
-เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันแค่ว่าช่องนี้
-"บังคับกรอก" แต่ไม่ได้ระบุ behavior การ validation (ข้อความ error, ปุ่มถูกบล็อกหรือไม่ ฯลฯ) เมื่อผู้ใช้ข้ามช่องนี้
-ไป — ไม่ใช่การเดา behavior เอง จึงยังไม่มี test case สำหรับกรณีนี้ (ดูรายงานผลของ `test-suite-builder`)
+(17/17 scenario มี test case อย่างน้อย 1 รายการ) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
+1. กรณี "เลือกเป้าหมาย 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมายทั้งที่เป็นช่องบังคับ" (ONB-3) ไม่มี AC scenario
+   รองรับ เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันแค่ว่า
+   ช่องนี้ "บังคับกรอก" แต่ไม่ได้ระบุ behavior การ validation (ข้อความ error, ปุ่มถูกบล็อกหรือไม่ ฯลฯ) เมื่อ
+   ผู้ใช้ข้ามช่องนี้ไป — ไม่ใช่การเดา behavior เอง จึงยังไม่มี test case สำหรับกรณีนี้
+2. **(เพิ่ม 2026-08-29)** ONB-0's REQ-14 (email verification ก่อนใช้งานได้จริงหรือไม่) และ REQ-14's
+   password policy — ทั้งสองยังเป็น Open Point ที่ upstream ไม่ได้ระบุพฤติกรรมไว้ ไม่มี AC/test case รองรับ
+   เช่นกัน (ดูหมายเหตุใน [acceptance-criteria.md § ONB-0](../../../01-requirements/acceptance-criteria.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-เพิ่มใหม่-2026-08-29))
+   — ดูรายงานผลของ `test-suite-builder`
 
 ---
 
@@ -331,6 +446,11 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
    เพราะ persona ของ ONB-3 มีน้ำหนักปัจจุบัน 75 กก. อยู่แล้ว (ใช้ 75.0 กก. เป็นเป้าหมายจะทำให้ delta = 0
    ซึ่งขัดกับความหมายของเป้าหมาย "ลดน้ำหนัก") — เป็น content decision ของเอกสารนี้เอง ยังไม่ใช่ค่าที่ยืนยัน
    จากผู้ใช้งานหรือ resolve ไว้ใน `01-spec/`
+5. **(เพิ่ม 2026-08-29)** อีเมล/รหัสผ่านตัวอย่างของ TC-ONB-0-001–003 (`newuser@example.com` /
+   `Passw0rd!23`) ไม่มีเอกสารต้นทางระบุตัวอย่างจริงไว้ (password policy เป็น Open Point ที่ยังไม่ resolve
+   ตาม `01-spec/20260823-01-onboarding-personalization.md`) เลือกใช้ค่าที่ครบทั้งตัวเลข/ตัวพิมพ์ใหญ่-เล็ก/
+   สัญลักษณ์เพื่อให้ Test Data มีความหมายตรวจสอบได้ ไม่ใช่ค่าที่ยืนยันจากผู้ใช้งาน ถ้ามีการกำหนด password
+   policy จริงในภายหลัง ต้องกลับมาแก้ Test Data นี้ให้ตรงตามกติกาจริง
 
 ---
 

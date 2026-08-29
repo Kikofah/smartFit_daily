@@ -3,10 +3,22 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — ขยายหัวข้อ 8 (ภาคผนวก: Stack Mapping) ให้ครอบคลุม per-table Firestore
-  collection/document mapping และการย้าย FK/constraint enforcement ไป Cloud Function ตามการยืนยันของ
-  ผู้ใช้ (เลือกแนวทาง Hybrid — ดูรายละเอียดในภาคผนวก) — **เนื้อหาหลักหัวข้อ 1-7 ไม่เปลี่ยนแปลง** ยังคงเป็น
-  logical/relational model + ER Diagram เดิมทั้งหมด เพราะ HLA §5 (Conceptual Data Entities) ไม่เปลี่ยน
+- **อัปเดตล่าสุด:** 2026-08-29 (รอบ 3) — sync หัวข้อ 8.2 (ภาคผนวก: Stack Mapping — แถว `user_account`) ให้
+  ตรงกับ `tech-stack.md` §6.1 ฉบับสมบูรณ์ (mechanical re-sync ล้วน ไม่ใช่การตัดสินใจใหม่ — ไม่แตะเนื้อหาหลัก
+  หัวข้อ 1-7): resolve ⚠️ placeholder เดิมของรอบ 2 — `user_account` ไม่ต้องมี Firestore document แยก
+  เพราะ field ทั้งหมด map ตรงกับ Firebase Auth's `UserRecord` เองครบถ้วน
+- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบ 2) — audit พบว่า `high-level-architecture.md` เพิ่ง add Conceptual
+  Component ใหม่ "Account & Session Management" (§3.1) ครอบคลุม ONB-0 (REQ-14–17) พร้อม entity ใหม่
+  **User Account** (§5) แต่เอกสารนี้ยังไม่มีตารางรองรับเลย (เอกสารล้าหลัง ไม่ใช่ข้อขัดแย้ง) — เพิ่มตาราง
+  **`user_account`** (หัวข้อ 3.1 ใหม่ — แบบ "thin identity anchor" ยืนยันจากผู้ใช้ 2026-08-29: เก็บเฉพาะ
+  วิธีสมัคร/อีเมล/credential reference/เวลาสร้างบัญชี **ไม่เก็บ session status เป็น column** เพราะเป็นข้อมูล
+  ephemeral ที่ external identity boundary จัดการเอง) แล้ว renumber ตารางเดิม 3.1–3.15 → 3.2–3.16, เพิ่ม
+  FK `user_profile.user_account_id` (1:1) ในหัวข้อ 3.2 (เดิม 3.1) และในหัวข้อ 2 (ER Diagram), เพิ่มกติกา
+  app-layer ใหม่ในหัวข้อ 4 (signup-method-conditional required fields), เพิ่มจุดที่ยังไม่ได้ระบุใหม่ 3 ข้อ
+  ในหัวข้อ 6 (data retention ของ `user_account`, การ merge บัญชีข้ามวิธีสมัคร), และขยายหัวข้อ 8 (ภาคผนวก:
+  Stack Mapping) ให้ระบุว่า `user_account` ยังไม่มี mapping ทางการใน `tech-stack.md` §6.1 (ตรงกับ open
+  point เดียวกันที่ HLA §10 ทิ้งไว้) — audit หัวข้อ 1, 5, 7 แล้วไม่พบ drift อื่น (ดู
+  [log 2026-08-29](../../05-log/20260829-log.md))
 - **สร้างโดย:** skill `api-db-spec-builder`
 - **อ้างอิงจาก:** [High Level Architecture](high-level-architecture.md),
   [Product Backlog](../../01-requirements/backlog.md),
@@ -30,6 +42,7 @@ DBMS-specific type/syntax (เช่น `VARCHAR(255)`, `SERIAL`, `ObjectId`, `J
 
 ```mermaid
 erDiagram
+    USER_ACCOUNT ||--o| USER_PROFILE : "creates after signup"
     USER_PROFILE ||--o| GOAL_SELECTION : "has current"
     USER_PROFILE ||--o{ EQUIPMENT_SELECTION : "has"
     USER_PROFILE ||--o{ WORKOUT_SESSION : "starts"
@@ -45,8 +58,17 @@ erDiagram
     USER_PROFILE ||--o{ WEIGHT_RECORD : "records"
     USER_PROFILE ||--o{ INTEGRATION_CONNECTION : "connects"
 
+    USER_ACCOUNT {
+        identifier id PK
+        enum signup_method
+        string email
+        string credential_reference
+        string external_provider_reference
+        datetime created_at
+    }
     USER_PROFILE {
         identifier id PK
+        identifier user_account_id FK
         integer age
         enum sex
         decimal weight_kg
@@ -159,13 +181,34 @@ erDiagram
 
 ## 3. Table Details
 
-### 3.1 `user_profile` ← User Profile
+### 3.1 `user_account` ← User Account
+
+ข้อมูลบัญชีผู้ใช้และวิธีที่ใช้ยืนยันตัวตน — เป็น identity anchor ที่มีอยู่ตั้งแต่ผู้ใช้สมัครสมาชิกสำเร็จ
+ก่อนที่ `user_profile` จะถูกสร้าง — Feature: ONB-0/REQ-14, REQ-15, REQ-16, REQ-17
+
+| Column | Logical Type | Required | Key | คำอธิบาย |
+|---|---|---|---|---|
+| `id` | `identifier` | ใช่ | PK | ค่าเดียวกับ `userId` ที่ HLA อ้างถึงตลอดทั้งเอกสาร |
+| `signup_method` | `enum` | ใช่ | — | `email_password` / `google` / `apple` — กำหนดตอนสมัครและไม่เปลี่ยนภายหลัง (ยังไม่มี requirement รองรับการเปลี่ยนวิธีสมัครทีหลัง) |
+| `email` | `string` | ใช่ | — | อีเมลที่ใช้สมัคร — กรอกเองสำหรับ `email_password` หรือได้รับจากผู้ให้บริการยืนยันตัวตนภายนอกสำหรับ `google`/`apple` (ตาม HLA §6.4) |
+| `credential_reference` | `string` | บังคับเมื่อ `signup_method = email_password`, ไม่บังคับอื่น | — | ข้อมูลอ้างอิงที่ใช้ตรวจสอบตัวตนเชิงตรรกะเท่านั้น — **ไม่ใช่รหัสผ่านจริงและไม่ระบุวิธีจัดเก็บ/เข้ารหัส** (ตาม HLA §5) |
+| `external_provider_reference` | `string` | บังคับเมื่อ `signup_method = google หรือ apple`, ไม่บังคับอื่น | — | ข้อมูลอ้างอิงไปยังบัญชีที่ผู้ให้บริการยืนยันตัวตนภายนอกออกให้ (ตาม HLA §6.4) |
+| `created_at` | `datetime` | ใช่ | — | เวลาที่สร้างบัญชี — ใช้ประกอบ consent record-keeping ตาม NFR-11 |
+
+> หมายเหตุ: **"สถานะเข้าสู่ระบบปัจจุบัน (session)"** ที่ HLA §5 ระบุไว้เป็นส่วนหนึ่งของ entity นี้
+> **ไม่ persist เป็น column** ในตารางนี้ — เป็นข้อมูล ephemeral ที่ผันผวนตลอดเวลา (คล้ายกับ flag read-only
+> ของ `weekly_plan_entry` ในหัวข้อ 3.10 ที่ก็ไม่ persist เป็น column เช่นกัน — ดูหัวข้อ 5) และเป็นหน้าที่ของ
+> กลไก session ที่ external identity boundary/session mechanism จัดการเอง (ดู HLA §6.4) ไม่ใช่ state
+> ระดับ schema
+
+### 3.2 `user_profile` ← User Profile
 
 ข้อมูลร่างกาย/ประชากรศาสตร์พื้นฐานของผู้ใช้ — Feature: ONB-1/REQ-01
 
 | Column | Logical Type | Required | Key | คำอธิบาย |
 |---|---|---|---|---|
 | `id` | `identifier` | ใช่ | PK | — |
+| `user_account_id` | `identifier` | ใช่ | FK → `user_account.id`, Unique (1:1) | สร้างขึ้นหลังผู้ใช้ผ่าน ONB-0 (มี User Account จริงแล้ว) และกรอกข้อมูล ONB-1 ครบเสมอ — ก่อนหน้านั้นแถวนี้ยังไม่มีอยู่ (ตรงกับ `GET /profile` ที่คืน `404` ใน `api-spec.md` §3.2 ถ้ายังไม่เคยทำ ONB-1) |
 | `age` | `integer` | ใช่ | — | อายุ ณ ตอนกรอก |
 | `sex` | `enum` | ใช่ | — | หญิง/ชาย (ตามสูตร Mifflin-St Jeor ที่มี 2 branch) |
 | `weight_kg` | `decimal` | ใช่ | — | อัปเดตได้จาก manual entry หรือ INT-2 sync |
@@ -173,7 +216,7 @@ erDiagram
 | `activity_level` | `enum` | ใช่ | — | ใช้เป็น Activity Factor ในการคำนวณ TDEE |
 | `tdee_kcal` | `decimal` | ใช่ | — | คำนวณจาก BMR (Mifflin-St Jeor) × Activity Factor — คำนวณใหม่ทุกครั้งที่ `weight_kg`/`height_cm`/`age`/`activity_level` เปลี่ยน |
 
-### 3.2 `goal_selection` ← Goal Selection & Daily Calorie Target
+### 3.3 `goal_selection` ← Goal Selection & Daily Calorie Target
 
 เป้าหมายหลักปัจจุบันของผู้ใช้ — Feature: ONB-3/REQ-02
 
@@ -186,7 +229,7 @@ erDiagram
 | `daily_calorie_target_kcal` | `decimal` | ใช่ | — | TDEE ± ค่าคงที่ตามเป้าหมาย ปรับด้วย safety floor แล้ว |
 | `is_safety_floor_applied` | `boolean` | ใช่ | — | true ถ้าค่าที่คำนวณได้ต่ำกว่า 1,200–1,500 kcal และถูกปรับขึ้น |
 
-### 3.3 `equipment_selection` ← Equipment Profile
+### 3.4 `equipment_selection` ← Equipment Profile
 
 อุปกรณ์ที่ผู้ใช้มี (multi-select) — Feature: ONB-2/REQ-03
 
@@ -196,7 +239,7 @@ erDiagram
 | `user_profile_id` | `identifier` | ใช่ | FK → `user_profile.id` | 1 profile มีได้หลายแถว (multi-select) |
 | `equipment_type` | `enum` | ใช่ | — | ไม่มีอุปกรณ์ / ดัมเบล / ยิมครบชุด — เลือก "ไม่มีอุปกรณ์" ต้อง mutual-exclusive กับตัวอื่น (บังคับใช้ที่ application layer ดูหัวข้อ 5) |
 
-### 3.4 `workout_session` ← Workout Session
+### 3.5 `workout_session` ← Workout Session
 
 การประกอบวิดีโอ 1 ครั้งออกกำลังกาย — Feature: REC-1, REC-4/REQ-04, REQ-07
 
@@ -208,7 +251,7 @@ erDiagram
 | `actual_duration_minutes` | `decimal` | ไม่บังคับจนกว่าจะจบเซสชัน | — | อัปเดตตอน complete — ยังไม่ชัดว่ารวมเวลา warmup/cooldown หรือไม่ (ดูหัวข้อ 6) |
 | `status` | `enum` | ใช่ | — | กำลังดำเนินการ / จบแล้ว / หยุดกลางคัน |
 
-### 3.5 `session_video` ← Video/Workout Content (ที่ใช้ในเซสชันหนึ่งๆ)
+### 3.6 `session_video` ← Video/Workout Content (ที่ใช้ในเซสชันหนึ่งๆ)
 
 วิดีโอที่ประกอบเป็นเซสชัน (หลัก + warmup/cooldown ถ้ามี) — Feature: REC-1, REC-4/REQ-04, REQ-07
 
@@ -222,7 +265,7 @@ erDiagram
 | `intensity` | `enum` | ใช่ | — | ต่ำ/กลาง/สูง — ตัดสินว่าต้องมี warmup/cooldown (role อื่น) หรือไม่ |
 | `duration_minutes` | `decimal` | ใช่ | — | ระยะเวลาตามที่วิดีโอระบุ (ไม่ใช่เวลาที่ใช้จริง) |
 
-### 3.6 `session_rejected_video` ← Workout Session (ส่วนขยาย: รายการที่ถูกปฏิเสธระหว่างสลับ)
+### 3.7 `session_rejected_video` ← Workout Session (ส่วนขยาย: รายการที่ถูกปฏิเสธระหว่างสลับ)
 
 Feature: REC-3/REQ-06 — เก็บแยกจาก `workout_session` เพื่อ normalize (แทนที่จะเป็น list ใน 1 column)
 
@@ -233,7 +276,7 @@ Feature: REC-3/REQ-06 — เก็บแยกจาก `workout_session` เ�
 | `external_video_id` | `string` | ใช่ | — | วิดีโอที่ถูกปฏิเสธ — ใช้กันไม่ให้ REC-3 แนะนำซ้ำในเซสชันเดียวกัน |
 | `rejected_at` | `datetime` | ใช่ | — | — |
 
-### 3.7 `actual_calorie_burn` ← Actual Calorie Burn
+### 3.8 `actual_calorie_burn` ← Actual Calorie Burn
 
 Feature: REC-2/REQ-05
 
@@ -246,7 +289,7 @@ Feature: REC-2/REQ-05
 | `calculated_kcal` | `decimal` | ใช่ | — | ค่าสุดท้ายที่ใช้จริง (MET × น้ำหนัก × เวลา หรือค่าจาก wearable) |
 | `wearable_reading_id` | `identifier` | บังคับเมื่อ `source = ค่าจาก wearable` | FK → `wearable_reading.id` | — |
 
-### 3.8 `wearable_reading` ← Wearable Reading
+### 3.9 `wearable_reading` ← Wearable Reading
 
 Feature: INT-3/REQ-13
 
@@ -258,7 +301,7 @@ Feature: INT-3/REQ-13
 | `calorie_value_kcal` | `decimal` | ใช่ | — | — |
 | `recorded_at` | `datetime` | ใช่ | — | — |
 
-### 3.9 `weekly_plan_entry` ← Weekly Plan / Calendar Entry
+### 3.10 `weekly_plan_entry` ← Weekly Plan / Calendar Entry
 
 Feature: PLN-1/REQ-08
 
@@ -273,7 +316,7 @@ Feature: PLN-1/REQ-08
 > หมายเหตุ: flag "read-only" ของ PLN-1 **ไม่ persist เป็น column** — เป็นค่าที่คำนวณจาก
 > `plan_date < วันนี้ AND มี daily_log ของวันเดียวกัน` เสมอ (ดูหัวข้อ 5)
 
-### 3.10 `day_status` ← Day Status (Cheat/Rest Day marker)
+### 3.11 `day_status` ← Day Status (Cheat/Rest Day marker)
 
 Feature: PLN-2/REQ-09
 
@@ -285,7 +328,7 @@ Feature: PLN-2/REQ-09
 | `is_cheat_rest` | `boolean` | ใช่ | — | — |
 | `set_at` | `datetime` | ใช่ | — | ใช้ตรวจว่ายกเลิกได้ไหม (ต้องก่อนสิ้นวันของ `status_date`) |
 
-### 3.11 `daily_log` ← Daily Log
+### 3.12 `daily_log` ← Daily Log
 
 Feature: PLN-3/REQ-10
 
@@ -299,7 +342,7 @@ Feature: PLN-3/REQ-10
 | `completion_status` | `enum` | ใช่ | — | ครบเป้าหมาย / ไม่ครบเป้าหมาย — all-or-nothing เข้มงวด ไม่มีค่ากลาง (บังคับใช้ที่ application layer) |
 | `source` | `enum` | ใช่ | — | จากเซสชันจริง (REC-2) / จาก Cheat-Rest override (PLN-2, "completed ชนะเสมอ") |
 
-### 3.12 `streak_snapshot` ← Streak
+### 3.13 `streak_snapshot` ← Streak
 
 Feature: PLN-4/REQ-09, REQ-10 — เก็บเป็น cache แยก (ตัดสินใจแล้ว 2026-08-28) แทนการคำนวณ on-demand ทุกครั้ง
 
@@ -310,7 +353,7 @@ Feature: PLN-4/REQ-09, REQ-10 — เก็บเป็น cache แยก (ต�
 | `current_streak_days` | `integer` | ใช่ | — | จำนวนวันต่อเนื่องปัจจุบัน |
 | `computed_at` | `datetime` | ใช่ | — | ต้อง sync ใหม่ทุกครั้งที่ `daily_log`/`day_status` ของผู้ใช้เปลี่ยน (บังคับใช้ที่ application layer — ดูหัวข้อ 5) |
 
-### 3.13 `weight_record` ← Weight Record
+### 3.14 `weight_record` ← Weight Record
 
 Feature: INT-2/REQ-12
 
@@ -323,7 +366,7 @@ Feature: INT-2/REQ-12
 | `recorded_at` | `datetime` | ใช่ | — | — |
 | `source` | `enum` | ใช่ | — | กรอกเอง / ซิงค์จากตาชั่งอัจฉริยะ |
 
-### 3.14 `weight_forecast_snapshot` ← Weight Goal / Forecast
+### 3.15 `weight_forecast_snapshot` ← Weight Goal / Forecast
 
 Feature: INT-1/REQ-11 — เก็บเป็น cache แยก (ตัดสินใจแล้ว 2026-08-28), น้ำหนักเป้าหมายเก็บที่ `goal_selection`
 อยู่แล้ว ตารางนี้เก็บเฉพาะผลการคำนวณ
@@ -336,7 +379,7 @@ Feature: INT-1/REQ-11 — เก็บเป็น cache แยก (ตัดส
 | `average_daily_deficit_kcal` | `decimal` | ใช่ | — | คำนวณจากประวัติ `daily_log` จริง (ไม่ใช่ค่าประมาณตอน onboarding) |
 | `computed_at` | `datetime` | ใช่ | — | ควร recompute เมื่อมี `daily_log`/`weight_record` ใหม่ (ความถี่ที่แน่นอนยังไม่ระบุ — ดูหัวข้อ 6) |
 
-### 3.15 `integration_connection` ← Integration Consent/Connection State
+### 3.16 `integration_connection` ← Integration Consent/Connection State
 
 Feature: INT-2, INT-3/REQ-12, REQ-13
 
@@ -350,6 +393,9 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
 
 ## 4. Relationships & Constraints (เชิงแนวคิด)
 
+- **1 `user_account` → 1 `user_profile`** — `user_profile` ถูกสร้างขึ้น**หลัง** `user_account` เสมอ (หลัง
+  ผ่าน ONB-0 แล้วกรอกข้อมูล ONB-1 เสร็จสมบูรณ์) ไม่ใช่พร้อมกัน — ระหว่างที่ผู้ใช้มีบัญชีแล้วแต่ยังไม่เคยทำ
+  ONB-1 ให้เสร็จ จะมีแถว `user_account` อยู่โดยไม่มีแถว `user_profile` คู่กัน (สถานะนี้ปกติ ไม่ใช่ข้อผิดพลาด)
 - **1 `user_profile` → หลาย `workout_session`/`weekly_plan_entry`/`day_status`/`daily_log`/
   `weight_record`/`integration_connection`** — ทุก entity หลักผูกกับผู้ใช้ 1 คนเสมอ
 - **1 `user_profile` → 1 `goal_selection` (ปัจจุบัน), 1 `streak_snapshot`, 1 `weight_forecast_snapshot`**
@@ -359,7 +405,7 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
   (เช่น ตัดสิน read-only ของ `weekly_plan_entry`)
 - **กติกาที่ enforce ไม่ได้ที่ระดับ schema — เป็นหน้าที่ของ application/service layer เท่านั้น**:
   1. **Equipment mutual exclusion** (`equipment_selection`) — เลือก "ไม่มีอุปกรณ์" ต้อง deselect ตัวอื่น
-     — เจ้าของ: **Personalization & Profile** component (HLA หัวข้อ 3.1)
+     — เจ้าของ: **Personalization & Profile** component (HLA หัวข้อ 3.2)
   2. **Safety floor** (`goal_selection.daily_calorie_target_kcal` ต้องไม่ต่ำกว่า 1,200–1,500) —
      เจ้าของ: **Personalization & Profile**
   3. **All-or-nothing** (`daily_log.completion_status` ต้อง ≥100% เท่านั้นถึงเป็น "ครบเป้าหมาย" ไม่มีค่า
@@ -372,6 +418,9 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
      `daily_log`/`day_status` เปลี่ยน, `weight_forecast_snapshot` เมื่อ `daily_log`/`weight_record`
      เปลี่ยน) — เจ้าของ: **Logging & Streak** และ **Insights & Forecast** ตามลำดับ — ไม่มีกลไก DB-level
      (เช่น trigger) ที่ระบุในเอกสารนี้ เพราะเป็นการผูก stack
+  7. **Signup-method-conditional required fields** (`user_account.credential_reference` บังคับเฉพาะ
+     `signup_method = email_password`, `user_account.external_provider_reference` บังคับเฉพาะ
+     `signup_method = google/apple`) — เจ้าของ: **Account & Session Management** (HLA หัวข้อ 3.1)
 
 ## 5. Query/Access Pattern Considerations (เชิงแนวคิด)
 
@@ -396,6 +445,12 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
    ควรเก็บทุกครั้งหรือ resolve เป็นค่าเดียว, wearable ต่างจาก MET มากควร flag อย่างไร) ยังไม่ระบุ
 5. **Data retention**: ยังไม่ระบุว่าจะเก็บ `daily_log`/`weight_record` ประวัติย้อนหลังนานแค่ไหน (ผูกกับ
    NFR-06 data deletion)
+6. **`user_account` data retention**: ยังไม่ระบุว่าเมื่อผู้ใช้ขอลบบัญชี (NFR-06) ต้องลบแถว `user_account`
+   ทันทีหรือ retain ไว้ระยะหนึ่งเพื่อวัตถุประสงค์ audit/PDPA (NFR-11) — เกี่ยวโยงกับจุดที่ 5 ข้างต้น
+7. **`user_account.credential_reference`**: รูปแบบ/วิธีตรวจสอบเชิงตรรกะยังไม่ระบุลึกกว่านี้โดยตั้งใจ (เป็น
+   หน้าที่ของ auth provider ที่เลือกจริงตาม `tech-stack.md` ไม่ใช่การตัดสินใจของเอกสารนี้)
+8. **บัญชี Google/Apple ที่อีเมลตรงกับบัญชีที่มีอยู่แล้วด้วยวิธีอื่น**: ยังไม่ระบุว่าควร merge เป็น
+   `user_account` เดียวกันหรือปฏิเสธการสมัครซ้ำ (ตรงกับ open point เดียวกันใน `api-spec.md` §4 ข้อ 11)
 
 ## 7. ความสัมพันธ์กับเอกสารอื่น
 
@@ -423,6 +478,12 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
 > เพราะ `tech-stack.md` §6.1 ยังเป็นแค่แนวทางเบื้องต้นระดับ component ไม่ได้ลงรายละเอียดระดับตาราง) —
 > `tech-stack.md` ควรอัปเดต §6 ให้สอดคล้องกับรายละเอียดนี้ในการรัน `tech-stack-builder` ครั้งถัดไป (ไม่ใช่
 > หน้าที่ของ skill นี้ที่จะแก้ `tech-stack.md` เอง)
+>
+> **อัปเดต 2026-08-29 (รอบ 3 — resolve mapping ของตาราง `user_account`)**: `tech-stack.md` §6.1 ขยาย
+> mapping ของ Component "Account & Session Management" เสร็จสมบูรณ์แล้ว — sync มาไว้ที่หัวข้อ 8.2 ด้านล่าง
+> (mechanical re-sync ล้วน ไม่ใช่การตัดสินใจใหม่) resolve ⚠️ placeholder เดิมของรอบ 2 ได้: `user_account`
+> **ไม่ต้องมี Firestore document แยก** เพราะ field ทั้งหมดของมัน map ตรงกับ Firebase Auth's `UserRecord`
+> เองครบถ้วน
 
 ### 8.1 Logical Type → Firestore Field Type
 
@@ -450,6 +511,7 @@ Feature: INT-2, INT-3/REQ-12, REQ-13
 
 | ตารางเดิม (Logical) | Firestore Representation | เหตุผล |
 |---|---|---|
+| `user_account` | **ไม่มี Firestore collection/document แยก — Firebase Authentication จัดการ credential/session ทั้งหมดเอง** ทุก column ของตารางนี้ map ตรงกับ Firebase Auth's `UserRecord` ครบทุก field: `id` = Firebase Auth UID (`uid`) — ค่าเดียวกับที่ `users/{userId}` ของ `user_profile` (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว จึงไม่ต้องเก็บ FK `user_profile.user_account_id` เป็น field แยกใน Firestore เลย (identity เดียวกันคือ key เดียวกัน); `signup_method` derive จาก `UserRecord.providerData[0].providerId` (`password`/`google.com`/`apple.com`) ไม่ persist ซ้ำที่ไหน; `email` = `UserRecord.email`; `credential_reference` ไม่มี field ให้เข้าถึงแม้ผ่าน Admin SDK เพราะ Firebase Auth เก็บ password hash ไว้ภายในเองทั้งหมด (ตรงกับเจตนา "ไม่ระบุวิธีจัดเก็บ/เข้ารหัส" ของหัวข้อ 3.1 พอดี); `external_provider_reference` = `UserRecord.providerData[0].uid`; `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบปัจจุบัน (session)" = Firebase Auth ID Token/Refresh Token ที่เก็บ persistence เองฝั่ง client — ไม่มี server-side session store ให้ query | field ทั้งหมดอ่านได้จาก Cloud Function ผ่าน Firebase Admin SDK (`admin.auth().getUser(uid)`) เท่านั้น (client SDK เข้าถึงได้เฉพาะ `auth.currentUser` ของตัวเอง) — resolve แล้วตาม `tech-stack.md` §6.1 (2026-08-29) ไม่มีงานค้างส่วนนี้อีก |
 | `user_profile` | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง | เอกสารเดียวต่อผู้ใช้ 1 คน อ่านพร้อมกันบ่อยที่สุด (แทบทุกหน้าจอ) เป็น root ที่ subcollection อื่นผูกสิทธิ์ผ่าน Firestore Security Rule ได้ตรงไปตรงมาที่สุด |
 | `goal_selection` | Embedded map field `goalSelection` ภายใน `users/{userId}` | 1:1 กับ user, เก็บเฉพาะค่าปัจจุบัน (ไม่มีประวัติ ตาม HLA §5) อ่านพร้อมโปรไฟล์แทบทุกครั้ง (Dashboard/Planner) — embed ลดจำนวน read ต่อครั้ง |
 | `equipment_selection` | Embedded array field `equipmentTypes: string[]` ภายใน `users/{userId}` | multi-select แต่ bounded ชัดเจน (สูงสุด 3 ค่าตาม ONB-2) ไม่มี pattern query แยกจากโปรไฟล์ |
@@ -488,6 +550,7 @@ Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่า�
 | PLN-2 "วันนี้เท่านั้น" (ทับ `daily_log` ที่มีอยู่แล้วได้เฉพาะ `status_date` = วันนี้) | ต้องอ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` | Cloud Function `cheatRest` (ชื่อทางการตาม tech-stack.md §6.1) | Planner & Day-Status |
 | Streak/Forecast snapshot ต้อง sync ใหม่ทุกครั้งที่ต้นทางเปลี่ยน | `streakSnapshot`/`weightForecastSnapshot` เป็น embedded field ใน `users/{userId}` — ไม่มี materialized view/trigger ของ DB ให้ใช้ฟรีเหมือนที่หัวข้อ 4 เดิมตั้งข้อสังเกตไว้แล้วว่าไม่มีแม้ตอนเป็น relational | Cloud Function ที่ trigger จาก Firestore `onWrite` ของ `dailyLogs`/`dayStatus` (Logging & Streak) และ Cloud Function `forecast` (Insights & Forecast) — ทั้งสองชื่อทางการตาม tech-stack.md §6.1 | Logging & Streak / Insights & Forecast |
 | **(ใหม่ — เกิดจาก Firestore ไม่มี FK เลย ไม่ใช่แค่ constraint ทางธุรกิจ)** Referential existence validation: ทุก field ที่เคยเป็น FK ในหัวข้อ 3 (เช่น `workout_session_id` ที่ wearable reading เดิมอ้างถึง) ต้องมีการตรวจสอบว่า document ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกัน ก่อนเขียนเสมอ | ส่วนใหญ่ถูกกำจัดไปแล้วด้วยการ embed (8.2) — ที่เหลือคือทุกครั้งที่ client ส่ง id ของ document อื่นมาใน request (เช่น `sessionId` ใน `POST /integrations/wearable/readings`) | ทุก Cloud Function ที่รับ id อ้างอิงจาก client ต้อง `get()` ยืนยันก่อนเขียนเสมอ (ดู tech-stack.md §6.3 สำหรับ mapping operation → Cloud Function แต่ละตัว) | เจ้าของแต่ละ Cloud Function ตาม operation นั้น (แปรผันตาม component) |
+| **(ใหม่ 2026-08-29)** Signup-method-conditional required fields (`user_account.credential_reference`/`external_provider_reference` ต้องกรอกตาม `signup_method`) | ไม่มี Firestore representation เลย (resolve แล้วในหัวข้อ 8.2 — `user_account` ไม่มี document แยก) — Firebase Authentication เองบังคับความสัมพันธ์นี้โดยธรรมชาติของแต่ละ client SDK call: `createUserWithEmailAndPassword`/`signInWithEmailAndPassword` เท่านั้นที่ต้องมีรหัสผ่าน (→ มี `providerData` แบบ `password`) ส่วน `signInWithCredential` (Google/Apple) กำหนด `providerData[0].uid` ให้อัตโนมัติเสมอ ไม่มีทางเรียกผิดชนิดได้จาก client SDK — ไม่มี CHECK constraint แบบ schema-level ให้ใช้ฟรีเหมือนเดิม แต่ก็ไม่ต้องมี Cloud Function มาบังคับเพิ่มเช่นกัน | ไม่ต้องมี Cloud Function (client SDK แต่ละตัวบังคับเอง — ดู `tech-stack.md` §6.3.1) — ยกเว้น `POST /auth/forgot-password` ที่มี Cloud Function `forgotPassword` แยกต่างหากเพื่อ enforce เงื่อนไขอื่น (ดูหัวข้อ 3.1/`api-spec.md` §3.1) | Account & Session Management |
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, REST
 convention → Firebase Cloud Functions routing) และเหตุผลการเลือก stack

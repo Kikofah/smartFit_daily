@@ -6,7 +6,7 @@
 - **สร้างโดย:** skill `test-suite-builder`
 
 เอกสารนี้อ้างอิงจาก [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) (MoSCoW priority
-และ Feature ID ทั้ง 14 ตัว) และ
+และ Feature ID ทั้ง 15 ตัว — รวม **ONB-0** Authentication ที่เพิ่มเข้า Must เมื่อ 2026-08-29) และ
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 (NFR-01–NFR-13 — ขยายจาก NFR-01–08 เมื่อ 2026-08-28 ด้วย NFR-09/10 Usability และ NFR-11 Legal/Regulatory
 Compliance, และขยายอีกครั้ง 2026-08-29 ด้วย **NFR-12** Reliability/Data Integrity — ผูกกับ REC-2, INT-3 —
@@ -30,10 +30,11 @@ Firebase/Firestore ผ่าน Non-Functional Requirements Review ของ `te
 
 ### อยู่ในขอบเขต (In scope) — ทดสอบเต็มรูปแบบในรอบนี้
 
-**Must** (8 features — ต้องผ่านก่อนถือว่า core loop ใช้งานได้):
+**Must** (9 features — ต้องผ่านก่อนถือว่า core loop ใช้งานได้; เพิ่ม **ONB-0** เมื่อ 2026-08-29):
 
 | Feature ID | Epic | เหตุผลที่ต้องทดสอบรอบนี้ |
 |---|---|---|
+| ONB-0 | Onboarding & Personalization | สมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ — precondition ระดับพื้นฐานที่สุดของทั้งแอป ยิ่งกว่า ONB-1/2/3 เสียอีก (ทุก REQ อื่นต้องมี `userId` จริงก่อน) |
 | ONB-1, ONB-2, ONB-3 | Onboarding & Personalization | เป็น baseline (TDEE, อุปกรณ์, เป้าหมายแคลอรี่) ที่ทุก feature อื่นต้องใช้ต่อ |
 | REC-1, REC-2 | Daily YouTube Recommendation | core loop รายวันที่ผู้ใช้เจอทุกวัน |
 | PLN-1, PLN-2, PLN-3 | Planner & Logging | ปฏิทิน, Cheat/Rest Day, และการบันทึก log ที่ feature อื่นพึ่งพา |
@@ -63,9 +64,9 @@ Risk Management และ §5 Entry/Exit Criteria
 
 | ประเภท | ขอบเขตที่ครอบคลุม | เหตุผลที่เลือก |
 |---|---|---|
-| **Functional Testing** | ตรรกะแคลอรี่/streak/logging หลัก: คำนวณ BMR/TDEE (ONB-1), แปลงเป้าหมายเป็น deficit/surplus + safety floor (ONB-3), สูตร MET (REC-2), all-or-nothing log (PLN-3), streak strict (PLN-4) | เป็นตรรกะทางคณิตศาสตร์/กติกาธุรกิจที่ตายตัว มีค่า input/output คาดเดาได้ชัดเจน ต้อง verify ว่าตรงตาม decision ที่ resolve แล้วใน spec ทุกตัว |
+| **Functional Testing** | ตรรกะแคลอรี่/streak/logging หลัก: คำนวณ BMR/TDEE (ONB-1), แปลงเป้าหมายเป็น deficit/surplus + safety floor (ONB-3), สูตร MET (REC-2), all-or-nothing log (PLN-3), streak strict (PLN-4) — รวมถึง **ตรรกะ Authentication (ONB-0, เพิ่ม 2026-08-29)**: field validation ของสมัครสมาชิก/เข้าสู่ระบบ, ข้อจำกัดที่ให้รีเซ็ตรหัสผ่านได้เฉพาะบัญชี email/password (REQ-16), และการล้าง session เมื่อออกจากระบบ (REQ-17) | เป็นตรรกะทางคณิตศาสตร์/กติกาธุรกิจที่ตายตัว มีค่า input/output คาดเดาได้ชัดเจน ต้อง verify ว่าตรงตาม decision ที่ resolve แล้วใน spec ทุกตัว |
 | **Integration Testing** | YouTube API (REC-1 การค้นหา/กรองวิดีโอ, REC-2 metadata ที่ใช้คำนวณ MET), Health API/wearable (INT-3), Bluetooth สมาร์ตสเกล (INT-2) | เป็นจุดที่แอปพึ่งพาระบบภายนอกที่ควบคุมไม่ได้เต็มที่ — REC-1/REC-2 อยู่ใน scope Must จึงต้อง integration-test แม้จะยังไม่มี backend จริง (ผ่าน mock ดู §3); INT-2/INT-3 เตรียม test case ไว้แต่ไม่ execute รอบนี้ (Could, นอกขอบเขต) |
-| **Usability Testing** | Onboarding flow ทั้งหมด (ONB-1 → ONB-2 → ONB-3) | เป็น first-run linear flow ที่ผู้ใช้ใหม่ทุกคนต้องผ่านโดยไม่มีทางย้อนกลับแก้ไขระหว่างทางที่ระบุไว้ชัดเจน (ดู Preconditions/flow ใน [user-journeys.md](../../02-design/01-prototypes/user-journeys.md)) — ถ้าขั้นตอนใดทำให้ผู้ใช้สับสนหรือติดขัด ผู้ใช้จะเข้าแอปไม่ได้เลยตั้งแต่ต้น ต่างจากหน้าจออื่นที่พลาดแล้วยังกลับมาแก้ได้ |
+| **Usability Testing** | Onboarding flow ทั้งหมด (**ONB-0** → ONB-1 → ONB-2 → ONB-3, ปรับลำดับ 2026-08-29 ให้เริ่มจาก Authentication ซึ่งเป็นจุดเริ่มต้นจริงของทั้งแอปตาม user-journeys.md) | เป็น first-run linear flow ที่ผู้ใช้ใหม่ทุกคนต้องผ่านโดยไม่มีทางย้อนกลับแก้ไขระหว่างทางที่ระบุไว้ชัดเจน (ดู Preconditions/flow ใน [user-journeys.md](../../02-design/01-prototypes/user-journeys.md)) — ถ้าขั้นตอนใดทำให้ผู้ใช้สับสนหรือติดขัด ผู้ใช้จะเข้าแอปไม่ได้เลยตั้งแต่ต้น ต่างจากหน้าจออื่นที่พลาดแล้วยังกลับมาแก้ได้ |
 | **Regression Testing** | กติกา all-or-nothing ของ streak (PLN-3 การสร้าง log และ PLN-4 การนับ/ตัด streak) | เป็นกติกาที่ "เข้มงวด ไม่มี partial credit" ตาม decision ที่ resolve แล้ว ซึ่งเป็นกฎที่ผิดพลาดง่ายเวลามีการแก้โค้ดในอนาคต (เช่น เผลอใส่ grace period หรือ partial credit) — ต้องมี regression suite ที่รันซ้ำทุกครั้งที่โค้ดส่วน logging/streak หรือ Cheat/Rest Day (PLN-2) ถูกแก้ |
 | **NFR-driven Testing** (Performance/Security/Reliability/Usability/Legal Compliance) | ตรงตาม NFR-01–NFR-13 ใน [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) — NFR-09/NFR-10 (Usability: accessibility, ภาษา) ตรวจสอบได้จริงจาก prototype HTML โดยตรง ต่างจาก NFR อื่นส่วนใหญ่ที่รอ backend NFR-12 (เพิ่ม 2026-08-29, Reliability/Data Integrity — ผูกกับ REC-2 (Must)/INT-3 (Could)) ต้องรอ backend/Cloud Function จริงเหมือนกลุ่ม NFR-04/06/08/11 (ดู §4 R12) NFR-13 (เพิ่ม 2026-08-29, Usability/Data Visualization) ตรวจสอบได้จริงจาก prototype `10-progress-insights.html` เหมือน NFR-09/10 แต่ผูกกับ INT-1 เท่านั้นซึ่งอยู่ใน Epic 4 (Could, นอกขอบเขต execution รอบนี้ตาม §1) จึงเตรียม test case ไว้ล่วงหน้าแต่ยังไม่ execute จนกว่า Epic 4 จะเข้า scope | เอกสาร NFR ถูกสร้างขึ้นมาโดยเฉพาะเพื่อเป็นฐานของแผนนี้ (ดู "ความสัมพันธ์กับเอกสารอื่น" ของเอกสารนั้น) — ทดสอบเท่าที่ execute ได้จริงในสถานะปัจจุบันของโปรเจกต์ (ดู §5 Entry/Exit Criteria สำหรับ NFR ที่ยัง block อยู่) |
 
@@ -98,7 +99,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | YouTube Data API | REC-1, REC-2 | ชุดวิดีโอจำลองพร้อม metadata ครบ (ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา) ให้ REC-1 จับคู่แคลอรี่เป้าหมายได้ และ REC-2 คำนวณ MET ได้โดยไม่ต้องเรียก API จริง — ควรมีชุดที่ "ไม่มีวิดีโอตรงเป้าเป๊ะ" ด้วย เพื่อทดสอบ tolerance (ดู Risk R1 ใน §4) |
 | Health API / wearable (Apple Health, Google Health Connect) | INT-3 | payload จำลองของแคลอรี่เผาผลาญจากอัตราการเต้นหัวใจ รวมถึงกรณีค่าที่ต่างจากค่าประมาณ MET มาก (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
 | ตาชั่งอัจฉริยะผ่าน Bluetooth | INT-2 | payload น้ำหนัก/องค์ประกอบร่างกายจำลอง รวมกรณีชั่งหลายครั้งในวันเดียว (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
-| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification), **NFR-12 (referential existence validation ที่ Cloud Function ตาม database-schema.md §8.3 — เพิ่ม 2026-08-29)** | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR ที่ "not testable" ในรอบนี้ (ดู §5) — จะ unblock ได้เมื่อ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md)) เสร็จจริง — **ปัจจุบัน task นี้ยังเป็น "ยังไม่เริ่ม"** ไม่ใช่ backend จริงในตอนนี้ |
+| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification), **NFR-12 (referential existence validation ที่ Cloud Function ตาม database-schema.md §8.3 — เพิ่ม 2026-08-29)**, และ **ONB-0 (เพิ่ม 2026-08-29 — เฉพาะส่วน session persistence ข้ามการเปิดแอปจริง/session timeout ตาม REQ-15 และการล้าง session ฝั่ง server จริงตาม REQ-17; ส่วนสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่านหน้าจอ (REQ-14/15/16) ทดสอบได้แล้วที่ prototype-level ผ่าน `localStorage` จำลอง)** | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR/ส่วนของ ONB-0 ที่ "not testable" ในรอบนี้ (ดู §5) — จะ unblock ได้เมื่อ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md)) เสร็จจริง — **ปัจจุบัน task นี้ยังเป็น "ยังไม่เริ่ม"** ไม่ใช่ backend จริงในตอนนี้ |
 
 ---
 
@@ -122,6 +123,7 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 | R10 | NFR-10 ยังไม่ระบุรูปแบบวันที่/ตัวเลขตาม locale ไทยที่แน่นอน (ค.ศ. หรือ พ.ศ.) — DESIGN.md §4.5 เองก็ทิ้ง open point นี้ไว้เช่นกัน | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Low (ไม่กระทบ core loop) | Low | ทดสอบเฉพาะกติกาที่ตายตัวแล้วไปก่อน (ภาษาไทยเป็นหลัก, ทับศัพท์คำเทคนิคได้) ส่วนรูปแบบวันที่ยังไม่ lock ค่าใดจนกว่าจะยืนยัน |
 | R11 | NFR-11 (PDPA — consent record-keeping, สิทธิ์เจ้าของข้อมูล, breach notification) พึ่งพาระบบบัญชีผู้ใช้/backend storage จริงที่ยังไม่มีในโปรเจกต์นี้ | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง | Mark เป็น **"not testable in this round"** อย่างชัดเจนในผลการทดสอบเหมือน R7 — มี concrete task รองรับแล้วเช่นเดียวกัน: [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) ใน MVP Phase (สถานะปัจจุบัน: ยังไม่เริ่ม) — กลับมาทดสอบเมื่อ task นั้นเสร็จจริง |
 | R12 | **(เพิ่ม 2026-08-29)** NFR-12 ยังไม่ได้ระบุรูปแบบ error handling ที่แน่นอนเมื่อ referential existence validation ล้มเหลว (เช่น ควร retry หรือแจ้ง error กลับ client แบบไหน) และตัวการ validation เองก็พึ่งพา backend/Cloud Function จริงที่ยังไม่มีในโปรเจกต์นี้เหมือน NFR-04/06/08/11 | [NFR § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md) | Low ตอนนี้ / High เมื่อมีระบบจริง (orphaned/dangling reference ในข้อมูลถ้าไม่ enforce จริง) | Mark เป็น **"not testable in this round"** เหมือน R7/R11 — AC-REC-2-04/AC-INT-3-03 และ TC-REC-2-005/TC-INT-3-003 เตรียมไว้ล่วงหน้าตาม error case ที่ระบุแล้วใน api-spec.md §3.3/database-schema.md §8.3 แต่รอ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) เสร็จจริงก่อนจึง execute ได้ พร้อมยืนยันรูปแบบ error handling ที่แน่นอนก่อน implement Cloud Function จริง |
+| R13 | **(เพิ่ม 2026-08-29)** ONB-0 (Authentication) เป็น Feature ID ใหม่ระดับ **Must** แต่ session persistence ข้ามการเปิดแอปจริง (REQ-15) และระยะเวลา session timeout (ยังไม่ระบุตัวเลขแน่นอน — ดู "จุดที่ยังไม่ได้ระบุ" ของ Onboarding spec) พึ่งพาระบบบัญชีผู้ใช้/backend จริงที่ยังไม่มีในโปรเจกต์นี้ ต่างจากสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่านหน้าจอที่ทดสอบได้แล้วจาก prototype (`00-auth-*.html`) ผ่าน `localStorage` จำลอง | [20260823-01-onboarding-personalization.md § จุดที่ยังไม่ได้ระบุ](../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม) | Certain (ยืนยันจากสถานะโปรเจกต์ใน CLAUDE.md — ไม่มี backend จริง) | Low ตอนนี้ / High เมื่อมีระบบจริง (ผู้ใช้ต้อง login ซ้ำโดยไม่คาดคิด หรือ session ไม่หมดอายุเลยจนเป็นความเสี่ยงด้านความปลอดภัย) | ทดสอบ AC-ONB-0-01–05 (สมัคร/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบหน้าจอ) ได้เต็มที่ในรอบนี้ที่ prototype-level — ส่วน AC-ONB-0-06 (session หมดอายุ) mark เป็น **"documentation-level / not testable in this round"** เหมือน R7/R11/R12 รอ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) เสร็จจริงพร้อมยืนยันระยะเวลา session timeout ที่แน่นอนก่อน |
 
 ---
 
@@ -134,9 +136,9 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
    contradiction ค้างอยู่ — ตรวจสอบแล้วในตอนเขียนแผนนี้ว่า **backlog.md และ NFR doc สอดคล้องกัน**
    (Epic 4 = Could ทั้งคู่) ไม่พบความขัดแย้งระหว่าง Requirement/Backlog ที่ต้องหยุดรอ
 2. [`docs/01-requirements/acceptance-criteria.md`](../../01-requirements/acceptance-criteria.md) — สร้าง
-   เสร็จแล้ว (45 scenario ครอบคลุมทั้ง 14 Feature ID ณ 2026-08-29 หลังเพิ่ม AC-REC-2-04/AC-INT-3-03 จาก
-   NFR-12 และ AC-INT-1-04 จาก NFR-13) ในการรัน `test-suite-builder`
-   จึงพร้อมให้ `test-cases/{epic-slug}.md` อ้างอิง AC ID ได้ครบทุก feature
+   เสร็จแล้ว (51 scenario ครอบคลุมทั้ง 15 Feature ID ณ 2026-08-29 หลังเพิ่ม AC-REC-2-04/AC-INT-3-03 จาก
+   NFR-12, AC-INT-1-04 จาก NFR-13, และ AC-ONB-0-01–06 จาก Feature ID ใหม่ **ONB-0**) ในการรัน
+   `test-suite-builder` จึงพร้อมให้ `test-cases/{epic-slug}.md` อ้างอิง AC ID ได้ครบทุก feature
 3. เตรียม mock/stub ของ YouTube API, Health API/wearable, และ Bluetooth สมาร์ตสเกล ตาม §3 ให้พร้อม
    ก่อนเริ่ม Integration Testing
 4. DESIGN.md และ prototype (ถ้ามีการสร้างแล้วใน `02-design/01-prototypes/v{N}/`) พร้อมใช้อ้างอิงสำหรับ
@@ -144,8 +146,10 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 
 ### Exit Criteria (เงื่อนไขที่ถือว่า "พอสำหรับรอบนี้")
 
-1. Test case ของทุก feature ระดับ **Must** (ONB-1/2/3, REC-1/2, PLN-1/2/3) ถูก execute ครบ และไม่มี
-   defect ระดับ Critical/High ค้างอยู่โดยไม่มีแผนแก้ไข
+1. Test case ของทุก feature ระดับ **Must** (**ONB-0**, ONB-1/2/3, REC-1/2, PLN-1/2/3) ถูก execute ครบ
+   และไม่มี defect ระดับ Critical/High ค้างอยู่โดยไม่มีแผนแก้ไข — สำหรับ ONB-0 หมายถึงเฉพาะส่วนที่
+   execute ได้จริงในรอบนี้ (AC-ONB-0-01–05) ส่วน AC-ONB-0-06 (session หมดอายุ) ถูก mark ว่า
+   "not testable in this round" ตาม §4 R13 ไม่นับเป็นเงื่อนไข block การ exit ของข้อนี้
 2. Test case ของทุก feature ระดับ **Should** (REC-3/4, PLN-4) ถูก execute ครบ — defect ที่พบ (ถ้าไม่ใช่
    Critical/High) บันทึกไว้ใน `docs/03-testing/02-test-result/` ได้โดยไม่ block การ exit
 3. Feature ระดับ **Could** (Epic 4 ทั้งหมด) ถูกยืนยันชัดเจนว่า **ไม่ execute ในรอบนี้** ตาม §1 Scope —
@@ -177,8 +181,9 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
   — ที่มาของหัวข้อ 2 (NFR-driven Testing) และความเสี่ยง R6–R12 ในหัวข้อ 4
 - [docs/02-design/01-prototypes/user-journeys.md](../../02-design/01-prototypes/user-journeys.md) —
   อ้างอิง flow/Preconditions ที่ใช้ในการออกแบบ Usability Testing ของ onboarding
-- `docs/01-requirements/01-spec/` ทั้ง 4 ไฟล์ — ที่มาของความเสี่ยง R1–R5 ในหัวข้อ 4 (ดูลิงก์ต่อแถวในตาราง)
+- `docs/01-requirements/01-spec/` ทั้ง 4 ไฟล์ — ที่มาของความเสี่ยง R1–R5, R13 ในหัวข้อ 4 (ดูลิงก์ต่อแถวใน
+  ตาราง; R13 มาจาก Onboarding spec ส่วน ONB-0 ที่เพิ่ม 2026-08-29)
 - [Release Plan](../../01-requirements/02-plan/release-plan.md) และ
   [TASK-INFRA-01](../../01-requirements/03-task/phase-1-mvp-core-loop.md) — เงื่อนไขที่จะ unblock
-  NFR-04/06/08/11/12 จาก "not testable in this round" (R7, R11, R12, §5 ข้อ 4)
+  NFR-04/06/08/11/12 และ ONB-0/AC-ONB-0-06 จาก "not testable in this round" (R7, R11, R12, R13, §5 ข้อ 4)
 - ผลการทดสอบจริง: [docs/03-testing/02-test-result/](../02-test-result/index.md)

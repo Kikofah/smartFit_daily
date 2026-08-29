@@ -3,21 +3,27 @@
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-08-29 — เพิ่ม `TASK-ONB-0` (Authentication — REQ-14–17) ตามที่ `backlog.md` เพิ่ม
+  Feature ID ใหม่ ONB-0 เข้า MVP Phase, แก้ไข stale reference "Supabase" → "Firebase" ใน `TASK-INFRA-01`
+  ให้ตรงกับ `tech-stack.md` ฉบับปัจจุบัน — ไม่ reset Status ของ task เดิมที่มีอยู่แล้ว (ทั้งหมดยัง "ยังไม่
+  เริ่ม" เหมือนเดิม)
 - **สร้างโดย:** skill `plan-task-builder`
 - **อ้างอิงจาก:** [Release Plan](../02-plan/release-plan.md), [Product Backlog](../backlog.md)
 
 ## 1. ขอบเขตของ Phase นี้
 
-Core loop รายวันใช้งานได้ครบวงจร: onboarding คำนวณเป้าหมายแคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผน
-รายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing — Feature ID: ONB-1, ONB-2, ONB-3, REC-1, REC-2,
-PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอียดเต็มดู [Release Plan §3.1](../02-plan/release-plan.md#31-mvp-phase)
+Core loop รายวันใช้งานได้ครบวงจร: สมัครสมาชิก/เข้าสู่ระบบ (Authentication) → onboarding คำนวณเป้าหมาย
+แคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผนรายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing —
+Feature ID: ONB-0, ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must)
+รายละเอียดเต็มดู [Release Plan §3.1](../02-plan/release-plan.md#31-mvp-phase)
 
 ## 2. Task List
 
 | Task ID | ชื่อ Task | Feature ID/REQ | Status | คำอธิบาย | References |
 |---|---|---|---|---|---|
-| TASK-INFRA-01 | ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง | (Infrastructure — ไม่มี Feature ID) | ยังไม่เริ่ม | Provision Supabase project จริง (Auth + Database + RLS) ตาม [tech-stack.md](../../02-design/02-technical/tech-stack.md) — ทำให้ NFR-04/NFR-06/NFR-08/NFR-11 ตรวจสอบได้จริง (ปัจจุบัน mark "not testable in this round" ใน test-plan.md เพราะยังไม่มี backend จริง) | NFR-04, NFR-06, NFR-08, NFR-11, [tech-stack.md §7](../../02-design/02-technical/tech-stack.md#7-จุดที่ยังไม่ได้ตัดสินใจ--ควรยืนยันเพิ่มเติม) (Supabase region ยังไม่เลือก) |
-| TASK-ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | ONB-1 / REQ-01 | ยังไม่เริ่ม | รับอายุ เพศ น้ำหนัก ส่วนสูง ระดับกิจกรรม คำนวณ BMR/TDEE ด้วยสูตร Mifflin-St Jeor | AC-ONB-1-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
+| TASK-INFRA-01 | ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง | (Infrastructure — ไม่มี Feature ID) | ยังไม่เริ่ม | Provision Firebase project จริง (Authentication + Firestore + Security Rules — เปลี่ยนจาก Supabase เดิมตาม `tech-stack.md` ฉบับ 2026-08-29) ตาม [tech-stack.md](../../02-design/02-technical/tech-stack.md) — ทำให้ NFR-04/NFR-06/NFR-08/NFR-11 ตรวจสอบได้จริง (ปัจจุบัน mark "not testable in this round" ใน test-plan.md เพราะยังไม่มี backend จริง) — เป็น prerequisite ของ `TASK-ONB-0` (ต้อง provision Firebase Auth ก่อนจึง implement business logic ของ ONB-0 ได้) | NFR-04, NFR-06, NFR-08, NFR-11, [tech-stack.md §7](../../02-design/02-technical/tech-stack.md#7-จุดที่ยังไม่ได้ตัดสินใจ--ควรยืนยันเพิ่มเติม) (Firebase project region ยังไม่เลือก) |
+| TASK-ONB-0 | สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (Authentication) | ONB-0 / REQ-14, REQ-15, REQ-16, REQ-17 | ยังไม่เริ่ม | Implement สมัครสมาชิก 3 วิธี (email/password, Google OAuth, Sign in with Apple) สร้าง `userId` ก่อนเข้าสู่ ONB-1 เสมอ, เข้าสู่ระบบด้วยวิธีเดียวกับที่สมัครพร้อม session persistence, รีเซ็ตรหัสผ่านผ่านอีเมล (เฉพาะบัญชี email/password), และออกจากระบบล้าง session ทันที — ขึ้นกับ `TASK-INFRA-01` เสร็จก่อน | AC-ONB-0-01–06, [detailed-design/01-onboarding-personalization.md § ONB-0](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
+| TASK-ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | ONB-1 / REQ-01 | ยังไม่เริ่ม | รับอายุ เพศ น้ำหนัก ส่วนสูง ระดับกิจกรรม คำนวณ BMR/TDEE ด้วยสูตร Mifflin-St Jeor (Precondition: ผ่าน ONB-0 แล้ว — มีบัญชีผู้ใช้จริง) | AC-ONB-1-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
 | TASK-ONB-2 | เลือกอุปกรณ์ที่มี | ONB-2 / REQ-03 | ยังไม่เริ่ม | เลือกอุปกรณ์ (ไม่มี/ดัมเบล/ยิมครบชุด แบบ multi-select) บันทึกเป็น filter ของวิดีโอ | AC-ONB-2-01–03 |
 | TASK-ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus + safety floor) | ONB-3 / REQ-02 | ยังไม่เริ่ม | เลือกประเภทเป้าหมาย แปลงเป็นเป้าหมายแคลอรี่รายวัน ปรับตาม safety floor 1,200–1,500 kcal | AC-ONB-3-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
 | TASK-REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | REC-1 / REQ-04 | ยังไม่เริ่ม | จับคู่วิดีโอตามเป้าหมายแคลอรี่ + filter อุปกรณ์ ขยายเกณฑ์ค้นหาถ้าไม่พบ | AC-REC-1-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
@@ -31,8 +37,10 @@ PLN-1, PLN-2, PLN-3 (ทั้งหมด MoSCoW = Must) รายละเอ�
 - ลำดับการพัฒนาที่แน่นอนภายใน phase (ขนานหรือเรียงตาม dependency เป๊ะๆ) ยังไม่ฟันธง — ขึ้นกับทรัพยากรทีม
   พัฒนาจริงที่ยังไม่มี ณ ตอนนี้ (ดู [Release Plan §5](../02-plan/release-plan.md#5-จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม))
 - จุดที่ยังไม่ได้ระบุเดิมของแต่ละ feature (เช่น REC-1 tolerance, Activity Factor ต่อระดับ, safety floor
-  ตัวเลขแน่นอน) ยังไม่ resolve ใน `01-spec/` — ไม่กระทบการมีอยู่ของ task นี้ แต่กระทบรายละเอียดตอน implement
-- **TASK-INFRA-01**: `tech-stack.md` § 7 ยังไม่เลือก Supabase region ที่แน่นอน — ควรยืนยันก่อนเริ่ม
+  ตัวเลขแน่นอน, **TASK-ONB-0**: email verification ก่อนใช้งานจริงหรือไม่, password policy, session
+  timeout ที่แน่นอน, ขอบเขต NFR-05 ต่อผู้ให้บริการยืนยันตัวตนภายนอก) ยังไม่ resolve ใน `01-spec/` — ไม่กระทบ
+  การมีอยู่ของ task นี้ แต่กระทบรายละเอียดตอน implement
+- **TASK-INFRA-01**: `tech-stack.md` § 7 ยังไม่เลือก Firebase project region ที่แน่นอน — ควรยืนยันก่อนเริ่ม
   provision จริง (เป็น open point เดิมของ `tech-stack.md` ไม่ใช่ของไฟล์นี้)
 
 ## 4. ความสัมพันธ์กับเอกสารอื่น

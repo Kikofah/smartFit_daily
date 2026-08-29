@@ -1,4 +1,11 @@
-<!-- Feature: INT-2, INT-3 | REQ: REQ-12, REQ-13 -->
+<!-- Feature: INT-2, INT-3, ONB-0 | REQ: REQ-12, REQ-13, REQ-17 -->
+<!-- ONB-0/REQ-17 added by prototype-builder's 2026-08-29 consistency audit: this is the "หน้า
+     โปรไฟล์" that REQ-17 names as the only place Logout happens ("ผู้ใช้ออกจากระบบได้ทุกเมื่อจาก
+     หน้าโปรไฟล์"). Previously this screen had no account/auth section at all (comment used to say
+     "no auth system exists yet") -- now that ONB-0 exists, added a minimal "บัญชีผู้ใช้" section
+     showing the simulated signed-in email (read from localStorage key smartfit_auth_user, written
+     by 00-auth-signup.html/00-auth-login.html) and a Logout action that clears that key (REQ-17:
+     "ล้าง session ที่จดจำไว้ตาม REQ-15 ทันที") and returns to 00-auth-welcome.html. -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -73,13 +80,19 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   .link-row { display:flex; align-items:center; justify-content:space-between; padding: var(--space-4); min-height:44px; box-sizing:border-box; text-decoration:none; color:var(--color-ink); }
   .link-row + .link-row { border-top: var(--border-width) solid var(--color-border); }
   .link-row .chevron { color: var(--color-ink-faint); flex-shrink:0; }
+
+  /* ONB-0/REQ-17: account row + Destructive logout button (DESIGN.md 3.1 Destructive variant --
+     text/border in --color-danger on --color-paper, never a full red fill). */
+  .account-row { display:flex; align-items:center; justify-content:space-between; padding: var(--space-4); min-height:44px; box-sizing:border-box; }
+  .btn-destructive { background:var(--color-paper); color:var(--color-danger); border:var(--border-width) solid var(--color-danger); width:100%; }
 </style>
 </head>
 <body>
 <div class="device-frame">
   <div class="screen-content">
 
-    <!-- Minimal profile header: no auth system exists yet, so no real name/avatar -->
+    <!-- Profile header: avatar stays a placeholder since there is no real photo upload feature,
+         but the name slot now reflects the simulated signed-in account from ONB-0 (see script). -->
     <div class="profile-header">
       <div class="avatar-placeholder">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"></path></svg>
@@ -87,8 +100,23 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
       <h1 class="text-h1">โปรไฟล์</h1>
     </div>
 
-    <!-- INT-2/INT-3: Connected Devices section. Default example state = ยังไม่เชื่อมต่อ for both. -->
+    <!-- ONB-0/REQ-17: minimal account section + Logout. Email/method are read from the
+         simulated session written by 00-auth-signup.html/00-auth-login.html. -->
     <div>
+      <h2 class="text-h2 section-title">บัญชีผู้ใช้</h2>
+      <div class="card">
+        <div class="account-row">
+          <div>
+            <p class="text-h3" id="accountEmail">ผู้ใช้งาน</p>
+            <p class="text-body-sm" id="accountMethod">เข้าสู่ระบบอยู่</p>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn btn-destructive" id="logoutBtn" style="margin-top:var(--space-3);">ออกจากระบบ</button>
+    </div>
+
+    <!-- INT-2/INT-3: Connected Devices section. Default example state = ยังไม่เชื่อมต่อ for both. -->
+    <div class="section-gap">
       <h2 class="text-h2 section-title">อุปกรณ์ที่เชื่อมต่อ</h2>
       <div class="card">
         <div class="device-row">
@@ -166,5 +194,26 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     </a>
   </nav>
 </div>
+
+<script>
+(function(){
+  // ONB-0/REQ-15/REQ-17: reflect the simulated session (if any) written by
+  // 00-auth-signup.html/00-auth-login.html, and clear it on logout.
+  var METHOD_LABELS = { email: 'เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน', google: 'เข้าสู่ระบบด้วย Google', apple: 'เข้าสู่ระบบด้วย Apple' };
+  try {
+    var raw = localStorage.getItem('smartfit_auth_user');
+    if (raw) {
+      var session = JSON.parse(raw);
+      if (session.email) document.getElementById('accountEmail').textContent = session.email;
+      document.getElementById('accountMethod').textContent = METHOD_LABELS[session.method] || 'เข้าสู่ระบบอยู่';
+    }
+  } catch (err) {}
+
+  document.getElementById('logoutBtn').addEventListener('click', function(){
+    try { localStorage.removeItem('smartfit_auth_user'); } catch (err) {}
+    window.location.href = '00-auth-welcome.html';
+  });
+})();
+</script>
 </body>
 </html>
