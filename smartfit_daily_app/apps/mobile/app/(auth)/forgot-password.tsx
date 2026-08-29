@@ -3,13 +3,13 @@ import { Text, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { Button } from '../../src/components/Button';
-import { requestPasswordReset } from '../../src/services/authService';
+import { requestPasswordReset } from '../../src/services/api';
 import { colors, radius, spacing, typography } from '../../src/constants/theme';
 
 /**
  * ONB-0 · REQ-16 — mirrors v1/00-auth-forgot-password.html.
  * Not available for accounts signed up via Google/Apple — enforced by the
- * forgotPassword Cloud Function, not client-side.
+ * Express /api/auth/forgot-password route, not client-side.
  */
 export default function ForgotPasswordScreen() {
   const router = useRouter();

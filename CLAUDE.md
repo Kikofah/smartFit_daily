@@ -5,31 +5,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project status
 
 This repository is an **Obsidian vault** (see `.obsidian/`, gitignored) used for project
-documentation, **plus** an application codebase scaffolded on 2026-08-29 following the stack
-decided in `docs/02-design/02-technical/tech-stack.md`, kept in its own `smartfit_daily_app/`
+documentation, **plus** an application codebase kept in its own `smartfit_daily_app/`
 subdirectory to stay separate from the documentation pipeline. The documentation pipeline
 described below remains the source of truth for requirements/design/business rules — application
 code should never contradict it; when they disagree, treat the docs as correct and either fix the
 code or flag the doc as stale via the relevant skill.
 
+**⚠️ Docs/code drift (as of 2026-08-29)**: the code was originally scaffolded following
+`docs/02-design/02-technical/tech-stack.md`'s decision (React Native + Expo, Firebase Cloud
+Functions), then re-architected the same day to Express.js + a web-first client after a
+follow-up user decision — Cloud Functions were dropped, and React Native was scoped down to a
+device-pairing-only companion app (INT-2/INT-3), with everything else moving to a new `apps/web`.
+**`tech-stack.md` and the Stack Mapping appendices in the HLA/API Spec/Database Schema/Detailed
+Design docs have not been updated to reflect this** — they still describe the Cloud Functions
+architecture. Treat the code below as the current reality and the docs as stale on this specific
+point until `tech-stack-builder` is run to reconcile them.
+
 **Real architecture**: npm-workspaces monorepo at `smartfit_daily_app/` —
 
-- `smartfit_daily_app/apps/mobile/` — React Native + Expo client (TypeScript, Expo Router). Screen
-  tree mirrors `docs/02-design/01-prototypes/v1/`.
-- `smartfit_daily_app/apps/functions/` — Firebase Cloud Functions backend (Node.js + TypeScript),
-  one folder per conceptual component from `high-level-architecture.md` §3.
+- `smartfit_daily_app/apps/web/` — the main product. One Express.js app (TypeScript) serving
+  both a REST API (`server/`, Firestore via the Admin SDK, one route file per conceptual
+  component from `high-level-architecture.md` §3) and a React + Vite client (`client/`, pages
+  mirror `docs/02-design/01-prototypes/v1/`, reusing `react-native-web` components ported from
+  the original mobile app).
+- `smartfit_daily_app/apps/mobile/` — React Native + Expo, trimmed to INT-2 (Bluetooth
+  smart-scale sync) and INT-3 (wearable HealthKit/Health Connect sync) only — the two things a
+  website cannot do. Everything else (onboarding, dashboard, planner, logging, streak, forecast)
+  lives in `apps/web` instead.
 - `smartfit_daily_app/packages/shared-types/` — TypeScript entities shared by both apps, mirroring
   `database-schema.md`'s conceptual entities (one file per HLA component).
 
-Most Cloud Functions and screens are scaffolded stubs (see inline `TODO`s) — this is a folder
-structure, not a working feature set yet.
+Most routes and screens are scaffolded stubs (see inline `TODO`s) — this is a folder structure,
+not a working feature set yet.
 
 **Commands** (run from `smartfit_daily_app/`, i.e. `cd smartfit_daily_app` first):
 
 ```bash
 npm install
-npm run mobile           # Expo dev server (apps/mobile)
-npm run functions:serve  # build + Firebase emulator (apps/functions)
+npm run web:dev          # apps/web: Vite dev server + Express, concurrently
+npm run web:build        # apps/web: build the client, then the server
+npm run web:start        # apps/web: run the built server (serves the built client itself)
+npm run mobile           # apps/mobile: Expo dev server (device-pairing companion app)
 npm run typecheck        # tsc --noEmit across every workspace
 npm run lint             # eslint across every workspace
 npm run test             # per-workspace test script (none real yet)

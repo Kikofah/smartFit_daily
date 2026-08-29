@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "mobile-web",
+      "name": "web-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "smartfit_daily_app", "run", "web", "--workspace", "apps/mobile"],
-      "port": 8081
+      "runtimeArgs": ["--prefix", "smartfit_daily_app", "run", "web:dev"],
+      "port": 5173
     }
   ]
 }

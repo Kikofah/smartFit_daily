@@ -8,8 +8,7 @@ import { colors, radius, spacing, typography } from '../../src/constants/theme';
 
 /**
  * ONB-0 · REQ-15 (login + session persistence) — mirrors v1/00-auth-login.html.
- * TODO: route to (tabs) if the user already completed onboarding, or
- * (onboarding) otherwise — needs a getProfile() check, see app/_layout.tsx.
+ * This companion app only needs an account to pair a device (INT-2/INT-3).
  */
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,7 +19,7 @@ export default function LoginScreen() {
   async function handleEmailLogin() {
     try {
       await loginWithEmail(email, password);
-      router.replace('/(onboarding)/personal-info');
+      router.replace('/device-pairing');
     } catch (e) {
       setError((e as Error).message);
     }

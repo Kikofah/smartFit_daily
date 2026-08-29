@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint"],
+  "extends": ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  "env": { "es2020": true },
+  "ignorePatterns": ["dist-server/", "dist-client/"],
+  "overrides": [
+    {
+      "files": ["server/**/*.ts"],
+      "env": { "node": true }
+    },
+    {
+      "files": ["client/**/*.tsx", "client/**/*.ts"],
+      "env": { "browser": true },
+      "extends": ["plugin:react-hooks/recommended"]
+    }
+  ]
+}

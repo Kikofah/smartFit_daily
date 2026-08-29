@@ -8,13 +8,14 @@
 # Node / TypeScript
 node_modules/
 dist/
+dist-client/
+dist-server/
 lib/
 *.tsbuildinfo
 npm-debug.log*
 
-# Expo (smartfit_daily_app/apps/mobile)
+# Expo (smartfit_daily_app/apps/mobile — companion app, INT-2/INT-3 only)
 smartfit_daily_app/apps/mobile/.expo/
-smartfit_daily_app/apps/mobile/dist/
 smartfit_daily_app/apps/mobile/web-build/
 *.jks
 *.p8

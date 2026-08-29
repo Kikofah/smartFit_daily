@@ -8,7 +8,8 @@ import { colors, radius, spacing, typography } from '../../src/constants/theme';
 
 /**
  * ONB-0 · REQ-14 (sign-up: email/password, Google, Apple) — mirrors v1/00-auth-signup.html.
- * Creates a User Account, then always proceeds to ONB-1 (never skips ahead).
+ * This companion app only needs an account to pair a device (INT-2/INT-3) —
+ * ONB-1..3 onboarding happens on the web app (apps/web).
  */
 export default function SignupScreen() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function SignupScreen() {
   async function handleEmailSignup() {
     try {
       await signUpWithEmail(email, password);
-      router.replace('/(onboarding)/personal-info');
+      router.replace('/device-pairing');
     } catch (e) {
       setError((e as Error).message);
     }

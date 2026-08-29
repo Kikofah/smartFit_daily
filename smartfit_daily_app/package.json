@@ -1,7 +1,7 @@
 {
   "name": "smartfit-daily",
   "private": true,
-  "description": "smartFit_daily — monorepo (mobile app + Firebase backend). See docs/ for the full documentation pipeline.",
+  "description": "smartFit_daily — monorepo: Express web app (main experience) + a slim React Native companion app (INT-2/INT-3 device pairing only). See docs/ for the full documentation pipeline.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,8 +11,9 @@
   },
   "scripts": {
     "mobile": "npm run start --workspace apps/mobile",
-    "functions:build": "npm run build --workspace apps/functions",
-    "functions:serve": "npm run serve --workspace apps/functions",
+    "web:dev": "npm run dev:server --workspace apps/web & npm run dev:client --workspace apps/web",
+    "web:build": "npm run build --workspace apps/web",
+    "web:start": "npm run start --workspace apps/web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
