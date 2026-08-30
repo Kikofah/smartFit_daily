@@ -3,7 +3,25 @@
 - **ประเภทเอกสาร:** Tech Stack — Concrete/Stack-Specific
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 — **Tech Stack Consistency Audit + Reconciliation** ตาม CLAUDE.md §
+- **อัปเดตล่าสุด:** 2026-08-31 — **Tech Stack Consistency Audit + Reconciliation** ต่อจากที่
+  `detailed-design-builder`/`api-db-spec-builder` เพิ่ง audit โค้ดจริงใน commit `b463436` เมื่อวันเดียวกันแล้ว
+  flag มาที่ท้าย log ว่า `tech-stack.md` เองก็ล้าหลังจากจุดเดียวกัน — ทั้งหมดเป็นการบันทึก/แก้ให้ตรงกับ
+  ข้อเท็จจริงที่ทีม implement/ตัดสินใจไปแล้วจริง ไม่มีจุดใดเป็นการเปลี่ยนตัวเลือก stack ใหม่ จึงแก้ผ่าน flow
+  ปกติไม่ต้องรัน Discovery Questionnaire: (1) เพิ่ม **Google Gemini** (`@google/genai` SDK, model
+  `gemini-3.6-flash`) เป็นเทคโนโลยีจริงที่เลือกแล้วสำหรับขั้นตอน ranking/ประเมินความเข้มข้นของวิดีโอใน
+  Content Recommendation (REC-1/REC-4) — เป็นขั้นตอนเสริมต่อจาก YouTube Data API v3 search ไม่ใช่แทนที่
+  (ผู้ใช้ยืนยันก่อนรันรอบนี้ว่าเป็นการบันทึกการตัดสินใจที่ทำและ ship ไปแล้วจริง ไม่ใช่จุดที่ต้องเลือกใหม่ — ดู
+  หัวข้อ 3/4/5) (2) แก้แถว **Content Recommendation** และ **Insights & Forecast** ในหัวข้อ 6.1 ที่ยังเขียนว่า
+  เป็น stub/รอ implement ทั้งที่ ship จริงและทำงานเต็มรูปแบบแล้ว พร้อมเพิ่ม operation ใหม่
+  `GET /api/insights/weight-records` (`api-spec.md` §3.7, เพิ่ม 2026-08-31) เข้าแถว Insights & Forecast
+  (3) ตัด **forecast (INT-1)** ออกจากรายการ "Client-side calculation ตาม NFR-01/NFR-03" ในหัวข้อ 4 เพราะ
+  `detailed-design-builder` แก้ไปแล้วว่า INT-1 คำนวณฝั่ง server ทั้งหมด ไม่มีข้อจำกัด latency แบบเดียวกับ
+  REC-2 — **ผลกระทบต่อเอกสารอื่น**: HLA §10 (แถว Content Recommendation ยังอ้าง widen-retry ที่ไม่มีจริงและ
+  ไม่มี mapping ของ Gemini) และ `database-schema.md` §8.2/§8.3 (ยังไม่มีแถว
+  `today_recommendation_snapshot`/`today_recommendation_rejected_video`) จะ stale ต่อจากการแก้รอบนี้ —
+  ควรรัน `architecture-builder`/`api-db-spec-builder` ต่อ (ดูหัวข้อ 8) — ดู log
+  [2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-30 — **Tech Stack Consistency Audit + Reconciliation** ตาม CLAUDE.md §
   "Docs/code drift": โค้ดจริงใน `smartfit_daily_app/` ได้ re-architecture ไปแล้วตั้งแต่ 2026-08-29 (เลิกใช้
   Firebase Cloud Functions แทนที่ด้วย **Express.js (TypeScript)**, แยก **web ออกเป็น `apps/web` ต่างหาก**
   จาก React Native เดิมที่เหลือ**เฉพาะ `apps/mobile` ตัดขอบเขตเหลือ INT-2/INT-3**) ทั้งที่เอกสารนี้ยังระบุ
@@ -20,7 +38,7 @@
   `apps/web/server/routes/*/index.ts`, เพิ่ม mapping กลไก pairing-code, แก้จำนวน operation ของ Account &
   Session Management จาก 8 เป็น **10** ให้ตรงกับ `api-spec.md` §3.1 ฉบับล่าสุด), 7, 8 — ดู log
   [2026-08-30](../../05-log/20260830-log.md)
-- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบใหม่) — sync ให้ครอบคลุม Feature ใหม่ **ONB-0 (Authentication)**
+- **อัปเดตก่อนหน้านั้น:** 2026-08-29 (รอบใหม่) — sync ให้ครอบคลุม Feature ใหม่ **ONB-0 (Authentication)**
   ที่ upstream ทั้ง 4 ชั้น (HLA §3.1/§5/§6.4, `api-spec.md` §3.1 — 8 operations, `database-schema.md` §3.1
   ตาราง `user_account`, `detailed-design/01-onboarding-personalization.md` — 3 sequence diagram) เพิ่ม
   เข้ามาแล้วเมื่อวันเดียวกัน โดยทิ้ง ⚠️ ไว้ในภาคผนวก Stack Mapping ของตัวเองว่ารอหัวข้อนี้ขยาย mapping ระดับ
@@ -31,7 +49,7 @@
   ทั้ง 8 operation (ส่วนใหญ่เป็น client SDK call ตรง ยกเว้น `forgot-password` ที่ต้องเป็น Cloud Function),
   เพิ่มเหตุผลในหัวข้อ 4, และเพิ่มจุดที่ยังไม่ได้ตัดสินใจใหม่ 3 ข้อในหัวข้อ 7 (ดู log
   `docs/05-log/20260829-log.md`)
-- **อัปเดตก่อนหน้านั้น:** 2026-08-29 — เปลี่ยน Database/Backend/Authentication/Hosting เป็น Firebase ตามคำขอ
+- **อัปเดตก่อนหน้านั้นอีกที:** 2026-08-29 — เปลี่ยน Database/Backend/Authentication/Hosting เป็น Firebase ตามคำขอ
   ของผู้ใช้งานโดยตรง (ดูหัวข้อ 2 และ 5); sync หัวข้อ 6.1 ให้ละเอียดตรงกับ `database-schema.md` §8.2/8.3
   ฉบับ Hybrid (per-table Firestore collection/document mapping + FK/constraint enforcement migration —
   เป็นการ mechanical re-sync ข้อเท็จจริงที่ตัดสินใจแล้วที่อื่น ไม่ใช่การเปลี่ยนตัวเลือก stack จริงใหม่ จึงไม่
@@ -134,7 +152,7 @@ Authentication) **ไม่เปลี่ยน** เพราะยังค�
 | **Database**                | Cloud Firestore (NoSQL document database, managed โดย Firebase) — **ไม่เปลี่ยน**, เข้าถึงผ่าน Firebase Admin SDK จาก Express แทน Cloud Functions runtime |
 | **Authentication**          | Firebase Authentication — email/password + Google OAuth + Sign in with Apple — **ไม่เปลี่ยน** เพิ่มกลไก pairing-code handoff ใหม่ (Firestore `pairingCodes/{code}` + `auth.createCustomToken`) สำหรับ `apps/mobile` ที่ไม่มีหน้าจอ auth ของตัวเอง (ดูหัวข้อ 6.1) |
 | **Hosting/Infra**           | **Google Cloud Run** — เปลี่ยนจาก Firebase Hosting + Cloud Functions (2026-08-30, ยืนยันจากผู้ใช้หลัง mini Discovery Questionnaire — ดูหัวข้อ 2) — deploy container image เดียว (Dockerfile) ครอบคลุมทั้ง Express + built client, autoscale-to-zero, ใช้ Application Default Credentials ใน GCP project เดียวกับ Firestore/Firebase Auth |
-| **Third-party Integration** | YouTube Data API v3 (เรียกจาก Express), `react-native-health` (Apple HealthKit), `react-native-health-connect` (Google Health Connect), `react-native-ble-plx` (Bluetooth สมาร์ตสเกล) — 3 ตัวหลังอยู่ใน `apps/mobile` เท่านั้น ไม่เปลี่ยนจากเดิม |
+| **Third-party Integration** | YouTube Data API v3 (เรียกจาก Express, `apps/web/server/services/youtube.ts`, อ่าน `YOUTUBE_API_KEY`) เป็นแหล่งค้นหาวิดีโอผู้สมัคร (candidate search) ให้ REC-1/REC-4 — **เพิ่มใหม่ 2026-08-31 (ยืนยันเป็นการบันทึกข้อเท็จจริงที่ ship แล้ว ไม่ใช่จุดตัดสินใจใหม่):** **Google Gemini** (`@google/genai` SDK, model `gemini-3.6-flash`, `apps/web/server/services/videoRecommender.ts`, อ่าน `GEMINI_API_KEY` หรือ `GOOGLE_API_KEY`) เป็นขั้นตอน**เสริม**ต่อจาก YouTube search — ใช้จัดอันดับ/เลือกวิดีโอที่ตรงเป้าหมายแคลอรี่คงเหลือ/อุปกรณ์ที่สุด 1 รายการ พร้อมประเมิน intensity/แคลอรี่โดยประมาณจาก title+description+duration (ไม่ใช่การแทนที่ YouTube Data API v3), `react-native-health` (Apple HealthKit), `react-native-health-connect` (Google Health Connect), `react-native-ble-plx` (Bluetooth สมาร์ตสเกล) — 3 ตัวหลังอยู่ใน `apps/mobile` เท่านั้น ไม่เปลี่ยนจากเดิม |
 | **CI/CD & Dev Tooling**     | GitHub Actions (`.github/workflows/ci.yml` — lint/typecheck/test ทุก workspace, ยังไม่มี deploy step), EAS Build + EAS Submit (เฉพาะ `apps/mobile` ตอนนี้), gcloud/Cloud Build build+deploy container image ไป Cloud Run สำหรับ `apps/web` (ยังไม่ได้ wire เข้า CI — ดูหัวข้อ 7) |
 
 ## 4. เหตุผลการเลือก (Rationale)
@@ -188,9 +206,32 @@ Authentication) **ไม่เปลี่ยน** เพราะยังค�
   autoscale-to-zero เข้ากับงบ MVP จำกัดมาก (ไม่มี traffic ก็ไม่มีค่าใช้จ่าย) — ยังคงอยู่ใน Firebase/Google
   Cloud ecosystem เดียวตามหลักการ "ย้ายทั้งระบบไป Firebase ecosystem" เดิม (2026-08-29) เพียงแค่เปลี่ยนว่า
   compute layer ไหนรัน business logic เอง
+- **Google Gemini (`@google/genai`, model `gemini-3.6-flash`) สำหรับ video ranking ของ Content
+  Recommendation — เพิ่มใหม่ 2026-08-31 (บันทึกการตัดสินใจที่ทีม implement/ship ไปแล้วจริง ไม่ใช่จุด
+  ตัดสินใจใหม่ที่ต้องเทียบเชิงปริมาณ — ผู้ใช้ยืนยันก่อนรันรอบนี้)**: YouTube Data API v3 (`services/
+  youtube.ts`) คืนเฉพาะ title/description/duration ต่อวิดีโอ ไม่มี field เชิงโครงสร้างสำหรับ "แคลอรี่ที่
+  เผาผลาญ"/ความเข้มข้นให้ filter ตรงๆ เลย — ทีมจึงเพิ่ม Gemini เป็นขั้นตอนที่สองต่อจาก YouTube search (ไม่ใช่
+  แทนที่) ให้ประเมิน/เลือกวิดีโอที่ดีที่สุด 1 รายการจาก candidate ที่มีอยู่ พร้อมประเมิน `activityType`/
+  `intensity`/`estimatedKcal`/`includesWarmupCooldown` จาก title+description+duration ล้วนแบบ best-effort
+  (`services/videoRecommender.ts`) — เลือก **tier Flash** โดยเฉพาะ (ไม่ใช่ Pro) เพราะเป็น tier เดียวที่มี
+  free-tier quota ให้ใช้งานจริงโดยไม่ต้องเปิด billing (Pro-tier model เช่น `gemini-3.1-pro-preview` ไม่มี
+  free-tier quota เลยตาม comment ในโค้ดเอง) ตรงกับ Budget/Scale tier "งบจำกัดมาก" ที่ยืนยันไว้ตั้งแต่
+  Discovery รอบแรก (หัวข้อ 2) และมีความสามารถเพียงพอสำหรับงาน ranking ผู้สมัครไม่กี่รายการต่อครั้ง —
+  ทางเลือกอื่นที่มีอยู่จริง (เช่น OpenAI GPT-4o-mini, Anthropic Claude Haiku, หรือ rule-based keyword
+  filtering ไม่พึ่ง AI เลย) ไม่ได้ถูกประเมินเชิงปริมาณอย่างเป็นทางการในเอกสารนี้ เพราะนี่เป็นการบันทึกย้อนหลัง
+  ของการตัดสินใจที่ implement และ ship ไปแล้วจริง ไม่ใช่จุดตัดสินใจใหม่ (ดูหัวข้อ 5 สำหรับบันทึกทางเลือก
+  โดยสังเขป) — env var ที่อ่าน (`GEMINI_API_KEY`/`GOOGLE_API_KEY`) มีอยู่แล้วใน `apps/web/.env.example`
+  (ตรวจสอบแล้ว 2026-08-31)
 - **Client-side calculation ตาม NFR-01/NFR-03**: [Detailed Design](detailed-design/) ระบุชัดว่า TDEE
-  (ONB-1), safety floor (ONB-3), MET+wearable override (REC-2), streak walk-back (PLN-4), และ forecast
-  (INT-1) ต้องเป็นการคำนวณที่ไม่มี network latency — จึง implement อัลกอริทึมเหล่านี้ที่ client โดยตรงเหมือนเดิม
+  (ONB-1), safety floor (ONB-3), MET+wearable override (REC-2), และ streak walk-back (PLN-4)
+  ต้องเป็นการคำนวณที่ไม่มี network latency — **แก้ไข 2026-08-31**: เดิมรายการนี้เคยรวม forecast (INT-1)
+  ด้วย แต่ `detailed-design-builder` audit พบว่าเป็นการเข้าใจผิดจากการ generalize มาจาก REC-2's MET
+  calculation ที่มีเหตุผลด้าน latency ระหว่างออกกำลังกายจริงชัดเจน (ต้องการ feedback ภายใน 250ms ตาม
+  NFR-02) — **Forecast (INT-1) ไม่มีข้อจำกัด latency แบบเดียวกันเลย**: เป็น bodyless
+  `GET /api/insights/forecast` ที่คำนวณทั้งหมดฝั่ง server (`apps/web/server/routes/insights-forecast/
+  index.ts`) ไม่มี client-side precomputation ใดๆ ตั้งแต่แรก (ดูหัวข้อ 6.1 แถว Insights & Forecast) —
+  ตัดออกจากรายการนี้ให้ตรงกับ `detailed-design/04-smart-integrations.md` ฉบับล่าสุดแล้ว — จึง implement
+  อัลกอริทึมที่เหลือ (TDEE/safety floor/MET/streak walk-back) ที่ client โดยตรงเหมือนเดิม
   (React+Vite web client สำหรับ feature เหล่านี้ทั้งหมด เพราะทั้งหมดอยู่ใน `apps/web` แล้วหลังตัดขอบเขต
   มือถือ — ดูหัวข้อ 3) แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Express route** (แทนที่ Firebase Cloud
   Function เดิม) เพื่อให้ route นั้นทำหน้าที่ validate/บังคับกติกาธุรกิจเป็นเกราะป้องกันชั้นที่สองฝั่ง server
@@ -324,6 +365,24 @@ Authentication) **ไม่เปลี่ยน** เพราะยังค�
 (ADC) และ autoscale-to-zero เป็นหลัก (ไม่ใช่ผลจาก Weighted Scoring Model เชิงปริมาณเหมือน 2 จุดตัดสินใจ
 ก่อนหน้า — เพราะเป็นคำถามเดียวที่มีมิติ trade-off ชัดเจนพอที่ไม่ต้องถ่วงน้ำหนักหลายเกณฑ์)
 
+### Video Ranking Model สำหรับ Content Recommendation (Gemini) — บันทึกการตัดสินใจที่ทำไปแล้วจริง (ใหม่ 2026-08-31)
+
+**บริบท**: ต่างจาก 3 จุดตัดสินใจด้านบนที่ skill นี้ยังไม่มีคำตอบตอนเริ่มต้น จุดนี้เป็นเทคโนโลยีที่ทีม
+implement และ ship ไปแล้วจริงใน `apps/web/server/services/videoRecommender.ts` ก่อนที่ `tech-stack.md`
+จะรู้จักด้วยซ้ำ — ผู้ใช้ยืนยันก่อนรันรอบนี้ว่าเป็นการบันทึกเอกสารให้ตรงกับของจริง ไม่ใช่จุดที่ต้องเปิดเทียบ
+ทางเลือกใหม่ (จึงไม่มี Weighted Scoring Model เต็มรูปแบบเหมือนหัวข้อข้างบน) ตารางด้านล่างเป็นเพียงบันทึก
+โดยสังเขปว่ามีทางเลือกอื่นอะไรบ้างและเพราะเหตุใด Gemini (tier Flash) จึงเพียงพอ:
+
+| ทางเลือก | ข้อดี | ข้อเสีย |
+|---|---|---|
+| **Google Gemini, model `gemini-3.6-flash` (เลือกจริง — ship แล้ว)** | มี free-tier quota ให้ใช้งานจริงโดยไม่ต้องเปิด billing (ต่างจาก Gemini Pro-tier ที่ไม่มี free-tier เลย), รองรับ `responseSchema`/structured JSON output ตรงกับความต้องการ parse ผลลัพธ์แบบมีโครงสร้าง, อยู่ใน Google Cloud ecosystem เดียวกับ Firebase/Firestore ที่เลือกไว้แล้ว | ความสามารถ reasoning ต่ำกว่า tier Pro/รุ่นใหญ่กว่าของค่ายอื่น — ยอมรับได้เพราะงานคือ ranking ผู้สมัครไม่กี่รายการ ไม่ใช่งาน reasoning ซับซ้อน |
+| OpenAI GPT-4o-mini | ราคาถูก, คุณภาพ ranking ดีเทียบเท่ากัน | ไม่มี free-tier แบบไม่ต้องผูกบัตรเครดิตเหมือน Gemini Flash, อยู่นอก Google Cloud ecosystem (ต้องจัดการ API key/billing แยกผู้ให้บริการ) |
+| Anthropic Claude Haiku | คุณภาพ ranking/reasoning ดี, structured output รองรับ | ไม่มี free-tier ให้ใช้งานจริงเลย (ต้องเปิด billing ตั้งแต่แรก) ขัดกับงบ MVP จำกัดมากที่ยืนยันไว้ตั้งแต่ Discovery รอบแรก |
+| Rule-based keyword filtering (ไม่พึ่ง AI) | ไม่มีต้นทุน API เลย, latency ต่ำสุด, ไม่ต้องพึ่ง external AI provider | ประเมิน intensity/แคลอรี่จาก title/description ไม่ได้แม่นยำเท่าโมเดลภาษา, ต้องเขียน/ดูแล keyword list เองต่อเนื่อง ความเสี่ยง maintenance สูง |
+
+**ผลลัพธ์**: Google Gemini (`gemini-3.6-flash`) — ยืนยันเป็นข้อเท็จจริงที่ทีม implement และ ship ไปแล้ว
+ไม่ใช่ผลจากการเปรียบเทียบเชิงปริมาณใหม่ในเอกสารนี้
+
 ## 6. Mapping จาก Conceptual Docs → Concrete Stack
 
 > **หมายเหตุ 2026-08-29**: หัวข้อนี้ทั้งหมดถูกเขียนใหม่จาก Supabase/PostgreSQL เป็น Firebase/Firestore
@@ -371,11 +430,11 @@ Authentication) **ไม่เปลี่ยน** เพราะยังค�
 |---|---|
 | Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยกสำหรับ credential** เพราะ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) map ตรงกับ Firebase Auth's `UserRecord` เองครบทุก field: `id` = Firebase Auth UID (`uid`) — **ค่าเดียวกับที่ `users/{userId}` ของ Personalization & Profile (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว** จึงไม่ต้องเก็บ `user_profile.user_account_id` (FK 1:1 ใน `database-schema.md` §3.2) เป็น field แยกใน Firestore เลย; `signup_method`/`email`/`external_provider_reference`/`created_at` derive จาก `UserRecord` field ตรงๆ; `credential_reference` ไม่มี field ให้เข้าถึงเพราะ Firebase Auth เก็บ password hash ไว้ภายในเองทั้งหมด — **ทั้งหมดนี้ไม่เปลี่ยนจากรอบก่อน** สิ่งที่เปลี่ยน (2026-08-30) คือ compute layer ที่เรียก Admin SDK: sign-up/login/logout ทั้ง 6 วิธี **ยังคงเป็น client SDK call ตรงจาก `apps/web/client/src/services/authService.ts`** (ไม่มี Express route เลย — ดูหัวข้อ 6.3.1), มีเพียง `forgot-password` ที่ implement เป็น **Express route จริง** `POST /api/auth/forgot-password` (`apps/web/server/routes/account-session/forgotPassword.ts`, mount ผ่าน `app.use('/api/auth', accountSessionRouter)` โดยตั้งใจไม่ใส่ `authenticate` middleware เพราะยังไม่มี session ตอนเรียก) แทนที่ Cloud Function `forgotPassword` เดิม เรียก `auth.getUserByEmail(email)` ตรวจ `providerData` เหมือนเดิมทุกประการ; **เพิ่มใหม่ 2026-08-30 — กลไก pairing-code identity handoff** (HLA §4.5, `api-spec.md` §3.1 ท้ายตาราง, `database-schema.md` §3.17): ไม่ persist ที่ตาราง/collection ใต้ `users/{userId}` แบบ entity อื่นทั้งหมด แต่ใช้ **top-level collection `pairingCodes/{code}`** แยกต่างหาก (document ID = ตัวรหัส 6 หลักเอง ไม่ใช่ auto-generated ID — ตรงกับที่ query หลักคือค้นด้วย `code` ไม่ใช่ user id ตาม `database-schema.md` §4) เก็บ field `uid` (เจ้าของรหัส)/`createdAt`/`expiresAt` (TTL 5 นาทีนับจากออกรหัส) — mint ผ่าน **Express route** `POST /api/pairing/create-code` (ต้องยืนยันตัวตนก่อน — `authenticate` middleware, `apps/web/server/routes/pairing/index.ts`) เรียกจากหน้า Profile ของเว็บไคลเอนต์; redeem ผ่าน **Express route** `POST /api/pairing/redeem` (**ข้อยกเว้นเดียว** ไม่มี `authenticate` middleware ตามที่ `api-spec.md` §2 ระบุ) ซึ่งอ่าน document, ตรวจ `expiresAt`, แล้วเรียก **`auth.createCustomToken(uid)`** คืน custom token ให้ `apps/mobile` เอาไปเข้าสู่ระบบต่อด้วย `signInWithCustomToken` (Firebase Auth client SDK ฝั่ง React Native) — **หมายเหตุการ enforce single-use**: `database-schema.md` §3.17 ออกแบบไว้เป็น `is_used` boolean conceptual field แต่ Express route จริงใช้ **`ref.delete()` ลบ document ทิ้งทันทีหลัง redeem สำเร็จแทนการตั้ง flag** — ผลลัพธ์เชิงความหมายเดียวกัน (redeem ซ้ำไม่ได้) เพียงแค่เลือก implement ด้วยการลบแทนการ set flag (ไม่ต้องเก็บ document ที่ใช้แล้วต่อ เพราะไม่มี use case ต้องดูประวัติ pairing เก่า) — ดูหัวข้อ 6.3.1 สำหรับ mapping operation ระดับ REST ทั้ง 10 |
 | Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` (สูงสุด 3 ค่าตาม ONB-2) อยู่ใน document เดียวกัน (bounded, 1:1/multi-select เล็ก ไม่มี pattern query แยก) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ (`request.auth.uid == userId`, ยังไม่ได้เขียนจริง ดูหัวข้อ 7) + **Express route** `GET /api/profile`, `PUT /api/profile/personal-info`, `PUT /api/profile/equipment`, `PUT /api/profile/goal` (แทนที่ Cloud Function `profileUpdate` เดิม — จริงๆ แล้วแยกเป็น 3 route handler ในไฟล์เดียว `apps/web/server/routes/personalization-profile/index.ts` ไม่ใช่ 1 ฟังก์ชันรวม) enforce equipment mutual exclusion (`equipmentTypes.includes('none') && length > 1` → `400`) และ safety floor (`dailyCalorieTargetKcal <= 1200` → ตั้ง `isSafetyFloorApplied`) — คำนวณ TDEE/target kcal ที่ฝั่ง client (React+Vite) ก่อนส่งเหมือนเดิม |
-| Content Recommendation | **Express route** `GET /api/workouts/today/recommendation`, `POST /api/workouts/today/recommendation/swap`, `POST /api/workouts/sessions` (แทนที่ Cloud Function `recommendation` เดิม — `apps/web/server/routes/content-recommendation/index.ts`, ปัจจุบันเป็น stub คืน `501` รอเรียก YouTube Data API v3 จริง) สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (1-3 รายการ ตาม REC-1/REC-4 — ยังไม่ implement ในโค้ดปัจจุบัน) และ `rejectedVideoIds: []` (REC-3) ใน document เดียวกัน |
+| Content Recommendation | **Express route** `GET /api/workouts/today/recommendation`, `POST /api/workouts/today/recommendation/swap`, `POST /api/workouts/sessions` (แทนที่ Cloud Function `recommendation` เดิม — `apps/web/server/routes/content-recommendation/index.ts`) — **แก้ 2026-08-31: implement จริงแล้วเต็มรูปแบบ ไม่ใช่ stub `501` อีกต่อไป** เป็น 2 ขั้นตอนต่อกัน: (1) **YouTube Data API v3** `search.list`+`videos.list` (`apps/web/server/services/youtube.ts`, อ่าน `YOUTUBE_API_KEY`) ค้นหาผู้สมัครสูงสุด 15 รายการตามคำค้นที่ derive จากอุปกรณ์ของผู้ใช้ กรองวิดีโอที่ embed ไม่ได้ทิ้ง (2) **Google Gemini** (`@google/genai`, model `gemini-3.6-flash`, `apps/web/server/services/videoRecommender.ts`, อ่าน `GEMINI_API_KEY`/`GOOGLE_API_KEY`) เลือกวิดีโอที่ตรงเป้าหมายแคลอรี่คงเหลือ/อุปกรณ์ที่สุด 1 รายการ พร้อมประเมิน `activityType`/`intensity`/`estimatedKcal`/`includesWarmupCooldown` แบบ best-effort เป็น **single-pass ล้วน** (ไม่มี tolerance ตัวเลข/widen-retry loop — ตรงกับที่ `detailed-design/02-daily-youtube-recommendation.md` แก้ไปแล้ว 2026-08-31) — ผลลัพธ์ cache เป็น embedded map field **`users/{userId}.todaysRecommendation`** (`computedFor`: วันที่คำนวณ ISO date, `video`: ผลลัพธ์ที่เลือก, `rejectedVideoIds: string[]`) mapping กับ 2 ตารางใหม่ `database-schema.md` §3.18/§3.19 (`today_recommendation_snapshot`/`today_recommendation_rejected_video`) — embed รวมเป็น field เดียวแทนที่จะเป็น 2 ตารางแยก (เข้าเกณฑ์ embed เดียวกับ `weightForecastSnapshot`/`streakSnapshot`: bounded, 1:1 กับผู้ใช้, ไม่มี pattern query อิสระ) — recompute เฉพาะเมื่อ `computedFor` ไม่ตรงกับวันนี้ (`GET .../recommendation`) หรือถูกเรียกจาก `POST .../swap` (REC-3, ส่ง `rejectedVideoIds` สะสม + วิดีโอปัจจุบันเข้า exclude list ก่อนค้นหาใหม่) — `POST /api/workouts/sessions` แยกต่างหาก สร้าง document `users/{userId}/workoutSessions/{sessionId}` เมื่อผู้ใช้กดเริ่มเซสชันจริง (`startedAt`/`status: 'in_progress'`) — **ยังเป็น TODO ในโค้ดจริง (ไม่เปลี่ยนจากการตรวจสอบรอบนี้)**: ยังไม่เขียน embedded array field `sessionVideos: []` (1-3 รายการตาม REC-1/REC-4) ลงใน document นี้เลย ต่างจาก `todaysRecommendation` ด้านบนที่ implement ครบแล้ว |
 | Exertion & Calorie Calculation | คำนวณ MET ที่ client (React+Vite) ตาม NFR-01/03 → **Express route** `POST /api/workouts/sessions/:sessionId/complete` (แทนที่ Cloud Function `sessionComplete` เดิม — `apps/web/server/routes/exertion-calorie/index.ts`) validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เขียนผ่าน **Express route** `POST /api/integrations/wearable/readings` (ดูแถว Integration Gateway) เป็น embedded map field `wearableReading` ใน document เดียวกัน — ถ้ามาถึงก่อน complete route จะอ่านมาใช้แทนค่าประมาณ MET; referential existence validation (**NFR-12**, Firestore ไม่มี FK) ทำผ่าน helper function ที่แยกเป็นไฟล์กลาง `apps/web/server/assertDocExists.ts` (throw `NotFoundError` ที่ error-handling middleware กลางของ Express แปลงเป็น `404` ให้อัตโนมัติ) เรียกใช้ซ้ำจากทั้ง route นี้และ `POST /api/integrations/wearable/readings` — แทนที่แนวคิดเดิมที่ให้แต่ละ Cloud Function `get()` เองแยกกัน |
 | Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) — **Express route** `GET /api/planner/week`, `PUT /api/planner/days/:date`, `POST /api/planner/days/:date/cheat-rest`, `DELETE /api/planner/days/:date/cheat-rest` (แทนที่ Cloud Function `cheatRest`/read-only-flag Cloud Function เดิม — `apps/web/server/routes/planner-day-status/index.ts`) อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag/enforce กติกา "วันนี้เท่านั้น" เหมือนตรรกะเดิม |
 | Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` (document ID = ISO date) + embedded map field `streakSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/logs`, `GET /api/logs/:date`, `GET /api/streak` (`apps/web/server/routes/logging-streak/index.ts`); all-or-nothing enforce ที่ route ที่เขียน `dailyLogs/{date}` (planner-day-status/exertion-calorie) เหมือนเดิม — **เปลี่ยนสำคัญ (2026-08-30)**: เดิม Cloud Functions มี Firestore `onWrite` trigger recompute `streakSnapshot` อัตโนมัติ แต่ **Express ไม่มี event-driven infrastructure แบบนั้นให้ใช้ฟรี** จึงเปลี่ยนเป็นฟังก์ชันธรรมดา `recomputeStreak(userId)` (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` (`exertion-calorie` และ `planner-day-status`) ต้อง `import` แล้วเรียกเองโดยตรงหลังเขียนเสร็จ — เป็นการเปลี่ยนแปลงสถาปัตยกรรมที่มีนัยสำคัญ (explicit call แทน implicit trigger) ต้องระวังเวลาเพิ่ม route ใหม่ที่เขียน `dailyLogs` ในอนาคตไม่ให้ลืมเรียก |
-| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast` (แทนที่ Cloud Function `forecast` เดิม — `apps/web/server/routes/insights-forecast/index.ts`, ปัจจุบันคืนค่า snapshot ที่มีอยู่ตรงๆ รอ implement การคำนวณจริงจากประวัติ `dailyLogs`/`weightRecords`) |
+| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast`, `GET /api/insights/weight-records` (ตัวหลังเพิ่มใหม่ `api-spec.md` §3.7, 2026-08-31 — แทนที่ Cloud Function `forecast` เดิม, ทั้งคู่อยู่ใน `apps/web/server/routes/insights-forecast/index.ts`) — **แก้ 2026-08-31: implement จริงแล้วเต็มรูปแบบ ไม่ใช่รอคำนวณจริงอีกต่อไป**: `GET .../forecast` เป็น bodyless GET ที่ **server คำนวณเองทั้งหมด** อ่าน `goalSelection.targetWeightKg`, ต้องมี `dailyLogs` สะสมอย่างน้อย `MIN_LOG_DAYS_FOR_FORECAST = 3` วัน (ค่า placeholder เชิงปฏิบัติ ยังไม่ resolve เป็นทางการ ดูหัวข้อ 7 ข้อ 10), คำนวณ**ค่าเฉลี่ยแคลอรี่ที่เผาผลาญจริงต่อวัน**จาก `accumulatedKcal` ของทุก `dailyLogs` (ไม่ใช่ผลต่างจากเป้าหมาย — สูตรที่ `detailed-design/04-smart-integrations.md` แก้ไปแล้ว 2026-08-31) หารด้วย `KCAL_PER_KG = 7700` ได้อัตราการเปลี่ยนแปลงน้ำหนักต่อวัน แล้วเขียนทับ `weightForecastSnapshot`; `GET .../weight-records` คืนรายการ `weightRecords` เรียงเก่าสุดก่อน (`recordedAt` ascending, รองรับ `fromDate`/`toDate` optional) ใช้แสดงกราฟแนวโน้มบน Progress screen แทนที่ mock data เดิม |
 | Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` — **Express route** `POST /api/integrations/smart-scale/connect`, `DELETE /api/integrations/smart-scale`, `POST /api/integrations/smart-scale/sync`, `POST /api/integrations/wearable/connect`, `DELETE /api/integrations/wearable`, `POST /api/integrations/wearable/readings` (แทนที่ Cloud Function `integrations` เดิม — `apps/web/server/routes/integration-gateway/index.ts`) + native module ฝั่ง `apps/mobile` เท่านั้น (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — รับ identity handoff จากกลไก pairing-code (แถว Account & Session Management ด้านบน) ก่อนเริ่มกระบวนการจับคู่จริงตาม HLA §3.8/§4.5 |
 
 ⚠️ **Referential existence validation เป็นกติกา cross-cutting** ไม่ได้ผูกกับ Component เดียว — ทุก Express
@@ -536,40 +595,38 @@ operation เพราะ Firestore ไม่มี auto-generated API — **Fir
 
 ## 8. ความสัมพันธ์กับเอกสารอื่น
 
-> **สถานะภาคผนวก Stack Mapping ณ 2026-08-30 (ก่อนรอบนี้)**: ทั้ง 4 จุด (HLA §10, `api-spec.md` §6,
-> `database-schema.md` §8, ทุกไฟล์ใน `detailed-design/`) เคย sync กับ `tech-stack.md` §6.1/§6.3.1 ฉบับ
-> Firebase Cloud Functions เดิมจนครบสมบูรณ์แล้ว (ปิดท้ายโดย `api-db-spec-builder` ในรอบ ONB-0 — ดู
-> [index.md](index.md)) แต่หลังจากนั้นโค้ดจริง re-architecture ไป Express+web-first (2026-08-29) ทำให้
-> `architecture-builder`/`api-db-spec-builder`/`detailed-design-builder` แก้เนื้อหาหลัก (ไม่ใช่ภาคผนวก) ของ
-> ทั้ง 4 เอกสารตามให้ทันแล้ว (pairing-code mechanism, web-only auth) แต่**จงใจไม่แตะภาคผนวก Stack Mapping
-> ของตัวเอง** เพราะรอ `tech-stack.md` (ไฟล์นี้) reconcile ก่อนตาม CLAUDE.md — **รอบนี้คือการ reconcile
-> นั้น** ผลคือภาคผนวกทั้ง 4 จุด**กลายเป็น stale ไปพร้อมกันอีกครั้ง** ด้วยเหตุผลเดียวกันทั้งหมด: (1) ยังอ้าง
-> "Firebase Cloud Function `{ชื่อ}`" แทนที่จะเป็น Express route จริง (2) ไม่มี mapping ของกลไก pairing-code
-> เลย (3) `api-spec.md`/`detailed-design/01-onboarding-personalization.md` ยังอ้างจำนวน operation ของ
-> Account & Session Management เป็น 8 ไม่ใช่ 10
+> **สถานะภาคผนวก Stack Mapping ณ 2026-08-30 — RESOLVED**: ความ stale ของทั้ง 4 จุด (HLA §10,
+> `api-spec.md` §6, `database-schema.md` §8, ทุกไฟล์ใน `detailed-design/`) ที่เคยเกิดจากการ
+> re-architecture ไป Express+web-first (Cloud Function → Express route, pairing-code mapping, 8→10
+> operation) ถูก `architecture-builder`/`api-db-spec-builder`/`detailed-design-builder` sync ครบทุกจุด
+> แล้วภายในวันเดียวกัน (2026-08-30) — ดู [index.md](index.md) สำหรับลำดับการ sync แบบละเอียด
+>
+> **สถานะภาคผนวก Stack Mapping ณ 2026-08-31 (หลังรอบนี้)**: การแก้หัวข้อ 3/4/6.1 รอบนี้ (เพิ่ม Gemini,
+> แก้แถว Content Recommendation/Insights & Forecast, เพิ่ม operation `GET /insights/weight-records`)
+> ทำให้ภาคผนวกบางจุด**กลายเป็น stale ใหม่เฉพาะจุดที่เกี่ยวข้อง** — ไม่ใช่ทั้ง 4 จุดเหมือนรอบก่อน:
+> `detailed-design/02-daily-youtube-recommendation.md` และ `04-smart-integrations.md` **sync ล่วงหน้าไป
+> แล้วเมื่อวันเดียวกัน** (ก่อนรอบนี้ — ดู log 2026-08-31) จึงไม่ stale จากรอบนี้ ส่วนที่ยัง stale จริงคือ
+> HLA §10 และ `database-schema.md` §8.2/§8.3 (ดูรายละเอียดในแต่ละบูลเลตด้านล่าง)
 
 - [High Level Architecture](high-level-architecture.md) — ที่มาของ Conceptual Component ทั้ง **8 ตัว**
-  ที่ map ในหัวข้อ 6.1 (รวม Account & Session Management §3.1 และความสัมพันธ์กับ Integration Gateway §3.8
-  ที่เพิ่ม 2026-08-30 สำหรับกลไก pairing-code) — **ภาคผนวก Stack Mapping (§10) ของไฟล์นี้ยัง sync กับ
-  `tech-stack.md` ฉบับ Firebase Cloud Functions เดิมอยู่ — stale แล้วหลังการ reconcile รอบนี้** ควรรัน
-  `architecture-builder` ต่อเพื่อ sync §10 ให้ตรงกับหัวข้อ 6.1 ฉบับ Express.js/Cloud Run นี้ (mechanical
+  ที่ map ในหัวข้อ 6.1 — **ภาคผนวก Stack Mapping (§10) แถว "Content Recommendation" ยัง stale หลังรอบนี้**:
+  ยังอ้าง "ตรรกะ matching/widen-retry" ที่ไม่มีจริง (โค้ดเป็น single-pass) และไม่มี mapping ของ **Gemini**
+  เข้าไปเลย (ต่างจากแถว "Insights & Forecast" ของ HLA §10 ที่ sync ถูกต้องอยู่แล้วว่าเป็น server-side
+  คำนวณจริง) ควรรัน `architecture-builder` ต่อเพื่อ sync §10 ให้ตรงกับหัวข้อ 6.1 ฉบับนี้ (mechanical
   re-sync ไม่ใช่ ask-user ตามกติกาของ `architecture-builder` เอง)
 - [API Spec](api-spec.md) — ที่มาของ operation ทั้งหมดที่ map เป็น Express route/Client SDK ในหัวข้อ
-  6.3/6.3.1 — §3.1 มี **10 operation** แล้ว (2 ใหม่คือ `POST /auth/pairing-codes`/`.../redeem`) แต่
-  **ภาคผนวก Stack Mapping (§6.3.1) ของไฟล์นี้ยังระบุ "8 operation" ของ Firebase Cloud Functions เดิม —
-  stale แล้วทั้งจำนวน operation และชื่อเทคโนโลยี** ควรรัน `api-db-spec-builder` ต่อเพื่อ sync §6 ให้ครบ 10
-  operation ด้วย Express route จริง (รวม mapping ของ `pairing-codes`/`pairing-codes/redeem` ใหม่)
+  6.3/6.3.1 — ภาคผนวก Stack Mapping (§6) sync กับ Express.js/Google Cloud Run ครบแล้ว, operation ใหม่
+  `GET /insights/weight-records` (§3.7, 2026-08-31) เข้าเกณฑ์กติกาทั่วไป "CRUD ตรงไปตรงมา → Express route
+  handler" ที่ §6 ระบุไว้แล้วโดยไม่ต้องแก้เพิ่ม — **ไม่ stale จากรอบนี้**
 - [Database Schema](database-schema.md) — ที่มาของตาราง/logical type ที่ map เป็น Firestore ในหัวข้อ 6.1/
-  6.2 — มีตารางใหม่ `pairing_credential` (§3.17, เพิ่ม 2026-08-30) แล้วแต่ **ภาคผนวก Stack Mapping (§8.2/
-  §8.3) ของไฟล์นี้ยังไม่มีแถว `pairing_credential` เลย และยังอ้าง Cloud Function เดิมในแถวอื่นทั้งหมด —
-  stale ทั้งสองมิติ** ควรรัน `api-db-spec-builder` ต่อเพื่อ sync §8.2/§8.3 ให้ครบ (รวม note เรื่อง
-  delete-on-redeem แทน `is_used` flag ตามหัวข้อ 6.1 ของไฟล์นี้)
-- [Detailed Design](detailed-design/) — ที่มาของ NFR-01/03 client-side computation ที่กำหนดการแบ่งงาน
-  ระหว่าง client กับ server-side validation — `04-smart-integrations.md` เพิ่ง sync เนื้อหาหลัก (sequence
-  diagram ของกลไก pairing-code, precondition ของ INT-2/INT-3) และ `01-onboarding-personalization.md`
-  แก้ actor ให้ระบุ "เว็บไคลเอนต์เท่านั้น" แล้วทั้งคู่ (2026-08-30) แต่**ภาคผนวก Stack Mapping ของทั้ง 4 ไฟล์
-  ยังอ้าง Firebase Cloud Function เดิมทั้งหมด และ `01-onboarding-personalization.md` เองยังนับ 8 operation
-  — stale ทุกไฟล์** ควรรัน `detailed-design-builder` ต่อเพื่อ sync ภาคผนวกของทั้ง 4 ไฟล์ให้ตรงกับหัวข้อ 6.1
-  ฉบับนี้ (โดยเฉพาะ `04-smart-integrations.md` ที่ต้องเพิ่ม mapping ของ sequence diagram กลไก pairing-code
-  ที่เพิ่งเพิ่มเข้าไปด้วย)
+  6.2 — **ภาคผนวก Stack Mapping (§8.2/§8.3) ยัง stale หลังรอบนี้**: 2 ตารางใหม่ `today_recommendation_
+  snapshot`/`today_recommendation_rejected_video` (§3.18/§3.19, เพิ่ม 2026-08-31) ยังไม่มีแถว mapping
+  เลยในภาคผนวก — เพิ่งยืนยันในหัวข้อ 6.1 ของไฟล์นี้ว่า embed รวมเป็น field เดียว
+  `users/{userId}.todaysRecommendation` (`computedFor`/`video`/`rejectedVideoIds`) เข้าเกณฑ์ embed แบบ
+  เดียวกับ `weightForecastSnapshot`/`streakSnapshot` — ควรรัน `api-db-spec-builder` ต่อเพื่อเพิ่ม 2 แถวนี้
+  เข้า §8.2/§8.3
+- [Detailed Design](detailed-design/) — `02-daily-youtube-recommendation.md` และ
+  `04-smart-integrations.md` sync ภาคผนวก Stack Mapping ของตัวเองกับ Gemini/server-side forecast ไปแล้ว
+  ล่วงหน้าเมื่อ 2026-08-31 (ก่อนรอบนี้ของ `tech-stack.md`) — **ไม่ stale จากรอบนี้** ส่วน
+  `01-onboarding-personalization.md` และ `03-planner-logging.md` ไม่มีการเปลี่ยนแปลงที่เกี่ยวข้องกับรอบนี้
 - [Product Backlog](../../01-requirements/backlog.md), [Requirement 4 epic + NFR](../../01-requirements/01-spec/index.md)

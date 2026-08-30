@@ -3,7 +3,36 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 7) — เพิ่ม bullet ใหม่ในหัวข้อ 5 (Query/Access Pattern
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 9) — mechanical re-sync หัวข้อ 8 (ภาคผนวก: Stack Mapping) เท่านั้น
+  ตามที่ `tech-stack-writer` เพิ่งอ่านโค้ดจริง (`apps/web/server/services/videoRecommender.ts`) แล้ว
+  reconcile `tech-stack.md` §6.1 แถว **Content Recommendation** ให้ระบุรายละเอียดการ embed
+  `users/{userId}.todaysRecommendation` (`computedFor`/`video`/`rejectedVideoIds`) ครบแล้ว — เพิ่มแถวใหม่ 2
+  แถวใน **หัวข้อ 8.2** (ตาราง `today_recommendation_snapshot` และ `today_recommendation_rejected_video`
+  หัวข้อ 3.18/3.19 ที่เพิ่มไปแล้วในรอบ 8 แต่ยังไม่มี mapping ในภาคผนวก) และแถวใหม่ 1 แถวใน **หัวข้อ 8.3**
+  (recompute-on-cache-miss ของ `todaysRecommendation` ที่ Express route ต้อง enforce เอง ไม่มี
+  TTL/trigger ให้ใช้ฟรี) — **ไม่แตะหัวข้อ 1-7 เลย** (เนื้อหาหลักถูกต้องอยู่แล้วตั้งแต่รอบ 8) เป็นการมิเรอร์
+  ข้อเท็จจริงที่ตัดสินใจแล้วใน `tech-stack.md` เท่านั้น ไม่ใช่การตัดสินใจใหม่ (ดู
+  [log 2026-08-31](../../05-log/20260831-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 8) — audit พบว่า `apps/web/server/routes/content-recommendation/index.ts`
+  (shipped ใน commit `b463436`) เพิ่ม caching pattern ใหม่: แคชผลการเลือกวิดีโอแนะนำของวันนั้นไว้บน
+  `users/{userId}.todaysRecommendation` (`computedFor`/`video`/`rejectedVideoIds`) เพื่อไม่ต้อง recompute
+  ทุกครั้งที่ `GET`/`swap` recommendation ซ้ำในวันเดียวกัน — ตรวจสอบกับ `high-level-architecture.md` §3.3
+  (Content Recommendation) และ §5 (entity **Video/Workout Content**) แล้วยืนยันว่านี่เป็น byproduct เชิง
+  implementation ของ REC-1/REC-3 ที่ HLA โมเดลไว้แล้ว (recompute-and-cache ผลลัพธ์ของ entity ที่มีอยู่แล้ว)
+  ไม่ใช่แนวคิดธุรกิจใหม่ที่ HLA ไม่ครอบคลุม จึงไม่ต้องส่งกลับ `architecture-builder` — เพิ่มตารางใหม่ 2 ตาราง
+  ตาม pattern เดียวกับ `weight_forecast_snapshot`/`streak_snapshot` (cache แบบ recompute-and-overwrite
+  รายวัน 1:1 กับผู้ใช้ ไม่มีประวัติ): **`today_recommendation_snapshot`** (หัวข้อ 3.18 — เก็บวันที่คำนวณ +
+  วิดีโอที่เลือกล่าสุด โดย derive โครงสร้าง column วิดีโอจาก `session_video` หัวข้อ 3.6) และ
+  **`today_recommendation_rejected_video`** (หัวข้อ 3.19 — รายการวิดีโอที่ถูกปฏิเสธสะสมตลอดวัน แยกจาก
+  `session_rejected_video` หัวข้อ 3.7 อย่างตั้งใจ เพราะ scope คนละระดับ: ตัวใหม่นี้ครอบคลุมทุก recommendation
+  call ก่อนเริ่มเซสชันจริงในวันนั้น ส่วน `session_rejected_video` ผูกกับ 1 เซสชันที่เริ่มไปแล้วเท่านั้น) —
+  เพิ่มความสัมพันธ์ใหม่ 2 เส้นใน ER Diagram (หัวข้อ 2), เพิ่ม bullet ใหม่ในหัวข้อ 4 (Relationships &
+  Constraints) และหัวข้อ 5 (Query/Access Pattern) — **ไม่แตะหัวข้อ 8 (ภาคผนวก: Stack Mapping)** เพราะยังไม่
+  sync กับ `tech-stack.md` เดิมอยู่แล้ว (pre-existing drift ตาม CLAUDE.md § "Docs/code drift") ต้องรอ
+  `tech-stack-builder` เดินกระบวนการก่อน — field name จริงจากโค้ดที่ควรใช้ต่อคือ
+  `todaysRecommendation.computedFor`/`.video`/`.rejectedVideoIds` แบบ embedded บน `users/{userId}` เดียวกับ
+  `weightForecastSnapshot` (ดู [log 2026-08-31](../../05-log/20260831-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 7) — เพิ่ม bullet ใหม่ในหัวข้อ 5 (Query/Access Pattern
   Considerations) ยืนยัน `weight_record` ค้นหาตาม `user_profile_id` + ช่วง `recorded_at` เป็น pattern
   ที่ INT-1 ใช้จริง — คู่กับ operation ใหม่ `GET /insights/weight-records` ที่เพิ่งเพิ่มใน `api-spec.md`
   § 3.7 (ไม่มีทางอ่านประวัติ `weight_record` กลับมาได้เลยมาก่อน) — **ไม่แตะตาราง `weight_record` เอง**
@@ -101,6 +130,8 @@ erDiagram
     USER_PROFILE ||--o| WEIGHT_FORECAST_SNAPSHOT : "has"
     USER_PROFILE ||--o{ WEIGHT_RECORD : "records"
     USER_PROFILE ||--o{ INTEGRATION_CONNECTION : "connects"
+    USER_PROFILE ||--o| TODAY_RECOMMENDATION_SNAPSHOT : "has"
+    TODAY_RECOMMENDATION_SNAPSHOT ||--o{ TODAY_RECOMMENDATION_REJECTED_VIDEO : "rejected today"
 
     USER_ACCOUNT {
         identifier id PK
@@ -227,6 +258,23 @@ erDiagram
         identifier user_account_id FK
         datetime expires_at
         datetime created_at
+    }
+    TODAY_RECOMMENDATION_SNAPSHOT {
+        identifier id PK
+        identifier user_profile_id FK
+        date computed_for_date
+        string external_video_id
+        string title
+        decimal duration_minutes
+        enum activity_type
+        enum intensity
+        decimal estimated_kcal
+        boolean includes_warmup_cooldown
+    }
+    TODAY_RECOMMENDATION_REJECTED_VIDEO {
+        identifier id PK
+        identifier today_recommendation_snapshot_id FK
+        string external_video_id
     }
 ```
 
@@ -467,6 +515,47 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
 > ตารางเชิงตรรกะตามปกติเพื่อความครบถ้วนของ ER model แต่ data retention/cleanup ของแถวที่หมดอายุแล้วแต่ไม่เคย
 > ถูก redeem เลยยังเป็นจุดที่ยังไม่ได้ระบุ (ดูหัวข้อ 6 ข้อ 9-11)
 
+### 3.18 `today_recommendation_snapshot` ← Video/Workout Content (แคชผลการจับคู่วิดีโอของวันนี้, ใหม่ 2026-08-31)
+
+แคชผลลัพธ์ล่าสุดของการจับคู่วิดีโอแนะนำประจำวัน (REC-1) ไว้ต่อผู้ใช้ 1 แถว เพื่อไม่ต้อง recompute ทุกครั้งที่
+เปิด Dashboard ซ้ำในวันเดียวกัน — เป็น cache แบบ recompute-and-overwrite ตาม pattern เดียวกับ
+`streak_snapshot` (หัวข้อ 3.13) และ `weight_forecast_snapshot` (หัวข้อ 3.15) ทุกประการ: เก็บเฉพาะค่าล่าสุด
+ไม่ persist ประวัติการจับคู่เก่า — โครงสร้าง column ของวิดีโอที่เลือก derive มาจาก `session_video` (หัวข้อ
+3.6) เพราะเป็น entity เดียวกัน (Video/Workout Content) เพียงแต่ยังไม่ผูกกับ `workout_session` ที่เริ่มไปแล้ว
+จริง (ผู้ใช้อาจยังไม่กดเริ่มออกกำลังกายเลยก็ได้) — Feature: REC-1, REC-3/REQ-04, REQ-06
+
+| Column | Logical Type | Required | Key | คำอธิบาย |
+|---|---|---|---|---|
+| `id` | `identifier` | ใช่ | PK | — |
+| `user_profile_id` | `identifier` | ใช่ | FK → `user_profile.id`, 1:1 | 1 profile มีแคชการแนะนำวิดีโอวันนี้ได้ 1 แถวเท่านั้น (ถูกทับด้วยค่าใหม่ทุกครั้งที่ recompute) |
+| `computed_for_date` | `date` | ใช่ | — | วันที่ที่ผลการจับคู่นี้ถูกคำนวณไว้ — เทียบกับวันที่ปัจจุบันเพื่อตัดสินว่าต้อง recompute ใหม่หรือใช้ค่าเดิมต่อ (ถ้าไม่ตรงกับวันนี้ ถือว่า stale ต้อง recompute) |
+| `external_video_id` | `string` | ใช่ | — | อ้างอิงวิดีโอจริงจาก YouTube ที่เพิ่งถูกเลือกล่าสุดของวันนี้ (external boundary — ดู HLA หัวข้อ 6.1), เหมือน `session_video.external_video_id` |
+| `title` | `string` | ใช่ | — | ชื่อวิดีโอ — ต้องแสดงบน Dashboard ก่อนผู้ใช้กดเริ่มเซสชันจริง (ไม่มี column นี้ใน `session_video` เพราะที่นั่นแสดงหลังเริ่มเซสชันไปแล้ว ซึ่งไม่จำเป็นต้องมีชื่ออีก) |
+| `duration_minutes` | `decimal` | ใช่ | — | ระยะเวลาตามที่วิดีโอระบุ (ไม่ใช่เวลาที่ใช้จริง) — เหมือน `session_video.duration_minutes` |
+| `activity_type` | `enum` | ใช่ | — | คาร์ดิโอ/เวทเทรนนิ่ง/HIIT — เหมือน `session_video.activity_type` |
+| `intensity` | `enum` | ใช่ | — | ต่ำ/กลาง/สูง — เหมือน `session_video.intensity`, ใช้ตัดสิน `includes_warmup_cooldown` ด้านล่าง |
+| `estimated_kcal` | `decimal` | ใช่ | — | แคลอรี่โดยประมาณที่ REC-1 ใช้จับคู่กับเป้าหมายคงเหลือของวันนี้ — คนละค่ากับ `actual_calorie_burn.calculated_kcal` (หัวข้อ 3.8) ที่คำนวณจริงหลังจบเซสชัน |
+| `includes_warmup_cooldown` | `boolean` | ใช่ | — | true ถ้า REC-4 ตัดสินว่าความเข้มข้นสูงพอต้องประกอบวอร์มอัพ/คูลดาวน์เมื่อผู้ใช้เริ่มเซสชันจริง (ผลลัพธ์จริงจะไปปรากฏเป็นแถว `session_video` เพิ่มเติมตอนนั้น) |
+
+### 3.19 `today_recommendation_rejected_video` ← Video/Workout Content (ส่วนขยาย: รายการที่ถูกปฏิเสธระหว่างวัน, ใหม่ 2026-08-31)
+
+Feature: REC-3/REQ-06 — เก็บแยกจาก `today_recommendation_snapshot` เพื่อ normalize (แทนที่จะเป็น list ใน 1
+column) ตาม pattern เดียวกับที่ `session_rejected_video` (หัวข้อ 3.7) แยกจาก `workout_session` — **แต่เป็น
+entity คนละตัวกับ `session_rejected_video` โดยตั้งใจ ไม่ใช่การรวมกัน**: ตารางนี้ scope อยู่ที่ "1 วัน" และ
+สะสมทุกครั้งที่ผู้ใช้กดเปลี่ยนวิดีโอ (REC-3) ก่อนที่จะกดเริ่มเซสชันจริงด้วยซ้ำ ในขณะที่ `session_rejected_video`
+scope อยู่ที่ "1 เซสชันที่เริ่มไปแล้ว" เท่านั้น — ทั้งสองไม่ทับซ้อนกันในเชิงเวลา (ตารางนี้หยุดสะสมทันทีที่ผู้ใช้
+กดเริ่มเซสชันจริง จากนั้น `session_rejected_video` จึงเริ่มทำหน้าที่ต่อถ้ามีการสลับวิดีโออีกภายในเซสชันนั้น)
+
+| Column | Logical Type | Required | Key | คำอธิบาย |
+|---|---|---|---|---|
+| `id` | `identifier` | ใช่ | PK | — |
+| `today_recommendation_snapshot_id` | `identifier` | ใช่ | FK → `today_recommendation_snapshot.id` | — |
+| `external_video_id` | `string` | ใช่ | — | วิดีโอที่ถูกปฏิเสธระหว่างการเปลี่ยนวิดีโอ (REC-3) ของวันนั้น — ใช้กันไม่ให้การจับคู่ครั้งถัดไปในวันเดียวกันแนะนำซ้ำ |
+
+> หมายเหตุ: ตารางนี้**ไม่มี column `rejected_at`** ต่างจาก `session_rejected_video` — เพราะรายการทั้งหมดถูก
+> reset ทิ้งโดยธรรมชาติทุกครั้งที่ `today_recommendation_snapshot.computed_for_date` เปลี่ยนเป็นวันใหม่ (ทั้ง
+> ตารางลูกนี้จึงมีอายุไม่เกิน 1 วันเสมอ) ลำดับเวลาภายในวันเดียวกันจึงไม่มีความหมายเชิงธุรกิจใดที่ต้องเก็บไว้
+
 ## 4. Relationships & Constraints (เชิงแนวคิด)
 
 - **1 `user_account` → 1 `user_profile`** — `user_profile` ถูกสร้างขึ้น**หลัง** `user_account` เสมอ (หลัง
@@ -474,14 +563,20 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
   ONB-1 ให้เสร็จ จะมีแถว `user_account` อยู่โดยไม่มีแถว `user_profile` คู่กัน (สถานะนี้ปกติ ไม่ใช่ข้อผิดพลาด)
 - **1 `user_profile` → หลาย `workout_session`/`weekly_plan_entry`/`day_status`/`daily_log`/
   `weight_record`/`integration_connection`** — ทุก entity หลักผูกกับผู้ใช้ 1 คนเสมอ
-- **1 `user_profile` → 1 `goal_selection` (ปัจจุบัน), 1 `streak_snapshot`, 1 `weight_forecast_snapshot`**
-  — เก็บเฉพาะค่าล่าสุด/ปัจจุบัน ไม่ persist ประวัติเป้าหมายเก่าหรือ snapshot ย้อนหลัง
+- **1 `user_profile` → 1 `goal_selection` (ปัจจุบัน), 1 `streak_snapshot`, 1 `weight_forecast_snapshot`,
+  1 `today_recommendation_snapshot` (ใหม่ 2026-08-31)** — เก็บเฉพาะค่าล่าสุด/ปัจจุบัน ไม่ persist ประวัติ
+  เป้าหมายเก่าหรือ snapshot ย้อนหลัง
 - **`weekly_plan_entry`, `day_status`, `daily_log` ผูกกันด้วย `(user_profile_id, date)` ร่วมกัน** — ไม่ใช่
   FK ตรงถึงกัน (คนละ entity เชิงแนวคิด) แต่ระบบต้องอ่านทั้ง 3 ตารางประกอบกันเพื่อตัดสินสถานะของ 1 วันจริง
   (เช่น ตัดสิน read-only ของ `weekly_plan_entry`)
 - **1 `user_account` → หลาย `pairing_credential` (ตามเวลา ไม่ใช่พร้อมกันเสมอไป, ใหม่ 2026-08-30)** — แต่ละ
   แถวใช้ได้ครั้งเดียว (single-use) และมีอายุจำกัด 5 นาที เจ้าของกติกานี้คือ **Account & Session Management**
   (HLA หัวข้อ 3.1)
+- **`today_recommendation_rejected_video` กับ `session_rejected_video` เป็นคนละ entity โดยตั้งใจ (ใหม่
+  2026-08-31)** — แม้ทั้งคู่เก็บ "รายการวิดีโอที่ถูกปฏิเสธ" เหมือนกัน แต่ scope ต่างกัน:
+  `today_recommendation_rejected_video` ผูกกับ `today_recommendation_snapshot` (ทั้งวัน ก่อนเริ่มเซสชันจริง)
+  ส่วน `session_rejected_video` ผูกกับ `workout_session` ที่เริ่มไปแล้ว (หัวข้อ 3.7) — ห้าม merge เป็นตาราง
+  เดียวเพราะ lifecycle/FK ต่างกัน (ดูหัวข้อ 3.19 สำหรับเหตุผลเต็ม)
 - **`pairing_credential` ไม่ได้อยู่ใต้ per-user isolation path แบบเดียวกับตารางอื่นทั้งหมดข้างต้น (ใหม่
   2026-08-30)** — ตารางอื่นทุกตัวถูกค้นหา/เข้าถึงผ่าน `user_profile_id` (หรือ `user_account_id` สำหรับ
   `user_account` เอง) เป็นหลักเสมอ แต่ `pairing_credential` ต้องถูกค้นหาด้วย `code` เป็นหลักตอน redeem
@@ -528,6 +623,11 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
   INT-1 ใช้ทั้งดึง "น้ำหนักปัจจุบัน" (ล่าสุดรายการเดียว) และดึงประวัติทั้งหมดสำหรับกราฟแนวโน้มน้ำหนักบนหน้า
   Progress (`api-spec.md` § 3.7 `GET /insights/weight-records`) — ควรออกแบบให้ค้นช่วงเวลา/เรียงตามเวลาได้เร็ว
   เหมือน `daily_log` ข้างต้น
+- **`today_recommendation_snapshot`/`today_recommendation_rejected_video` ไม่มี pattern การ query อิสระ
+  (ใหม่ 2026-08-31)** — อ่าน/เขียนพร้อมกับ 1 คำขอ recommendation ของวันนั้นเสมอ (`GET`/`swap` ใน `api-spec.md`
+  §3.3) เข้าถึงด้วย `user_profile_id` เดียวเท่านั้น (ล่าสุด 1 แถวต่อผู้ใช้) ไม่มีการค้นหาข้ามวัน/ข้ามผู้ใช้เลย
+  — เป็น pattern เดียวกับ `streak_snapshot`/`weight_forecast_snapshot` ข้างต้นที่ recompute แล้ว overwrite
+  ทับของเดิมทุกครั้ง ไม่ persist ประวัติให้ query ย้อนหลัง
 
 ## 6. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
@@ -600,6 +700,15 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
 > Express process แทน Cloud Functions runtime เท่านั้น ทั้งหมดนี้เป็น mechanical re-sync ล้วน (ข้อเท็จจริง
 > ที่ตัดสินใจแล้วใน `tech-stack.md`) ไม่ใช่การตัดสินใจใหม่ในเอกสารนี้
 
+> **อัปเดต 2026-08-31 (รอบ 9 — เพิ่ม mapping ของ `today_recommendation_snapshot`/
+> `today_recommendation_rejected_video`)**: `tech-stack.md` §6.1 แถว **Content Recommendation** เพิ่ง
+> reconcile เสร็จ ระบุรายละเอียด embed ครบแล้วว่าทั้ง 2 ตาราง (หัวข้อ 3.18/3.19 — เพิ่มไปในรอบ 8) รวมกัน
+> เป็น field เดียว **`users/{userId}.todaysRecommendation`** (`computedFor`/`video`/`rejectedVideoIds`)
+> เข้าเกณฑ์ embed แบบเดียวกับ `weightForecastSnapshot`/`streakSnapshot` (bounded, 1:1 กับผู้ใช้ เก็บเฉพาะ
+> ค่าล่าสุด ไม่มี pattern query อิสระ) — เพิ่มแถวใหม่ในหัวข้อ 8.2/8.3 ด้านล่าง mechanical re-sync ล้วน
+> (ข้อเท็จจริงที่ตัดสินใจแล้วใน `tech-stack.md`) ไม่แตะหัวข้อ 8.1 เพราะ logical type ทั้งหมดของ 2 ตารางนี้
+> (`string`/`decimal`/`enum`/`boolean`/`date`/`identifier`) มีอยู่แล้วในตาราง mapping เดิมครบทุกชนิด
+
 ### 8.1 Logical Type → Firestore Field Type
 
 มิเรอร์จาก [tech-stack.md § 6.2](tech-stack.md#62-database-schemamds-logical-type--firestore-field-type)
@@ -644,6 +753,8 @@ route" เพราะ compute layer เปลี่ยน):
 | `weight_forecast_snapshot` | Embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` | 1:1 กับ user เก็บค่าล่าสุดค่าเดียว อ่านพร้อมหน้า Insights |
 | `integration_connection` | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` | ชุดข้อมูลเล็ก bounded ชัดเจน (2 ประเภทตายตัวตาม INT-2/INT-3 ของ backlog ปัจจุบัน) อ่านพร้อมโปรไฟล์เพื่อตัดสิน UI ปุ่มเชื่อมต่อ/ตัดการเชื่อมต่อ |
 | `pairing_credential` (ใหม่ 2026-08-30 รอบ 5) | **Top-level collection `pairingCodes/{code}`** (document ID = ตัวรหัส 6 หลักเอง — **ไม่ใช่** subcollection ใต้ `users/{userId}` เหมือนตารางอื่นทั้งหมดข้างต้น) เก็บ field `uid` (= `user_account_id`), `createdAt`, `expiresAt` เท่านั้น — **ไม่มี field เทียบเท่า `is_used`** | query หลักคือค้นด้วย `code` ก่อนรู้ด้วยซ้ำว่าเป็นของผู้ใช้คนไหน (ตรงกับหัวข้อ 4/5 เดิม) จึงต้องเป็น top-level collection แยก ไม่ใช่ subcollection ของ user ใดคนหนึ่ง; single-use enforce ด้วย **delete-on-redeem** (`ref.delete()` ทันทีหลัง redeem สำเร็จ) แทนการตั้ง boolean flag — ผลคือไม่มี field ให้ persist สถานะ "ใช้แล้ว" เลย เพราะแถวหายไปพร้อมกับการ redeem สำเร็จ (ดูหัวข้อ 8.3 แถวสุดท้ายสำหรับ enforcement เต็มรูปแบบ) |
+| `today_recommendation_snapshot` (ใหม่ 2026-08-31 รอบ 8, mapping เพิ่ม 2026-08-31 รอบ 9) | Embedded map field **`todaysRecommendation`** ภายใน `users/{userId}` เดียวกับ `streakSnapshot`/`weightForecastSnapshot` — sub-field `computedFor` (ISO date ที่คำนวณล่าสุด, เทียบกับ `computed_for_date`) และ `video` (map ผลลัพธ์ที่เลือก: `externalVideoId`/`title`/`durationMinutes`/`activityType`/`intensity`/`estimatedKcal`/`includesWarmupCooldown`) | 1:1 กับ user เก็บเฉพาะค่าล่าสุด ไม่ persist ประวัติการจับคู่เก่า (เหมือน `streak_snapshot`/`weight_forecast_snapshot` ทุกประการ) และไม่มี pattern query อิสระแยกจากโปรไฟล์ (ดูหัวข้อ 5 เดิม) จึง embed แทนที่จะเป็น top-level/subcollection ตาม `tech-stack.md` §6.1 แถว Content Recommendation |
+| `today_recommendation_rejected_video` (ใหม่ 2026-08-31 รอบ 8, mapping เพิ่ม 2026-08-31 รอบ 9) | Embedded array field **`rejectedVideoIds: string[]`** ภายใน field `todaysRecommendation` เดียวกันข้างต้น (เก็บเฉพาะ `externalVideoId` — **ไม่มี field เทียบเท่า `rejected_at`** ตรงกับที่หัวข้อ 3.19 ระบุไว้แล้วว่าตารางนี้ไม่มี column เวลา) | สะสมทุกครั้งที่ REC-3 ปฏิเสธวิดีโอก่อนเริ่มเซสชันจริงของวันนั้น แต่ bounded ต่อวัน (reset ทันทีที่ `computedFor` เปลี่ยนเป็นวันใหม่ ตามหัวข้อ 3.19) และไม่มี pattern query อิสระ — embed รวมกับ field เดียวกับ snapshot ข้างต้นแทนที่จะเป็น subcollection แยก (ต่างจาก `session_rejected_video` ที่ embed เป็น array ของตัวเองในอีก parent document เพราะ scope คนละระดับ — ดูหัวข้อ 4) |
 
 ⚠️ ตารางนี้เป็นการออกแบบที่ละเอียดกว่า `tech-stack.md` §6.1 ปัจจุบัน (ซึ่งระบุแค่ชื่อ collection ระดับ
 component คร่าวๆ) — ยึดชื่อ collection ที่ `tech-stack.md` §6.1 ตั้งไว้แล้วเป็นหลัก (`workoutSessions`
@@ -658,6 +769,10 @@ component คร่าวๆ) — ยึดชื่อ collection ที่ `te
 > route handler"** (compute layer เปลี่ยนจาก Firebase Cloud Functions ไป Express.js บน Google Cloud Run
 > ตั้งแต่ 2026-08-29 ในโค้ดจริง — ดู `tech-stack.md` §6) และเพิ่มแถวใหม่สำหรับการ enforce single-use ของ
 > `pairing_credential` (แถวสุดท้าย) ที่ยังไม่เคยมีมาก่อน
+
+> **อัปเดต 2026-08-31 (รอบ 9)**: เพิ่มแถวใหม่สำหรับ recompute-on-cache-miss ของ `todaysRecommendation`
+> (`today_recommendation_snapshot`/`today_recommendation_rejected_video` หัวข้อ 3.18/3.19) ที่ยังไม่เคยมี
+> mapping มาก่อนเลย — mechanical re-sync ตาม `tech-stack.md` §6.1 แถว Content Recommendation ฉบับล่าสุด
 
 Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่างจาก relational DB ที่อย่างน้อยยังมี FK บังคับการมีอยู่
 ของ parent row ให้ฟรี ตารางด้านล่างขยายจากหัวข้อ 4 (Relationships & Constraints) เดิม โดยระบุว่ากติกาแต่ละ
@@ -675,6 +790,7 @@ Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่า�
 | **(ใหม่ — เกิดจาก Firestore ไม่มี FK เลย ไม่ใช่แค่ constraint ทางธุรกิจ)** Referential existence validation: ทุก field ที่เคยเป็น FK ในหัวข้อ 3 (เช่น `workout_session_id` ที่ wearable reading เดิมอ้างถึง) ต้องมีการตรวจสอบว่า document ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกัน ก่อนเขียนเสมอ | ส่วนใหญ่ถูกกำจัดไปแล้วด้วยการ embed (8.2) — ที่เหลือคือทุกครั้งที่ client ส่ง id ของ document อื่นมาใน request (เช่น `sessionId` ใน `POST /integrations/wearable/readings`) | Helper กลาง `assertDocExists()`/`NotFoundError` (`apps/web/server/assertDocExists.ts`) ที่ทุก Express route ที่รับ id อ้างอิงจาก client เรียกใช้ซ้ำ (แทนที่แนวคิดเดิมที่ให้แต่ละ Cloud Function `get()` เองแยกกัน — ดู tech-stack.md §6.1 สำหรับรายละเอียด) | เจ้าของแต่ละ Express route ตาม operation นั้น (แปรผันตาม component) |
 | **(ใหม่ 2026-08-29)** Signup-method-conditional required fields (`user_account.credential_reference`/`external_provider_reference` ต้องกรอกตาม `signup_method`) | ไม่มี Firestore representation เลย (resolve แล้วในหัวข้อ 8.2 — `user_account` ไม่มี document แยก) — Firebase Authentication เองบังคับความสัมพันธ์นี้โดยธรรมชาติของแต่ละ client SDK call: `createUserWithEmailAndPassword`/`signInWithEmailAndPassword` เท่านั้นที่ต้องมีรหัสผ่าน (→ มี `providerData` แบบ `password`) ส่วน `signInWithCredential` (Google/Apple) กำหนด `providerData[0].uid` ให้อัตโนมัติเสมอ ไม่มีทางเรียกผิดชนิดได้จาก client SDK — ไม่มี CHECK constraint แบบ schema-level ให้ใช้ฟรีเหมือนเดิม แต่ก็ไม่ต้องมี Express route มาบังคับเพิ่มเช่นกัน | ไม่ต้องมี Express route (client SDK แต่ละตัวบังคับเอง — ดู `tech-stack.md` §6.3.1) — ยกเว้น `POST /api/auth/forgot-password` ที่มี Express route แยกต่างหาก (`apps/web/server/routes/account-session/forgotPassword.ts`) เพื่อ enforce เงื่อนไขอื่น (ดูหัวข้อ 3.1/`api-spec.md` §3.1) | Account & Session Management |
 | **(ใหม่ 2026-08-30 รอบ 5)** Pairing code single-use + short-lived (`pairing_credential` ต้องถูกลบทิ้งทันทีหลัง redeem สำเร็จ, ปฏิเสธการแลกถ้า `expires_at` ผ่านไปแล้ว) | Top-level document `pairingCodes/{code}` (ดูหัวข้อ 8.2) — Firestore ไม่มี TTL/CHECK constraint อัตโนมัติที่ผูกกับ business logic นี้ | Express route `POST /api/pairing/redeem` (`apps/web/server/routes/pairing/index.ts`, **ไม่มี** `authenticate` middleware) — อ่าน document, เทียบ `expiresAt < now()` แล้วคืน `410 Gone` ถ้าไม่พบ/หมดอายุ, ถ้าสำเร็จเรียก `ref.delete()` ก่อนออก custom token เสมอ (delete-on-redeem แทน `is_used` flag — ดูหัวข้อ 3.17/4 ข้อ 8) | Account & Session Management |
+| **(ใหม่ 2026-08-31 รอบ 9)** Today's recommendation cache ต้อง recompute เมื่อ `computed_for_date` ไม่ตรงกับวันนี้ หรือถูกเรียกจาก swap (REC-3) (`today_recommendation_snapshot`/`today_recommendation_rejected_video`, 1:1 ต่อผู้ใช้, overwrite ทับของเดิมทุกครั้ง) | Embedded map field `todaysRecommendation` ภายใน `users/{userId}` (ดูหัวข้อ 8.2) — ไม่มี TTL/trigger อัตโนมัติที่เปรียบเทียบวันที่ให้ฟรี | Express route `GET /api/workouts/today/recommendation` (`apps/web/server/routes/content-recommendation/index.ts`) เปรียบเทียบ `todaysRecommendation.computedFor` กับวันนี้เอง ก่อนตัดสินใจ recompute (เรียก YouTube Data API v3 + Gemini ใหม่) หรือคืนค่าที่แคชไว้; `POST /api/workouts/today/recommendation/swap` บังคับ recompute เสมอ โดยส่ง `rejectedVideoIds` สะสม + วิดีโอปัจจุบันเข้า exclude list ก่อนค้นหาใหม่ (ดูหัวข้อ 3.18/3.19/5) | Content Recommendation |
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, REST
 convention → Express.js routing บน Google Cloud Run) และเหตุผลการเลือก stack

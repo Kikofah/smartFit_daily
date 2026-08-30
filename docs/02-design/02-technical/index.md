@@ -40,8 +40,10 @@ Questionnaire) ก่อนแนะนำเสมอ — ต้องมีค
 Vite** (`apps/web/client/`, เว็บ, ครอบคลุม core loop ทั้งหมด) + **React Native + Expo** (`apps/mobile/`,
 ตัดขอบเขตเหลือเฉพาะ INT-2/INT-3) เป็น client, **Express.js (TypeScript)** บน **Google Cloud Run** เป็น
 backend/hosting (แทนที่ Firebase Cloud Functions + Firebase Hosting เดิม) กับ **Cloud Firestore +
-Firebase Authentication** (ไม่เปลี่ยนจากการตัดสินใจ 2026-08-29) เป็น database/auth — ดูรายละเอียดการ
-reconcile ล่าสุดที่ `tech-stack.md` §2/§5/§6
+Firebase Authentication** (ไม่เปลี่ยนจากการตัดสินใจ 2026-08-29) เป็น database/auth และ **Google Gemini**
+(`@google/genai`, model `gemini-3.6-flash`, เพิ่ม 2026-08-31) เป็นขั้นตอนเสริมของ YouTube Data API v3
+สำหรับ ranking/ประเมินความเข้มข้นวิดีโอใน Content Recommendation — ดูรายละเอียดการ reconcile ล่าสุดที่
+`tech-stack.md` §2/§5/§6
 
 **ภาคผนวก: Stack Mapping** (เพิ่ม 2026-08-28): `high-level-architecture.md`, `api-spec.md`,
 `database-schema.md`, และแต่ละไฟล์ใน `detailed-design/` ทุกไฟล์มี section ท้ายไฟล์ชื่อ "ภาคผนวก: Stack
@@ -263,3 +265,50 @@ formal" ในทั้งสองไฟล์ — citation-only ไม่ม�
 เนื้อหา component/data flow/entity เดิม (citation-only ล้วนๆ) — ปิดเชน citation fix ของ INT-0/REQ-18 ครบ
 ทุกไฟล์ (HLA, API Spec, Database Schema, Detailed Design) — ดู log
 [2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-31 (`detailed-design-builder`)**: audit เทียบ `detailed-design/02-daily-youtube-
+recommendation.md`/`04-smart-integrations.md` กับโค้ดจริงที่เพิ่ง ship (commit `b463436`) พบเนื้อหาหลักขัด
+กับ implementation จริง 2 จุด: (1) **REC-1** ไม่มี tolerance ตัวเลข/widen-retry loop จริง — เป็น
+single-pass (ค้นหา YouTube ครั้งเดียว → กรอง embed ไม่ได้ → AI ranking ครั้งเดียวเลือกวิดีโอที่ดีที่สุดแบบ
+best-effort) แก้ sequence diagram/algorithm ของ REC-1 (และ REC-3 ที่อ้างถึง) ให้ตรง พร้อม resolve จุดที่
+ยังไม่ได้ระบุเดิมเรื่อง tolerance (2) **INT-1** สูตร step 4 ของอัลกอริทึม forecast เขียนผิดเป็นผลต่างจาก
+เป้าหมาย (ที่ถูกต้องคือค่าเฉลี่ยแคลอรี่ที่เผาผลาญจริงต่อวันตรงๆ) และ "Execution ของ algorithm" อ้างผิดว่า
+คำนวณฝั่ง client ทั้งที่ server คำนวณทั้งหมดจริง — แก้ทั้งสองจุด พร้อมแก้ภาคผนวก Stack Mapping ของทั้งสองไฟล์
+(แถว Content Recommendation/Insights & Forecast ที่ยังเขียนว่าเป็น stub ทั้งที่ ship จริงแล้ว) — **พบว่า
+`tech-stack.md` §6.1 (แถว Content Recommendation, Insights & Forecast) และ §4 (อ้าง forecast/INT-1 เป็น
+client-side ผิด) ก็ล้าหลังจากจุดเดียวกันเช่นกัน — ต้องรัน `tech-stack-builder` ต่อเพื่อ sync** — ดู log
+[2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`tech-stack-builder`)**: Tech Stack Consistency Audit + Reconciliation ตามที่
+`detailed-design-builder` ข้างบน flag ไว้ — formalize **Google Gemini** (`@google/genai` SDK, model
+`gemini-3.6-flash`) เป็นเทคโนโลยีจริงที่เลือกแล้วสำหรับขั้นตอน ranking/ประเมินความเข้มข้นของวิดีโอใน Content
+Recommendation (เสริมต่อจาก YouTube Data API v3 search ไม่ใช่แทนที่ — ผู้ใช้ยืนยันว่าเป็นการบันทึกการ
+ตัดสินใจที่ ship ไปแล้วจริง ไม่ใช่จุดตัดสินใจใหม่) แก้แถว Content Recommendation/Insights & Forecast ในหัวข้อ
+6.1 ให้ตรงกับ implementation จริง (ไม่ใช่ stub อีกต่อไป) พร้อมเพิ่ม operation ใหม่
+`GET /api/insights/weight-records` เข้าแถว Insights & Forecast และตัด forecast (INT-1) ออกจากรายการ
+"Client-side calculation ตาม NFR-01/NFR-03" ในหัวข้อ 4 — **ผลกระทบต่อเอกสารอื่น**: HLA §10 (แถว Content
+Recommendation ยังอ้าง widen-retry ที่ไม่มีจริงและไม่มี mapping ของ Gemini) และ `database-schema.md`
+§8.2/§8.3 (ยังไม่มีแถว `today_recommendation_snapshot`/`today_recommendation_rejected_video`) stale ต่อ —
+ควรรัน `architecture-builder`/`api-db-spec-builder` ต่อ — ดู log
+[2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`architecture-builder`, Stack Mapping re-sync)**: sync แถว "Content Recommendation"
+ใน **HLA §10 (ภาคผนวก: Stack Mapping)** ให้ตรงกับ `tech-stack.md` §6.1 ฉบับล่าสุดที่ `tech-stack-builder`
+เพิ่ง reconcile ข้างบน — ลบข้อความ "ตรรกะ matching/widen-retry" ที่ไม่มีจริงในโค้ด (single-pass ล้วน ไม่มี
+tolerance ตัวเลข/widen-retry loop) และเพิ่ม mapping ของ **Google Gemini** (`@google/genai`, model
+`gemini-3.6-flash`) เป็นขั้นตอน ranking ต่อจาก YouTube Data API v3 search พร้อม cache field
+`users/{userId}.todaysRecommendation` ที่ map กับ `database-schema.md` §3.18/§3.19
+(`today_recommendation_snapshot`/`today_recommendation_rejected_video`) — mechanical re-sync ล้วนๆ ไม่แตะ
+เนื้อหาหลัก §1-9 (REC-1 ถูกบรรยายเชิงแนวคิดไว้แล้วโดยไม่อ้างรายละเอียด widen-retry ระดับ implementation นี้
+อยู่แล้ว) — **ยังเหลือ**: `database-schema.md` §8.2/§8.3 ยังไม่มีแถว
+`today_recommendation_snapshot`/`today_recommendation_rejected_video` — ควรรัน `api-db-spec-builder` ต่อ —
+ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`api-db-spec-builder`, Stack Mapping re-sync, ปิดท้ายเชน)**: sync
+**`database-schema.md` §8.2/§8.3** ให้ตรงกับ `tech-stack.md` §6.1 แถว Content Recommendation ฉบับล่าสุดที่
+`tech-stack-builder`/`architecture-builder` เพิ่ง reconcile ข้างบน — เพิ่มแถวใหม่ 2 แถวใน §8.2 สำหรับตาราง
+`today_recommendation_snapshot`/`today_recommendation_rejected_video` (หัวข้อ 3.18/3.19) ระบุว่าทั้งคู่ embed
+รวมกันเป็น field เดียว `users/{userId}.todaysRecommendation` (`computedFor`/`video`/`rejectedVideoIds`)
+เข้าเกณฑ์เดียวกับ `weightForecastSnapshot`/`streakSnapshot` และเพิ่มแถวใหม่ใน §8.3 สำหรับ
+recompute-on-cache-miss (Express route `GET /api/workouts/today/recommendation` เทียบ `computedFor` เอง,
+`POST .../swap` บังคับ recompute เสมอ) — mechanical re-sync ล้วนๆ ไม่แตะเนื้อหาหลักหัวข้อ 1-7 (ถูกต้องอยู่
+แล้วจากรอบ 8) — **ตอนนี้ภาคผนวก Stack Mapping ทั้ง 4 จุด (HLA §10, `api-spec.md` §6, `database-schema.md`
+§8, `detailed-design/02-daily-youtube-recommendation.md`/`04-smart-integrations.md`) sync กับ
+`tech-stack.md` ฉบับ Gemini+weight-records ครบทุกไฟล์แล้ว ไม่มีจุดใดค้าง** — ดู log
+[2026-08-31](../../05-log/20260831-log.md)

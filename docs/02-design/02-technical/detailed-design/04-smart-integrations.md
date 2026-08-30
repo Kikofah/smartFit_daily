@@ -3,7 +3,27 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 3) — Citation/grouping-only fix: `feature-journey-writer` เพิ่งตั้งกลไก
+- **อัปเดตล่าสุด:** 2026-08-31 — audit เทียบกับโค้ดจริงที่เพิ่ง ship (commit `b463436`,
+  `apps/web/server/routes/insights-forecast/index.ts`) พบ 2 จุดที่ INT-1 เนื้อหาหลักขัดกับ implementation
+  จริง: (1) **step 4 ของอัลกอริทึม "คำนวณวันพยากรณ์ถึงเป้าหมายน้ำหนัก" เขียนสูตรผิด** — เอกสารเดิมเขียนว่า
+  "อัตราขาดดุลเฉลี่ยต่อวัน = ผลรวมส่วนต่าง (เป้าหมาย − แคลอรี่จริง) หารด้วยจำนวนวัน" ซึ่งกลับทิศความสัมพันธ์
+  (ออกกำลังกายน้อยลงจะพยากรณ์ว่าน้ำหนักเปลี่ยนเร็วขึ้น ผิดหลักการ) — สูตรที่ถูกต้องและ ship จริง (ยืนยันจาก
+  code comment ในไฟล์ข้างต้น ซึ่งระบุว่าผู้ใช้ยืนยันการแก้นี้แล้วเมื่อ 2026-08-31 ในอีก session หนึ่ง) คือ
+  **ค่าเฉลี่ยของแคลอรี่ที่เผาผลาญจริงต่อวัน (accumulatedKcal ต่อวัน)** ตรงๆ ไม่ใช่ผลต่างจากเป้าหมาย — เพราะแอปนี้
+  ติดตามเฉพาะแคลอรี่ที่เผาผลาญจากการออกกำลังกาย ไม่มีการบันทึกแคลอรี่จากอาหาร แก้ทั้ง step 4 ของอัลกอริทึมและ
+  label ที่เกี่ยวข้องใน sequence diagram ให้ตรงกัน (2) **หัวข้อ "Execution ของ algorithm" และแถว "Insights &
+  Forecast" ในภาคผนวก Stack Mapping อ้างผิดว่า INT-1 คำนวณฝั่ง client แล้วส่งผลลัพธ์มาบันทึก** — จริงๆ
+  `GET /api/insights/forecast` เป็น bodyless GET request ที่ **server คำนวณทั้งหมดเอง** (อ่านเป้าหมายน้ำหนัก/
+  ประวัติ log/น้ำหนักล่าสุด คำนวณอัตราขาดดุล-อัตราเปลี่ยนแปลงน้ำหนัก-วันที่คาดถึงเป้าหมาย แล้วบันทึกผลเอง)
+  แก้ข้อความให้ตรงกับ execution จริงฝั่ง server (การอ้าง NFR-01/03 สำหรับ INT-1 เป็นการเข้าใจเกินจริงจากตอนที่
+  เขียน section นี้ครั้งแรกโดย generalize จาก REC-2's MET calculation ซึ่งมีเหตุผล latency ระหว่างออกกำลังกาย
+  จริง — INT-1 เป็นการพยากรณ์ "อีกกี่วันถึงเป้าหมาย" ที่ไม่มีความจำเป็นด้าน sub-250ms feedback แบบเดียวกัน) —
+  แก้แถว "Insights & Forecast" ที่ระบุว่า "ปัจจุบันคืนค่า snapshot ที่มีอยู่ตรงๆ รอ implement การคำนวณจริง" ซึ่ง
+  ล้าหลังไปแล้วเช่นกัน (implement จริงและ ship แล้วเต็มรูปแบบ) — ตรวจ `MIN_LOG_DAYS_FOR_FORECAST = 3` ในโค้ด
+  แล้วยืนยันว่า**ยังไม่ใช่ decision ที่ resolve เป็นทางการ** (code comment ระบุว่าเป็นค่า placeholder เชิง
+  ปฏิบัติ) — คงจุดที่ยังไม่ได้ระบุ #1 (จำนวนวัน log ขั้นต่ำ) ไว้เหมือนเดิม เพิ่มหมายเหตุอ้างอิงค่า placeholder
+  นี้ประกอบ — ไม่พบ drift อื่นใน INT-0/2/3/State Diagram (ดู [log 2026-08-31](../../../05-log/20260831-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 3) — Citation/grouping-only fix: `feature-journey-writer` เพิ่งตั้งกลไก
   pairing-code เป็นบทบัญญัติทางการ **REQ-18** พร้อม Feature ID ของตัวเอง **INT-0** (แทนที่การอ้างเป็น
   implicit precondition ของ REQ-12/REQ-13 เดิม) — แก้หัวข้อ "Identity Handoff — Pairing-Code Mechanism"
   ให้เป็นหัวข้อกลุ่ม Feature ID **`## INT-0 — ... (REQ-18)`** ตรงรูปแบบเดียวกับ INT-1/2/3 อื่น และแก้ list
@@ -88,8 +108,9 @@ sequenceDiagram
         alt log สะสมไม่พอ (จำนวนขั้นต่ำยังไม่ระบุ)
             IF-->>U: 422 Unprocessable (ต้องสะสมข้อมูลเพิ่ม)
         else log สะสมเพียงพอ
-            IF->>LS: ดึงประวัติ daily_log จริง
-            IF->>IF: คำนวณอัตราขาดดุลเฉลี่ยต่อวัน
+            IF->>LS: ดึงประวัติ daily_log จริง (แคลอรี่ที่เผาผลาญจริงต่อวัน)
+            IF->>IF: คำนวณค่าเฉลี่ยแคลอรี่ที่เผาผลาญจริงต่อวัน (average daily deficit — ค่าเฉลี่ยตรงๆ
+                ไม่ใช่ผลต่างจากเป้าหมาย เพราะแอปติดตามเฉพาะแคลอรี่เผาผลาญ ไม่มีการบันทึกแคลอรี่จากอาหาร)
             IF->>IF: แปลงเป็นอัตราเปลี่ยนแปลงน้ำหนัก (7,700 kcal ประมาณ 1 กก.)
             IF->>IF: คำนวณวันที่คาดถึงเป้าหมาย
             IF->>IF: บันทึกลง weight_forecast_snapshot
@@ -100,11 +121,19 @@ sequenceDiagram
 
 ### อัลกอริทึม — คำนวณวันพยากรณ์ถึงเป้าหมายน้ำหนัก
 
+> **แก้ไขแล้ว (2026-08-31)**: step 4 เดิมเขียนสูตรผิดเป็นผลต่างจากเป้าหมาย (เป้าหมาย − แคลอรี่จริง) ซึ่งกลับ
+> ทิศความสัมพันธ์ — สูตรที่ถูกต้องและ ship จริงคือ**ค่าเฉลี่ยของแคลอรี่ที่เผาผลาญจริงต่อวันตรงๆ** (ไม่มีการลบ
+> จากเป้าหมายใดๆ) เพราะแอปนี้ติดตามเฉพาะแคลอรี่ที่เผาผลาญจากการออกกำลังกาย ไม่มีการบันทึกแคลอรี่จากอาหาร
+> "ขาดดุลจริงต่อวัน" จึงเท่ากับแคลอรี่ที่เผาผลาญได้ในวันนั้นตรงๆ (ยืนยันจาก code comment ใน
+> `apps/web/server/routes/insights-forecast/index.ts` ซึ่งระบุว่าผู้ใช้ยืนยันการแก้นี้แล้วเมื่อ 2026-08-31)
+
 1. ตรวจสอบว่ามีน้ำหนักเป้าหมาย (`goal_selection.target_weight_kg`) หรือไม่ → ถ้าไม่มี คืน error (`422`)
 2. ตรวจสอบว่ามีประวัติ `daily_log` สะสมเพียงพอหรือไม่ (จำนวนวันขั้นต่ำยังไม่ resolve เป็นทางการ — ดู
    "จุดที่ยังไม่ได้ระบุ") → ถ้าไม่พอ คืน error (`422`)
-3. ดึงประวัติแคลอรี่ขาดดุล/เกินดุลจริงจาก `daily_log` (ไม่ใช่ค่าประมาณตอน onboarding) ในช่วงเวลาล่าสุด
-4. คำนวณอัตราขาดดุลเฉลี่ยต่อวัน = ผลรวมส่วนต่าง (เป้าหมาย − แคลอรี่จริง) หารด้วยจำนวนวันที่มีข้อมูล
+3. ดึงประวัติแคลอรี่ที่เผาผลาญจริงต่อวันจาก `daily_log` (accumulatedKcal ของแต่ละวันที่มีการบันทึก — ไม่ใช่
+   ค่าประมาณตอน onboarding และไม่ใช่ส่วนต่างจากเป้าหมาย)
+4. คำนวณอัตราขาดดุลเฉลี่ยต่อวัน = **ค่าเฉลี่ยของแคลอรี่ที่เผาผลาญจริงต่อวัน** (ผลรวมแคลอรี่ที่เผาผลาญจริงของ
+   ทุกวันที่มีข้อมูล หารด้วยจำนวนวันที่มีข้อมูล) — ไม่ใช่ผลต่างจากเป้าหมายรายวัน
 5. แปลงอัตราขาดดุลเฉลี่ยเป็นอัตราการเปลี่ยนแปลงน้ำหนักโดยประมาณ โดยใช้ค่าคงที่ 7,700 kcal ≈ 1 กก. ไขมัน
    (ตาม decision ที่ resolve แล้วใน ONB-3/REQ-02)
 6. คำนวณวันที่คาดว่าจะถึงเป้าหมาย จากน้ำหนักปัจจุบัน (ล่าสุดจาก `weight_record`), น้ำหนักเป้าหมาย, และ
@@ -224,7 +253,11 @@ sequenceDiagram
 
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
-1. **INT-1**: จำนวนวัน log ขั้นต่ำก่อนพยากรณ์ได้ยังไม่ระบุ
+1. **INT-1**: จำนวนวัน log ขั้นต่ำก่อนพยากรณ์ได้ยังไม่ระบุเป็นทางการ — **ยังเป็น open point เหมือนเดิม**
+   (โค้ดจริง `apps/web/server/routes/insights-forecast/index.ts` ปัจจุบันใช้ค่า placeholder
+   `MIN_LOG_DAYS_FOR_FORECAST = 3` แต่ code comment ระบุชัดว่า "picked pragmatically until [this]
+   is formally decided" — คือเลือกไว้ใช้งานชั่วคราวเท่านั้น ไม่ใช่ decision ที่ resolve แล้ว ห้ามถือเป็นคำตอบ
+   สุดท้าย)
 2. **INT-2**: ลำดับความสำคัญเมื่อชั่งน้ำหนักหลายครั้งในวันเดียวกัน (ค่าล่าสุด vs ค่าเฉลี่ย) ยังไม่ระบุ
 3. **INT-3**: การ reconcile เมื่อค่าจาก wearable ต่างจากค่าประมาณ MET มากยังไม่ระบุ (ปัจจุบัน wearable
    ชนะเสมอเมื่อมีข้อมูล ไม่มีการเทียบความสมเหตุสมผล)
@@ -267,21 +300,33 @@ sequenceDiagram
 > React+Vite web client** เพราะ INT-1 ย้ายเข้า `apps/web` แล้วหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ
 > INT-2/INT-3 (ตาม `tech-stack.md` §7 ข้อ 5)
 
+> **อัปเดต 2026-08-31**: แก้ 2 จุดในภาคผนวกนี้ตามโค้ดจริง (commit `b463436`): (1) แถว **Insights & Forecast**
+> เดิมระบุว่า "ปัจจุบันคืนค่า snapshot ที่มีอยู่ตรงๆ รอ implement การคำนวณจริง" ซึ่งล้าหลังไปแล้ว — ตอนนี้
+> คำนวณจริงและ ship แล้วเต็มรูปแบบ (2) **"Execution ของ algorithm" เดิมอ้างว่า INT-1 คำนวณฝั่ง client** ตาม
+> NFR-01/03 ซึ่งเป็นข้อผิดพลาดจากการ generalize มาจาก REC-2 — แก้เป็นข้อเท็จจริงว่า INT-1 คำนวณทั้งหมดฝั่ง
+> server (ดูย่อหน้า "Execution ของ algorithm" ด้านล่าง) — ทั้งสองจุดเป็นการแก้ให้ตรงกับพฤติกรรมที่ ship แล้ว
+> ไม่ใช่การตัดสินใจ business rule ใหม่ — `tech-stack.md` §6.1 เอง (ไฟล์ต้นทางของภาคผนวกนี้) ยังใช้ถ้อยคำ
+> "Insights & Forecast" แบบเดิมที่ล้าหลังเช่นกัน แนะนำให้รัน `tech-stack-builder` เพื่ออัปเดตแหล่งที่มาจริงด้วย
+> (ดู [log 2026-08-31](../../../05-log/20260831-log.md))
+
 มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
 (อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
 | Account & Session Management (เฉพาะกลไก pairing-code — ดู `01-onboarding-personalization.md` ภาคผนวกสำหรับ ONB-0 อีก 8 operation) | Top-level collection `pairingCodes/{code}` (document ID = รหัส 6 หลักเอง) เก็บ `uid`/`createdAt`/`expiresAt` — mint ผ่าน **Express route** `POST /api/pairing/create-code` (`apps/web/server/routes/pairing/index.ts`, ต้องผ่าน `authenticate` middleware) เรียกจากหน้าโปรไฟล์ของเว็บไคลเอนต์; redeem ผ่าน **Express route** `POST /api/pairing/redeem` (**ข้อยกเว้นเดียว** ไม่มี `authenticate` middleware) อ่าน document แล้วเรียก `auth.createCustomToken(uid)` — single-use enforce ด้วย `ref.delete()` ทันทีหลัง redeem สำเร็จ (ไม่ใช่ set `is_used` flag) ทำให้ error case ทั้งหมด (ไม่พบ/หมดอายุ/ถูกใช้แล้ว) รวมเป็น `410 Gone` เดียวที่ระดับ Express route |
-| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast` (แทนที่ Cloud Function `forecast` เดิม — `apps/web/server/routes/insights-forecast/index.ts`, ปัจจุบันคืนค่า snapshot ที่มีอยู่ตรงๆ รอ implement การคำนวณจริงจากประวัติ `dailyLogs`/`weightRecords`) |
+| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast` (แทนที่ Cloud Function `forecast` เดิม — `apps/web/server/routes/insights-forecast/index.ts`) **คำนวณผลพยากรณ์ทั้งหมดเองฝั่ง server** จากประวัติ `dailyLogs`/`weightRecords` จริง (ไม่ใช่แค่คืนค่า snapshot ที่มีอยู่ตรงๆ อีกต่อไป — ยืนยันจากโค้ดจริง 2026-08-31) แล้วบันทึกผลลง `weightForecastSnapshot` เอง |
 | Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` — **Express route** `POST /api/integrations/smart-scale/connect`, `DELETE /api/integrations/smart-scale`, `POST /api/integrations/smart-scale/sync`, `POST /api/integrations/wearable/connect`, `DELETE /api/integrations/wearable`, `POST /api/integrations/wearable/readings` (แทนที่ Cloud Function `integrations` เดิม — `apps/web/server/routes/integration-gateway/index.ts`) + native module ฝั่ง `apps/mobile` เท่านั้น (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — รับ identity handoff จากกลไก pairing-code (แถวด้านบน) ก่อนเริ่มกระบวนการจับคู่จริงตาม HLA §3.8/§4.5 |
 
-**Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
-(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Forecast (INT-1)** เกิดขึ้นฝั่ง **React+Vite web
-client โดยตรง** (`apps/web/client` — เปลี่ยนจาก React Native client เดิม เพราะ INT-1 ย้ายเข้า `apps/web`
-ทั้งหมดหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ INT-2/INT-3, ดู `tech-stack.md` §7 ข้อ 5) เพื่อไม่มี network
-latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Express route `GET /api/insights/forecast`** (แทนที่
-Firebase Cloud Function `forecast` เดิม) เพื่อ validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server — ส่วน
+**Execution ของ algorithm**: **Forecast (INT-1)** คำนวณทั้งหมด**ฝั่ง server** ผ่าน **Express route
+`GET /api/insights/forecast`** (แทนที่ Firebase Cloud Function `forecast` เดิม —
+`apps/web/server/routes/insights-forecast/index.ts`) — เป็น bodyless `GET` request ที่ server อ่าน
+เป้าหมายน้ำหนัก ประวัติ `daily_log`, และน้ำหนักล่าสุด แล้วคำนวณอัตราขาดดุลเฉลี่ย/อัตราเปลี่ยนแปลงน้ำหนัก/
+วันที่คาดถึงเป้าหมายเองทั้งหมด ไม่มีขั้นตอนใดถูก precompute ฝั่ง client แล้วส่งขึ้นมาบันทึกแบบที่เคยเขียนไว้
+(**แก้ไขแล้ว 2026-08-31** — ข้อความเดิมอ้าง [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
+(NFR-01/NFR-03 — client-side calculation) ผิดพลาด โดย generalize มาจาก REC-2's MET calculation ซึ่งมีเหตุผล
+ด้าน sub-250ms latency ระหว่างออกกำลังกายจริงเท่านั้น — INT-1 เป็นการพยากรณ์ "อีกกี่วันถึงเป้าหมาย" ที่ไม่มี
+ความจำเป็นด้าน latency ระหว่าง UI แบบเดียวกัน จึงไม่ควรอ้าง NFR-01/03 กับ Feature นี้อีกต่อไป) — ส่วน
 **INT-2/INT-3** (จับคู่/ซิงค์อุปกรณ์ภายนอก) ยังคงเป็น native-only capability ที่อยู่ใน `apps/mobile` เท่านั้น
 ใช้ native module ฝั่ง client ตามที่ตารางข้างบนระบุเหมือนเดิม (`react-native-health` สำหรับ Apple HealthKit,
 `react-native-health-connect` สำหรับ Google Health Connect, `react-native-ble-plx` สำหรับ Bluetooth
