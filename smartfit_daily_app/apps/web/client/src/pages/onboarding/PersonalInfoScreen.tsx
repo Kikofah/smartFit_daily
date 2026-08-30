@@ -105,7 +105,7 @@ export default function PersonalInfoScreen() {
       <View style={{ marginTop: spacing[8], gap: spacing[6] }}>
         <Input
           label="ชื่อ-นามสกุล"
-          placeholder="เช่น พิมพ์ใจ สุขสันต์"
+          placeholder="ชื่อ นามสกุล"
           value={name}
           onChangeText={setName}
           error={touched && !nameValid ? 'กรุณากรอกชื่อ-นามสกุล' : undefined}

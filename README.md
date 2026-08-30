@@ -58,12 +58,39 @@ request — but nothing that needs Firestore/Auth admin access will work). Pick 
 Either way, keep `FIREBASE_PROJECT_ID` set in `apps/web/.env` too — the Admin SDK needs it to
 validate a token's audience claim even before it gets to the credentials check.
 
+### Seeding sample data
+
+`apps/web/scripts/seedSampleUsers.ts` creates 5 realistic sample accounts (varied goals, streaks,
+and integration states — including one that exercises the ONB-3 safety-floor path and one fresh
+account with no data yet, for testing empty states) directly in whichever Firebase project
+`apps/web/client/.env` points at:
+
+```bash
+npm run seed:sample-users --workspace apps/web
+```
+
+It authenticates via the client SDK (each sample user signs itself up, then writes only its own
+documents), so it needs no Admin SDK credentials — see the script's own header comment for details.
+Safe to re-run: existing sample accounts sign in instead of re-signing up, and every write is an
+idempotent overwrite.
+
 ## Status
 
 Application code was scaffolded on 2026-08-29 following the stack decided in
 [`tech-stack.md`](docs/02-design/02-technical/tech-stack.md) (React Native + Expo + Firebase
 Cloud Functions), then re-architected the same day to Express + a web-first client after a
-follow-up decision to drop Cloud Functions and keep React Native only for INT-2/INT-3. Most
-routes and screens are stubs (see inline `TODO`s) — the documentation in `docs/` remains the
-source of truth for business rules, not the code comments. `tech-stack.md` itself has not yet
-been updated to reflect this change — treat the code as ahead of the docs on this point.
+follow-up decision to drop Cloud Functions and keep React Native only for INT-2/INT-3.
+`tech-stack.md` has since been reconciled (2026-08-30/31) to reflect this: Express.js deployed on
+Google Cloud Run, replacing Cloud Functions everywhere.
+
+As of 2026-08-31, every screen in the auth, onboarding, daily-workout, planner/logging, and
+progress/profile flows is built out against the [`v1` prototypes](docs/02-design/01-prototypes/v1/)
+and [`DESIGN.md`](docs/02-design/01-prototypes/DESIGN.md), sharing a component library in
+`apps/web/client/src/components/` (`Button`, `Card`, `Input`, `Stepper`, `Chip`, `Switch`,
+`CalorieRing`, `VideoCard`, `StreakBadge`, `EmptyState`, `ProgressDots`, `Icon`), and most of it is
+wired to real `apps/web/server` routes backed by Firestore rather than mock data. REC-1/REC-3's
+video recommendation (`GET`/`POST` under `/workouts/today/recommendation`) is fully implemented —
+YouTube Data API v3 supplies candidates, Google Gemini (`gemini-3.6-flash`) ranks/picks the best
+match and estimates its intensity/calories, cached per user per day. One known gap remains: the
+Google/Apple buttons on the auth screens are UI-only stubs with no real OAuth popup flow wired up
+yet.
