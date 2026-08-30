@@ -111,6 +111,20 @@ flow เดียวกัน — ผลลัพธ์จาก Authentication 
   3. **วิธี Authentication**: ครบทั้ง 3 วิธีตามที่ `tech-stack.md` เลือกไว้แล้ว — email/password, Google
      OAuth, Sign in with Apple — ไม่ลด scope เหลือแค่ email/password
 
+- **ONB-0 UI surface เป็น web-only (อัปเดต 2026-08-30 ตามการตรวจสอบ codebase จริงหลัง re-architecture
+  2026-08-29)**: หน้าจอสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ (REQ-14–17) มีอยู่เฉพาะที่เว็บแอป
+  (`apps/web/client/`, React+Vite) เท่านั้น เพราะโปรเจกต์ re-architecture จาก React Native+Expo (ซึ่งตอน
+  ตัดสินใจ "ครบทั้ง 3 วิธี" ด้านบนเมื่อ 2026-08-29 สมมติว่า build ได้ทั้ง iOS/Android/Web จากโค้ดเดียว) เป็น
+  Express.js + web-first client ในวันเดียวกัน — แอปมือถือ (`apps/mobile/`, React Native+Expo) ถูกตัดขอบเขต
+  ให้เหลือเฉพาะ companion app สำหรับจับคู่อุปกรณ์เท่านั้น (INT-2 ตาชั่งอัจฉริยะผ่าน Bluetooth, INT-3
+  wearable ผ่าน Health API) ไม่มีหน้าจอ auth ของตัวเองเลย (ยืนยันจากโค้ดจริง: ไม่มีไฟล์ signup/login/
+  forgot-password ใต้ `apps/mobile/app/` มีแค่ `pairing-code.tsx` และ `device-pairing.tsx`) — เนื้อหา
+  business rule ของ REQ-14–17 (สมัคร/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ และวิธี auth ทั้ง 3 แบบ) **ไม่
+  เปลี่ยนแปลง** เปลี่ยนเฉพาะ "พื้นผิว UI ที่ทำได้จริง" ผู้ใช้มือถือที่ยังไม่เคยสมัคร/เข้าสู่ระบบบนเว็บมาก่อน
+  จะยังใช้ INT-2/INT-3 บนมือถือไม่ได้เลยจนกว่าจะมีบัญชีจากเว็บก่อนเสมอ — มือถือระบุตัวตนผู้ใช้ได้โดยไม่ต้องมี
+  หน้าจอ auth ของตัวเองผ่านกลไก pairing-code ใหม่ ดูรายละเอียดที่
+  [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
 - **ONB-3 (REQ-02)**: กรณีผู้ใช้เลือกเป้าหมาย "กระชับสัดส่วน"/"เพิ่มความอึด" แล้วข้ามช่องน้ำหนักเป้าหมาย
@@ -134,4 +148,9 @@ Onboarding เป็นเอกสาร requirement ต้นทางขอ�
 (Authentication) เป็น precondition ของทุก REQ อื่นในโปรเจกต์ทั้งหมด (ไม่ใช่แค่ epic นี้) เพราะทุก REQ
 ต้องมี `userId` จริงก่อนบันทึกข้อมูลใดๆ — ผูกกับ [tech-stack.md](../../02-design/02-technical/tech-stack.md)
 ที่เลือก Firebase Authentication ไว้ล่วงหน้าแล้ว (email/password + Google OAuth + Sign in with Apple) และ
-[NFR-04/NFR-06/NFR-11](20260827-05-non-functional-requirements.md) ที่อ้างถึงระบบบัญชีผู้ใช้เป็นเงื่อนไข
+[NFR-04/NFR-06/NFR-11](20260827-05-non-functional-requirements.md) ที่อ้างถึงระบบบัญชีผู้ใช้เป็นเงื่อนไข —
+เพิ่มเติม 2026-08-30: เนื่องจาก ONB-0 เป็น web-only (ดู "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" ด้านบน)
+Onboarding จึงเชื่อมกับ [Smart Integrations](20260823-04-smart-integrations.md) เพิ่มอีกทางหนึ่งผ่าน
+**INT-0** (REQ-18 — กลไก pairing-code ที่แยกเป็น REQ/Feature ID ของตัวเองแล้วเมื่อ 2026-08-30): บัญชีผู้ใช้
+ที่สร้างจาก ONB-0 บนเว็บเป็น precondition ของ INT-0 ที่ทำให้มือถือ (ซึ่งไม่มีหน้าจอ auth ของตัวเอง) ระบุ
+ตัวตนผู้ใช้ก่อนจับคู่อุปกรณ์ได้ (INT-0 เป็น precondition ต่อของ INT-2/INT-3 อีกทอดหนึ่ง)

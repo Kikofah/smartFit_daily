@@ -3,7 +3,19 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 2) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ให้ตรงกับ
+  `tech-stack.md` §6.1 ฉบับล่าสุด (Express.js บน **Google Cloud Run** แทนที่ Firebase Cloud Functions เดิม
+  — ยืนยันจากโค้ดจริง `apps/web/server/routes/*`) — เนื้อหาหลัก (sequence/state diagram/algorithm ของ
+  REC-1/2/3/4) ไม่เปลี่ยนแปลงเพราะยัง conceptual ล้วน — ไม่กระทบจาก pairing-code mechanism เหมือนรอบก่อน (ดู
+  [log 2026-08-30](../../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 1) — audit ตามการเปลี่ยนแปลงใน `high-level-architecture.md`/
+  `api-spec.md`/`database-schema.md` (Identity Handoff — Pairing-Code Mechanism, entity/ตาราง
+  `pairing_credential`) แล้วพบว่า**ไม่กระทบไฟล์นี้เลย** (กลไกนี้เป็น precondition เฉพาะของ INT-2/INT-3 ใน
+  `04-smart-integrations.md` เท่านั้น ไม่เกี่ยวกับ REC-1/2/3/4) — ตรวจ "Firebase Cloud Function
+  `sessionComplete`" ที่ปรากฏในเนื้อหาแล้วยืนยันว่าอยู่ใน "## ภาคผนวก: Stack Mapping" เท่านั้น (ไม่ใช่ในเนื้อหา
+  หลัก — ไม่พบ main-body stack-name violation) — ไม่แตะภาคผนวก Stack Mapping ตามที่ผู้ใช้ยืนยันว่า
+  `tech-stack.md` ยังไม่ reconcile จาก Firebase เดิมมาเป็น stack จริงตามโค้ด (**แก้ไขแล้วในรอบ 2 ด้านบน**)
+- **อัปเดตก่อนหน้านั้น:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
   (audit เนื้อหาหลัก sequence/state diagram/algorithm ของ REC-1/2/3/4 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
@@ -190,17 +202,24 @@ sequenceDiagram
 > `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence/state diagram/algorithm ของ REC-1/2/3/4)
 > **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-30 (รอบ 2)**: mechanical re-sync ทั้งหมดจาก Firebase Cloud Functions เป็น **Express.js
+> บน Google Cloud Run** ตามการเปลี่ยน stack ใน `tech-stack.md` §2/§3/§6 (ยืนยันจากโค้ดจริง
+> `apps/web/server/routes/*`) — เปลี่ยน execution ของ MET + wearable override (REC-2) จาก **React Native
+> client** เป็น **React+Vite web client** เพราะ REC-* ทั้งหมดอยู่ใน `apps/web` (ไม่เคยย้าย ไม่ใช่ native-only
+> capability) — เนื้อหาหลัก (sequence/state diagram/algorithm) **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
+(อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry |
-| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React Native) ตาม NFR-01/03 → Cloud Function `sessionComplete` validate + เขียน `actualCalorieBurn` ลง Firestore |
+| Content Recommendation | **Express route** `GET /api/workouts/today/recommendation`, `POST /api/workouts/today/recommendation/swap`, `POST /api/workouts/sessions` (แทนที่ Cloud Function `recommendation` เดิม — `apps/web/server/routes/content-recommendation/index.ts`, ปัจจุบันเป็น stub คืน `501` รอเรียก YouTube Data API v3 จริง) เก็บ `sessionVideos`/`rejectedVideoIds` เป็น embedded array field ใน document `users/{userId}/workoutSessions/{sessionId}` |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React+Vite) ตาม NFR-01/03 → **Express route** `POST /api/workouts/sessions/:sessionId/complete` (แทนที่ Cloud Function `sessionComplete` เดิม — `apps/web/server/routes/exertion-calorie/index.ts`) validate + เขียน embedded map field `actualCalorieBurn` ลง document เดียวกัน; ค่าจาก wearable (INT-3) เขียนผ่าน **Express route** `POST /api/integrations/wearable/readings` เป็น embedded map field `wearableReading` — referential existence validation ผ่าน helper กลาง `apps/web/server/assertDocExists.ts` (แทนที่แนวคิดเดิมที่ให้แต่ละ Cloud Function `get()` เองแยกกัน) |
 
 **Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **MET + wearable override (REC-2)** เกิดขึ้นฝั่ง
-**React Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน
-**Firebase Cloud Function `sessionComplete`** (แทนที่ Supabase Edge Function `session-complete` เดิม —
-ไม่ใช่เขียนตรงเข้า embedded field `actualCalorieBurn` ภายใน document `workoutSessions/{sessionId}` จาก
-client เอง) เพื่อให้ Cloud Function validate เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม
+**React+Vite web client โดยตรง** (`apps/web/client`) เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้ว
+ไปบันทึกผ่าน **Express route `POST /api/workouts/sessions/:sessionId/complete`** (แทนที่ Firebase Cloud
+Function `sessionComplete` เดิม — ไม่ใช่เขียนตรงเข้า embedded field `actualCalorieBurn` ภายใน document
+`workoutSessions/{sessionId}` จาก client เอง) เพื่อให้ route นั้น validate เป็นเกราะป้องกันชั้นที่สองฝั่ง
+server เช่นเดิม รันบน **Google Cloud Run**

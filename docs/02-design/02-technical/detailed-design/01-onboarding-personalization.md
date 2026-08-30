@@ -3,7 +3,24 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 (รอบ 3) — `tech-stack.md` ขยาย mapping ของ Component "Account & Session
+- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 5) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ทั้งหมดให้ตรงกับ
+  `tech-stack.md` §6.1/§6.3.1 ฉบับล่าสุด (Express.js บน **Google Cloud Run** แทนที่ Firebase Cloud Functions
+  เดิม, จำนวน operation ของ Account & Session Management แก้จาก 8 เป็น **10** ให้ตรงกับ `api-spec.md` §3.1)
+  — เนื้อหาหลัก (sequence diagram ทั้ง 3, algorithm ของ ONB-1/ONB-3) ไม่เปลี่ยนแปลงเพราะยัง conceptual ล้วน —
+  audit แล้วไม่พบ main-body stack-name violation ใหม่ (ดู [log 2026-08-30](../../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 4) — audit พบว่า `high-level-architecture.md` เพิ่มกลไกใหม่ **Identity
+  Handoff — Pairing-Code Mechanism** (§4.5, §3.1) ซึ่งเกี่ยวข้องกับ Account & Session Management
+  (component ของไฟล์นี้เอง สำหรับ ONB-0) — sequence diagram จริงของกลไกนี้อยู่ที่
+  `04-smart-integrations.md` แทน (เป็น precondition ของ INT-2/INT-3 ไม่ใช่ของ 4 REQ ของ ONB-0 เอง) แต่ไฟล์นี้
+  มี 2 จุดที่ต้องแก้เพื่อไม่ให้เกิดความคลุมเครือ: (1) **ระบุ actor ให้ชัดว่าเป็นเว็บไคลเอนต์เท่านั้น** ในทั้ง 3
+  sequence diagram ของ ONB-0 (เดิมใช้ `actor U as ผู้ใช้` เฉยๆ ซึ่งอาจอ่านกำกวมว่าเป็นไคลเอนต์ใดก็ได้ — แก้เป็น
+  `ผู้ใช้ (เว็บไคลเอนต์เท่านั้น — sole entry point ตาม HLA §3.1)` ทั้ง 3 diagram) (2) **เพิ่มหมายเหตุ
+  cross-reference** ในส่วนนำของ ONB-0 ชี้ไปยัง `04-smart-integrations.md` สำหรับกลไก pairing-code — **ไม่มี
+  main-body stack-name violation ในไฟล์นี้**: ตรวจ "Firebase Cloud Function `profileUpdate`" ที่ปรากฏใน
+  เนื้อหาแล้วยืนยันว่าอยู่ใน "## ภาคผนวก: Stack Mapping" เท่านั้น (ไม่ใช่ในเนื้อหาหลัก) — **ไม่แตะหัวข้อ
+  ภาคผนวก Stack Mapping** ตามที่ผู้ใช้ยืนยันว่า `tech-stack.md` ยังไม่ reconcile จาก Firebase เดิมมาเป็น stack
+  จริงตามโค้ด — audit ONB-1/2/3 ส่วนอื่นแล้วไม่พบ drift (ดู [log 2026-08-30](../../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบ 3) — `tech-stack.md` ขยาย mapping ของ Component "Account & Session
   Management" เสร็จสมบูรณ์แล้ว (§6.1 per-field mapping + §6.3.1 ใหม่ mapping ระดับ operation ทั้ง 8 ตัว) —
   sync แถวเดิมในภาคผนวก Stack Mapping ที่เคยเป็น placeholder ⚠️ (รอบ 2) ให้ตรงกับเนื้อหาสมบูรณ์นี้ เป็น
   mechanical re-sync ล้วนๆ ไม่ใช่การตัดสินใจใหม่ — พิจารณาแล้วว่า **ไม่จำเป็นต้องเพิ่มหมายเหตุ client SDK vs
@@ -43,11 +60,20 @@ framework/service เฉพาะเจาะจง) อัลกอริทึ
 (ไม่เหมือน ONB-1/2/3 ที่แต่ละ Feature ID มี operation เดียว): สมัครสมาชิก, เข้าสู่ระบบ+ลืมรหัสผ่าน (รวมกัน
 เพราะ `user-journeys.md#onb-0` ระบุว่าลืมรหัสผ่านวนกลับเข้า login flow เดิม — Step 9), และออกจากระบบ
 
+> **หมายเหตุ (เพิ่ม 2026-08-30)**: ทั้ง 3 diagram ด้านล่างใช้ actor "ผู้ใช้" ที่ระบุชัดว่าเป็น**เว็บไคลเอนต์
+> เท่านั้น** ตาม HLA §3.1 ("เว็บไคลเอนต์เป็นทางเข้าเดียวสำหรับการยืนยันตัวตนด้วย credential ทุกวิธี") — ไม่มี
+> ไคลเอนต์อื่นในระบบมีหน้าจอ auth ของตัวเองเลย นอกจาก 4 REQ ข้างต้น Account & Session Management ยังทำหน้าที่
+> mint/redeem รหัสจับคู่อุปกรณ์ชั่วคราว (identity handoff) ให้ไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง (companion
+> app ของ INT-2/INT-3) — เป็น operation คนละชุดกับ 4 REQ นี้ (ยังไม่มี REQ number formal ของตัวเอง ดู HLA §8
+> ข้อ 7) จึงมี sequence diagram แยกต่างหากอยู่ที่
+> [`04-smart-integrations.md` § Identity Handoff — Pairing-Code Mechanism](04-smart-integrations.md#identity-handoff--pairing-code-mechanism-precondition-ของ-int-2-int-3--เพิ่ม-2026-08-30)
+> แทนที่จะซ้ำไว้ในไฟล์นี้ (เพราะเป็น precondition ทางเทคนิคของ Epic 4 ไม่ใช่ของ ONB-0 เอง)
+
 ### Sequence Diagram 1 — สมัครสมาชิก (REQ-14)
 
 ```mermaid
 sequenceDiagram
-    actor U as ผู้ใช้
+    actor U as ผู้ใช้ (เว็บไคลเอนต์เท่านั้น — sole entry point ตาม HLA §3.1)
     participant AS as Account & Session Management
     participant IDP as ผู้ให้บริการยืนยันตัวตนภายนอก (Google/Apple)
     alt สมัครด้วยอีเมล/รหัสผ่าน
@@ -93,7 +119,7 @@ fallback" (ตรงกับ HLA §6.4 — ต่างจาก INT-2/INT-3 �
 
 ```mermaid
 sequenceDiagram
-    actor U as ผู้ใช้
+    actor U as ผู้ใช้ (เว็บไคลเอนต์เท่านั้น — sole entry point ตาม HLA §3.1)
     participant AS as Account & Session Management
     participant IDP as ผู้ให้บริการยืนยันตัวตนภายนอก (Google/Apple)
     alt เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน
@@ -133,7 +159,7 @@ Edge case ที่แสดง: **"สมัครด้วย Google/Apple แ
 
 ```mermaid
 sequenceDiagram
-    actor U as ผู้ใช้
+    actor U as ผู้ใช้ (เว็บไคลเอนต์เท่านั้น — sole entry point ตาม HLA §3.1)
     participant AS as Account & Session Management
     U->>AS: POST /auth/logout
     AS->>AS: ล้างสถานะเข้าสู่ระบบ (session) ทันที — เป็นข้อมูล ephemeral ไม่ persist เป็น column (ตาม database-schema.md §3.1)
@@ -271,11 +297,14 @@ sequenceDiagram
 ## ความสัมพันธ์กับเอกสารอื่น
 
 - [High Level Architecture](../high-level-architecture.md) — component "Account & Session Management"
-  (หัวข้อ 3.1, สำหรับ ONB-0), "Personalization & Profile" (หัวข้อ 3.2, สำหรับ ONB-1/2/3 — เดิม 3.1 ก่อน
-  renumber), external integration boundary "ผู้ให้บริการยืนยันตัวตนภายนอก — Google/Apple" (หัวข้อ 6.4),
-  entity "User Account" (หัวข้อ 5), Flow 1 Onboarding Flow (หัวข้อ 4.1)
-- [API Spec](../api-spec.md) — section 3.1 Account & Session Management (ONB-0), section 3.2
-  Personalization & Profile (ONB-1/2/3 — เดิม 3.1 ก่อน renumber)
+  (หัวข้อ 3.1, สำหรับ ONB-0 และกลไก Identity Handoff — Pairing-Code Mechanism ที่เป็น precondition ของ
+  Epic 4 แทน — ดู `04-smart-integrations.md`), "Personalization & Profile" (หัวข้อ 3.2, สำหรับ ONB-1/2/3
+  — เดิม 3.1 ก่อน renumber), external integration boundary "ผู้ให้บริการยืนยันตัวตนภายนอก — Google/Apple"
+  (หัวข้อ 6.4), entity "User Account" (หัวข้อ 5), Flow 1 Onboarding Flow (หัวข้อ 4.1)
+- [API Spec](../api-spec.md) — section 3.1 Account & Session Management (ONB-0 — 8 operation แรก;
+  operation ที่ 9-10 ของหัวข้อเดียวกัน `POST /auth/pairing-codes`/`.../redeem` แสดง sequence diagram อยู่ที่
+  `04-smart-integrations.md` แทน), section 3.2 Personalization & Profile (ONB-1/2/3 — เดิม 3.1 ก่อน
+  renumber)
 - [Database Schema](../database-schema.md) — ตาราง `user_account` (ONB-0), `user_profile`,
   `goal_selection`, `equipment_selection`
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md) —
@@ -308,20 +337,32 @@ sequenceDiagram
 > เดิมของไฟล์นี้เองที่ผลักรายละเอียด client-side/Edge Function split ของ ONB-1/ONB-3 ไปไว้ที่ภาคผนวกนี้เท่านั้น
 > ไม่ใช่ในตัว diagram หลัก) — ความถูกต้องเชิง conceptual ของ diagram ไม่กระทบ
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-และ [§ 6.3.1](../tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น)
-(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-30 (รอบ 4)**: mechanical re-sync ทั้งหมดจาก Firebase Cloud Functions เป็น **Express.js
+> บน Google Cloud Run** ตามการเปลี่ยน stack ใน `tech-stack.md` §2/§3/§6 (ยืนยันจากโค้ดจริง
+> `apps/web/server/routes/*`) — เพิ่ม mapping ของ 2 operation ใหม่ (`POST /auth/pairing-codes`,
+> `.../redeem`) ทำให้จำนวน operation ของ Account & Session Management เพิ่มจาก 8 เป็น **10** (2 operation
+> ใหม่นี้ทำหน้าที่ precondition ของ Epic 4 เท่านั้น — mapping รายละเอียด sequence-diagram-level อยู่ที่
+> `04-smart-integrations.md` ภาคผนวกแทน ที่นี่มิเรอร์แค่ระดับ operation ให้ตัวเลขตรงกัน) — เปลี่ยน execution
+> ของ TDEE/Safety Floor (ONB-1/ONB-3) จาก **React Native client** เป็น **React+Vite web client** เพราะ
+> ONB-* ทั้งหมดย้ายเข้า `apps/web` แล้วหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ INT-2/INT-3 (ตาม
+> `tech-stack.md` §7 ข้อ 5) — เนื้อหาหลัก (sequence diagram/algorithm) **ไม่เปลี่ยนแปลง** เพราะยัง
+> conceptual ล้วน
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
+และ [§ 6.3.1](../tech-stack.md#631-account--session-management-onb-0--identity-handoff--ข้อยกเว้นของกติกาข้างต้น)
+(อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยก** เพราะ `user_account` (thin identity anchor) map ตรงกับ Firebase Auth's `UserRecord` ครบทุก field: `id` = Firebase Auth UID (ค่าเดียวกับ document ID ของ `users/{userId}` ที่ Personalization & Profile ใช้ — ไม่มี FK lookup จริงให้ทำ), `signup_method` derive จาก `providerData[0].providerId`, `email` = `UserRecord.email`, `credential_reference` ไม่มี field ให้เข้าถึงเลยเพราะ Firebase เก็บ password hash ไว้ภายในเอง, `external_provider_reference` = `providerData[0].uid`, `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบ (session)" (ephemeral) = ID Token/Refresh Token ที่ client SDK เก็บ persistence เอง ไม่มี server-side session store ให้ query — **operation-level mapping**: 7 ใน 8 operation (`signup/email`, `signup/google`, `signup/apple`, `login/email`, `login/google`, `login/apple`, `logout`) เป็น **client SDK call ตรง ไม่ผ่านการเขียนโค้ด backend เอง** (Google/Apple signup กับ login เป็น SDK call เดียวกันจริง แยกด้วย field `isNewUser` ที่ SDK คืนมาแทนการแยก route) — มีเพียง `POST /auth/forgot-password` ที่ต้องเป็น **Cloud Function `forgotPassword`** เพราะต้อง enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) ที่ client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ |
-| Personalization & Profile | Firestore collection `users/{userId}` เก็บ `profile`/`goalSelection`/`equipmentSelection` + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` (validate safety floor, equipment mutual exclusion) — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
+| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยก** เพราะ `user_account` (thin identity anchor) map ตรงกับ Firebase Auth's `UserRecord` ครบทุก field: `id` = Firebase Auth UID (ค่าเดียวกับ document ID ของ `users/{userId}` ที่ Personalization & Profile ใช้ — ไม่มี FK lookup จริงให้ทำ), `signup_method` derive จาก `providerData[0].providerId`, `email` = `UserRecord.email`, `credential_reference` ไม่มี field ให้เข้าถึงเลยเพราะ Firebase เก็บ password hash ไว้ภายในเอง, `external_provider_reference` = `providerData[0].uid`, `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบ (session)" (ephemeral) = ID Token/Refresh Token ที่ client SDK เก็บ persistence เอง ไม่มี server-side session store ให้ query — **operation-level mapping (10 operation รวม pairing-code แล้ว)**: 7 ใน 10 operation (`signup/email`, `signup/google`, `signup/apple`, `login/email`, `login/google`, `login/apple`, `logout`) เป็น **client SDK call ตรง จาก `apps/web/client/src/services/authService.ts`** (Google/Apple signup กับ login เป็น SDK call เดียวกันจริง แยกด้วย field `isNewUser` ที่ SDK คืนมาแทนการแยก route) — `POST /auth/forgot-password` เป็น **Express route** `POST /api/auth/forgot-password` (`apps/web/server/routes/account-session/forgotPassword.ts`, ไม่ผ่าน `authenticate` middleware, แทนที่ Cloud Function `forgotPassword` เดิม) เพราะต้อง enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) ที่ client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ — อีก 2 operation ใหม่ (`POST /auth/pairing-codes`, `.../redeem`, precondition ของ Epic 4) เป็น **Express route** เช่นกัน (`apps/web/server/routes/pairing/index.ts` — รายละเอียดเต็มอยู่ที่ `04-smart-integrations.md` ภาคผนวก) |
+| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) เก็บ `profile`/`goalSelection`/`equipmentSelection` เป็น field/embedded map ในตัว document เดียวกัน + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ (ยังไม่ได้เขียนจริง) + **Express route** `GET /api/profile`, `PUT /api/profile/personal-info`, `PUT /api/profile/equipment`, `PUT /api/profile/goal` (แทนที่ Cloud Function `profileUpdate` เดิม — 3 route handler แยกในไฟล์เดียว `apps/web/server/routes/personalization-profile/index.ts`) enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
 
 **Execution ของ algorithm section**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
 (NFR-01/NFR-03 — client-side calculation) การคำนวณ **TDEE (ONB-1)** และ **Safety Floor (ONB-3)**
-เกิดขึ้นฝั่ง **React Native client โดยตรง** เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึก
-ผ่าน **Firebase Cloud Function `profileUpdate`** (แทนที่ Supabase Edge Function `profile-update` เดิม —
-ไม่ใช่เขียนตรงเข้า Firestore document `users/{userId}` จาก client เอง) เพื่อให้ Cloud Function
-validate/บังคับกติกาธุรกิจ (เช่น safety floor, equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง
-server เช่นเดิม — **ONB-0 ไม่มี algorithm section จึงไม่มี client-side/Edge Function split ให้ระบุเพิ่ม**
-(REQ-14–17 ไม่ใช่ feature เชิงคำนวณ)
+เกิดขึ้นฝั่ง **React+Vite web client โดยตรง** (`apps/web/client` — เปลี่ยนจาก React Native client เดิม
+เพราะ ONB-* ทั้งหมดย้ายเข้า `apps/web` แล้วหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ INT-2/INT-3, ดู
+`tech-stack.md` §7 ข้อ 5) เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Express route**
+ใต้ `PUT /api/profile/*` (แทนที่ Firebase Cloud Function `profileUpdate` เดิม — ไม่ใช่เขียนตรงเข้า Firestore
+document `users/{userId}` จาก client เอง) เพื่อให้ route นั้น validate/บังคับกติกาธุรกิจ (เช่น safety floor,
+equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม — **ONB-0 ไม่มี algorithm section
+จึงไม่มี client-side/server-side split ให้ระบุเพิ่ม** (REQ-14–17 ไม่ใช่ feature เชิงคำนวณ)

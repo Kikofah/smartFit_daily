@@ -1,7 +1,8 @@
 # Acceptance Criteria — smartFit_daily
 
 เอกสารนี้แจกแจง Acceptance Criteria แบบ **Given-When-Then** ของทุก Feature ใน
-[backlog.md](backlog.md) (15 Feature ID ครบทุก Epic — เพิ่ม ONB-0 Authentication เมื่อ 2026-08-29) โดยยึด
+[backlog.md](backlog.md) (16 Feature ID ครบทุก Epic — เพิ่ม ONB-0 Authentication เมื่อ 2026-08-29,
+เพิ่ม INT-0 Pairing Code identity handoff เมื่อ 2026-08-30) โดยยึด
 **Success State** เป็น happy-path
 scenario และ **Alt/Edge Cases** ที่มีอยู่แล้วใน
 [user-journeys.md](../02-design/01-prototypes/user-journeys.md) เป็น scenario เพิ่มเติมต่อ feature —
@@ -30,7 +31,7 @@ Traceability](backlog.md#non-functional-requirements-nfr-traceability) พร้
 - [Epic 1: Onboarding & Personalization](#epic-1-onboarding--personalization) — ONB-0, ONB-1, ONB-2, ONB-3
 - [Epic 2: Daily YouTube Recommendation](#epic-2-daily-youtube-recommendation) — REC-1, REC-2, REC-3, REC-4
 - [Epic 3: Planner & Logging](#epic-3-planner--logging) — PLN-1, PLN-2, PLN-3, PLN-4
-- [Epic 4: Smart Integrations](#epic-4-smart-integrations) — INT-1, INT-2, INT-3
+- [Epic 4: Smart Integrations](#epic-4-smart-integrations) — INT-0, INT-1, INT-2, INT-3
 
 ---
 
@@ -87,6 +88,17 @@ Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-on
 - Prototype: ไม่มี — prototype v1 ยังไม่ implement การตรวจสอบ session จริง (ดูหมายเหตุใน
   `00-auth-welcome.html` ที่ระบุว่า "no real session check here") เป็น documentation-level scenario
   รอ backend จริง
+
+#### AC-ONB-0-07 — พื้นผิว UI ของ Authentication ทั้งหมดมีเฉพาะที่เว็บแอปเท่านั้น (เพิ่ม 2026-08-30, REQ-14, REQ-15)
+- **Given**: ผู้ใช้เปิดแอปมือถือ (companion app, `apps/mobile/`) ที่ยังไม่เคยสมัครสมาชิก/เข้าสู่ระบบบนเว็บแอปมาก่อนเลย
+- **When**: ผู้ใช้ค้นหาหรือพยายามเข้าถึงหน้าจอสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบบนแอปมือถือ
+- **Then**: ไม่มีหน้าจอ Authentication เหล่านี้อยู่บนแอปมือถือเลย (ยืนยันจากโค้ดจริง: มีเฉพาะ `pairing-code.tsx`
+  และ `device-pairing.tsx` ใต้ `apps/mobile/app/`) ผู้ใช้ต้องสมัครสมาชิก/เข้าสู่ระบบผ่านเว็บแอปก่อนเสมอ แล้วใช้
+  กลไกรหัสจับคู่อุปกรณ์ (pairing-code — ดู AC-INT-0-01 ถึง AC-INT-0-04) ระบุตัวตนบนมือถือแทนการมีหน้าจอ
+  auth ของตัวเอง
+- Prototype: ไม่มี — เป็นการยืนยันจาก codebase จริงของ `apps/mobile/`, ไม่ใช่หน้าจอใน prototype `v1/`
+- ต้นทาง decision: [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  (บันทึกจาก codebase จริง 2026-08-30)
 
 > หมายเหตุ: journey ของ ONB-0 ยังมี Alt/Edge Case อีก 2 จุดที่ไม่ได้ถูกแปลงเป็น scenario ในไฟล์นี้ เพราะยัง
 > เป็น Open Point ที่ upstream ไม่ได้ระบุ**พฤติกรรม**ไว้ชัดเจน (ต่างจาก AC-ONB-0-06 ที่พฤติกรรมชัดเจนแล้ว
@@ -420,6 +432,77 @@ Spec: [01-spec/20260823-03-planner-logging.md](01-spec/20260823-03-planner-loggi
 
 Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-integrations.md)
 
+### INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่ (Pairing Code)
+
+> **หมายเหตุ (renumbering, เพิ่ม 2026-08-30)**: 4 scenario ด้านล่างนี้ย้ายมาจาก AC-INT-2-03, AC-INT-2-04,
+> AC-INT-2-05, AC-INT-2-06 และ AC-INT-3-04 เดิม หลังจาก `feature-list-journey` ทำให้กลไกรหัสจับคู่อุปกรณ์
+> (pairing-code identity handoff) เป็น Feature ID ของตัวเอง (**INT-0**) พร้อม business rule ของตัวเอง
+> (**REQ-18**) ใน `backlog.md`/`user-journeys.md` แทนที่จะเป็น "implicit precondition" ที่ผูกอยู่ใต้ INT-2
+> เนื้อหา Given-When-Then ไม่เปลี่ยน มีแค่ ID/การจัดกลุ่ม/REQ ที่อ้างอิงที่ปรับให้ตรงกับ REQ-18 — AC-INT-2-06
+> และ AC-INT-3-04 เดิม (precondition guard คนละปลายทาง) รวมเป็น scenario เดียว (AC-INT-0-04) เพราะกลไก
+> เดียวกันทุกประการ ต่างกันแค่ปลายทางหลัง redeem สำเร็จ
+
+#### AC-INT-0-01 — ขอรหัสจับคู่อุปกรณ์จากเว็บสำเร็จ (mint pairing-code, REQ-18)
+- **Given**: ผู้ใช้ล็อกอินอยู่บนเว็บแอปแล้ว (ONB-0) และเปิดหน้าโปรไฟล์
+- **When**: ผู้ใช้กดปุ่มขอรหัสจับคู่อุปกรณ์
+- **Then**: ระบบสร้างรหัสจับคู่อุปกรณ์ 6 หลัก อายุการใช้งาน 5 นาทีนับจากออกรหัส ผูกกับ `userId` ของผู้ใช้คนนั้น
+  และแสดงรหัสบนหน้าจอเว็บทันที
+- Prototype: [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+  (ปุ่ม "ขอรหัสจับคู่อุปกรณ์" แสดงรหัส 6 หลัก + expiry countdown)
+- ต้นทาง decision: [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว),
+  [api-spec.md §3.1](../02-design/02-technical/api-spec.md) (`POST /auth/pairing-codes`) ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (steps 1–3)
+
+#### AC-INT-0-02 — กรอกรหัสจับคู่บนมือถือสำเร็จ แลกเป็น session แบบ silent (redeem pairing-code, REQ-18)
+- **Given**: ผู้ใช้เปิด companion app บนมือถือ (ไม่มีหน้าจอ auth ของตัวเอง) และมีรหัสจับคู่ 6 หลักที่ยังไม่หมด
+  อายุ/ยังไม่ถูกใช้จากเว็บ (จาก AC-INT-0-01)
+- **When**: ผู้ใช้กรอกรหัสนั้นบนมือถือ
+- **Then**: ระบบตรวจสอบว่ารหัสถูกต้อง ยังไม่หมดอายุ และยังไม่ถูกใช้ ลบรหัสทิ้งถาวรทันที (single-use enforce
+  ด้วยการลบ ไม่ใช่ตั้งสถานะ "ใช้แล้ว") แล้ว mint token ผูกกับบัญชีเดิมที่สร้างรหัสไว้ มือถือใช้ token นั้น
+  sign in แบบ silent (ไม่ต้องกรอก credential ซ้ำ) แล้วเข้าสู่หน้าจับคู่อุปกรณ์จริง (INT-2 หรือ INT-3 UI
+  แล้วแต่ว่าผู้ใช้ต้องการจับคู่อุปกรณ์ชนิดใด)
+- Prototype: [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html)
+- ต้นทาง decision: [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว),
+  [api-spec.md §3.1](../02-design/02-technical/api-spec.md) (`POST /auth/pairing-codes/redeem`) ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (steps 4–7)
+
+#### AC-INT-0-03 — รหัสจับคู่ไม่ถูกต้อง/หมดอายุ/ถูกใช้ไปแล้ว ระบบปฏิเสธด้วยกรณีเดียว (410, REQ-18)
+- **Given**: ผู้ใช้กรอกรหัสจับคู่บนมือถือที่ไม่ตรงกับรหัสใดที่ยังใช้ได้จริง (ไม่ว่าจะเพราะไม่เคยมีอยู่จริง,
+  หมดอายุไปแล้ว, หรือถูกใช้ไปแล้วก่อนหน้านี้ — 3 สถานการณ์นี้แยกไม่ออกอีกต่อไปเพราะรหัสถูกลบทิ้งถาวรทันทีที่
+  redeem สำเร็จครั้งแรก)
+- **When**: มือถือส่งรหัสนั้นไป redeem
+- **Then**: ระบบปฏิเสธคำขอด้วยกรณีเดียวครอบคลุมทั้ง 3 สถานการณ์ (ไม่แยกแยะให้ผู้ใช้ทราบว่าเป็นกรณีไหน — เป็น
+  ความจริงเชิง implementation ที่ตั้งใจยอมรับ ไม่ใช่ช่องโหว่) และไม่ mint token ใด ๆ ผู้ใช้ต้องกลับไปขอรหัส
+  ใหม่จากเว็บ
+- Prototype: [13-companion-pairing-code.html](../02-design/01-prototypes/v1/13-companion-pairing-code.html)
+  (สถานะรหัสไม่ถูกต้อง/หมดอายุ)
+- ต้นทาง decision: [api-spec.md §3.1](../02-design/02-technical/api-spec.md) (`POST /auth/pairing-codes/redeem`
+  — แก้ error case เป็น `410` กรณีเดียวเมื่อ 2026-08-30 รอบ 5) ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (Alt/Edge Case แรก)
+
+#### AC-INT-0-04 — ต้องผ่านกลไกรหัสจับคู่สำเร็จก่อน จึงจะเข้าหน้าจับคู่อุปกรณ์ (ตาชั่งอัจฉริยะหรือ wearable) บนมือถือได้ (precondition guard, REQ-18)
+- **Given**: ผู้ใช้เปิด companion app บนมือถือที่ยังไม่เคย redeem รหัสจับคู่อุปกรณ์สำเร็จ (ไม่มี session ที่
+  ผูกกับบัญชีผู้ใช้ใด — ไม่ว่าจะเพราะยังไม่มีบัญชีจากเว็บเลย หรือมีบัญชีแล้วแต่ยังไม่ redeem รหัสบนมือถือเครื่อง
+  นี้)
+- **When**: ผู้ใช้พยายามเข้าหน้าจับคู่ตาชั่งอัจฉริยะ (ปลายทางของ INT-2) หรือหน้าเชื่อมต่อ wearable (ปลายทาง
+  ของ INT-3) บนมือถือ
+- **Then**: ระบบไม่ให้เข้าหน้าจับคู่อุปกรณ์ปลายทางใด ๆ จนกว่าจะผ่านขั้นตอนกลไกรหัสจับคู่ครบ (ขอรหัสจากเว็บ
+  ONB-0 → กรอกรหัสบนมือถือ → redeem สำเร็จ, AC-INT-0-01/02) ก่อนเสมอ — พฤติกรรมเดียวกันไม่ว่าจะพยายามเข้า
+  ปลายทางใด (ปลายทาง INT-2 หรือ INT-3 เท่านั้นที่ต่างกัน ไม่ใช่กลไกรหัสจับคู่)
+- Prototype: flow เชิงเส้น [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+  (ขอรหัสบนเว็บ) → [13-companion-pairing-code.html](../02-design/01-prototypes/v1/13-companion-pairing-code.html)
+  (กรอกรหัสบนมือถือ) → [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html)
+  (เข้าหน้าจับคู่อุปกรณ์จริงหลัง redeem สำเร็จ — ปลายทางแตกต่างกันตาม INT-2/INT-3 ที่ผู้ใช้เลือก)
+- ต้นทาง: [user-journeys.md § ONB-0 Alt/Edge Cases](../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17)
+  (ผู้ใช้เปิดแอปมือถือโดยยังไม่เคยสมัคร/เข้าสู่ระบบบนเว็บมาก่อน → ใช้ INT-2/INT-3 ไม่ได้เลย),
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (Alt/Edge Case ที่สอง)
+
+---
+
 ### INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก
 
 #### AC-INT-1-01 — เห็นวันที่คาดว่าจะถึงเป้าหมายน้ำหนัก (REQ-11)
@@ -474,6 +557,12 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 - **Then**: ระบบตกกลับไปให้ผู้ใช้กรอกน้ำหนักเอง แทนการซิงค์อัตโนมัติ
 - Prototype: [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
 
+> **หมายเหตุ (renumbering, เพิ่ม 2026-08-30)**: กลไกรหัสจับคู่อุปกรณ์ (mint/redeem/error-case/precondition
+> guard) ที่เคยอยู่ที่ AC-INT-2-03 ถึง AC-INT-2-06 ย้ายไปเป็น **AC-INT-0-01 ถึง AC-INT-0-04** ทั้งหมดแล้ว
+> (ดู [INT-0 section](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code) ด้านบน) เพราะกลไกนี้
+> ได้รับ Feature ID/REQ-18 ของตัวเองแล้ว ไม่ใช่ business rule เฉพาะของ INT-2/REQ-12 อีกต่อไป —
+> precondition guard scenario สำหรับปลายทางตาชั่งอัจฉริยะโดยเฉพาะ ดู **AC-INT-0-04**
+
 > หมายเหตุ: journey ของ INT-2 ยังมี Alt/Edge Case ที่ระบุว่า "มีค่าน้ำหนักหลายค่าในวันเดียว ใช้ค่าล่าสุด
 > หรือค่าเฉลี่ยของวันนั้น ยังไม่ระบุชัดเจน" — เป็นพฤติกรรมที่ยังไม่ถูกตัดสินใจ จึงไม่แปลงเป็น scenario ในไฟล์นี้
 > (ดู [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions) ข้อ 5)
@@ -513,13 +602,19 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > [database-schema.md §8.3](../02-design/02-technical/database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function)
 > ที่ยกตัวอย่าง `sessionId` ใน `POST /integrations/wearable/readings` ไว้ชัดเจนว่าเป็นกรณีที่ต้องตรวจสอบ
 
+> **หมายเหตุ (renumbering, เพิ่ม 2026-08-30)**: precondition guard scenario ที่เคยเป็น **AC-INT-3-04**
+> ย้ายไปรวมกับปลายทาง INT-2 เป็นสถานการณ์เดียวที่ **AC-INT-0-04** แล้ว (ดู
+> [INT-0 section](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code) ด้านบน) เพราะกลไกรหัส
+> จับคู่อุปกรณ์เป็นกลไกเดียวกันทุกประการไม่ว่าปลายทางจะเป็นตาชั่งอัจฉริยะ (INT-2) หรือ wearable (INT-3) —
+> ตอนนี้มี Feature ID/REQ-18 ของตัวเองแล้ว ไม่ใช่ technical precondition ที่ไม่มี REQ number แยกอีกต่อไป
+
 ---
 
 ## สรุปจำนวน Scenario ต่อ Feature
 
 | Feature ID | จำนวน AC Scenario |
 |---|---|
-| ONB-0 | 6 |
+| ONB-0 | 7 |
 | ONB-1 | 3 |
 | ONB-2 | 3 |
 | ONB-3 | 5 |
@@ -531,10 +626,11 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | PLN-2 | 4 |
 | PLN-3 | 3 |
 | PLN-4 | 3 |
+| INT-0 | 4 |
 | INT-1 | 4 |
 | INT-2 | 2 |
 | INT-3 | 3 |
-| **รวม** | **51** |
+| **รวม** | **56** |
 
 > อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
 > AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์
@@ -542,6 +638,20 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > อัปเดต 2026-08-29 (เพิ่มเติม): +6 scenario จาก **ONB-0** (Authentication) ที่เพิ่มเข้า backlog.md เป็น
 > Feature ID ใหม่ (Must) — AC-ONB-0-01 ถึง AC-ONB-0-06 ครอบคลุม REQ-14/15/16/17 ทั้งหมด รวม Feature ID
 > ทั้งหมดในไฟล์นี้จาก 14 เป็น **15** และรวม scenario จาก 45 เป็น **51**
+>
+> อัปเดต 2026-08-30 (reconcile ตาม CLAUDE.md § "Docs/code drift" — ONB-0 เป็น web-only + กลไก pairing-code
+> ใหม่): +6 scenario — **AC-ONB-0-07** (พื้นผิว UI เป็น web-only เท่านั้น), **AC-INT-2-03 ถึง AC-INT-2-06**
+> (mint/redeem/error-case/precondition ของกลไกรหัสจับคู่อุปกรณ์ที่ทำให้มือถือไม่มีหน้าจอ auth ของตัวเองยังคง
+> ระบุตัวตนผู้ใช้ได้ก่อนจับคู่ตาชั่งอัจฉริยะ), **AC-INT-3-04** (precondition เดียวกันสำหรับ wearable) รวม
+> scenario จาก 51 เป็น **57** (Feature ID ยังคง 15 ตัวเท่าเดิม — ไม่มี Feature ID ใหม่ เพียงเพิ่ม scenario
+> ภายใน ONB-0/INT-2/INT-3 ที่มีอยู่แล้ว)
+>
+> อัปเดต 2026-08-30 (renumbering หลัง `feature-list-journey` เพิ่ม Feature ID **INT-0** + **REQ-18**
+> formal): AC-INT-2-03 ถึง AC-INT-2-06 และ AC-INT-3-04 (รวม 5 scenario) ย้ายเป็น **AC-INT-0-01 ถึง
+> AC-INT-0-04** (4 scenario — AC-INT-2-06 กับ AC-INT-3-04 ซึ่งเป็น precondition guard คนละปลายทางรวมเป็น
+> scenario เดียวเพราะกลไกเดียวกันทุกประการ) INT-2 เหลือ 2 scenario เดิม (01/02) INT-3 เหลือ 3 scenario เดิม
+> (01/02/03) รวม Feature ID ในไฟล์นี้จาก 15 เป็น **16** และรวม scenario จาก 57 เป็น **56** (57 − 5 ย้ายออก
+> + 4 ย้ายเข้า INT-0) — เนื้อหา Given-When-Then ไม่เปลี่ยน มีแค่ ID/การจัดกลุ่ม/REQ อ้างอิงที่ปรับ
 
 ---
 

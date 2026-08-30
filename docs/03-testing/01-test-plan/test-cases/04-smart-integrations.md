@@ -1,22 +1,28 @@
-# Test Cases: Smart Integrations (INT-1, INT-2, INT-3)
+# Test Cases: Smart Integrations (INT-0, INT-1, INT-2, INT-3)
 
 - **ประเภทเอกสาร:** Test Cases (ต่อ Epic — ไฟล์นี้ครอบคลุมเฉพาะ Epic 4: Smart Integrations)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
 
-เอกสารนี้ให้ step-by-step test case ของทุก Feature ใน Epic 4 (Smart Integrations: **INT-1, INT-2, INT-3**)
-สร้างจาก [acceptance-criteria.md](../../../01-requirements/acceptance-criteria.md) (Epic 4 section — AC-INT-1-01
-ถึง AC-INT-3-03, อัปเดต 2026-08-29 ด้วย AC-INT-1-04/AC-INT-3-03 จาก NFR-13/NFR-12) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก)
+เอกสารนี้ให้ step-by-step test case ของทุก Feature ใน Epic 4 (Smart Integrations: **INT-0, INT-1, INT-2,
+INT-3**) สร้างจาก [acceptance-criteria.md](../../../01-requirements/acceptance-criteria.md) (Epic 4 section
+— AC-INT-0-01 ถึง AC-INT-3-03, อัปเดต 2026-08-29 ด้วย AC-INT-1-04/AC-INT-3-03 จาก NFR-13/NFR-12, อัปเดต
+2026-08-30 ด้วยการย้าย AC-INT-2-03–06/AC-INT-3-04 เดิมมาเป็น AC-INT-0-01–04 หลัง `feature-list-journey`
+ตั้ง Feature ID **INT-0**/REQ-18 ให้กลไกรหัสจับคู่อุปกรณ์เป็นของตัวเอง) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
 (คำอธิบาย feature), [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md)
-(REQ-11/12/13 และค่าคงที่ 7,700 kcal ≈ 1 กก.), และ
+(REQ-18/11/12/13 และค่าคงที่ 7,700 kcal ≈ 1 กก.), และ
 [user-journeys.md](../../../02-design/01-prototypes/user-journeys.md#epic-4-smart-integrations) (flow/Alt-Edge
 Case) — ตาม methodology ของ `test-suite-builder` เอกสารทั้งสี่นี้เป็น read-only upstream ไฟล์นี้ไม่แก้ไข
 
 > **หมายเหตุขอบเขต**: ตาม [test-plan.md §1](../test-plan.md#1-ขอบเขต-scope) Epic 4 ทั้งหมดเป็น MoSCoW
 > **Could** และ**อยู่นอกขอบเขตการ execute ของรอบทดสอบปัจจุบัน** (ยังไม่ถูก implement จริง) — ไฟล์นี้เตรียม
 > test case ไว้ล่วงหน้าตามที่ scope ของ `test-suite-builder` กำหนด (default = full backlog coverage)
-> เพื่อให้พร้อมใช้ execute ทันทีเมื่อ Epic 4 ถูกหยิบขึ้นมา implement จริง
+> เพื่อให้พร้อมใช้ execute ทันทีเมื่อ Epic 4 ถูกหยิบขึ้นมา implement จริง — **ข้อยกเว้น (เพิ่ม 2026-08-30)**:
+> TC-INT-0-001 ถึง TC-INT-0-005 และ TC-INT-3-004 (กลไกรหัสจับคู่อุปกรณ์ pairing-code — ย้ายจาก
+> TC-INT-2-003 ถึง TC-INT-2-007 เดิม หลัง INT-0/REQ-18 เป็น Feature ID ทางการ) **execute ได้จริงแล้ว
+> ในรอบนี้** แม้ INT-2/INT-3 เองยังเป็น Could/นอกขอบเขต เพราะ backend จริงของกลไกนี้ implement แล้วที่
+> `apps/web/server/routes/pairing/index.ts` — ดู [test-plan.md §4 R14](../test-plan.md#4-risk-management)
 
 **ตัวอย่างหน้าจอที่เกี่ยวข้อง** (prototype `v1`):
 [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html) (INT-1),
@@ -38,9 +44,147 @@ Activity Factor 1.55 (ตัวอย่างระดับกิจกรร�
 
 ## สารบัญ
 
+- [INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  — TC-INT-0-001 ถึง 005 (renumbering 2026-08-30 จาก TC-INT-2-003 ถึง 007 เดิม)
 - [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 005
-- [INT-2 — ซิงค์ตาชั่งอัจฉริยะ](#int-2--ซิงค์ตาชั่งอัจฉริยะ) — TC-INT-2-001 ถึง 002
-- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 003
+- [INT-2 — ซิงค์ตาชั่งอัจฉริยะ](#int-2--ซิงค์ตาชั่งอัจฉริยะ) — TC-INT-2-001 ถึง 002 (003–007 เดิมย้ายไป
+  INT-0 แล้วเมื่อ 2026-08-30)
+- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 004 (004 เพิ่ม 2026-08-30,
+  cross-reference ไปยัง TC-INT-0-005 อัปเดต 2026-08-30 รอบ renumbering)
+
+---
+
+## INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่ (REQ-18)
+
+REQ-18 · Spec: [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md) ·
+AC: [acceptance-criteria.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code](../../../01-requirements/acceptance-criteria.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code) ·
+Journey: [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+
+> **หมายเหตุ (renumbering, เพิ่ม 2026-08-30)**: TC-INT-0-001 ถึง TC-INT-0-005 ด้านล่างนี้ย้ายมาจาก
+> TC-INT-2-003, TC-INT-2-004, TC-INT-2-005, TC-INT-2-006, TC-INT-2-007 เดิม ตามลำดับ หลังจาก
+> `feature-list-journey` ตั้ง Feature ID **INT-0** พร้อม **REQ-18** ของตัวเองให้กลไกรหัสจับคู่อุปกรณ์
+> (pairing-code identity handoff) แทนที่จะเป็น implicit precondition ของ INT-2 เนื้อหา Test Steps/
+> Expected Result/Test Data ไม่เปลี่ยน มีแค่ ID/References/การจัดกลุ่มที่ปรับให้ตรง REQ-18 — ต่างจาก
+> test case อื่นของ Epic 4 กลุ่มนี้ **execute ได้จริงในรอบนี้** แม้ INT-2/INT-3 เองยังเป็น Could/นอกขอบเขต
+> เพราะ backend จริงของกลไกนี้มีอยู่แล้ว (`apps/web/server/routes/pairing/index.ts`, ดู
+> [test-plan.md §4 R14](../test-plan.md#4-risk-management)) — endpoint จริงคือ
+> `POST /api/pairing/create-code` (ต้องยืนยันตัวตนก่อนเรียก) และ `POST /api/pairing/redeem` (ไม่ต้อง
+> ยืนยันตัวตน) ซึ่ง mount จริงต่างจากชื่อ conceptual `POST /auth/pairing-codes`/`.../redeem` ใน
+> [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md) (conceptual REST convention เทียบเท่ากัน
+> — ดู mapping ที่ [tech-stack.md §6.3.1](../../../02-design/02-technical/tech-stack.md))
+
+### TC-INT-0-001 — ขอรหัสจับคู่อุปกรณ์จากเว็บสำเร็จ (mint pairing-code, ต้องยืนยันตัวตนก่อน)
+
+- **Pre-condition**: ผู้ใช้ (persona ด้านบน) ล็อกอินอยู่บนเว็บแอปแล้ว (ONB-0) มี session/ID token ที่ valid
+  และเปิดหน้าโปรไฟล์
+- **Test Steps**:
+  1. ที่หน้าโปรไฟล์ กดปุ่ม "ขอรหัสจับคู่อุปกรณ์"
+  2. Client เรียก `POST /api/pairing/create-code` พร้อม auth header ที่ valid
+  3. สังเกต response และรหัสที่แสดงบนหน้าจอ
+- **Expected Result**: Server สร้างเอกสาร `pairingCodes/{code}` ใหม่ใน Firestore ผูกกับ `uid` ของผู้ใช้คนนี้
+  ตอบกลับ `201` พร้อม `{ code, expiresAt }` — `code` เป็นตัวเลข 6 หลัก และ `expiresAt` = เวลาปัจจุบัน + 5
+  นาทีพอดี (ISO string) หน้าจอเว็บแสดงรหัส 6 หลักนั้นให้ผู้ใช้เห็นทันที
+- **Test Data**: `uid` ตัวอย่าง = `"uid_test_001"`, เวลาที่เรียก = `2026-08-30T10:00:00.000Z` → คาดว่า
+  `expiresAt` = `2026-08-30T10:05:00.000Z`, รูปแบบ `code` = ตัวเลข 6 หลัก เช่น `"482913"`
+- **References**: REQ-18 · AC-INT-0-01 · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) ·
+  [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md) (`POST /auth/pairing-codes`, conceptual
+  เทียบเท่า `POST /api/pairing/create-code` จริง) · [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (steps 1–3) · [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html)
+  (ปุ่ม "ขอรหัสจับคู่อุปกรณ์" แสดงรหัส 6 หลัก + expiry countdown)
+
+### TC-INT-0-002 — กรอกรหัสจับคู่บนมือถือสำเร็จ แลกเป็น session แบบ silent (redeem สำเร็จ)
+
+- **Pre-condition**: ผู้ใช้มีรหัสจับคู่ 6 หลักที่ยังไม่หมดอายุและยังไม่ถูกใช้จาก TC-INT-0-001 (`code = "482913"`,
+  `uid = "uid_test_001"`) และเปิด companion app บนมือถือ (ไม่มีหน้าจอ auth ของตัวเอง)
+- **Test Steps**:
+  1. บน companion app กรอกรหัสจับคู่ = `482913`
+  2. Client เรียก `POST /api/pairing/redeem` พร้อม body `{ "code": "482913" }` (ไม่มี auth header)
+  3. สังเกต response ที่ได้กลับมา
+  4. ตรวจสอบว่าเอกสาร `pairingCodes/482913` ใน Firestore ยังอยู่หรือไม่หลังเรียกเสร็จ
+- **Expected Result**: Server ตรวจสอบว่ารหัสยังไม่หมดอายุ ลบเอกสาร `pairingCodes/482913` ทิ้งถาวรทันที
+  (single-use) แล้วตอบกลับ `200` พร้อม Firebase custom token ที่ผูกกับ `uid = "uid_test_001"` — companion
+  app ใช้ token นั้น sign in แบบ silent (ไม่ต้องกรอก credential ใด ๆ) แล้วเข้าสู่หน้าจับคู่อุปกรณ์จริง
+  (device-pairing) เอกสาร `pairingCodes/482913` ไม่มีอยู่ใน Firestore อีกต่อไปหลังจากนี้
+- **Test Data**: `code` ที่กรอก = `"482913"` (ยังไม่หมดอายุ ยังไม่ถูกใช้) → คาดว่าได้ `customToken` ที่ decode
+  แล้วมี `uid = "uid_test_001"`
+- **References**: REQ-18 · AC-INT-0-02 · [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md)
+  (`POST /auth/pairing-codes/redeem`, conceptual เทียบเท่า `POST /api/pairing/redeem` จริง) ·
+  [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  (steps 4–6)
+
+### TC-INT-0-003 — รหัสจับคู่ไม่ถูกต้อง/หมดอายุ/ถูกใช้ไปแล้ว ระบบตอบ `410` กรณีเดียวเสมอ (consolidated)
+
+> **หมายเหตุการรวม test case**: 3 variation ด้านล่าง (ไม่พบรหัสเลย/หมดอายุแล้ว/ถูกใช้ไปแล้ว) ถูกรวมไว้ใน
+> test case เดียวกันโดยตั้งใจ — เพราะโค้ดจริง (`apps/web/server/routes/pairing/index.ts`) ลบเอกสาร Firestore
+> ทิ้งทันทีที่ redeem สำเร็จครั้งแรก ทำให้ทั้ง 3 สถานการณ์คืนผลลัพธ์ที่**สังเกตไม่ออกว่าต่างกัน**จาก client
+> ฝั่งเดียว (response เดียวกันทุกกรณี) การแยกเป็น 3 test case จะสื่อเป็นนัยผิด ๆ ว่ามี behavior ที่แยกจากกันจริง
+> ทั้งที่ไม่มี — จึงเขียนเป็น 1 test case ที่มีหลาย Test Data variation แทน ตรงตาม decision ที่ resolve แล้ว
+> ใน [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md)
+
+- **Pre-condition**: มี 3 สถานการณ์ทดสอบแยกกัน (ก) `code` ที่ไม่เคยถูกสร้างขึ้นมาเลย (ข) `code` ที่เคยสร้าง
+  แต่หมดอายุแล้ว (เกิน 5 นาทีจากที่ mint) (ค) `code` ที่เคยสร้างและถูก redeem สำเร็จไปแล้วครั้งหนึ่ง (เช่น
+  จาก TC-INT-0-002)
+- **Test Steps** (ทำซ้ำทั้ง 3 สถานการณ์แยกกัน):
+  1. Client เรียก `POST /api/pairing/redeem` พร้อม `code` ของสถานการณ์นั้น
+  2. สังเกต response
+- **Expected Result**: ทั้ง 3 สถานการณ์ ระบบตอบกลับ **`410 Gone`** พร้อมข้อความ error เดียวกัน
+  (`"This code is invalid or has expired."`) เหมือนกันทุกกรณี — ไม่มีการแยกแยะให้ client ทราบว่าเป็นกรณี
+  ไหน ไม่ mint token ใด ๆ ในทั้ง 3 กรณี
+- **Test Data**:
+  | สถานการณ์ | `code` ที่ส่งไป | ผลที่คาดหวัง |
+  |---|---|---|
+  | (ก) ไม่เคยมีอยู่จริง | `"000000"` (ไม่มีเอกสาร `pairingCodes/000000` ใน Firestore) | `410` |
+  | (ข) หมดอายุแล้ว | `"482913"` แต่เรียกที่เวลา `2026-08-30T10:05:01.000Z` (เกิน `expiresAt` 1 วินาที) | `410` |
+  | (ค) ถูกใช้ไปแล้ว | `"482913"` เรียกซ้ำอีกครั้งหลัง TC-INT-0-002 redeem สำเร็จไปแล้ว (เอกสารถูกลบไปแล้ว) | `410` |
+- **References**: REQ-18 · AC-INT-0-03 · [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md)
+  (`POST /auth/pairing-codes/redeem` — แก้ error case เป็น `410` กรณีเดียวเมื่อ 2026-08-30 รอบ 5) ·
+  [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) (สถานะรหัสไม่ถูกต้อง)
+
+### TC-INT-0-004 — รหัสจับคู่หมดอายุตามเวลา TTL 5 นาทีพอดี (expiry timing boundary)
+
+- **Pre-condition**: ผู้ใช้มีรหัสจับคู่ที่เพิ่ง mint จาก `POST /api/pairing/create-code` ที่เวลา
+  `2026-08-30T10:00:00.000Z` (`expiresAt = 2026-08-30T10:05:00.000Z`)
+- **Test Steps**:
+  1. เรียก `POST /api/pairing/redeem` ด้วยรหัสเดิม ที่เวลา `2026-08-30T10:04:59.000Z` (ก่อนหมดอายุ 1 วินาที)
+  2. สังเกต response ของขั้นตอนที่ 1
+  3. ขอรหัสใหม่ mint อีกครั้งที่เวลา `2026-08-30T10:00:00.000Z` (`expiresAt` เดิม) แล้วเรียก redeem ด้วยรหัส
+     เดิมที่เวลา `2026-08-30T10:05:00.000Z` พอดี (ตรงกับ `expiresAt` เป๊ะ)
+  4. สังเกต response ของขั้นตอนที่ 3
+- **Expected Result**: ขั้นตอนที่ 1 (ก่อนหมดอายุ 1 วินาที) → redeem สำเร็จ `200` พร้อม custom token —
+  ขั้นตอนที่ 3 (ตรงกับเวลาหมดอายุพอดี, เงื่อนไขโค้ดจริงคือ `new Date(data.expiresAt) < new Date()`) →
+  เวลาปัจจุบันไม่ได้ "น้อยกว่า" `expiresAt` อย่างเคร่งครัด (เท่ากันพอดี) จึงยังไม่ถือว่าหมดอายุ **redeem
+  สำเร็จ** `200` เช่นกัน (boundary นี้ inclusive ที่ฝั่ง valid ตามเงื่อนไขโค้ดจริง ไม่ใช่ exclusive) — ต้อง
+  ทดสอบที่ 1 มิลลิวินาทีหลัง `expiresAt` แยกต่างหาก (ดู TC-INT-0-003 สถานการณ์ (ข)) เพื่อยืนยันฝั่งหมดอายุจริง
+- **Test Data**: `expiresAt` = `2026-08-30T10:05:00.000Z`; เวลาทดสอบ (1) = `10:04:59.000Z` (ก่อนหมดอายุ,
+  คาดว่า `200`), เวลาทดสอบ (2) = `10:05:00.000Z` พอดี (คาดว่า `200` ตาม boundary inclusive ของโค้ดจริง),
+  เทียบกับ TC-INT-0-003 (ข) ที่ `10:05:01.000Z` (คาดว่า `410`)
+- **References**: REQ-18 · AC-INT-0-03 · [api-spec.md §3.1](../../../02-design/02-technical/api-spec.md) ·
+  [13-companion-pairing-code.html](../../../02-design/01-prototypes/v1/13-companion-pairing-code.html)
+  (สถานะรหัสไม่ถูกต้อง/หมดอายุ) — ไม่มีลิงก์ user-journeys.md เพราะเป็น boundary test ระดับ implementation
+  ไม่ใช่ Alt/Edge Case ของ journey โดยตรง
+
+### TC-INT-0-005 — ยังไม่ผ่านกลไกรหัสจับคู่ ระบบไม่ให้เข้าหน้าจับคู่อุปกรณ์บนมือถือ (precondition guard)
+
+- **Pre-condition**: ผู้ใช้เปิด companion app บนมือถือเครื่องนี้เป็นครั้งแรก ยังไม่เคย redeem รหัสจับคู่
+  อุปกรณ์สำเร็จเลย (ไม่มี session ที่ผูกกับบัญชีผู้ใช้ใด)
+- **Test Steps**:
+  1. เปิด companion app
+  2. พยายาม navigate ไปหน้าจับคู่อุปกรณ์โดยตรง — ทดสอบแยกทั้ง 2 ปลายทาง: (ก) หน้าจับคู่ตาชั่งอัจฉริยะ
+     (device-pairing, `device=scale`, ปลายทางของ INT-2) และ (ข) หน้าเชื่อมต่อ wearable (device-pairing,
+     `device=wearable`, ปลายทางของ INT-3)
+- **Expected Result**: ทั้ง 2 ปลายทาง แอปพามาที่หน้าจอกรอกรหัสจับคู่ (`pairing-code.tsx`) เหมือนกัน แทนที่
+  จะให้เข้าหน้าจับคู่อุปกรณ์ได้โดยตรง — ต้อง redeem รหัสจับคู่สำเร็จก่อน (TC-INT-0-002) จึงจะเข้าหน้าจับคู่
+  อุปกรณ์จริง (ปลายทางใดก็ได้) ได้
+- **Test Data**: session ปัจจุบันของมือถือเครื่องนี้ = ไม่มี (ไม่เคย redeem มาก่อน)
+- **References**: REQ-18 · AC-INT-0-04 · [user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17)
+  (Alt/Edge Case: "ผู้ใช้เปิดแอปมือถือโดยยังไม่เคยสมัคร/เข้าสู่ระบบบนเว็บมาก่อน") ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  · flow เชิงเส้น [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html) →
+  [13-companion-pairing-code.html](../../../02-design/01-prototypes/v1/13-companion-pairing-code.html) →
+  [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) (ปลายทางเป็นหน้า
+  จับคู่ตาชั่งหรือหน้าเชื่อมต่อ wearable แล้วแต่ผู้ใช้เลือก — ดู TC-INT-3-004 สำหรับ cross-reference
+  ปลายทาง wearable โดยเฉพาะ)
 
 ---
 
@@ -147,6 +291,12 @@ Journey: [user-journeys.md#int-1--พยากรณ์วันถึงเป�
 REQ-12 · Spec: [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md) ·
 AC: [acceptance-criteria.md#int-2--ซิงค์ตาชั่งอัจฉริยะ](../../../01-requirements/acceptance-criteria.md#int-2--ซิงค์ตาชั่งอัจฉริยะ) ·
 Journey: [user-journeys.md#int-2--ซิงค์ตาชั่งอัจฉริยะ-req-12](../../../02-design/01-prototypes/user-journeys.md#int-2--ซิงค์ตาชั่งอัจฉริยะ-req-12)
+
+> **หมายเหตุ (renumbering, เพิ่ม 2026-08-30)**: TC-INT-2-003 ถึง TC-INT-2-007 เดิม (กลไกรหัสจับคู่อุปกรณ์
+> pairing-code identity handoff) ย้ายไปเป็น **TC-INT-0-001 ถึง TC-INT-0-005** ทั้งหมดแล้ว (ดู
+> [INT-0 section](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18) ด้านบน) เพราะกลไกนี้ได้รับ
+> Feature ID/REQ-18 ของตัวเองแล้ว ไม่ใช่ precondition ทางเทคนิคที่ไม่มี REQ number แยกอีกต่อไป —
+> precondition guard test case สำหรับปลายทางตาชั่งอัจฉริยะโดยเฉพาะ ดู **TC-INT-0-005**
 
 ### TC-INT-2-001 — จับคู่ตาชั่งสำเร็จ ซิงค์น้ำหนัก/องค์ประกอบร่างกายอัตโนมัติ และคำนวณ TDEE ใหม่
 
@@ -261,6 +411,33 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
   scenario นี้เป็นระดับ API/backend validation ไม่ใช่ Alt/Edge Case ของ journey (ดูหมายเหตุใต้
   AC-INT-3-03 ใน acceptance-criteria.md)
 
+### TC-INT-3-004 — ยังไม่ผ่านกลไกรหัสจับคู่ ระบบไม่ให้เข้าหน้าเชื่อมต่อ wearable บนมือถือ (precondition guard, เพิ่ม 2026-08-30)
+
+> **หมายเหตุ (อัปเดต 2026-08-30 รอบ renumbering)**: กลไก pairing-code เดียวกันกับ **TC-INT-0-001 ถึง
+> TC-INT-0-005** (เดิมคือ TC-INT-2-003 ถึง 007 ก่อนที่กลไกนี้จะได้ Feature ID/REQ-18 ของตัวเอง — ดู
+> [INT-0 section](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18) ด้านบน) — test case นี้ยืนยัน
+> เฉพาะส่วนที่ต่างจาก TC-INT-0-005 คือปลายทางหลัง redeem สำเร็จเป็นหน้าเชื่อมต่อ wearable แทนหน้าจับคู่
+> ตาชั่ง ไม่ทดสอบ mint/redeem/expiry ซ้ำ (ดู TC-INT-0-001 ถึง 004 สำหรับกลไกนั้น) — ที่จริงแล้ว TC-INT-0-005
+> เองครอบคลุมทั้ง 2 ปลายทาง (ตาชั่ง/wearable) ไว้แล้วในตัว test case เดียว test case นี้จึงเป็น
+> cross-reference ยืนยันซ้ำเฉพาะฝั่ง wearable แยกไว้ใน section INT-3 เพื่อให้ค้นหาง่ายจากที่นี่โดยตรง
+
+- **Pre-condition**: ผู้ใช้เปิด companion app บนมือถือเครื่องนี้เป็นครั้งแรก ยังไม่เคย redeem รหัสจับคู่
+  อุปกรณ์สำเร็จเลย
+- **Test Steps**:
+  1. เปิด companion app
+  2. พยายาม navigate ไปหน้าเชื่อมต่อ wearable (device-pairing, `device=wearable`) โดยตรง
+- **Expected Result**: แอปพามาที่หน้าจอกรอกรหัสจับคู่ (`pairing-code.tsx`) แทนที่จะให้เข้าหน้าเชื่อมต่อ
+  wearable ได้โดยตรง — ต้อง redeem รหัสจับคู่สำเร็จก่อน (กลไกเดียวกันกับ TC-INT-0-002) จึงจะเข้าหน้าเชื่อม
+  ต่อ wearable จริงได้
+- **Test Data**: session ปัจจุบันของมือถือเครื่องนี้ = ไม่มี (ไม่เคย redeem มาก่อน)
+- **References**: REQ-18 · AC-INT-0-04 · [user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17)
+  (Alt/Edge Case: "ผู้ใช้เปิดแอปมือถือโดยยังไม่เคยสมัคร/เข้าสู่ระบบบนเว็บมาก่อน") ·
+  [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  · **ดูรายละเอียดกลไกเต็มที่ TC-INT-0-005** — flow เชิงเส้นเดียวกันกับ TC-INT-0-005
+  [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html) →
+  [13-companion-pairing-code.html](../../../02-design/01-prototypes/v1/13-companion-pairing-code.html) →
+  [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html)
+
 ---
 
 ## หมายเหตุ: Gap ที่ยังไม่มี test case (Open Question ที่ยังไม่ resolve)
@@ -284,6 +461,10 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 
 | Feature ID | AC ที่ครอบคลุม | Test Case ที่ map | หมายเหตุ |
 |---|---|---|---|
+| INT-0 | AC-INT-0-01 (เดิม AC-INT-2-03) | TC-INT-0-001 | 1:1 — execute ได้จริง (backend มีอยู่แล้ว) |
+| INT-0 | AC-INT-0-02 (เดิม AC-INT-2-04) | TC-INT-0-002 | 1:1 — execute ได้จริง |
+| INT-0 | AC-INT-0-03 (เดิม AC-INT-2-05) | TC-INT-0-003, TC-INT-0-004 | 1 AC → 2 TC (TC-003: 3 สถานการณ์ consolidated เป็น 410 เดียว; TC-004: boundary timing ของ TTL) — execute ได้จริง |
+| INT-0 | AC-INT-0-04 (เดิม AC-INT-2-06 + AC-INT-3-04 รวมกัน) | TC-INT-0-005 | 1:1 — execute ได้จริง (ครอบคลุมทั้ง 2 ปลายทาง ตาชั่ง/wearable ในตัว) |
 | INT-1 | AC-INT-1-01 | TC-INT-1-001 | 1:1 |
 | INT-1 | AC-INT-1-02 | TC-INT-1-002 | 1:1 |
 | INT-1 | AC-INT-1-03 | TC-INT-1-003, TC-INT-1-004 | 1 AC → 2 TC (variation: ขาดดุล = 0 / ขาดดุลสวนทางเป้าหมาย) |
@@ -293,7 +474,20 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 | INT-3 | AC-INT-3-01 | TC-INT-3-001 | 1:1 |
 | INT-3 | AC-INT-3-02 | TC-INT-3-002 | 1:1 |
 | INT-3 | AC-INT-3-03 (ใหม่, NFR-12, เพิ่ม 2026-08-29) | TC-INT-3-003 | 1:1 — "not testable in this round" (ดู test-plan.md R12) |
-| **รวม** | **9 AC scenario** (ครบทุก AC ของ INT-1/2/3 ใน acceptance-criteria.md) | **10 test case** | |
+| INT-3 | AC-INT-0-04 (cross-ref, เดิม AC-INT-3-04) | TC-INT-3-004 | 1:1 — execute ได้จริง (cross-reference ยืนยันเฉพาะฝั่ง wearable ของ TC-INT-0-005) |
+| **รวม** | **13 AC scenario ไม่ซ้ำ** (ครบทุก AC ของ INT-0/1/2/3 ใน acceptance-criteria.md — TC-INT-3-004 map ซ้ำกับ AC-INT-0-04) | **16 test case** | |
+
+> อัปเดต 2026-08-30 (reconcile ตาม CLAUDE.md § "Docs/code drift"): +5 AC scenario / +6 test case จากกลไก
+> รหัสจับคู่อุปกรณ์ (pairing-code identity handoff) ที่ implement จริงแล้วใน `apps/web/server/routes/pairing/`
+> — ต่างจาก test case อื่นของ Epic 4 กลุ่มนี้ execute ได้จริงในรอบนี้แม้ INT-2/INT-3 เองยังเป็น Could/นอก
+> ขอบเขต (ดู test-plan.md §4 R14)
+>
+> อัปเดต 2026-08-30 (renumbering): กลไก pairing-code ได้ Feature ID **INT-0**/REQ-18 ของตัวเองจาก
+> `feature-list-journey` — TC-INT-2-003 ถึง 007 เดิม (5 test case) ย้ายเป็น **TC-INT-0-001 ถึง 005**
+> (ยังคง 5 test case เท่าเดิม เพียงย้าย section) INT-2 เหลือ TC-INT-2-001/002 เดิม INT-3 ยังมี TC-INT-3-004
+> อยู่เหมือนเดิมแต่เปลี่ยนไป cross-reference AC-INT-0-04/TC-INT-0-005 แทนการยืนยันกลไกลำพัง — รวม test case
+> ทั้งไฟล์ยังคง **16 test case** เท่าเดิม (ย้าย ไม่ได้เพิ่ม/ลด) AC scenario ไม่ซ้ำที่ครอบคลุมลดจาก 14 เป็น
+> **13** เพราะ AC-INT-2-06/AC-INT-3-04 เดิมรวมเป็น AC-INT-0-04 เดียว
 
 ---
 

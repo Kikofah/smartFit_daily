@@ -1,4 +1,18 @@
 <!-- Feature: INT-2, INT-3 | REQ: REQ-12, REQ-13 -->
+<!-- 2026-08-30 consistency audit (pairing-code identity-handoff, journey P4-P6/A): this screen used
+     to be reached only via a direct ?device= deep link from 11-device-integrations.html (the web
+     profile page) -- that no longer matches the architecture, since the mobile companion app that
+     owns this screen has no route back to a web-only page (see 11's 2026-08-30 comment and
+     apps/mobile/app/device-pairing.tsx, which shows both device buttons on one screen rather than
+     being deep-linked per device). Added a device-select landing state (shown when no ?device= is
+     present, i.e. arriving fresh right after 13-companion-pairing-code.html's silent sign-in) with
+     both "เชื่อมต่อตาชั่งอัจฉริยะ"/"เชื่อมต่อ Wearable" buttons, mirroring device-pairing.tsx's two
+     buttons. The existing per-device connecting/success/failure states (used once a device IS
+     chosen, via the same ?device= param, now set by this screen's own buttons instead of by 11) are
+     unchanged. The "ย้อนกลับ" link in those states now points back to this screen's own
+     device-select state (not to 11, which mobile can't reach) -- matches device-pairing.tsx having
+     no path back to the web app, only a "ออกจากระบบ" action, added here too. -->
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -96,15 +110,32 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 <div class="device-frame">
   <div class="screen-content">
 
-    <div class="top-bar">
-      <a href="11-device-integrations.html" class="btn btn-ghost back-btn">
+    <!-- Shown only once a device is chosen (?device= present); id="backBar" toggled by script -->
+    <div class="top-bar hidden" id="backBar">
+      <a href="12-device-pairing.html" class="btn btn-ghost back-btn">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 5l-7 7 7 7"></path></svg>
         ย้อนกลับ
       </a>
     </div>
 
+    <!-- P6/A of the INT-2/INT-3 journey: landing state right after 13-companion-pairing-code.html's
+         silent sign-in, no ?device= chosen yet. Mirrors apps/mobile/app/device-pairing.tsx's two
+         buttons on one screen (this replaces the old direct deep-link from 11-device-integrations.html,
+         which mobile can no longer reach -- see this file's 2026-08-30 comment above). -->
+    <div id="deviceSelectState">
+      <div class="status-panel" style="padding-top: var(--space-8);">
+        <h1 class="text-h1">เชื่อมต่ออุปกรณ์</h1>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="location.href='12-device-pairing.html?device=scale'">เชื่อมต่อตาชั่งอัจฉริยะ</button>
+      <div style="height: var(--space-3);"></div>
+      <button type="button" class="btn btn-secondary" onclick="location.href='12-device-pairing.html?device=wearable'">เชื่อมต่อ Wearable</button>
+      <div style="margin-top: var(--space-4); text-align:center;">
+        <button type="button" class="btn btn-ghost" onclick="location.href='13-companion-pairing-code.html'">ออกจากระบบ</button>
+      </div>
+    </div>
+
     <!-- Demo state toggle (not part of real UI, for prototype review only) -->
-    <div class="demo-toggle">
+    <div class="demo-toggle hidden" id="demoToggle">
       <button type="button" class="active" id="btnConnecting" onclick="setState('connecting')">ตัวอย่าง: กำลังเชื่อมต่อ</button>
       <button type="button" id="btnSuccess" onclick="setState('success')">ตัวอย่าง: สำเร็จ</button>
       <button type="button" id="btnFailure" onclick="setState('failure')">ตัวอย่าง: เชื่อมต่อไม่สำเร็จ</button>
@@ -129,7 +160,11 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
         </div>
         <h2 class="text-h3" id="successTitle">เชื่อมต่อตาชั่งอัจฉริยะสำเร็จ</h2>
         <p class="text-body-sm" id="successBody">ข้อมูลจากอุปกรณ์นี้จะซิงค์เข้าโปรไฟล์ให้อัตโนมัติจากนี้ไป</p>
-        <button type="button" class="btn btn-secondary" onclick="location.href='11-device-integrations.html'">กลับไปหน้าโปรไฟล์</button>
+        <!-- 2026-08-30: was "กลับไปหน้าโปรไฟล์" -> 11-device-integrations.html, which this mobile
+             companion screen can no longer reach (see file header comment) -- returns to this
+             screen's own device-select state instead, matching device-pairing.tsx being the
+             companion app's own home screen with no route to the web app. -->
+        <button type="button" class="btn btn-secondary" onclick="location.href='12-device-pairing.html'">เสร็จสิ้น</button>
       </div>
     </div>
 
@@ -157,7 +192,8 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
             <button type="button" class="stepper-btn" onclick="stepWeight(0.1)">+</button>
           </div>
         </div>
-        <button type="button" class="btn btn-primary" onclick="location.href='11-device-integrations.html'">บันทึกน้ำหนัก</button>
+        <!-- 2026-08-30: same fix as the success state's button above -->
+        <button type="button" class="btn btn-primary" onclick="location.href='12-device-pairing.html'">บันทึกน้ำหนัก</button>
         <div style="margin-top: var(--space-3); text-align:center;">
           <button type="button" class="btn btn-ghost" onclick="setState('connecting')">ลองเชื่อมต่ออีกครั้ง</button>
         </div>
@@ -180,13 +216,25 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   };
   var deviceLabels = { scale: 'ตาชั่งอัจฉริยะ', wearable: 'Wearable' };
 
-  function getDevice() {
+  function getExplicitDevice() {
     var params = new URLSearchParams(window.location.search);
     var d = params.get('device');
-    return (d === 'scale' || d === 'wearable') ? d : 'scale';
+    return (d === 'scale' || d === 'wearable') ? d : null;
   }
 
-  var device = getDevice();
+  // P6/A: no ?device= yet -> show the device-select landing state and keep the
+  // connecting/success/failure states + their demo toggle + back bar hidden. Once a device IS
+  // chosen (via this screen's own buttons), those become the visible ones instead.
+  var explicitDevice = getExplicitDevice();
+  if (!explicitDevice) {
+    document.getElementById('connectingState').classList.add('hidden');
+  } else {
+    document.getElementById('deviceSelectState').classList.add('hidden');
+    document.getElementById('backBar').classList.remove('hidden');
+    document.getElementById('demoToggle').classList.remove('hidden');
+  }
+
+  var device = explicitDevice || 'scale';
   var label = deviceLabels[device];
 
   document.getElementById('deviceIconConnecting').innerHTML = iconPaths[device];

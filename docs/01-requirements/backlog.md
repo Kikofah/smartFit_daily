@@ -35,6 +35,7 @@
 | PLN-2 | โหมด Cheat Day / Rest Day (preserve log, completed wins) | Planner & Logging | **Must** | REQ-09 | [03-spec](01-spec/20260823-03-planner-logging.md) |
 | PLN-3 | บันทึกผลรายวัน (all-or-nothing) | Planner & Logging | **Must** | REQ-10 | [03-spec](01-spec/20260823-03-planner-logging.md) |
 | PLN-4 | ติดตาม Streak ต่อเนื่อง (strict, ไม่มี partial credit) | Planner & Logging | **Should** | REQ-09, REQ-10 | [03-spec](01-spec/20260823-03-planner-logging.md) |
+| INT-0 | ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่ (Pairing Code) | Smart Integrations | **Could** | REQ-18 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
 | INT-1 | พยากรณ์วันถึงเป้าหมายน้ำหนัก | Smart Integrations | **Could** | REQ-11 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
 | INT-2 | ซิงค์ตาชั่งอัจฉริยะ | Smart Integrations | **Could** | REQ-12 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
 | INT-3 | ซิงค์ข้อมูล Wearable | Smart Integrations | **Could** | REQ-13 | [04-spec](01-spec/20260823-04-smart-integrations.md) |
@@ -44,7 +45,10 @@
 ถูกจัดไว้เป็นแถวแรกสุดของ Onboarding แม้ REQ-14–17 จะปรากฏหลัง REQ-01–03 ใน Business Rules ของเอกสาร
 spec ก็ตาม เพราะ Authentication เป็น step แรกสุดที่เกิดขึ้นจริงในลำดับ user flow (ก่อน ONB-1 เสมอ ตาม
 [รายละเอียดของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#รายละเอียด-description))
-ไม่ใช่ลำดับที่ปรากฏในเอกสาร**
+ไม่ใช่ลำดับที่ปรากฏในเอกสาร** — เช่นเดียวกัน **INT-0 ถูกจัดไว้เป็นแถวแรกสุดของ Smart Integrations แม้
+REQ-18 จะเป็นเลขสุดท้ายและปรากฏหลัง REQ-11–13 ใน Business Rules ของเอกสาร spec ก็ตาม** เพราะเป็น
+precondition ทางเทคนิคที่ INT-2/INT-3 ต้องผ่านก่อนเสมอในลำดับ user flow จริง (ใช้เกณฑ์เดียวกับ ONB-0)
+ไม่ใช่ลำดับที่ปรากฏในเอกสาร spec
 
 ---
 
@@ -69,7 +73,12 @@ spec ก็ตาม เพราะ Authentication เป็น step แรก�
   เมื่อ 2026-08-29 (เทียบเคียงกับ PLN-4 ที่ผูก REQ-09+REQ-10 ไว้ใน Feature ID เดียวกันในลักษณะเดียวกัน)
   ดูรายละเอียดเต็มของการตัดสินใจ Epic placement/ขอบเขต/วิธี authentication ที่ยืนยันแล้วใน
   [ข้อสมมติฐาน/การตัดสินใจของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
-  — ผลลัพธ์ (`userId`) เป็น input ให้ ONB-1 และทุก feature อื่นในทุก Epic ใช้ต่อ
+  — ผลลัพธ์ (`userId`) เป็น input ให้ ONB-1 และทุก feature อื่นในทุก Epic ใช้ต่อ **ONB-0 เป็น web-only**
+  (อัปเดต 2026-08-30 ตาม codebase จริง): ทั้ง 4 หน้าจอ (สมัคร/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ) มีอยู่
+  เฉพาะที่เว็บแอปเท่านั้น แอปมือถือ (companion app ของ INT-2/INT-3) ไม่มีหน้าจอ auth ของตัวเองเลย และต้อง
+  พึ่งบัญชีผู้ใช้ที่มาจาก ONB-0 บนเว็บผ่านกลไก pairing-code (ดู [INT-2](#int-2--ซิงค์ตาชั่งอัจฉริยะ)/
+  [INT-3](#int-3--ซิงค์ข้อมูล-wearable) ด้านล่าง และ
+  [decision เต็มใน Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
 
 #### ONB-1 — กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่
 
@@ -192,6 +201,25 @@ spec ก็ตาม เพราะ Authentication เป็น step แรก�
 
 ### Epic 4: Smart Integrations
 
+#### INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่ (Pairing Code)
+
+- **Priority**: Could — แม้เป็น precondition ทางเทคนิคร่วมของ INT-2 และ INT-3 ทั้งคู่ (เทียบเคียงกับที่
+  ONB-0 เป็น precondition ของทั้งแอป) แต่ต่างจาก ONB-0 ตรงที่ไม่มี feature ระดับ Must/Should ใดพึ่งพา
+  INT-0 เลย มีแค่ INT-2/INT-3 ซึ่งทั้งคู่เป็น Could เท่านั้นที่ต้องใช้ — priority ของ INT-0 จึงสืบทอดมาจาก
+  feature ที่มันรองรับ (Could) ไม่ใช่ถูกดึงขึ้นเป็น Must/Should แบบ ONB-0
+- **REQ ที่เกี่ยวข้อง**: REQ-18
+- **คำอธิบาย**: ผู้ใช้ที่ล็อกอินอยู่บนเว็บแอปแล้ว ([ONB-0](#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-authentication))
+  ขอรหัสจับคู่อุปกรณ์แบบตัวเลข 6 หลักจากหน้าโปรไฟล์ — server สร้างรหัสผูกกับบัญชีผู้ใช้นั้นเสมอ อายุการใช้งาน
+  **5 นาที** และเป็น **single-use** จากนั้นผู้ใช้กรอกรหัสนี้บน companion mobile app เพื่อแลกเป็น session
+  ที่ authenticated แบบ silent (ไม่ต้องกรอก credential ซ้ำ) — เกิดขึ้นเพราะแอปมือถือ (companion app ของ
+  INT-2/INT-3) ไม่มีหน้าจอ auth ของตัวเองเลย ตามการ re-architecture ของโปรเจกต์เมื่อ 2026-08-29 (ดู
+  [decision เต็มใน Smart Integrations spec](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
+  — ได้รับ Feature ID ของตัวเอง (**INT-0**) และ REQ ของตัวเอง (**REQ-18**) เมื่อ 2026-08-30 ยืนยันจาก
+  ผู้ใช้งาน โดยตั้งชื่อ/จัดวางตามแบบแผนเดียวกับ ONB-0 ในฐานะ foundational precondition ที่ feature อื่นใน
+  epic เดียวกันใช้ร่วมกัน (ต่างจาก ONB-0 ตรงที่ INT-0 รองรับเฉพาะ INT-2/INT-3 ภายใน epic นี้ ไม่ใช่ทั้งแอป)
+  — ผลลัพธ์ (mobile session ที่ authenticated) เป็น precondition ของทั้ง [INT-2](#int-2--ซิงค์ตาชั่งอัจฉริยะ)
+  และ [INT-3](#int-3--ซิงค์ข้อมูล-wearable) ด้านล่าง
+
 #### INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก
 
 - **Priority**: Could — เป็น insight เสริมที่เพิ่มคุณค่าให้ผู้ใช้ที่ใช้แอปมาระยะหนึ่งแล้ว แต่ไม่ใช่
@@ -208,7 +236,11 @@ spec ก็ตาม เพราะ Authentication เป็น step แรก�
 - **REQ ที่เกี่ยวข้อง**: REQ-12
 - **คำอธิบาย**: ซิงค์น้ำหนัก/องค์ประกอบร่างกายจากตาชั่งอัจฉริยะผ่าน Bluetooth หรือ Health API เข้า
   โปรไฟล์ผู้ใช้อัตโนมัติ ค่าที่ได้ถูกใช้คำนวณ TDEE ใหม่ (ONB-1), แคลอรี่เผาผลาญ (REC-2), และพยากรณ์
-  เป้าหมาย (INT-1) ต่อ
+  เป้าหมาย (INT-1) ต่อ — ทำงานผ่าน companion app บนมือถือ ซึ่งไม่มีหน้าจอ auth ของตัวเอง (ดู
+  [ONB-0](#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-authentication) เป็น web-only)
+  จึงต้องผ่าน **[INT-0](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)** (REQ-18)
+  เพื่อยืนยันตัวตนผู้ใช้ก่อนเข้าหน้าจับคู่อุปกรณ์จริงเสมอ — ไม่ duplicate รายละเอียดกลไกซ้ำที่นี่อีกแล้ว
+  ตั้งแต่ 2026-08-30 (ย้ายไปอยู่ที่ INT-0 entry ของตัวเอง)
 
 #### INT-3 — ซิงค์ข้อมูล Wearable
 
@@ -217,7 +249,11 @@ spec ก็ตาม เพราะ Authentication เป็น step แรก�
 - **REQ ที่เกี่ยวข้อง**: REQ-13
 - **คำอธิบาย**: เชื่อมต่อ Apple Watch/Fitbit/Garmin ผ่าน Apple Health/Google Health Connect เพื่อดึง
   แคลอรี่เผาผลาญจริงจากอัตราการเต้นหัวใจและกิจกรรม มาแทนที่ค่าประมาณจากสูตร MET ใน REC-2 เมื่อมีข้อมูล
-  พร้อม ค่านี้ถูกใช้ต่อใน PLN-3 (บันทึก log) และ INT-1 (พยากรณ์)
+  พร้อม ค่านี้ถูกใช้ต่อใน PLN-3 (บันทึก log) และ INT-1 (พยากรณ์) — เช่นเดียวกับ INT-2 ทำงานผ่าน companion
+  app บนมือถือที่ไม่มีหน้าจอ auth ของตัวเอง ต้องผ่าน
+  **[INT-0](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)** (REQ-18) เพื่อยืนยันตัวตน
+  ผู้ใช้ก่อนเข้าหน้าเชื่อมต่อ wearable จริงเสมอ (กลไกเดียวกันกับที่ INT-2 ใช้ — ไม่ duplicate รายละเอียด
+  ซ้ำที่นี่อีกแล้วตั้งแต่ 2026-08-30)
 
 ---
 
@@ -242,9 +278,12 @@ spec ก็ตาม เพราะ Authentication เป็น step แรก�
 | REQ-15 | เข้าสู่ระบบ + จดจำสถานะ login (session persistence) | ONB-0 |
 | REQ-16 | ลืมรหัสผ่าน — รีเซ็ตผ่านอีเมล (เฉพาะ email/password) | ONB-0 |
 | REQ-17 | ออกจากระบบ — ล้าง session ทันที | ONB-0 |
+| REQ-18 | ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่ (Pairing Code, 6 หลัก, 5 นาที, single-use) | INT-0 |
 
-REQ-01 ถึง REQ-17 ครบทุกข้อ (REQ-14–17 เพิ่มเข้า Onboarding & Personalization spec เมื่อ 2026-08-29 —
-ดู [ONB-0](#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-authentication) ด้านบน) —
+REQ-01 ถึง REQ-18 ครบทุกข้อ (REQ-14–17 เพิ่มเข้า Onboarding & Personalization spec เมื่อ 2026-08-29 —
+ดู [ONB-0](#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-authentication) ด้านบน; REQ-18
+เพิ่มเข้า Smart Integrations spec เมื่อ 2026-08-30 — ดู
+[INT-0](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code) ด้านบน) —
 ไม่มี REQ ที่ต้องส่งไปที่ Open Questions
 (ดูรายละเอียดสมมติฐาน/ช่องว่างที่ยังไม่ชัดเจน ซึ่งไม่ใช่ส่วนหนึ่งของ 4 decision ที่ resolve แล้ว
 ได้ใน [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions)

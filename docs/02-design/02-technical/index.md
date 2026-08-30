@@ -31,16 +31,17 @@ state diagram และ pseudocode เป็นกลางทางเทคโ
 `detailed-design-builder` (`.claude/skills/detailed-design-builder/SKILL.md`) เท่านั้น — ต้องมีครบทั้ง
 `high-level-architecture.md`, `api-spec.md`, และ `database-schema.md` อยู่ก่อนเสมอ
 
-`tech-stack.md` ในโฟลเดอร์นี้คือ**เอกสารเดียวที่ stack-specific จริง** — ระบุชื่อเทคโนโลยีจริง (mobile
+`tech-stack.md` ในโฟลเดอร์นี้คือ**เอกสารเดียวที่ stack-specific จริง** — ระบุชื่อเทคโนโลยีจริง (mobile/web
 framework, backend, DBMS, cloud provider, การเชื่อมต่อ third-party) แทนที่จะเป็น conceptual เหมือน
 เอกสารอื่นทั้งหมดในโฟลเดอร์นี้ สร้าง/อัปเดต/audit โดย skill `tech-stack-builder`
 (`.claude/skills/tech-stack-builder/SKILL.md`) เท่านั้น ซึ่งจะถามผู้ใช้แบบเข้มข้น (Discovery
 Questionnaire) ก่อนแนะนำเสมอ — ต้องมีครบทั้ง `high-level-architecture.md`, `api-spec.md`,
-`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (อัปเดต 2026-08-29) เลือก React
-Native + Expo (mobile/web client) กับ **Firebase** (Cloud Firestore + Cloud Functions + Firebase
-Authentication + Firebase Hosting) เป็น backend/database — เปลี่ยนจาก Supabase/PostgreSQL เดิมตามคำขอ
-ของผู้ใช้งานโดยตรง (ไม่ใช่ผลจาก Discovery Questionnaire/Weighted Scoring Model เดิม ดู
-`tech-stack.md` §2/§5)
+`database-schema.md`, และ `detailed-design/*.md` อยู่ก่อนเสมอ ปัจจุบัน (อัปเดต 2026-08-30) เลือก **React +
+Vite** (`apps/web/client/`, เว็บ, ครอบคลุม core loop ทั้งหมด) + **React Native + Expo** (`apps/mobile/`,
+ตัดขอบเขตเหลือเฉพาะ INT-2/INT-3) เป็น client, **Express.js (TypeScript)** บน **Google Cloud Run** เป็น
+backend/hosting (แทนที่ Firebase Cloud Functions + Firebase Hosting เดิม) กับ **Cloud Firestore +
+Firebase Authentication** (ไม่เปลี่ยนจากการตัดสินใจ 2026-08-29) เป็น database/auth — ดูรายละเอียดการ
+reconcile ล่าสุดที่ `tech-stack.md` §2/§5/§6
 
 **ภาคผนวก: Stack Mapping** (เพิ่ม 2026-08-28): `high-level-architecture.md`, `api-spec.md`,
 `database-schema.md`, และแต่ละไฟล์ใน `detailed-design/` ทุกไฟล์มี section ท้ายไฟล์ชื่อ "ภาคผนวก: Stack
@@ -157,3 +158,108 @@ sync แถว signup-method-conditional required fields ในหัวข้�
 และหัวข้อ 1-7 ของ `database-schema.md` — **ตอนนี้ภาคผนวก Stack Mapping ของ HLA/API Spec/Database Schema/
 Detailed Design ทั้งหมด sync กับ `tech-stack.md` §6.1/§6.3.1 ฉบับสมบูรณ์ครบทุกไฟล์แล้ว ไม่มี ⚠️ placeholder
 ค้างในเชนของ Component "Account & Session Management" อีก**
+— **อัปเดต 2026-08-30 (`architecture-builder`)**: Architecture Consistency Audit ตาม `feature-list-journey`
+ที่เพิ่งพบ 2 จุดล้าหลังใน `high-level-architecture.md` จาก codebase จริง (re-architecture เป็น Express +
+web-first) — แก้ทั้งคู่ผ่าน flow ปกติ: (1) ระบุชัดว่าเว็บไคลเอนต์เป็นทางเข้าเดียวของ credential-based auth
+(§3.1, §4.1) (2) เพิ่มกลไก pairing-code/identity handoff ใหม่ (Account & Session Management ↔ Integration
+Gateway) เป็น component interaction (§3.1, §3.8), data flow ใหม่ใน Flow 5 (§4.5), conceptual data entity
+**Pairing Credential** (§5), และหมายเหตุ NFR/open point (§7, §8) — **ไม่แตะภาคผนวก Stack Mapping (§10)**
+รอบนี้เพราะ `tech-stack.md` เองยังไม่ได้อัปเดตจาก Firebase Cloud Functions/React Native-Expo เดิมตาม
+CLAUDE.md (ต้องรอ `tech-stack-builder`) — ดู log [2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`api-db-spec-builder`)**: API & Database Consistency Audit ตาม `architecture-builder`
+ที่เพิ่งเพิ่มกลไก pairing-code/identity handoff (§4.5) และ entity **Pairing Credential** (§5) ข้างต้น — พบ
+2 จุดล้าหลัง แก้ผ่าน flow ปกติทั้งคู่: (1) `api-spec.md` §2 (Conventions, Authentication) เคยระบุว่า "ไม่มี
+endpoint ใดที่ยกเว้น" การยืนยันตัวตนก่อนเรียก — แก้ให้ตรงกับ operation ใหม่ (2) เพิ่ม 2 operation ใหม่ท้าย
+`api-spec.md` §3.1 (`POST /auth/pairing-codes` ขอรหัสจับคู่อุปกรณ์, `POST /auth/pairing-codes/redeem`
+แลกรหัสเป็น session — operation เดียวในเอกสารที่ไม่ต้องยืนยันตัวตนก่อนเรียก พร้อม error case `404`/`409`/
+`422`) และเพิ่มตารางใหม่ `pairing_credential` (§3.17) ใน `database-schema.md` พร้อม entity/relationship ใน
+ER Diagram (§2), กติกา single-use/short-lived ใน §4 (ระบุชัดว่าตารางนี้ไม่ได้อยู่ใต้ per-user isolation
+path เหมือนตารางอื่น — query หลักคือ `code`), และหมายเหตุ pattern ใน §5 — **ไม่แตะภาคผนวก Stack Mapping**
+ของทั้งสองไฟล์ (`api-spec.md` §6, `database-schema.md` §8) รอบนี้เช่นเดียวกับ HLA เพราะเหตุผลเดียวกัน (รอ
+`tech-stack-builder`) — ผลกระทบต่อเนื่อง: `detailed-design/04-smart-integrations.md` ยังไม่มี sequence
+diagram รองรับ 2 operation ใหม่นี้ ต้องรัน `detailed-design-builder` ต่อ — ดู log
+[2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`detailed-design-builder`)**: Detailed Design Consistency Audit ตาม
+`api-db-spec-builder` ข้างบน — เพิ่ม section ใหม่ **"Identity Handoff — Pairing-Code Mechanism"** (1
+sequence diagram, alt block ครบ 3 edge case `404`/`409`/`422`) ก่อน INT-2 ใน
+`detailed-design/04-smart-integrations.md` พร้อม `Note` precondition ในไดอะแกรมเดิมของ INT-2/INT-3 — และ
+แก้ `detailed-design/01-onboarding-personalization.md` ให้ระบุ actor ของ ONB-0 ทั้ง 3 sequence diagram ให้
+ชัดว่าเป็นเว็บไคลเอนต์เท่านั้น (แก้ความกำกวมเดิมที่ใช้ `ผู้ใช้` เฉยๆ) — audit ยืนยันว่า "Firebase Cloud
+Function" ที่ปรากฏในทั้ง 4 ไฟล์ epic ทั้งหมดอยู่ใน "ภาคผนวก: Stack Mapping" เท่านั้น ไม่มี main-body
+violation — **ไม่แตะภาคผนวก Stack Mapping ทั้ง 4 ไฟล์** รอบนี้เช่นเดียวกับ HLA/API Spec/Database Schema
+เพราะเหตุผลเดียวกัน (รอ `tech-stack-builder`) — ดู log [2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`tech-stack-builder`)**: Tech Stack Consistency Audit + Reconciliation ที่ทุก
+skill ข้างบนรอมาตลอดวันนี้ — audit ยืนยันว่าโค้ดจริงเปลี่ยนตัวเลือก stack จริง 3 จุด (Backend compute
+engine: Firebase Cloud Functions → **Express.js**; Hosting/Infra: Firebase Hosting → ต้องเลือกใหม่;
+Client split: 1 codebase RN+Expo คุม 3 แพลตฟอร์ม → 2 codebase แยก **React+Vite** (`apps/web`) กับ
+**RN+Expo ตัดขอบเขต** (`apps/mobile`, เหลือ INT-2/INT-3)) จึงถาม mini Discovery Questionnaire เฉพาะหมวด
+Hosting/Infra ก่อนแก้ (Backend/Client split เป็นข้อเท็จจริงที่ทีมตัดสินใจไปแล้วในโค้ด ไม่ต้องถามซ้ำ) —
+ผู้ใช้ยืนยัน **Google Cloud Run** (เทียบกับ Render/Fly.io/VM — ADC ไม่ต้องมี service account key file,
+autoscale-to-zero, container image เดียวครอบคลุม Express+built client) — แก้ `tech-stack.md` §2-8: remap
+ทุก "Cloud Function" → Express route จริง (`apps/web/server/routes/*/index.ts`), เพิ่ม Web/Client row
+ใหม่, เพิ่ม mapping กลไก pairing-code (Firestore `pairingCodes/{code}` top-level ไม่ใช่ใต้ `users/`, TTL 5
+นาที, `auth.createCustomToken`/`signInWithCustomToken` — หมายเหตุว่า implementation จริงใช้ delete-on-
+redeem แทน `is_used` flag ที่ `database-schema.md` §3.17 ออกแบบไว้), แก้จำนวน operation ของ Account &
+Session Management จาก 8 เป็น **10**, แก้ข้อ 5 ในหัวข้อ 7 ที่เคยบอกว่า Epic 4 ทั้งหมด mobile-only (จริงๆ
+มีแค่ INT-2/INT-3 — INT-1 อยู่ apps/web แล้ว), เพิ่มจุดที่ยังไม่ได้ตัดสินใจใหม่ (Cloud Run cold start กับ
+NFR-02, Dockerfile/CI deploy step ยังไม่มี, pairing-code redeem status code ไม่ตรงกับ `api-spec.md`) —
+**ผลกระทบต่อเอกสารอื่น**: ภาคผนวก Stack Mapping ทั้ง 4 จุด (HLA §10, `api-spec.md` §6, `database-schema.md`
+§8, ทุกไฟล์ใน `detailed-design/`) **stale อีกครั้ง** ด้วยเหตุผลเดียวกันทั้งหมด (ยังอ้าง Cloud Function เดิม
++ ไม่มี pairing-code mapping + `api-spec.md`/`01-onboarding-personalization.md` ยังนับ 8 ไม่ใช่ 10
+operation) — ควรรัน `architecture-builder` → `api-db-spec-builder` → `detailed-design-builder` ตามลำดับ
+เพื่อ mechanical re-sync ต่อ (ไม่ใช่ ask-user) — ดู log [2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`architecture-builder`, Stack Mapping re-sync)**: sync **HLA §10 (ภาคผนวก: Stack
+Mapping)** ให้ตรงกับ `tech-stack.md` §6.1/§6.2/§6.3/§6.3.1 ฉบับ Express.js/Google Cloud Run ที่
+`tech-stack-builder` เพิ่ง reconcile ข้างบน — เปลี่ยนทุก "Cloud Function `{ชื่อ}`" เป็น Express route จริง,
+เพิ่ม mapping กลไก pairing-code (top-level collection `pairingCodes/{code}`, TTL 5 นาที, delete-on-redeem,
+`auth.createCustomToken`) เข้าแถว Account & Session Management, แก้จำนวน operation จาก 8 เป็น 10 — เป็น
+mechanical re-sync ล้วนๆ ไม่แตะเนื้อหาหลัก §1-9 (ถูกต้องอยู่แล้วจากรอบก่อน) — **ยังเหลือ**: `api-spec.md` §6,
+`database-schema.md` §8.2/§8.3, และทุกไฟล์ใน `detailed-design/` ยังค้างอ้าง Cloud Function เดิม/นับ 8
+operation — ควรรัน `api-db-spec-builder` → `detailed-design-builder` ต่อเพื่อ sync ส่วนที่เหลือ — ดู log
+[2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`api-db-spec-builder`, reconcile + Stack Mapping re-sync)**: อ่าน
+`apps/web/server/routes/pairing/index.ts` ตรงยืนยันพฤติกรรมจริงแล้วแก้ **เนื้อหาหลัก** ของ `api-spec.md`/
+`database-schema.md` 2 จุด (ไม่ใช่แค่ภาคผนวก — ตามที่ `tech-stack.md` §7 ข้อ 8 flag ไว้ว่าเป็น discrepancy
+จริง): (1) `api-spec.md` §3.1 — แก้ error case ของ `POST /auth/pairing-codes/redeem` จาก 3 กรณีแยก
+(`404`/`409`/`422`) เป็น **`410 Gone` กรณีเดียว** เพราะโค้ดจริงลบ document ทิ้งทันทีหลัง redeem สำเร็จ
+(delete-on-redeem) ทำให้ 3 กรณีแยกไม่ออกจากกันอีกต่อไป — เพิ่ม `410` เข้ารายการ status code ของหัวข้อ 2 ด้วย
+(2) `database-schema.md` §3.17 — **ลบ column `is_used` boolean** ออกจากตาราง `pairing_credential` (และ ER
+Diagram §2, กติกาธุรกิจ §4 ข้อ 8) เพราะ implementation จริงใช้ delete-on-redeem แทนการตั้ง flag — ทั้งสอง
+จุดนี้เป็นการแก้เอกสารให้ตรงกับพฤติกรรมที่ shipped ไปแล้วจริง (ไม่ใช่การตัดสินใจ business rule ใหม่ ตาม
+CLAUDE.md § "Docs/code drift" ที่ยอมรับว่าโค้ดเป็นสัญญาณที่น่าเชื่อถือกว่าสำหรับกลไกที่เพิ่งถูกคิดขึ้นใน
+session เดียวกัน) — **แล้วจึง mechanical re-sync ภาคผนวก Stack Mapping ที่เหลือ**: `api-spec.md` §6/§6.3.1
+(Express.js บน Google Cloud Run แทน Firebase Cloud Functions เดิม, 10 operation แทน 8) และ
+`database-schema.md` §8.1/§8.2/§8.3 (ทุก "Cloud Function" → "Express route", เพิ่มแถว `pairing_credential`
+ใหม่ในทั้ง §8.2/§8.3) — **ยังเหลือ**: ทุกไฟล์ใน `detailed-design/` ยังค้างอ้าง Cloud Function เดิม/นับ 8
+operation (โดยเฉพาะ `04-smart-integrations.md` ที่ยังมี alt block `404`/`409`/`422` เดิมของ redeem ที่ตอนนี้
+ไม่ตรงกับ `api-spec.md` แล้ว) — ควรรัน `detailed-design-builder` ต่อ — ดู log
+[2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`detailed-design-builder`, citation/grouping fix)**: `feature-journey-writer`
+formalized กลไก pairing-code เป็นบทบัญญัติ **REQ-18** พร้อม Feature ID ของตัวเอง **INT-0** (แทนที่ implicit
+precondition ของ REQ-12/REQ-13 เดิม) — แก้ `detailed-design/04-smart-integrations.md` ให้หัวข้อ "Identity
+Handoff — Pairing-Code Mechanism" กลายเป็นหัวข้อกลุ่ม Feature ID `## INT-0 — ... (REQ-18)` ตรงรูปแบบเดียวกับ
+INT-1/2/3 อื่น พร้อมแก้ list ความสัมพันธ์กับเอกสารอื่นให้รวม INT-0/REQ-18 — citation/grouping-only ไม่แก้ตัว
+diagram หรือเนื้อหา INT-2/INT-3 เอง
+— **อัปเดต 2026-08-30 (`detailed-design-builder`, ปิดท้ายเชน)**: (1) แก้ `alt` block ของ sequence diagram
+"Identity Handoff — Pairing-Code Mechanism" ใน `detailed-design/04-smart-integrations.md` จาก 3 กรณีแยก
+(`404`/`409`/`422`) เป็น **`410 Gone` กรณีเดียว** ให้ตรงกับ `api-spec.md` §3.1 ฉบับล่าสุดเป๊ะ (รวมถึงแก้ mint
+step ที่เคยอ้าง `is_used = false` ให้ตรงกับ `database-schema.md` §3.17 ที่ลบ column นี้ออกแล้ว) (2)
+mechanical re-sync ภาคผนวก Stack Mapping ที่เหลือทั้ง 4 ไฟล์ให้ตรงกับ `tech-stack.md` §6.1/§6.2/§6.3 ฉบับ
+Express.js บน Google Cloud Run ครบ — **ตอนนี้ภาคผนวก Stack Mapping ทั้ง 4 จุด (HLA §10, `api-spec.md` §6,
+`database-schema.md` §8, ทุกไฟล์ใน `detailed-design/`) sync กับ `tech-stack.md` ฉบับ Express.js/Google
+Cloud Run ครบทุกไฟล์แล้ว ไม่มีจุดใดค้างอ้าง Firebase Cloud Functions เดิมหรือระบุ 8 operation อีก** — ดู log
+[2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`api-db-spec-builder`, citation-only fix)**: `feature-journey-writer` formalize
+กลไก pairing-code เป็น Feature ID **INT-0** พร้อม business rule **REQ-18** ใหม่ — แก้ citation ของ 2
+operation `POST /auth/pairing-codes`/`.../redeem` ในหัวข้อ 3.1 ของ `api-spec.md` และของตาราง
+`pairing_credential` (หัวข้อ 3.17) ใน `database-schema.md` จาก "INT-2, INT-3 (implicit precondition ของ
+REQ-12/REQ-13)" เป็น **INT-0/REQ-18** พร้อม resolve จุดที่ยังไม่ได้ระบุที่เคยบอกว่า "ยังไม่มี REQ number
+formal" ในทั้งสองไฟล์ — citation-only ไม่มีการ re-model operation/table ใดๆ — ดู log
+[2026-08-30](../../05-log/20260830-log.md)
+— **อัปเดต 2026-08-30 (`architecture-builder`, citation-only fix, ปิดท้ายเชน)**: แก้ citation เดียวกัน
+(INT-2/INT-3 implicit precondition ของ REQ-12/REQ-13 → **REQ-18/Feature ID INT-0**) ใน
+`high-level-architecture.md` §3.1/§3.8/§4.5/§5/§7/§8 ให้ครบตามที่ `detailed-design-builder`/
+`api-db-spec-builder` แก้ไปแล้วในไฟล์ของตัวเอง พร้อมแก้จำนวน Feature ID ในหัวข้อ 1 จาก 15 เป็น 16 — ไม่แตะ
+เนื้อหา component/data flow/entity เดิม (citation-only ล้วนๆ) — ปิดเชน citation fix ของ INT-0/REQ-18 ครบ
+ทุกไฟล์ (HLA, API Spec, Database Schema, Detailed Design) — ดู log
+[2026-08-30](../../05-log/20260830-log.md)

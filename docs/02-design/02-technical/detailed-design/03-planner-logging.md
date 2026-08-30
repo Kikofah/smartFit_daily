@@ -3,7 +3,21 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 2) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ให้ตรงกับ
+  `tech-stack.md` §6.1 ฉบับล่าสุด (Express.js บน **Google Cloud Run** แทนที่ Firebase Cloud Functions เดิม
+  — ยืนยันจากโค้ดจริง `apps/web/server/routes/*`) รวมถึงการเปลี่ยนสถาปัตยกรรม streak recompute จาก
+  Firestore `onWrite` trigger อัตโนมัติเป็นฟังก์ชัน `recomputeStreak()` ที่ต้องเรียกเอง — เนื้อหาหลัก
+  (sequence diagram/algorithm ของ PLN-1/2/3/4) ไม่เปลี่ยนแปลงเพราะยัง conceptual ล้วน — ไม่กระทบจาก
+  pairing-code mechanism เหมือนรอบก่อน (ดู [log 2026-08-30](../../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 1) — audit ตามการเปลี่ยนแปลงใน `high-level-architecture.md`/
+  `api-spec.md`/`database-schema.md` (Identity Handoff — Pairing-Code Mechanism, entity/ตาราง
+  `pairing_credential`) แล้วพบว่า**ไม่กระทบไฟล์นี้เลย** (กลไกนี้เป็น precondition เฉพาะของ INT-2/INT-3 ใน
+  `04-smart-integrations.md` เท่านั้น ไม่เกี่ยวกับ PLN-1/2/3/4) — ตรวจ "Firebase Cloud Function `cheatRest`"
+  และ Firestore `onWrite` trigger ที่ปรากฏในเนื้อหาแล้วยืนยันว่าอยู่ใน "## ภาคผนวก: Stack Mapping" เท่านั้น
+  (ไม่ใช่ในเนื้อหาหลัก — ไม่พบ main-body stack-name violation) — ไม่แตะภาคผนวก Stack Mapping ตามที่ผู้ใช้
+  ยืนยันว่า `tech-stack.md` ยังไม่ reconcile จาก Firebase เดิมมาเป็น stack จริงตามโค้ด (**แก้ไขแล้วในรอบ 2
+  ด้านบน**)
+- **อัปเดตก่อนหน้านั้น:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
   (audit เนื้อหาหลัก sequence diagram/algorithm ของ PLN-1/2/3/4 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
@@ -177,17 +191,27 @@ sequenceDiagram
 > `tech-stack.md` §2/§5 — เนื้อหาหลักข้างต้น (sequence diagram/algorithm ของ PLN-1/2/3/4)
 > **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน ไม่ผูกกับ backend จริง
 
-มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-(อัปเดต 2026-08-29) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
+> **อัปเดต 2026-08-30 (รอบ 2)**: mechanical re-sync ทั้งหมดจาก Firebase Cloud Functions เป็น **Express.js
+> บน Google Cloud Run** ตามการเปลี่ยน stack ใน `tech-stack.md` §2/§3/§6 (ยืนยันจากโค้ดจริง
+> `apps/web/server/routes/*`) — **เปลี่ยนแปลงสถาปัตยกรรมที่มีนัยสำคัญ**: streak recompute เดิมพึ่ง Firestore
+> `onWrite` trigger อัตโนมัติ แต่ Express ไม่มี event-driven infrastructure แบบนั้นให้ใช้ฟรี จึงเปลี่ยนเป็น
+> ฟังก์ชันธรรมดา `recomputeStreak()` ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` ต้องเรียกเองโดยตรง —
+> เปลี่ยน execution ของ Streak walk-back (PLN-4) จาก **React Native client** เป็น **React+Vite web
+> client** เพราะ PLN-* ทั้งหมดอยู่ใน `apps/web` (ไม่เคยย้าย ไม่ใช่ native-only capability) — เนื้อหาหลัก
+> (sequence diagram/algorithm) **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน
+
+มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
+(อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
 | Conceptual Component | Concrete Implementation |
 |---|---|
-| Planner & Day-Status | Firestore collection `weeklyPlanEntries`/`dayStatus` + Cloud Function คำนวณ read-only flag (แทน Postgres view เดิม) + Cloud Function `cheatRest` (nested check ตาม Detailed Design) |
-| Logging & Streak | Firestore collection `dailyLogs`/`streakSnapshots` + Cloud Function ที่ trigger จาก Firestore `onWrite` เพื่อ recompute streak หลังทุกครั้งที่ log เปลี่ยน |
+| Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date) — **Express route** `GET /api/planner/week`, `PUT /api/planner/days/:date`, `POST /api/planner/days/:date/cheat-rest`, `DELETE /api/planner/days/:date/cheat-rest` (แทนที่ Cloud Function `cheatRest`/read-only-flag Cloud Function เดิม — `apps/web/server/routes/planner-day-status/index.ts`) อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag/enforce กติกา "วันนี้เท่านั้น" (nested check ตาม Detailed Design ข้างต้น) |
+| Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` + embedded map field `streakSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/logs`, `GET /api/logs/:date`, `GET /api/streak` (`apps/web/server/routes/logging-streak/index.ts`) — **เปลี่ยนสำคัญ 2026-08-30**: ไม่มี Firestore `onWrite` trigger อัตโนมัติอีกต่อไป (Express ไม่มี event-driven infrastructure ให้ใช้ฟรีเหมือน Cloud Functions) แทนที่ด้วยฟังก์ชันธรรมดา `recomputeStreak(userId)` (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` (`exertion-calorie` และ `planner-day-status`) ต้อง `import` แล้วเรียกเองโดยตรงหลังเขียนเสร็จ |
 
 **Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
-(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Streak walk-back (PLN-4)** เกิดขึ้นฝั่ง **React
-Native client โดยตรง** เพื่อไม่มี network latency ก่อน แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกลง Firestore —
-ฝั่ง server การ recompute/validate streak เป็นเกราะป้องกันชั้นที่สองนี้ตอนนี้ระบุชัดเจนแล้วว่าเป็น
-**Firebase Cloud Function ที่ trigger อัตโนมัติจาก Firestore `onWrite`** ของ `dailyLogs`/`dayStatus`
-(แทนที่ความคลุมเครือเดิมของ Supabase ที่ยังไม่ฟันธงระหว่าง Postgres function กับ Edge Function)
+(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Streak walk-back (PLN-4)** เกิดขึ้นฝั่ง **React+Vite
+web client โดยตรง** (`apps/web/client`) เพื่อไม่มี network latency ก่อน แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกลง
+Firestore ผ่าน Express route ที่เกี่ยวข้อง — ฝั่ง server การ recompute/validate streak เป็นเกราะป้องกัน
+ชั้นที่สองนี้ตอนนี้เปลี่ยนจาก Firestore `onWrite` trigger อัตโนมัติเดิมของ Cloud Functions เป็นการเรียก
+ฟังก์ชัน **`recomputeStreak()` ตรงจากทุก Express route** ที่เขียน `dailyLogs`/`dayStatus` เอง (ดูตารางด้านบน
+— ต้องระวังเวลาเพิ่ม route ใหม่ที่เขียน `dailyLogs` ในอนาคตไม่ให้ลืมเรียก) รันบน **Google Cloud Run**

@@ -6,6 +6,21 @@
      showing the simulated signed-in email (read from localStorage key smartfit_auth_user, written
      by 00-auth-signup.html/00-auth-login.html) and a Logout action that clears that key (REQ-17:
      "ล้าง session ที่จดจำไว้ตาม REQ-15 ทันที") and returns to 00-auth-welcome.html. -->
+<!-- 2026-08-30 consistency audit (pairing-code identity-handoff, INT-2/INT-3 P1-P3 of
+     user-journeys.md): this screen previously had two per-device "เชื่อมต่อ" buttons that
+     deep-linked straight into 12-device-pairing.html?device=scale|wearable -- that skipped the
+     journey's P1-P6 entirely (web can't do Bluetooth/HealthKit itself; only the mobile companion
+     app can, and it has no auth screen of its own -- see backlog.md's INT-2/INT-3 description and
+     apps/web/client/src/pages/ProfileScreen.tsx / apps/web/server/routes/pairing/index.ts for the
+     real implementation this mirrors). Replaced those buttons with a "ขอรหัสจับคู่อุปกรณ์" flow:
+     tapping it generates a 6-digit code (client-side random for this static prototype; the real
+     server mints one with a 5-minute TTL) shown with a calmly-styled expiry countdown, per P2/P3.
+     The countdown is a deliberate, approved exception to DESIGN.md 1.2's "ไม่ใช้ countdown timer
+     กดดัน" rule: it communicates a real, functional security-code expiry (the code truly stops
+     working after 5 minutes), not manufactured urgency -- styled with --color-ink-muted only, no
+     --color-danger/red, no pulse/shake animation, to stay within the Calm principle's spirit. Also
+     kept the existing per-device status rows (now read-only, no buttons) since connection status
+     is still useful information here even though initiation now only happens on the mobile side. -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -77,6 +92,16 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   .status-dot { width:6px; height:6px; border-radius:50%; background: var(--color-ink-faint); }
   .status-dot.connected { background: var(--color-sage); }
 
+  /* INT-2/INT-3 pairing-code card (2026-08-30, journey P1-P3) -- Forms/Card patterns composed,
+     no new tokens. Countdown text stays --color-ink-muted (never --color-danger) even in the last
+     seconds, per DESIGN.md 1.2's Calm trait -- a real expiry, not manufactured urgency. */
+  .pairing-card-inner { padding: var(--space-4); text-align:center; }
+  .pairing-code-display { font-size:28px; line-height:36px; font-weight:600; letter-spacing:0.35em; margin: var(--space-4) 0 var(--space-2); color: var(--color-ink); }
+  .pairing-expiry { color: var(--color-ink-muted); }
+  .pairing-expired-note { color: var(--color-ink-muted); margin-bottom: var(--space-3); }
+
+  .hidden { display:none !important; }
+
   .link-row { display:flex; align-items:center; justify-content:space-between; padding: var(--space-4); min-height:44px; box-sizing:border-box; text-decoration:none; color:var(--color-ink); }
   .link-row + .link-row { border-top: var(--border-width) solid var(--color-border); }
   .link-row .chevron { color: var(--color-ink-faint); flex-shrink:0; }
@@ -115,10 +140,35 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
       <button type="button" class="btn btn-destructive" id="logoutBtn" style="margin-top:var(--space-3);">ออกจากระบบ</button>
     </div>
 
-    <!-- INT-2/INT-3: Connected Devices section. Default example state = ยังไม่เชื่อมต่อ for both. -->
+    <!-- INT-2/INT-3: pairing-code request card (journey P1-P3), then read-only device status list.
+         Default example state = ยังไม่เชื่อมต่อ for both, no code requested yet. -->
     <div class="section-gap">
       <h2 class="text-h2 section-title">อุปกรณ์ที่เชื่อมต่อ</h2>
       <div class="card">
+        <div class="pairing-card-inner">
+          <p class="text-body-sm">เชื่อมต่อตาชั่งอัจฉริยะ/Wearable ได้จากแอปมือถือ smartFit daily (Bluetooth/Health API ใช้บนเว็บไม่ได้)</p>
+
+          <!-- P1-P2: before requesting a code -->
+          <div id="requestCodePanel">
+            <button type="button" class="btn btn-secondary" style="margin-top: var(--space-4);" onclick="requestPairingCode()">ขอรหัสจับคู่อุปกรณ์</button>
+          </div>
+
+          <!-- P3: code shown with expiry countdown -->
+          <div id="activeCodePanel" class="hidden">
+            <p class="text-display pairing-code-display" id="pairingCodeValue">000000</p>
+            <p class="text-caption pairing-expiry">กรอกรหัสนี้ในแอปมือถือภายใน <span id="pairingCountdown">5:00</span></p>
+            <button type="button" class="btn btn-ghost" style="margin-top: var(--space-3);" onclick="expirePairingCodeNow()">จำลองรหัสหมดอายุ (สำหรับทดสอบ prototype)</button>
+          </div>
+
+          <!-- Alt/Edge Case: code expired (>5 min) -->
+          <div id="expiredCodePanel" class="hidden">
+            <p class="text-body-sm pairing-expired-note" style="margin-top: var(--space-4);">รหัสนี้หมดอายุแล้ว ขอรหัสใหม่ได้ทันที</p>
+            <button type="button" class="btn btn-secondary" onclick="requestPairingCode()">ขอรหัสใหม่</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top: var(--space-3);">
         <div class="device-row">
           <div class="device-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="9" width="16" height="10" rx="2"></rect><path d="M8 9V7a4 4 0 0 1 8 0v2"></path></svg>
@@ -130,7 +180,6 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
               <span class="text-body-sm">ยังไม่เชื่อมต่อ</span>
             </div>
           </div>
-          <button type="button" class="btn btn-secondary" onclick="location.href='12-device-pairing.html?device=scale'">เชื่อมต่อ</button>
         </div>
         <div class="device-row">
           <div class="device-icon">
@@ -143,7 +192,6 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
               <span class="text-body-sm">ยังไม่เชื่อมต่อ</span>
             </div>
           </div>
-          <button type="button" class="btn btn-secondary" onclick="location.href='12-device-pairing.html?device=wearable'">เชื่อมต่อ</button>
         </div>
       </div>
       <p class="text-caption" style="margin-top: var(--space-3);">ไม่เชื่อมต่อก็ใช้แอปได้ปกติ — กรอกน้ำหนักเองได้เสมอ และแคลอรี่เผาผลาญยังคำนวณจากสูตร MET ได้</p>
@@ -214,6 +262,48 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     window.location.href = '00-auth-welcome.html';
   });
 })();
+</script>
+<script>
+  // INT-2/INT-3 pairing-code request (journey P1-P3; mirrors POST /pairing/create-code, which
+  // mints a real 6-digit code with a 5-minute TTL -- CODE_TTL_MS in
+  // apps/web/server/routes/pairing/index.ts). This is a static prototype: the code is generated
+  // client-side and there is no real mobile app to redeem it against, but the 5-minute countdown
+  // behavior is real so reviewers can see the expiry Alt/Edge Case without waiting.
+  var pairingCountdownTimer = null;
+
+  function requestPairingCode() {
+    var code = String(Math.floor(100000 + Math.random() * 900000));
+    document.getElementById('pairingCodeValue').textContent = code;
+
+    document.getElementById('requestCodePanel').classList.add('hidden');
+    document.getElementById('expiredCodePanel').classList.add('hidden');
+    document.getElementById('activeCodePanel').classList.remove('hidden');
+
+    var expiresAt = Date.now() + 5 * 60 * 1000;
+    if (pairingCountdownTimer) clearInterval(pairingCountdownTimer);
+    updatePairingCountdown(expiresAt);
+    pairingCountdownTimer = setInterval(function () {
+      updatePairingCountdown(expiresAt);
+    }, 1000);
+  }
+
+  function updatePairingCountdown(expiresAt) {
+    var remainingMs = expiresAt - Date.now();
+    if (remainingMs <= 0) {
+      expirePairingCodeNow();
+      return;
+    }
+    var totalSeconds = Math.ceil(remainingMs / 1000);
+    var minutes = Math.floor(totalSeconds / 60);
+    var seconds = totalSeconds % 60;
+    document.getElementById('pairingCountdown').textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+  }
+
+  function expirePairingCodeNow() {
+    if (pairingCountdownTimer) { clearInterval(pairingCountdownTimer); pairingCountdownTimer = null; }
+    document.getElementById('activeCodePanel').classList.add('hidden');
+    document.getElementById('expiredCodePanel').classList.remove('hidden');
+  }
 </script>
 </body>
 </html>

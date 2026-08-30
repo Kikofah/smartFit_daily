@@ -5,8 +5,8 @@
 
 ## Scope
 
-ครอบคลุมทั้ง 15 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่แก้ล่าสุด 2026-08-29 — เพิ่ม ONB-0
-เข้ามาใหม่) รวม 16 หน้าจอ HTML ดูสารบัญเต็มที่ [index.html](index.html)
+ครอบคลุมทั้ง 15 Feature ใน 4 Epic (ทุก feature ใน `backlog.md` ณ วันที่แก้ล่าสุด 2026-08-30 — เพิ่มกลไก
+pairing-code ของ INT-2/INT-3) รวม 17 หน้าจอ HTML ดูสารบัญเต็มที่ [index.html](index.html)
 
 | # | ไฟล์ | Feature ID | REQ |
 |---|---|---|---|
@@ -26,6 +26,7 @@
 | 10 | `10-progress-insights.html` | INT-1 | REQ-11 |
 | 11 | `11-device-integrations.html` | ONB-0, INT-2, INT-3 | REQ-17, REQ-12, REQ-13 |
 | 12 | `12-device-pairing.html` | INT-2, INT-3 | REQ-12, REQ-13 |
+| 13 | `13-companion-pairing-code.html` | INT-2, INT-3 | REQ-12, REQ-13 |
 
 หลาย feature ที่เป็น "state/action บนหน้าเดิม" ไม่ได้แยกเป็นไฟล์ใหม่ (สอดคล้องกับ user journey ที่ไม่ได้แยก
 screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ PLN-2/PLN-4 อยู่บนไฟล์ 05, PLN-2 (toggle) อยู่บน bottom sheet ของไฟล์ 08,
@@ -49,7 +50,9 @@ Logout (ONB-0/REQ-17) อยู่บนไฟล์ 11 (หน้าโปร�
 - ฟอนต์ IBM Plex Sans Thai ผ่าน Google Fonts link + fallback stack ตาม DESIGN.md 2.2
 - Bottom tab nav 4 tab (วันนี้/แผน/ความคืบหน้า/โปรไฟล์) ปรากฏเฉพาะหน้าหลัก 6 หน้า (05, 08, 09, 10, 11) —
   ไม่ปรากฏใน Onboarding (01–04, ใช้ progress dots แทนตาม DESIGN.md 4.1) และไม่ปรากฏในหน้า session/sub-flow
-  ที่เป็น immersive หรือ modal-like (06, 07, 12 — ใช้ปุ่ม Ghost "ปิด"/"ย้อนกลับ" แทน)
+  ที่เป็น immersive หรือ modal-like (06, 07, 12, 13 — ใช้ปุ่ม Ghost "ปิด"/"ย้อนกลับ"/"ออกจากระบบ" แทน) — 13
+  ไม่มี bottom nav เลยด้วยเหตุผลเพิ่มเติม: เป็นหน้าจอของแอปมือถือ companion app ซึ่งมีแค่ 2 หน้าจอทั้งหมด
+  (13, 12) ไม่ใช่ผลิตภัณฑ์ 4-tab เต็มรูปแบบเหมือนเว็บ
 - หน้า 09/10 (ทั้งคู่อยู่ใต้ tab "ความคืบหน้า") มี sub-tab เล็ก "ภาพรวม"/"ประวัติ" เชื่อมกัน — เป็นการตัดสินใจ
   ระหว่างสร้าง ไม่ได้ระบุไว้ชัดเจนใน user-journeys.md
 
@@ -240,3 +243,58 @@ ONB-0 เลย (มีอยู่ก่อนแล้วแต่ไม่ไ
 - `test-plan.md` §1 Scope ยังเขียน "Must (8 features)" (ควรเป็น 9 รวม ONB-0) และตาราง Usability Testing
   ยังเริ่มจาก "ONB-1 → ONB-2 → ONB-3" (ควรเริ่มจาก ONB-0 เพราะเป็น first-run flow ตัวจริง)
 - `test-cases/01-onboarding-personalization.md` ยังไม่มี `TC-ONB-0-*` อ้างอิงหน้าจอใหม่ 4 หน้านี้
+
+## เปลี่ยนแปลงจาก audit (Prototype Consistency Audit, 2026-08-30 — กลไก pairing-code ของ INT-2/INT-3)
+
+หลังจากเซสชันก่อนหน้าเพิ่มกลไก pairing-code identity-handoff ใหม่เข้า
+[`01-spec/20260823-04-smart-integrations.md`](../../../01-requirements/01-spec/20260823-04-smart-integrations.md),
+[`backlog.md`](../../../01-requirements/backlog.md), [`user-journeys.md`](../user-journeys.md) (INT-2/INT-3
+§ P1–P6), `high-level-architecture.md` §4.5/§5, `api-spec.md` §3.1, `database-schema.md` §3.17, และ
+`detailed-design/04-smart-integrations.md` — เพราะเว็บแอป (ONB-0) เป็น web-only แอปมือถือ (companion app
+ของ INT-2/INT-3) จึงไม่มีหน้าจอ auth ของตัวเอง ต้องขอรหัสจับคู่อุปกรณ์ 6 หลัก (อายุ 5 นาที) จากหน้าโปรไฟล์บนเว็บ
+มากรอกบนมือถือแทน ก่อนจะ sign in แบบ silent ได้ — `prototype-builder` รัน consistency audit เทียบ v1 กับ
+กลไกนี้ (scope: เฉพาะ INT-2/INT-3, ใช้ `user-journeys.md` P1–P6 เป็นแหล่งอ้างอิงหลักเพราะ
+`acceptance-criteria.md` ยังไม่มี AC เฉพาะของกลไกนี้ ณ ตอน audit) พบว่า **prototype ล้าหลัง** (ไม่ขัดแย้งกับ
+เอกสารใด เพราะกลไกนี้เพิ่งถูกเพิ่มเข้ามาใหม่):
+
+- `11-device-integrations.html` ไม่มี UI "ขอรหัสจับคู่อุปกรณ์" เลย — มีแค่ปุ่ม "เชื่อมต่อ" ต่อรายอุปกรณ์ที่
+  deep-link ตรงไปยัง `12-device-pairing.html?device=...` ข้ามขั้นตอน P1–P6 ทั้งหมด
+- `12-device-pairing.html` ไม่มีขั้นตอนกรอกรหัสก่อนเข้าสู่หน้าจับคู่อุปกรณ์เลย และปุ่ม "ย้อนกลับ" ชี้กลับไปหน้า
+  โปรไฟล์บนเว็บซึ่งสถาปัตยกรรมจริงแล้วแอปมือถือเข้าไม่ถึง (companion app ไม่มีหน้าจอเว็บ)
+- ไม่มีหน้าจอสำหรับ P4 (กรอกรหัสจับคู่บนแอปมือถือ) เลย
+
+ผู้ใช้ยืนยันให้แก้ `v1/` ตรง ๆ (ไม่สร้าง `v2/`) เพราะยังเป็นการเพิ่มเติมเล็ก ๆ ในกลไก auth ที่มีอยู่แล้ว (ONB-0)
+ไม่ใช่ requirement ใหม่ทั้งชุด และ v1 ยังไม่เคยผ่าน formal review — สอดคล้องกับ pattern ที่ทุก audit รอบก่อน
+หน้านี้เลือกเหมือนกัน:
+
+1. **`11-device-integrations.html`** — แทนที่ปุ่ม "เชื่อมต่อ" ต่อรายอุปกรณ์ทั้งสองด้วย UI "ขอรหัสจับคู่อุปกรณ์"
+   เดียว (mirror จาก `apps/web/client/src/pages/ProfileScreen.tsx` จริง): กดปุ่มแล้วแสดงรหัส 6 หลัก
+   (สุ่มฝั่ง client เพราะเป็น static prototype) พร้อม countdown หมดอายุ 5 นาที และปุ่มลัด "จำลองรหัสหมดอายุ"
+   สำหรับทดสอบ prototype โดยไม่ต้องรอจริง — ยังคงเก็บแถวสถานะอุปกรณ์ (ไม่มีปุ่มแล้ว) ไว้เป็นข้อมูล read-only
+   เพราะยังมีประโยชน์แม้การเริ่มเชื่อมต่อจะย้ายไปฝั่งมือถือแล้ว
+   - **Content decision เรื่อง countdown timer** (ยืนยันกับผู้ใช้แล้ว 2026-08-30): DESIGN.md 1.2 มีกฎ
+     "ไม่ใช้ countdown timer กดดัน" ซึ่งตั้งใจป้องกัน urgency ปลอมแบบการตลาด — ตีความว่าไม่ครอบคลุม
+     countdown ของรหัสความปลอดภัยที่หมดอายุจริงตามเวลาจริง (ข้อมูลที่ผู้ใช้ต้องรู้จริง ๆ ไม่ใช่ manufactured
+     urgency) จึงใช้ countdown ได้แต่ต้อง styling แบบสงบ: สี `--color-ink-muted` เท่านั้น (ห้ามใช้
+     `--color-danger`/สีแดง แม้ใกล้หมดเวลา), ไม่มี pulse/shake animation — ยังไม่ได้เพิ่มเป็น component
+     ทางการใน DESIGN.md §3 เพราะเป็น instance เดียวในระบบตอนนี้ ถ้ามี use case อื่นเพิ่มควรพิจารณาเพิ่มเป็น
+     pattern ทางการ
+2. **สร้างหน้าใหม่ `13-companion-pairing-code.html`** (P4–P6 ของ journey, mirror จาก
+   `apps/mobile/app/pairing-code.tsx` จริง) — หน้าจอแอปมือถือ companion app หน้าแรก: อธิบายวิธีขอรหัสจากเว็บ
+   + ช่องกรอกตัวเลข 6 หลัก (Forms pattern 3.7, ตัวอักษรใหญ่ letter-spaced) + error state สี `--color-danger`
+   (เป็น validation error จริง ไม่ใช่กรณี "ไม่ครบเป้าหมาย" ของ 4.2) + demo toggle "รหัสถูกต้อง"/"รหัสผิด/
+   หมดอายุ" สำหรับทดสอบทั้งสอง branch ของ P5 — สำเร็จแล้วไปหน้า 12
+3. **`12-device-pairing.html`** — เพิ่ม landing state ใหม่ "เลือกอุปกรณ์" (แสดงเมื่อไม่มี `?device=` — คือ
+   ตอนมาจาก 13 หลัง sign-in สำเร็จ) มีปุ่ม "เชื่อมต่อตาชั่งอัจฉริยะ"/"เชื่อมต่อ Wearable" สองปุ่ม (mirror จาก
+   `apps/mobile/app/device-pairing.tsx` จริงที่มี 2 ปุ่มอยู่หน้าเดียวกัน) และปุ่ม Ghost "ออกจากระบบ" ที่พาไป
+   หน้า 13 — แก้ปุ่ม "ย้อนกลับ" ของ state เดิม (connecting/success/failure) ให้ชี้กลับมาที่ landing state นี้
+   แทนหน้า 11 ที่มือถือเข้าไม่ถึง และแก้ปุ่ม "กลับไปหน้าโปรไฟล์"/"บันทึกน้ำหนัก" ใน success/failure state ที่
+   เคยชี้ไป `11-device-integrations.html` ด้วยเหตุผลเดียวกัน (เปลี่ยนเป็นกลับมา landing state นี้แทน)
+4. อัปเดต `index.html` (เพิ่มการ์ดที่ 13, แก้ตัวเลขรวมเป็น "17 หน้าจอ") และ `README.md` ไฟล์นี้ (ตารางสรุป,
+   scope, ข้อตกลงร่วมเรื่อง bottom nav, section นี้)
+
+ไม่ต้องเรียก `feature-list-journey`/`test-suite-builder` ต่อรอบนี้ — `01-spec/`/`backlog.md`/
+`user-journeys.md` ได้ถูกอัปเดตไปแล้วในเซสชันก่อนหน้าที่เพิ่มกลไกนี้เข้ามา (ไม่ใช่งานของ audit รอบนี้) และ
+`acceptance-criteria.md` ยังไม่มี AC เฉพาะของกลไกนี้ (`test-suite-writer` พิจารณาแล้วว่ายังเป็น implicit
+precondition ของ REQ-12/REQ-13 ไม่ใช่ REQ ใหม่แยกต่างหาก — ดู `user-journeys.md` § Open Questions ข้อ 7)
+จึงไม่มีอะไรให้ prototype นี้ต้อง trace เพิ่มในชั้นนั้นตอนนี้

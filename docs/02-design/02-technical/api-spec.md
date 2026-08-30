@@ -3,7 +3,45 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 (รอบ 3) — sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md`
+- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 6) — Citation-only fix: `feature-journey-writer` formalize กลไก
+  pairing-code เป็น Feature ID **INT-0** พร้อม business rule **REQ-18** ใหม่ (ดู `backlog.md` § INT-0
+  และ `20260823-04-smart-integrations.md` § REQ-18) แทนที่การอ้างว่าเป็น "precondition ทางเทคนิค
+  implicit ของ INT-2/INT-3 (REQ-12/REQ-13)" เดิม — แก้ Feature/REQ column ของทั้ง 2 operation ในหัวข้อ
+  3.1 (`POST /auth/pairing-codes`, `.../redeem`) จาก "INT-2, INT-3 (implicit...)" เป็น "INT-0/REQ-18"
+  และ resolve จุดที่ยังไม่ได้ระบุข้อ 12 ในหัวข้อ 4 (เดิมบอกว่า "ยังไม่มี REQ number formal") ว่า resolve
+  แล้ว — ไม่แตะเนื้อหา request/response/error/NFR อื่นใดของ 2 operation นี้ (no re-modeling) — ไม่พบ
+  citation อื่นต่อ REQ-12/REQ-13 ที่ต้องแก้ในเอกสารนี้ (ดู [log
+  2026-08-30](../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 5) — Reconcile 2 จุดตาม `tech-stack.md`/โค้ดจริง (`apps/web/server/routes/pairing/index.ts`
+  ที่ `tech-stack-writer` อ่านตรงยืนยันแล้ว): (1) แก้ error/edge case ของ `POST /auth/pairing-codes/redeem`
+  (หัวข้อ 3.1) จากเดิม 3 กรณีแยก (`404` ไม่พบ/`409` ถูกใช้แล้ว/`422` หมดอายุ) เป็น **`410 Gone` กรณีเดียว**
+  ครอบคลุมทั้งสามสถานการณ์ (ไม่พบรหัสเลย/หมดอายุแล้ว/ถูกใช้ไปแล้ว) เพราะโค้ดจริง **ลบ document ทิ้งทันทีหลัง
+  redeem สำเร็จ (delete-on-redeem) แทนการตั้ง flag `is_used`** ทำให้ "ถูกใช้ไปแล้ว" และ "ไม่เคยมีอยู่จริง"
+  แยกออกจากกันไม่ได้อีกต่อไปในทางปฏิบัติ ณ operation นี้ — นี่คือการแก้เอกสารให้ตรงกับพฤติกรรมที่ shipped ไป
+  แล้วจริง (ตามที่ `tech-stack.md` §7 ข้อ 8 flag ไว้) ไม่ใช่การตัดสินใจ business rule ใหม่ — เพิ่ม `410` เข้า
+  รายการ status code ของหัวข้อ 2 ด้วย (2) mechanical re-sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ทั้งหมดให้ตรง
+  กับ `tech-stack.md` §6.3/§6.3.1 ฉบับล่าสุด (Express.js บน Google Cloud Run แทนที่ Firebase Cloud Functions
+  เดิม, 10 operation ในหัวข้อ 3.1 sync ครบแล้วแทนที่ตัวเลข "8" ที่เคยล้าหลัง) — audit หัวข้อ 1, 3.2-3.8, 4, 5
+  แล้วไม่พบ drift อื่น (ดู [log 2026-08-30](../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 4) — audit พบว่า `high-level-architecture.md` เพิ่งอัปเดต 2 จุด: (1)
+  §3.1 ระบุชัดว่าเว็บไคลเอนต์เป็นทางเข้าเดียว (sole entry point) ของ credential-based auth ทุกวิธี —
+  ปรับหัวข้อ 2 (Conventions, ข้อ Authentication) ให้แก้ประโยคปิดท้ายที่เคยเขียนไว้ว่า "ไม่มี endpoint ใดใน
+  เอกสารนี้ที่ยกเว้น" เพราะไม่จริงอีกต่อไปหลังเพิ่ม operation ใหม่ตามข้อ (2) — operation signup/login/
+  forgot-password/logout เดิมในหัวข้อ 3.1 **ไม่เปลี่ยนแปลง** (เอกสารล้าหลังเชิง wording เท่านั้น) (2) HLA
+  §4.5/§5 เพิ่มกลไกใหม่ **Identity Handoff — Pairing-Code Mechanism** (component interaction ระหว่าง
+  Account & Session Management ↔ Integration Gateway) พร้อม entity **Pairing Credential** — เพิ่ม 2
+  operation ใหม่ท้ายหัวข้อ 3.1: `POST /auth/pairing-codes` (session ที่ยืนยันตัวตนแล้วขอรหัสจับคู่อุปกรณ์)
+  และ `POST /auth/pairing-codes/redeem` (ไคลเอนต์ที่ยังไม่ยืนยันตัวตนแลกรหัสเป็น session — **ข้อยกเว้นเดียว
+  ในเอกสารนี้** ต่อกติกา "ทุก endpoint ต้องยืนยันตัวตนก่อนเรียก" ตาม HLA §4.5) พร้อม error/edge case ครบ 3
+  กรณี (`404` รหัสไม่พบ, `409` รหัสถูกใช้ไปแล้ว, `422` รหัสหมดอายุ) และ NFR ที่เกี่ยวข้อง (NFR-04, NFR-05
+  — เป็น open point เดียวกับที่ HLA §8 ข้อ 7 ทิ้งไว้ว่า NFR-05 ยังไม่ระบุตรงๆ ว่าครอบคลุมกลไกนี้) — เพิ่มจุดที่
+  ยังไม่ได้ระบุใหม่ 2 ข้อในหัวข้อ 4 (ดูข้อ 12-13) — **ไม่แตะหัวข้อ 6 (ภาคผนวก: Stack Mapping)** ตามที่ผู้ใช้
+  ยืนยันชัดเจนว่า `tech-stack.md` ยังไม่ reconcile จาก Firebase Cloud Functions/React Native-Expo เดิมมาเป็น
+  Express + web-first ตามโค้ดจริง (ต้องรอ `tech-stack-builder`) — หัวข้อ 6.3.1 ที่เคยระบุ "8 operation" จึง
+  กลายเป็นข้อมูลล้าหลังเพิ่มอีกชั้น (ตอนนี้หัวข้อ 3.1 มี 10 operation แล้ว) รอ resolve พร้อมกันในรอบ
+  `tech-stack-builder` ถัดไป — audit หัวข้อ 1, 3.2-3.8, 5 แล้วไม่พบ drift อื่น (ดู
+  [log 2026-08-30](../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบ 3) — sync หัวข้อ 6 (ภาคผนวก: Stack Mapping) ให้ตรงกับ `tech-stack.md`
   §6.3.1 ฉบับสมบูรณ์ (mechanical re-sync ล้วน ไม่ใช่การตัดสินใจใหม่ — ไม่แตะเนื้อหาหลักหัวข้อ 1-5): เพิ่ม
   หัวข้อย่อย **6.3.1** สรุป mapping ระดับ operation ของทั้ง 8 operation ในหัวข้อ 3.1 (Account & Session
   Management) — resolve ⚠️ placeholder เดิมที่ทิ้งไว้ในรอบ 2 (7 ใน 8 operation เป็น client SDK call ตรง
@@ -49,10 +87,16 @@ operation ใดที่ไม่มี component รองรับ
   ที่มนุษย์อ่านได้
 - **Status code ที่ใช้**: `200` สำเร็จ (อ่าน/อัปเดต), `201` สร้างสำเร็จ, `204` สำเร็จไม่มีเนื้อหาตอบกลับ,
   `400` ข้อมูล request ไม่ถูกต้อง (เช่น validation error ของ REQ-01), `401` ยังไม่ยืนยันตัวตน, `404` ไม่พบ
-  resource, `409` conflict กับกติกาธุรกิจ (เช่น พยายามแก้วันที่เป็น read-only ของ PLN-1), `422` ข้อมูลถูก
+  resource, `409` conflict กับกติกาธุรกิจ (เช่น พยายามแก้วันที่เป็น read-only ของ PLN-1), `410` resource
+  เคยมีอยู่แต่ถูกลบ/สิ้นสภาพถาวรแล้วไม่มีทางกู้คืน (เพิ่ม 2026-08-30 — ใช้เฉพาะ
+  `POST /auth/pairing-codes/redeem` ในหัวข้อ 3.1 ที่ implementation จริงลบ credential ทิ้งทันทีหลัง redeem
+  สำเร็จ 1 ครั้ง ทำให้ไม่มีทางแยก "ไม่เคยมีอยู่จริง" ออกจาก "เคยมีแต่ถูกใช้ไปแล้ว" ได้อีก), `422` ข้อมูลถูก
   ต้องตามรูปแบบแต่ขัดกติกาธุรกิจ (เช่น พยายามตั้ง Cheat/Rest Day ย้อนหลังเกินวันนี้ตาม PLN-2)
 - **Authentication (เชิงแนวคิด)**: ทุก endpointในเอกสารนี้ต้อง "ยืนยันตัวตนผู้ใช้ก่อนเรียก" เสมอ (ไม่ระบุ
-  กลไก) ยกเว้นจะระบุไว้เป็นอื่นในตัว operation เอง — ไม่มี endpoint ใดในเอกสารนี้ที่ยกเว้น
+  กลไก) ยกเว้นจะระบุไว้เป็นอื่นในตัว operation เอง — มี**ข้อยกเว้นเดียว**ในเอกสารนี้ทั้งหมดคือ
+  `POST /auth/pairing-codes/redeem` (หัวข้อ 3.1, เพิ่ม 2026-08-30) ซึ่งออกแบบมาให้ไคลเอนต์ที่ยังไม่เคยยืนยัน
+  ตัวตนมาก่อนเลยเรียกได้โดยตรง (เป็นกลไก identity handoff ตาม HLA §4.5 — precondition ทางเทคนิคของ
+  INT-2/INT-3) — endpoint อื่นทั้งหมดในเอกสารนี้ยังคงต้องยืนยันตัวตนก่อนเสมอ ไม่มีข้อยกเว้นอื่นนอกจากนี้
 
 ## 3. API Resources & Operations
 
@@ -68,6 +112,8 @@ operation ใดที่ไม่มี component รองรับ
 | เข้าสู่ระบบผ่าน Apple | `POST /auth/login/apple` | ONB-0/REQ-15 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ | เหมือน `POST /auth/login/google` ข้างต้น | NFR-04 |
 | ขอรีเซ็ตรหัสผ่าน | `POST /auth/forgot-password` | ONB-0/REQ-16 | อีเมลที่ลงทะเบียนไว้ | `204`/`202` คำขอรีเซ็ตถูกส่งแล้ว (ช่องทางส่งจริงไม่ระบุ) | `422` ถ้าบัญชีของอีเมลนั้นสมัครผ่าน Google/Apple (ไม่มีรหัสผ่านให้รีเซ็ตตาม REQ-16), พฤติกรรมเมื่ออีเมลไม่มีอยู่ในระบบเลยยังไม่ระบุ (account enumeration policy — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 |
 | ออกจากระบบ | `POST /auth/logout` | ONB-0/REQ-17 | — | `204` ล้าง session ที่จดจำไว้ทันที | — | — |
+| ขอรหัสจับคู่อุปกรณ์ (mint pairing code, เพิ่ม 2026-08-30) | `POST /auth/pairing-codes` | INT-0/REQ-18 (precondition ทางเทคนิคร่วมของ INT-2/INT-3 — formalize เป็น Feature ID/REQ ของตัวเองแล้ว 2026-08-30 รอบ 6 แทนที่การอ้างอิงแบบ implicit เดิม) | — (ต้องยืนยันตัวตนผู้ใช้ก่อนเรียกตามปกติ ตามหัวข้อ 2) | Pairing Credential ที่สร้างใหม่: รหัสจับคู่อุปกรณ์ 6 หลัก + เวลาหมดอายุ (5 นาทีนับจากออกรหัส) | — (ไม่มี edge case พิเศษนอกเหนือจาก `401` มาตรฐานถ้ายังไม่ยืนยันตัวตน) | NFR-04 (เข้ารหัสระหว่างส่ง), NFR-05 (เจตนารมณ์เดียวกับการปกป้อง credential/consent — NFR-05 ปัจจุบันยังไม่ระบุตรงๆ ว่าครอบคลุมกลไกนี้ ดู HLA §8 ข้อ 7) |
+| แลกรหัสจับคู่อุปกรณ์เป็น session (redeem pairing code, เพิ่ม 2026-08-30, แก้ error case 2026-08-30 รอบ 5) | `POST /auth/pairing-codes/redeem` | INT-0/REQ-18 (เหมือนแถวบน) | รหัสจับคู่อุปกรณ์ 6 หลักที่ผู้ใช้กรอกบนไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง — **operation นี้ไม่ต้องยืนยันตัวตนผู้ใช้ก่อนเรียก** (ข้อยกเว้นเดียวของหัวข้อ 2 Authentication) | session credential ที่ผูกกับ User Account เจ้าของรหัส — เชิงแนวคิดเทียบเท่ากับสิ่งที่ operation เข้าสู่ระบบอื่นในหัวข้อนี้คืนกลับ (session ที่ใช้เรียก endpoint ที่ต้องยืนยันตัวตนต่อจากนี้ได้ทันที) โดยไม่ต้องกรอก credential ซ้ำ | `410` รหัสไม่ถูกต้อง/หมดอายุ/ถูกใช้ไปแล้ว — **กรณีเดียวครอบคลุมทั้ง 3 สถานการณ์เดิม** (ไม่พบรหัสเลย, หมดอายุแล้ว, ถูกใช้ไปแล้ว) เพราะกลไก single-use enforce ด้วยการ**ลบ Pairing Credential ทิ้งถาวรทันทีที่ redeem สำเร็จ**แทนการตั้งสถานะ "ใช้แล้ว" ที่ยังคงเก็บแถวไว้ตรวจสอบ — เมื่อแถวถูกลบไปแล้ว operation นี้แยกไม่ออกอีกต่อไปว่ารหัสที่กรอกมา "ไม่เคยมีอยู่จริงตั้งแต่แรก" หรือ "เคยมีแต่ถูก redeem ไปแล้วก่อนหน้านี้" — เป็นความจริงเชิง implementation ที่ตั้งใจยอมรับ ไม่ใช่ช่องโหว่ (เดิมเอกสารนี้เคยแยกเป็น `404`/`409`/`422` 3 กรณี ซึ่งไม่ตรงกับพฤติกรรมจริง — แก้ไขแล้ว 2026-08-30 รอบ 5) | NFR-04, NFR-05 (เหมือนแถวบน) |
 
 ### 3.2 Personalization & Profile
 
@@ -153,6 +199,16 @@ operation ใดที่ไม่มี component รองรับ
 11. **ONB-0/REQ-14 (Google/Apple)**: พฤติกรรมเมื่ออีเมลจากผู้ให้บริการภายนอกตรงกับบัญชีที่มีอยู่แล้วด้วยวิธี
     อื่น (เช่น เคยสมัครด้วย email/password มาก่อน) ยังไม่ระบุ — ควร merge เข้าบัญชีเดียวกันหรือปฏิเสธการ
     สมัครซ้ำ
+12. ~~**Pairing-code mechanism**: ยังไม่มี REQ number formal สำหรับกลไกนี้~~ — **resolved 2026-08-30
+    รอบ 6**: `feature-journey-writer` formalize กลไกนี้เป็น Feature ID **INT-0** พร้อม business rule
+    **REQ-18** แล้ว (แทนที่การอ้างอิงแบบ implicit precondition ของ REQ-12/REQ-13 เดิม — ดู
+    `backlog.md` § INT-0 และ `20260823-04-smart-integrations.md` § REQ-18) — `POST /auth/pairing-codes`
+    และ `.../redeem` ในหัวข้อ 3.1 อัปเดต Feature/REQ column เป็น INT-0/REQ-18 แล้ว จุดนี้จึงไม่ใช่ open
+    point อีกต่อไป
+13. **`POST /auth/pairing-codes`**: ยังไม่ระบุว่าอนุญาตให้มีรหัสที่ยังไม่หมดอายุ/ยังไม่ถูกใช้มากกว่า 1 รหัส
+    ต่อ User Account เดียวกันพร้อมกันหรือไม่ (เช่น กดขอรหัสซ้ำก่อนรหัสเดิมหมดอายุ) — กระทบว่าควร invalidate
+    รหัสเดิมทันทีหรือปล่อยให้ใช้ได้ทั้งคู่ และควรมี rate limit ต่อการกดขอรหัสซ้ำถี่ๆ หรือไม่ (brute-force
+    risk ของรหัส 6 หลัก — เกี่ยวโยงกับจุดที่ 5 ข้างต้นเรื่อง rate limiting ที่ยังไม่มี requirement รองรับ)
 
 ## 5. ความสัมพันธ์กับเอกสารอื่น
 
@@ -181,45 +237,65 @@ operation ใดที่ไม่มี component รองรับ
 > Authentication ไม่ต้องมี Cloud Function ครอบ มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น
 > Cloud Function (`forgotPassword`) เพราะต้อง enforce เงื่อนไข `422` ที่ client SDK เพียงอย่างเดียวไม่รองรับ
 
-มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--firebase-cloud-functions-routing)
-(อัปเดต 2026-08-29):
+> **อัปเดต 2026-08-30 (รอบ 5 — reconcile ตาม CLAUDE.md § "Docs/code drift")**: ทั้งหัวข้อ 6.3/6.3.1 ด้านล่าง
+> เขียนใหม่ทั้งหมดจาก "Firebase Cloud Functions Routing" เป็น **"Express.js Routing บน Google Cloud
+> Run"** ตามการ reconcile ของ `tech-stack.md` (2026-08-30) ที่ยืนยันแล้วว่าโค้ดจริง re-architecture ไปตั้งแต่
+> 2026-08-29 (Express.js แทน Cloud Functions, `apps/web`/`apps/mobile` แยกกัน) — และเพิ่ม mapping ของ 2
+> operation ใหม่ (`POST /auth/pairing-codes`, `.../redeem`) ที่ทำให้จำนวน operation ของหัวข้อ 3.1 เพิ่มจาก
+> 8 เป็น **10** ทั้งหมดนี้เป็น mechanical re-sync ล้วน (ข้อเท็จจริงที่ตัดสินใจแล้วใน `tech-stack.md`) ไม่ใช่
+> การตัดสินใจใหม่ในเอกสารนี้ — หัวข้อ 1-5 ข้างต้นไม่ต้องแก้ไขใดๆ เพิ่มเติมจากที่แก้ไปแล้วในหัวข้อ 3.1 (ดู
+> อัปเดตล่าสุดด้านบนสุดของเอกสาร สำหรับการแก้ error case ของ `.../redeem` ที่เป็นการแก้เนื้อหาหลัก ไม่ใช่
+> ภาคผนวกนี้)
 
-- **ทุก operation ในหัวข้อ 3 ต้อง implement เป็น Cloud Function เอง** — Firestore **ไม่มี auto-generated
-  REST API แบบ PostgREST ของ Supabase ให้ใช้ฟรี** ต่างจาก mapping เดิม (2026-08-28) ที่แยก CRUD ธรรมดา
-  ออกจาก business-logic operation ได้ชัดเจน ตอนนี้ทั้งสองกลุ่มต้องเขียนเป็น **Cloud Function (Callable
-  Function หรือ HTTPS Function)** เหมือนกันหมด โดย map 1:1 กับ resource path เดิมของหัวข้อ 3 เป็น function
-  name/route convention:
+มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--expressjs-routing)
+(อัปเดต 2026-08-30):
+
+- **ทุก operation ในหัวข้อ 3 ต้อง implement เป็น Express route handler เอง** — Firestore **ไม่มี
+  auto-generated REST API แบบ PostgREST ของ Supabase ให้ใช้ฟรี** ข้อเท็จจริงนี้ไม่เปลี่ยนไม่ว่าจะรันบน
+  compute engine ไหน (Cloud Functions เดิม หรือ Express.js ปัจจุบัน) สิ่งที่เปลี่ยนคือรูปแบบไฟล์/การ mount
+  route: **1 โฟลเดอร์ต่อ Conceptual Component** (`apps/web/server/routes/{component-slug}/`) ที่มี
+  `index.ts` เป็น Express `Router()` รวม operation ทั้งหมดของ component นั้น แล้ว mount เข้า
+  `apps/web/server/index.ts` ด้วย prefix `/api` ร่วมกัน — HTTP verb + resource path ของหัวข้อ 3 ยังคงตรง
+  กับ Express route path 1:1 เหมือนเดิม (เพียงเติม prefix `/api`):
   - **Operation ที่เป็น CRUD ตรงไปตรงมา** (เช่น `GET /profile`, `GET /logs`, `GET /logs/{date}`,
-    `GET /planner/week`, `GET /streak`) → Cloud Function ที่ทำหน้าที่อ่าน/เขียน Firestore ตรงไปตรงมา
-    (ไม่มีทางเลือก auto-generate เหมือน PostgREST เดิม เพิ่มปริมาณงาน dev เทียบกับ mapping เดิม)
+    `GET /planner/week`, `GET /streak`) → Express route handler ที่ทำหน้าที่อ่าน/เขียน Firestore
+    ตรงไปตรงมา (ไม่มีทางเลือก auto-generate เหมือน PostgREST เดิม)
   - **Operation ที่มี business logic/validation/เรียก external API** (เช่น `PUT /profile/goal`,
     `GET /workouts/today/recommendation`, `POST /workouts/sessions/{sessionId}/complete`,
-    `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → Cloud Function เดิม
-    ตามแนวทางเดียวกัน ไม่เปลี่ยนจากเดิม ต่างแค่ runtime (Firebase Cloud Functions แทน Supabase Edge
-    Function)
+    `POST /planner/days/{date}/cheat-rest`, ทุก endpoint ใต้ `/integrations/*`) → Express route handler
+    เดียวกัน ผ่าน `authenticate` middleware กลาง (`apps/web/server/middleware/authenticate.ts`) ที่ตรวจ
+    Firebase ID Token แล้วเซ็ต `req.userId` แทนที่ `request.auth.uid` อัตโนมัติของ Cloud Functions'
+    `onCall()` เดิม — รันบน **Google Cloud Run** (deploy จาก container image เดียว ครอบคลุมทั้ง Express
+    + built web client) แทนที่ Firebase Hosting + Cloud Functions เดิม
 
-### 6.3.1 หัวข้อ 3.1 Account & Session Management — ข้อยกเว้นของกติกาข้างต้น
+### 6.3.1 หัวข้อ 3.1 Account & Session Management (รวม Identity Handoff) — ข้อยกเว้นของกติกาข้างต้น
 
-มิเรอร์จาก [tech-stack.md § 6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น)
-(อัปเดต 2026-08-29): **8 operation ของหัวข้อ 3.1 ส่วนใหญ่ไม่เข้ากติกา "ทุก operation ต้องเป็น Cloud
-Function" ข้างต้น** — เพราะ Firebase Authentication (ต่างจาก Firestore) มี client SDK ที่ทำหน้าที่นี้ให้
-โดยตรงอยู่แล้ว:
+มิเรอร์จาก [tech-stack.md § 6.3.1](tech-stack.md#631-account--session-management-onb-0--identity-handoff--ข้อยกเว้นของกติกาข้างต้น)
+(อัปเดต 2026-08-30): หัวข้อ 3.1 มี **10 operation** แล้ว (2 ใหม่คือ `POST /auth/pairing-codes` และ
+`.../redeem` สำหรับกลไก identity handoff) — ส่วนใหญ่ยังไม่เข้ากติกา "ทุก operation ต้องเป็น Express route"
+ข้างต้น เพราะ Firebase Authentication (ต่างจาก Firestore) มี client SDK ที่ทำหน้าที่นี้ให้โดยตรงอยู่แล้ว
+**ยกเว้น 2 operation ใหม่ของกลไก pairing-code ที่ต้องเป็น Express route จริง** เพราะ Firebase
+Authentication ไม่มีแนวคิด "device-pairing code" ให้ใช้สำเร็จรูปในตัว SDK:
 
-| Operation (หัวข้อ 3.1) | Firebase Implementation |
+| Operation (หัวข้อ 3.1) | Express.js/Firebase Implementation |
 |---|---|
-| `POST /auth/signup/email` | **Client SDK โดยตรง** — ไม่ต้องมี Cloud Function |
+| `POST /auth/signup/email` | **Client SDK โดยตรง** — ไม่ต้องมี Express route |
 | `POST /auth/signup/google` | **Client SDK โดยตรง** — เป็น SDK call เดียวกันเป๊ะกับ `POST /auth/login/google` (Firebase ไม่มี endpoint แยก signup/login สำหรับ OAuth provider — client อ่าน flag "ผู้ใช้ใหม่หรือไม่" ที่ SDK คืนมาเพื่อตัดสินเส้นทางต่อแทนการแยก route) |
 | `POST /auth/signup/apple` | **Client SDK โดยตรง** — เป็น SDK call เดียวกันเป๊ะกับ `POST /auth/login/apple` เช่นเดียวกับ Google ข้างต้น |
-| `POST /auth/login/email` | **Client SDK โดยตรง** — ไม่ต้องมี Cloud Function |
+| `POST /auth/login/email` | **Client SDK โดยตรง** — ไม่ต้องมี Express route |
 | `POST /auth/login/google` | **Client SDK เดียวกับ `POST /auth/signup/google`** เป๊ะ |
 | `POST /auth/login/apple` | **Client SDK เดียวกับ `POST /auth/signup/apple`** เป๊ะ |
-| `POST /auth/forgot-password` | **Cloud Function (Callable) `forgotPassword`** — operation เดียวในหัวข้อ 3.1 ที่ต้องเป็น Cloud Function เพราะต้อง enforce เงื่อนไข `422` ("บัญชีนี้สมัครผ่าน Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต") ซึ่ง client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ |
-| `POST /auth/logout` | **Client SDK โดยตรง** — ล้าง token ที่ client เก็บไว้ทันที ไม่มี server-side session ให้ invalidate ฝั่ง Cloud Function จึงไม่ต้องมี Cloud Function |
+| `POST /auth/forgot-password` | **Express route** `POST /api/auth/forgot-password` (`apps/web/server/routes/account-session/forgotPassword.ts`, ไม่มี `authenticate` middleware — precondition คือยังไม่มี session) — operation เดียวในกลุ่ม auth เดิมที่ต้องเป็น route จริงเพราะต้อง enforce เงื่อนไข `422` ("บัญชีนี้สมัครผ่าน Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต") ซึ่ง client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ |
+| `POST /auth/logout` | **Client SDK โดยตรง** — ล้าง token ที่ client เก็บไว้ทันที ไม่มี server-side session ให้ invalidate ฝั่ง Express จึงไม่ต้องมี route |
+| `POST /auth/pairing-codes` (ใหม่ 2026-08-30) | **Express route** `POST /api/pairing/create-code` (`apps/web/server/routes/pairing/index.ts`, ต้องผ่าน `authenticate` middleware ก่อนเสมอ) สร้าง document ใหม่ที่ `pairingCodes/{code}` (top-level collection, รหัส 6 หลักเป็น document ID เอง) เก็บ `uid`/`createdAt`/`expiresAt` (TTL 5 นาที) แล้วคืนรหัส + เวลาหมดอายุ |
+| `POST /auth/pairing-codes/redeem` (ใหม่ 2026-08-30) | **Express route** `POST /api/pairing/redeem` (**ข้อยกเว้นเดียว** ไม่มี `authenticate` middleware) อ่าน `pairingCodes/{code}`, ถ้าไม่พบหรือหมดอายุ (`expiresAt < now`) คืน `410 Gone`, ถ้าสำเร็จ `delete()` document ทิ้งทันที (single-use ผ่านการลบ ไม่ใช่ set `is_used` flag) แล้วเรียก `auth.createCustomToken(uid)` คืน custom token — status code `410` ครอบคลุมทั้ง "ไม่พบ"/"หมดอายุ"/"ถูกใช้ไปแล้ว" เป็นเงื่อนไขเดียว เพราะเมื่อ document ถูกลบไปแล้ว 3 กรณีนี้แยกไม่ออกจากกันอีกต่อไป (แก้ error case ในหัวข้อ 3.1 ให้ตรงกับพฤติกรรมนี้แล้ว 2026-08-30 รอบ 5) |
 
-**สรุป**: จาก 8 operation มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น Cloud Function — ที่เหลือ
-เป็น client SDK call ตรงทั้งหมด ต่างจาก component อื่นทุกตัวในหัวข้อ 6.3 ที่ต้องเขียน Cloud Function ครอบทุก
-operation เพราะ Firestore ไม่มี auto-generated API — เป็นข้อยกเว้นโดยธรรมชาติของบริการ Firebase
-Authentication เอง ไม่ใช่การเลือก stack ใหม่
+**สรุป**: จาก 10 operation มี 7 ตัวเป็น client SDK call ตรง (Google/Apple signup กับ login เป็น SDK call
+เดียวกันจริงๆ) และ 3 ตัวเป็น Express route จริง (`forgot-password`, `pairing-codes`,
+`pairing-codes/redeem`) — ต่างจาก component อื่นทุกตัวในหัวข้อ 6.3 ที่ต้องเขียน route ครอบทุก operation
+เพราะ Firestore ไม่มี auto-generated API — เป็นข้อยกเว้นโดยธรรมชาติของบริการ Firebase Authentication เอง
+สำหรับ 7 ใน 10 operation ส่วน 2 operation ของกลไก pairing-code ต้องเป็น route เพราะเป็นตรรกะที่ทีมออกแบบเอง
+ไม่มีใน SDK ให้ใช้สำเร็จรูป ไม่ใช่การเลือก stack ใหม่
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, logical
 type → Firestore field type) และเหตุผลการเลือก stack

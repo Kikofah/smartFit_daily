@@ -38,7 +38,8 @@ AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--�
 [AC-ONB-0-03](../../../01-requirements/acceptance-criteria.md#ac-onb-0-03--ผู้ใช้ที่สมัครด้วย-emailpassword-ขอรีเซ็ตรหัสผ่านผ่านอีเมลได้-req-16),
 [AC-ONB-0-04](../../../01-requirements/acceptance-criteria.md#ac-onb-0-04--บัญชีที่สมัครด้วย-googleapple-ขอรีเซ็ตรหัสผ่านไม่ได้-req-16),
 [AC-ONB-0-05](../../../01-requirements/acceptance-criteria.md#ac-onb-0-05--ออกจากระบบจากหน้าโปรไฟล์-ล้าง-session-ทันที-req-17),
-[AC-ONB-0-06](../../../01-requirements/acceptance-criteria.md#ac-onb-0-06--session-หมดอายุ-ต้องเข้าสู่ระบบใหม่-req-15)
+[AC-ONB-0-06](../../../01-requirements/acceptance-criteria.md#ac-onb-0-06--session-หมดอายุ-ต้องเข้าสู่ระบบใหม่-req-15),
+[AC-ONB-0-07](../../../01-requirements/acceptance-criteria.md#ac-onb-0-07--พื้นผิว-ui-ของ-authentication-ทั้งหมดมีเฉพาะที่เว็บแอปเท่านั้น-เพิ่ม-2026-08-30-req-14-req-15)
 
 > **หมายเหตุการทดสอบ ONB-0**: AC-ONB-0-01 (สมัครสมาชิก) และ AC-ONB-0-02 (เข้าสู่ระบบ) แต่ละอันมี **1 test
 > case** ใช้ **email/password เป็นตัวแทน** เท่านั้น ไม่แยก 3 test case ตามวิธี (email/password, Google,
@@ -123,6 +124,25 @@ AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--�
 | Expected Result | ระบบตรวจไม่พบ session ที่ยังใช้ได้ พาผู้ใช้ไปหน้าเข้าสู่ระบบ (`00-auth-login.html`) แทนที่จะเข้าแอปต่อได้เลย |
 | Test Data | ไม่มีตัวเลขระยะเวลา session timeout ที่แน่นอน (Open Point ยังไม่ resolve ใน spec) — test นี้ตรวจเฉพาะ behavior เมื่อ session ถูกถือว่าหมดอายุแล้ว ไม่ตรวจจับเวลาที่แน่นอน |
 | References | REQ-15 · AC-ONB-0-06 · [User Journey ONB-0](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) — **หมายเหตุ**: ยังไม่มี prototype ที่ implement การตรวจสอบ session จริง (gap, documentation-level test case รอ backend จริงตาม [test-plan.md §4 R13](../test-plan.md)) |
+
+### TC-ONB-0-007 — ยืนยันว่าไม่มีหน้าจอ Authentication อยู่บนแอปมือถือเลย (web-only UI surface, เพิ่ม 2026-08-30)
+
+> **หมายเหตุประเภท test case**: ต่างจาก TC-ONB-0-001–006 ข้างต้น (runtime/UI interaction ปกติ) test case
+> นี้เป็น **code-inspection-level test case** — ตรวจสอบโครงสร้างไฟล์ของ codebase จริงแทนการโต้ตอบกับ UI
+> เพราะสิ่งที่ต้องยืนยัน (AC-ONB-0-07) คือ "ไม่มีหน้าจอนี้อยู่เลย" ซึ่งพิสูจน์ได้แน่นอนกว่าด้วยการตรวจโค้ด
+> มากกว่าการค้นหาหน้าจอไม่เจอในแอปที่รันจริง (negative UI testing มีความเสี่ยงข้ามจุดที่ควรตรวจได้ง่ายกว่า)
+> — สามารถ execute ได้ทันทีในรอบนี้ ไม่ต้องรอ backend (ต่างจาก TC-ONB-0-006) เพราะเป็นการตรวจ static
+> structure ของโค้ดที่มีอยู่แล้ว ไม่ใช่ runtime behavior
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-007 |
+| Test Case Name | ตรวจสอบ codebase ของ `apps/mobile/` ว่าไม่มีไฟล์หน้าจอ signup/login/forgot-password/logout ใด ๆ อยู่เลย |
+| Pre-condition | มี codebase ของ `smartfit_daily_app/apps/mobile/app/` ให้ตรวจสอบ |
+| Test Steps | 1. เปิดโฟลเดอร์ `smartfit_daily_app/apps/mobile/app/`<br>2. ค้นหาไฟล์ที่มีชื่อ/เนื้อหาเกี่ยวกับ signup, login, forgot-password, หรือ logout screen<br>3. เปรียบเทียบรายการไฟล์ทั้งหมดในโฟลเดอร์นี้กับรายการที่คาดหวัง |
+| Expected Result | ไม่พบไฟล์หน้าจอ auth ใด ๆ (signup/login/forgot-password/logout) อยู่ใต้ `apps/mobile/app/` เลย มีเพียง `pairing-code.tsx` และ `device-pairing.tsx` เท่านั้นที่เกี่ยวข้องกับการระบุตัวตน/จับคู่อุปกรณ์ ยืนยันว่าพื้นผิว UI ของ Authentication ทั้งหมดอยู่ที่เว็บแอป (`apps/web/client/`) เพียงที่เดียว |
+| Test Data | โฟลเดอร์ตรวจสอบ = `smartfit_daily_app/apps/mobile/app/`; ไฟล์ที่คาดว่าพบ = `pairing-code.tsx`, `device-pairing.tsx` เท่านั้น; ไฟล์ที่คาดว่า**ไม่พบ** = ไฟล์ใด ๆ ที่มีคำว่า `signup`/`login`/`forgot-password`/`logout` ในชื่อหรือเนื้อหา |
+| References | REQ-14, REQ-15 · AC-ONB-0-07 · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) — ไม่มีลิงก์ prototype `v1/` เพราะเป็นการตรวจ codebase จริงของ `apps/mobile/`, ไม่ใช่ prototype HTML |
 
 ---
 
@@ -398,6 +418,7 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-0 | AC-ONB-0-04 | 1 | TC-ONB-0-004 |
 | ONB-0 | AC-ONB-0-05 | 1 | TC-ONB-0-005 |
 | ONB-0 | AC-ONB-0-06 | 1 (documentation-level, not testable in this round) | TC-ONB-0-006 |
+| ONB-0 | AC-ONB-0-07 (ใหม่ 2026-08-30) | 1 (code-inspection-level) | TC-ONB-0-007 |
 | ONB-1 | AC-ONB-1-01 | 2 (variation: ชาย/หญิง) | TC-ONB-1-001, TC-ONB-1-002 |
 | ONB-1 | AC-ONB-1-02 | 2 (variation: ข้อมูลไม่ครบ/ไม่ถูกต้อง) | TC-ONB-1-003, TC-ONB-1-004 |
 | ONB-1 | AC-ONB-1-03 | 1 | TC-ONB-1-005 |
@@ -409,11 +430,12 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-3 | AC-ONB-3-03 | 1 | TC-ONB-3-005 |
 | ONB-3 | AC-ONB-3-04 | 1 | TC-ONB-3-006 |
 | ONB-3 | AC-ONB-3-05 | 1 | TC-ONB-3-007 |
-| **รวม** | **17 AC scenario** | **22 test case** | TC-ONB-0-001 … TC-ONB-3-007 |
+| **รวม** | **18 AC scenario** | **23 test case** | TC-ONB-0-001 … TC-ONB-3-007 |
 
 ครบทุก AC scenario ของ ONB-0/ONB-1/ONB-2/ONB-3 ตาม
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization)
-(17/17 scenario มี test case อย่างน้อย 1 รายการ) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
+(18/18 scenario มี test case อย่างน้อย 1 รายการ — เพิ่ม AC-ONB-0-07/TC-ONB-0-007 เมื่อ 2026-08-30 หลัง ONB-0
+ถูกยืนยันเป็น web-only จาก codebase จริง) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
 1. กรณี "เลือกเป้าหมาย 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมายทั้งที่เป็นช่องบังคับ" (ONB-3) ไม่มี AC scenario
    รองรับ เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันแค่ว่า
    ช่องนี้ "บังคับกรอก" แต่ไม่ได้ระบุ behavior การ validation (ข้อความ error, ปุ่มถูกบล็อกหรือไม่ ฯลฯ) เมื่อ

@@ -3,7 +3,32 @@
 - **ประเภทเอกสาร:** High Level Architecture — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 (รอบใหม่) — sync แถว "Account & Session Management" ในหัวข้อ 10 (ภาคผนวก:
+- **อัปเดตล่าสุด (citation fix):** 2026-08-30 — `feature-list-journey` เพิ่งกำหนด Feature ID **INT-0**
+  พร้อม business rule ใหม่ **REQ-18** อย่างเป็นทางการใน `backlog.md`/
+  `01-spec/20260823-04-smart-integrations.md` ให้กับกลไก pairing-code/identity handoff ที่เอกสารนี้
+  โมเดลไว้แล้วตั้งแต่รอบก่อนหน้าในฐานะ implicit precondition ของ REQ-12/REQ-13 — รอบนี้เป็น **citation-only
+  fix ล้วนๆ ไม่ใช่การ re-model เนื้อหา**: แก้ทุกจุดที่เคยอ้าง "implicit precondition ของ REQ-12/REQ-13"
+  หรือ "ยังไม่มี REQ number formal" ให้อ้าง **REQ-18 (Feature ID INT-0)** แทน ใน §3.1 (รับผิดชอบ/หน้าที่/
+  คุยกับ), §3.8 (หน้าที่/คุยกับ), §4.5 (หัว flow, subgraph PAIR label, คำอธิบาย PAIR), §5 (แถว Pairing
+  Credential), §7 (ย่อหน้า Security/Privacy), §8 (ข้อ 7 — ปรับสถานะจาก "ยังไม่ resolved เรื่อง REQ number"
+  เป็น "resolved บางส่วน" เพราะยังเหลือประเด็น NFR-05 coverage ที่ยังไม่ resolved) และปรับจำนวน Feature ID
+  ในหัวข้อ 1 จาก 15 เป็น 16 — ไม่แตะหัวข้อ 2, 6, 9, 10 เพราะไม่มีการอ้าง REQ-12/REQ-13 ผูกกับกลไกนี้อยู่ที่
+  นั่น (ดู log [2026-08-30](../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 — Architecture Consistency Audit ตาม `feature-list-journey` ที่เพิ่งอัปเดต
+  `backlog.md`/`user-journeys.md`/2 ไฟล์ `01-spec/*.md` (Onboarding, Smart Integrations) พบ 2 จุดล้าหลัง
+  (ไม่ขัดแย้ง แค่เก่า) แก้ผ่าน flow ปกติทั้งคู่: (1) **ONB-0 เป็น web-only** — ปรับ §3.1 (หน้าที่/คุยกับ),
+  §4.1 (diagram node + คำอธิบาย Step 1) ให้ระบุชัดว่าเว็บไคลเอนต์เป็นทางเข้าเดียวของ credential-based auth
+  (เดิมเอกสารนี้ไม่ได้ระบุข้อจำกัดนี้เลย แม้จะมี component "Account & Session Management" อยู่แล้ว) (2)
+  **กลไก pairing-code / identity handoff ใหม่** (precondition ของ INT-2/INT-3, implicit ต่อ REQ-12/13
+  ไม่มี REQ number ของตัวเอง) — เพิ่ม component interaction ระหว่าง Account & Session Management ↔
+  Integration Gateway (§3.1, §3.8), เพิ่ม subgraph PAIR นำหน้า INT-2/INT-3 ใน Flow 5 diagram (§4.5) พร้อม
+  คำอธิบาย mapping กลับ Step 1-6 ของ user-journeys.md, เพิ่ม conceptual data entity **Pairing Credential**
+  (§5), เพิ่มหมายเหตุ Security/Privacy (§7) และจุดที่ยังไม่ได้ระบุข้อ 7 (§8) — ไม่แตะหัวข้อ 10 (ภาคผนวก:
+  Stack Mapping) รอบนี้ เพราะ `tech-stack.md` เองยังไม่ได้อัปเดตจาก Firebase Cloud Functions/React
+  Native-Expo เดิมมาเป็น Express + web-first ตามโค้ดจริง (ต้องรอ `tech-stack-builder` เดินกระบวนการถามผู้ใช้
+  ก่อนตาม CLAUDE.md — เป็น pre-existing drift ที่ `feature-list-journey` พบเช่นกัน) audit หัวข้ออื่นทั้งหมด
+  (2, 6) แล้วไม่พบข้อขัดแย้งเพิ่มเติม (ดู log [2026-08-30](../../05-log/20260830-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-29 (รอบใหม่) — sync แถว "Account & Session Management" ในหัวข้อ 10 (ภาคผนวก:
   Stack Mapping) ให้ตรงกับ `tech-stack.md` §6.1/§6.3.1 ฉบับสมบูรณ์ที่เพิ่งขยาย mapping ระดับ operation เสร็จ
   (เดิมทิ้ง ⚠️ placeholder ไว้ว่า "รอ `tech-stack-builder` ขยาย") — เป็น mechanical re-sync ล้วนๆ ตามกติกา
   Stack Mapping Appendix freshness ไม่ใช่การตัดสินใจเนื้อหาใหม่ ไม่กระทบหัวข้อ 1-9 (ดู log
@@ -26,6 +51,20 @@
   NFR-05 ต่อผู้ให้บริการยืนยันตัวตน), และเพิ่มแถวใหม่ใน §10 (ภาคผนวก Stack Mapping — บันทึกว่า
   `tech-stack.md` §6.1 ยังไม่มี mapping ระดับ operation ของ component นี้ รอ `tech-stack-builder` ขยาย)
   (ดู [log 2026-08-29](../../05-log/20260829-log.md))
+- **อัปเดตล่าสุด (รอบ Stack Mapping re-sync):** 2026-08-30 — **mechanical re-sync หัวข้อ 10 (ภาคผนวก:
+  Stack Mapping) เท่านั้น** ตามที่ `tech-stack-builder` เพิ่งอัปเดต `tech-stack.md` ให้สะท้อนสถาปัตยกรรมจริง
+  (Express.js บน Google Cloud Run แทน Firebase Cloud Functions/Firebase Hosting) — ตามกติกา CLAUDE.md
+  "Drift between the appendix and `tech-stack.md` is auto-fixable without the ask-user protocol" จึงแก้
+  โดยไม่ถามผู้ใช้: (1) เปลี่ยนทุกจุดที่เคยเขียน "Cloud Function `{ชื่อ}`" เป็น **Express route** จริงตามที่
+  `tech-stack.md` §6.1/§6.3 ระบุ (2) เพิ่ม mapping ของ**กลไก pairing-code** (component interaction, data
+  flow, และ conceptual data entity "Pairing Credential" ที่เอกสารนี้เองโมเดลไว้แล้วใน §3.1/§3.8/§4.5/§5
+  ตั้งแต่รอบก่อนหน้า แต่ยังไม่เคยมี stack mapping) — top-level collection `pairingCodes/{code}`, TTL 5
+  นาทีผ่าน field `expiresAt`, mint ผ่าน `POST /api/pairing/create-code` (ต้องยืนยันตัวตน), redeem ผ่าน
+  `POST /api/pairing/redeem` (ข้อยกเว้นเดียว ไม่ต้องยืนยันตัวตน) ซึ่ง `delete()` document ทิ้งแทนการตั้ง
+  `is_used` flag แล้ว mint Firebase custom token คืนให้ (3) แก้จำนวน operation ของ Account & Session
+  Management จาก 8 เป็น **10** ให้ตรงกับ `tech-stack.md` §6.3.1 ฉบับล่าสุด (4) เปลี่ยน hosting reference
+  เป็น **Google Cloud Run** — **ไม่แตะหัวข้อ 1-9**: บรรยาย pairing-code เชิงแนวคิดถูกต้องอยู่แล้วจากรอบก่อน
+  ไม่มีอะไรต้องแก้ (ดู log [2026-08-30](../../05-log/20260830-log.md))
 - **สร้างโดย:** skill `architecture-builder`
 - **อ้างอิงจาก:** [Product Backlog](../../01-requirements/backlog.md),
   [Requirement ทั้ง 4 epic + NFR](../../01-requirements/01-spec/index.md),
@@ -46,8 +85,9 @@ provider, ภาษาโปรแกรม, หรือรูปแบบ API 
 stack-specific (database schema, API design, tech choices) ในอนาคต — เมื่อทีมเลือก stack จริงแล้ว
 เอกสารเหล่านั้นควร derive concept จากที่นี่ ไม่ใช่มาแทนที่เอกสารนี้
 
-ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 15 Feature ID ในทั้ง 4 Epic ตาม
-[backlog.md](../../01-requirements/backlog.md) (รวม **ONB-0** ที่เพิ่มเข้ามาเมื่อ 2026-08-29 — ดู §3.1)
+ขอบเขต (scope) ของเอกสารนี้ครอบคลุมทั้ง 16 Feature ID ในทั้ง 4 Epic ตาม
+[backlog.md](../../01-requirements/backlog.md) (รวม **ONB-0** ที่เพิ่มเข้ามาเมื่อ 2026-08-29 — ดู §3.1 —
+และ **INT-0**/REQ-18 ที่ได้รับ Feature ID/REQ formal ของตัวเองเมื่อ 2026-08-30 — ดู §3.1/§3.8/§4.5)
 รวมถึง NFR-01–13 จาก
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 ในฐานะ cross-cutting concern (ดูหัวข้อ 7)
@@ -92,18 +132,31 @@ flowchart LR
 
 ### 3.1 Account & Session Management
 
-- **รับผิดชอบ**: ONB-0 (REQ-14–17 — เพิ่มเข้า backlog 2026-08-29)
+- **รับผิดชอบ**: ONB-0 (REQ-14–17 — เพิ่มเข้า backlog 2026-08-29); และกลไกส่งต่อความเป็นตัวตน (identity
+  handoff) ซึ่งเป็น precondition ทางเทคนิคของ INT-2/INT-3 ตาม **REQ-18 (Feature ID INT-0)** — formalize
+  เป็น Feature ID/REQ ของตัวเองแล้วเมื่อ 2026-08-30 (เดิมเคย map เป็น implicit precondition ของ
+  REQ-12/REQ-13 เท่านั้น ก่อนมี REQ ของตัวเอง — ดูหัวข้อ 8 ข้อ 7 สำหรับสถานะปัจจุบัน)
 - **หน้าที่**: จัดการวงจรชีวิตทั้งหมดของบัญชีผู้ใช้ — สร้างบัญชีใหม่ผ่านหลายวิธี (สมัครด้วยอีเมล/รหัสผ่าน
   หรือผ่านผู้ให้บริการยืนยันตัวตนภายนอก — ดูหัวข้อ 6.4), ยืนยันตัวตนเพื่อเข้าสู่ระบบด้วยวิธีเดียวกับที่สมัคร
   ไว้, คงสถานะเข้าสู่ระบบไว้ข้ามการเปิดแอปแต่ละครั้ง (session persistence) จนกว่าจะออกจากระบบเองหรือ
   session หมดอายุ, จัดการคำขอรีเซ็ตข้อมูลยืนยันตัวตนสำหรับบัญชีที่ใช้อีเมล/รหัสผ่านเท่านั้น (ใช้ไม่ได้กับ
   บัญชีที่ผูกกับผู้ให้บริการภายนอก), และล้างสถานะเข้าสู่ระบบทันทีเมื่อผู้ใช้ออกจากระบบ เป็น**เกตเวย์แรกสุด
   ของทั้งระบบ** — ต้องสร้างบัญชีผู้ใช้จริงก่อนเสมอ ก่อนที่ Personalization & Profile หรือ component อื่นใด
-  จะเริ่มอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนนั้นได้
+  จะเริ่มอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนนั้นได้ **เว็บไคลเอนต์ (web client) เป็นทางเข้าเดียว (sole entry
+  point) สำหรับการยืนยันตัวตนด้วย credential ทุกวิธี (สมัคร/เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบ)** —
+  ไคลเอนต์อื่นใดในระบบไม่มีหน้าจอสำหรับสิ่งเหล่านี้ของตัวเองเลย ต้องอาศัยตัวตนที่ยืนยันแล้วจากเว็บไคลเอนต์
+  เสมอ (อัปเดต 2026-08-30) นอกจากนี้ยังทำหน้าที่ mint **รหัสจับคู่อุปกรณ์ชั่วคราวแบบใช้ครั้งเดียว**
+  (short-lived, single-use pairing credential) ให้กับ session ที่ยืนยันตัวตนแล้วเมื่อร้องขอ และรับการแลก
+  รหัสนั้นคืนเป็น session ที่ยืนยันตัวตนแล้วสำหรับไคลเอนต์ใหม่ที่ยังไม่เคยยืนยันตัวตนมาก่อน โดยไม่ต้องกรอก
+  credential ซ้ำ — เป็นกลไกเดียวที่ทำให้ไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง (ดู Integration Gateway,
+  §3.8) เริ่มทำงานในนามผู้ใช้คนเดิมได้ (identity handoff ตาม **REQ-18**/**INT-0**, อัปเดต 2026-08-30)
 - **คุยกับ**: Personalization & Profile (ส่งต่อบัญชีผู้ใช้ที่ยืนยันตัวตนสำเร็จแล้ว เพื่อเริ่มกรอกข้อมูล
-  ส่วนตัวครั้งแรก หรือพาเข้าสู่ Daily Dashboard ต่อถ้าเคยผ่าน onboarding มาแล้ว) — และเป็น**precondition
-  โดยอ้อมของทุก component ที่เหลือทั้งหมด** เพราะทุก component อื่นอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนหนึ่ง
-  เสมอ ซึ่งต้องผ่านที่นี่ก่อนจึงจะมีตัวตนให้ผูกข้อมูลด้วย
+  ส่วนตัวครั้งแรก หรือพาเข้าสู่ Daily Dashboard ต่อถ้าเคยผ่าน onboarding มาแล้ว), Integration Gateway
+  (ออกรหัสจับคู่อุปกรณ์ชั่วคราวให้ session ที่ยืนยันตัวตนแล้วร้องขอ แล้วรับการแลกรหัสนั้นคืนเป็น session
+  ใหม่ที่ยืนยันตัวตนแล้ว ก่อนที่ Integration Gateway จะเริ่มกระบวนการจับคู่อุปกรณ์จริงของ INT-2/INT-3 ได้ —
+  precondition ทางเทคนิคตาม **REQ-18/INT-0**, อัปเดต 2026-08-30) — และเป็น**precondition โดยอ้อมของทุก component ที่เหลือ
+  ทั้งหมด** เพราะทุก component อื่นอ่าน/เขียนข้อมูลที่ผูกกับผู้ใช้คนหนึ่งเสมอ ซึ่งต้องผ่านที่นี่ก่อนจึงจะมี
+  ตัวตนให้ผูกข้อมูลด้วย
 
 ### 3.2 Personalization & Profile
 
@@ -166,9 +219,15 @@ flowchart LR
 - **รับผิดชอบ**: INT-2, INT-3
 - **หน้าที่**: เป็นสะพานเชื่อมอุปกรณ์/แพลตฟอร์มภายนอกที่เป็นทางเลือก (ตาชั่งอัจฉริยะผ่าน Bluetooth,
   wearable ผ่าน Health API) เข้ากับโปรไฟล์และข้อมูลแคลอรี่ของแอป โดยต้องผ่าน consent gate เสมอ และมี
-  fallback เป็นการกรอกเอง/ใช้ค่าประมาณ MET เมื่อเชื่อมต่อไม่ได้
-- **คุยกับ**: Personalization & Profile (เขียนน้ำหนัก/องค์ประกอบร่างกายที่ซิงค์มา), Exertion & Calorie
-  Calculation (เขียนค่าแทนที่จาก wearable), Insights & Forecast (ทางอ้อม ผ่านน้ำหนักที่ซิงค์)
+  fallback เป็นการกรอกเอง/ใช้ค่าประมาณ MET เมื่อเชื่อมต่อไม่ได้ **ก่อนเริ่มกระบวนการจับคู่อุปกรณ์จริงของ
+  INT-2/INT-3 ได้ ต้องผ่าน identity handoff จาก Account & Session Management ก่อนเสมอ ตาม REQ-18
+  (Feature ID INT-0)** (ดู §3.1, §4.5) — เนื่องจากไคลเอนต์ที่ทำหน้าที่นี้ไม่มีหน้าจอ auth ของตัวเอง จึงต้อง
+  รับตัวตนที่ยืนยันแล้วมาจากที่นั่นผ่านรหัสจับคู่อุปกรณ์ชั่วคราวแทน (อัปเดต 2026-08-30)
+- **คุยกับ**: Account & Session Management (รับรหัสจับคู่อุปกรณ์ชั่วคราวที่ผู้ใช้กรอกบนไคลเอนต์ที่ไม่มี
+  หน้าจอ auth ของตัวเอง แลกเป็น session ที่ยืนยันตัวตนแล้ว ก่อนเริ่มกระบวนการจับคู่อุปกรณ์จริง — precondition
+  ทางเทคนิคตาม **REQ-18 (Feature ID INT-0)**, อัปเดต 2026-08-30), Personalization & Profile (เขียนน้ำหนัก/
+  องค์ประกอบร่างกายที่ซิงค์มา), Exertion & Calorie Calculation (เขียนค่าแทนที่จาก wearable), Insights &
+  Forecast (ทางอ้อม ผ่านน้ำหนักที่ซิงค์)
 
 > NFR-01–13 ไม่ใช่ component ของตัวเอง — เป็น cross-cutting concern ที่พาดผ่านทั้ง 8 component ข้างต้น
 > (ดูหัวข้อ 7)
@@ -183,8 +242,8 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    subgraph ONB0["ONB-0: Account & Session Management"]
-        Z1["เปิดแอป (input)"] --> Z2{"มีบัญชีผู้ใช้อยู่แล้วหรือไม่?"}
+    subgraph ONB0["ONB-0: Account & Session Management (web client เท่านั้น — sole entry point ของ credential-based auth)"]
+        Z1["เปิดเว็บแอป — web client (input)"] --> Z2{"มีบัญชีผู้ใช้อยู่แล้วหรือไม่?"}
         Z2 -- ยังไม่มี --> Z3["สมัครสมาชิก: email/password หรือผู้ให้บริการยืนยันตัวตนภายนอก"]
         Z3 --> Z4["สร้างบัญชีผู้ใช้ใหม่ (userId)"]
         Z2 -- มีอยู่แล้ว --> Z5["เข้าสู่ระบบด้วยวิธีเดียวกับที่สมัคร"]
@@ -208,7 +267,9 @@ flowchart TD
     C2 --> OUT["โปรไฟล์ผู้ใช้ครบ: บัญชีผู้ใช้ยืนยันตัวตนแล้ว, TDEE, อุปกรณ์, เป้าหมายแคลอรี่รายวัน, น้ำหนักเป้าหมาย (ถ้ามี) → ส่งต่อ Flow 2"]
 ```
 
-- **ONB-0** (Step 1-11): ผู้ใช้เปิดแอป ระบบตรวจสอบว่ามีบัญชีผู้ใช้อยู่แล้วหรือไม่ (Step 1) →
+- **ONB-0** (Step 1-11): ผู้ใช้เปิด**เว็บแอป (web client)** — ONB-0 เป็น **web-only**: หน้าจอสมัคร/
+  เข้าสู่ระบบ/ลืมรหัสผ่าน/ออกจากระบบทั้งหมดมีอยู่เฉพาะที่เว็บไคลเอนต์เท่านั้น ไคลเอนต์อื่น (companion app
+  ของ INT-2/INT-3) ไม่มีหน้าจอเหล่านี้เลย (อัปเดต 2026-08-30) ระบบตรวจสอบว่ามีบัญชีผู้ใช้อยู่แล้วหรือไม่ (Step 1) →
   **กรณียังไม่มีบัญชี**: เลือกวิธีสมัครสมาชิก 1 ใน 3 วิธี — email/password, Google OAuth, หรือ Sign in
   with Apple (Step 2) → สร้างบัญชีผู้ใช้ใหม่ (`userId`) ก่อนเข้าสู่ ONB-1 เสมอ (Step 3-4) →
   **กรณีมีบัญชีอยู่แล้ว**: เลือกวิธีเข้าสู่ระบบด้วยวิธีเดียวกับที่สมัครไว้ (Step 5) → ตรวจสอบว่าเข้าสู่ระบบ
@@ -315,16 +376,26 @@ flowchart TD
   PLN-3 หรือถูกบังคับจาก PLN-2) นับต่อเนื่อง (Step 3-4) → วันที่ "ไม่ครบเป้าหมาย" หรือไม่มี log เลยทำให้
   streak ขาดทันทีไม่มี grace (Step 5) → แสดงตัวเลข streak สุดท้ายบน Dashboard (Step 6)
 
-### 4.5 Flow 5 — Smart Integration & Insights Flow (INT-2, INT-3 → INT-1)
+### 4.5 Flow 5 — Smart Integration & Insights Flow (INT-0 → INT-2, INT-3 → INT-1)
 
 ```mermaid
 flowchart TD
+    subgraph PAIR["INT-0: Identity Handoff — Pairing-Code Mechanism (Account & Session Management; REQ-18 — precondition ทางเทคนิคของ INT-2/INT-3)"]
+        Q1["ผู้ใช้ล็อกอินอยู่บนเว็บไคลเอนต์แล้ว (ONB-0) เปิดหน้าโปรไฟล์"] --> Q2["กดขอรหัสจับคู่อุปกรณ์"]
+        Q2 --> Q3["mint รหัสจับคู่ 6 หลัก อายุ 5 นาที ใช้ครั้งเดียว"]
+        Q3 --> Q4["กรอกรหัสบนไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง"]
+        Q4 --> Q5{"รหัสถูกต้อง ไม่หมดอายุ ยังไม่ถูกใช้?"}
+        Q5 -- ไม่ --> Q4
+        Q5 -- ใช่ --> Q6["แลกรหัสเป็น session ที่ยืนยันตัวตนแล้ว (ไม่ต้องกรอก credential ซ้ำ)"]
+    end
     subgraph INT2["INT-2: Integration Gateway"]
+        Q6 --> S1
         S1["จับคู่ตาชั่งผ่าน Bluetooth/Health API + consent"] --> S2{"เชื่อมต่อสำเร็จ?"}
         S2 -- สำเร็จ --> S3["ซิงค์น้ำหนัก/องค์ประกอบร่างกาย"]
         S2 -- ไม่สำเร็จ --> S4["fallback: กรอกน้ำหนักเอง"]
     end
     subgraph INT3["INT-3: Integration Gateway"]
+        Q6 --> W1
         W1["ขอ consent เข้าถึง Health API/wearable"] --> W2{"มีข้อมูลระหว่างออกกำลังกาย?"}
         W2 -- มี --> W3["ใช้ค่าจาก wearable แทนค่าประมาณ MET (Flow 2/REC-2)"]
         W2 -- ไม่มี --> W4["ใช้ค่าประมาณ MET ตามเดิม"]
@@ -343,6 +414,17 @@ flowchart TD
     end
 ```
 
+- **PAIR — INT-0: Identity Handoff (REQ-18; Step 1-6 ของทั้ง INT-2 และ INT-3 ใน user-journeys.md,
+  formalize เป็น Feature ID/REQ ของตัวเอง 2026-08-30)**:
+  ผู้ใช้ที่ล็อกอินอยู่แล้วบนเว็บไคลเอนต์ (ONB-0/Account & Session Management) เปิดหน้าโปรไฟล์ (Step 1) →
+  กดขอรหัสจับคู่อุปกรณ์ (Step 2) → Account & Session Management mint รหัสจับคู่ 6 หลัก อายุการใช้งาน 5
+  นาที แสดงบนหน้าเว็บ (Step 3) → ผู้ใช้เปิดไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง (companion app ของ
+  INT-2/INT-3) กรอกรหัสนั้น (Step 4) → ตรวจสอบว่ารหัสถูกต้อง ยังไม่หมดอายุ และยังไม่ถูกใช้หรือไม่ ถ้าไม่ผ่าน
+  วนกลับไปกรอกใหม่ (Step 5) → ถ้าผ่าน Account & Session Management แลกรหัสเป็น session ที่ยืนยันตัวตนแล้ว
+  ผูกกับบัญชีเดิม โดยไม่ต้องกรอก credential ซ้ำ (Step 6) — เป็น precondition ทางเทคนิคของ INT-2/INT-3 ทั้งคู่
+  ตาม **REQ-18 (Feature ID INT-0)** (เดิมก่อน 2026-08-30 เคย map เป็น implicit precondition ของ
+  REQ-12/REQ-13 เท่านั้น ก่อนมี REQ ของตัวเอง — ดูหัวข้อ 8 ข้อ 7) จากนั้นจึงเข้าสู่กระบวนการจับคู่อุปกรณ์จริง
+  ของ INT-2 หรือ INT-3 ตามที่ผู้ใช้เลือก
 - **INT-2** (Step 1-5): จับคู่ตาชั่งอัจฉริยะผ่าน Bluetooth/Health API พร้อม consent → เชื่อมต่อสำเร็จ:
   ซิงค์น้ำหนัก/องค์ประกอบร่างกายเข้าโปรไฟล์ทันที → เชื่อมต่อไม่สำเร็จ: fallback เป็นกรอกน้ำหนักเอง → ค่าที่
   ได้ป้อนกลับเข้า Personalization & Profile เพื่อคำนวณ TDEE ใหม่
@@ -377,6 +459,7 @@ flowchart TD
 | **Weight Goal / Forecast** | น้ำหนักเป้าหมาย (จาก ONB-3), วันที่คาดว่าจะถึงเป้าหมาย | ใช้ค่าคงที่ 7,700 kcal จาก Goal Selection — อ่านประวัติ Daily Log และ Weight Record ล่าสุด |
 | **Wearable Reading** | ข้อมูลแคลอรี่เผาผลาญ (และฐานข้อมูลอัตราการเต้นหัวใจ/กิจกรรม) จาก Health API ต่อ 1 เซสชัน | override Actual Calorie Burn เมื่อมี — มาจาก Integration Gateway |
 | **Integration Consent/Connection State** | สถานะ consent/การเชื่อมต่อต่ออุปกรณ์ภายนอกแต่ละตัว (ตาชั่ง, wearable) | ควบคุมว่า Weight Record/Wearable Reading จะซิงค์ได้หรือไม่ (ตาม NFR-05) |
+| **Pairing Credential** (รหัสจับคู่อุปกรณ์ — REQ-18/INT-0, ใหม่ 2026-08-30) | รหัสจับคู่อุปกรณ์ชั่วคราว, เวลาหมดอายุ (5 นาทีนับจากออกรหัส), สถานะใช้แล้ว/ยังไม่ใช้, การอ้างอิงกลับไปยัง User Account เจ้าของรหัส | ออกโดย Account & Session Management ผูกกับ User Account ที่ร้องขอ 1 รายการต่อการร้องขอ 1 ครั้ง (ใช้ครั้งเดียวแล้ว invalidate/หมดอายุอัตโนมัติ ไม่ persist ระยะยาว) — เป็น precondition ทางเทคนิคตาม REQ-18 (Feature ID INT-0) ก่อน Integration Gateway จะเริ่มกระบวนการของ INT-2/INT-3 ได้ (ดู §4.5) |
 
 ## 6. External Integration Boundaries
 
@@ -444,7 +527,12 @@ flowchart TD
   สุขภาพอื่นตามเจตนารมณ์ของ NFR-04 แม้เนื้อหา NFR-04 ปัจจุบันจะระบุเจาะจงเฉพาะ "ข้อมูลสุขภาพส่วนบุคคล" ยังไม่
   ได้เขียนรวม credential ไว้ตรงๆ (ดู [หมายเหตุ 3 ของ backlog.md NFR Traceability](../../01-requirements/backlog.md#non-functional-requirements-nfr-traceability))
   — เนื้อหา NFR-04/06/11 ยังต้องถูก audit เพิ่มเติมว่าครบถ้วนสำหรับระบบบัญชีผู้ใช้จริงหรือไม่ เป็นงานของ
-  `test-suite-builder` ไม่ใช่การตัดสินใจของเอกสารนี้
+  `test-suite-builder` ไม่ใช่การตัดสินใจของเอกสารนี้ นอกจากนี้ **รหัสจับคู่อุปกรณ์ (Pairing Credential —
+  REQ-18, Feature ID INT-0, ใหม่ 2026-08-30)** ที่ Account & Session Management ออกให้เพื่อทำ identity
+  handoff ไปยัง Integration Gateway ต้องเป็นแบบชั่วคราว (short-lived) และใช้ได้ครั้งเดียว (single-use)
+  ตามเจตนารมณ์เดียวกับการปกป้อง credential ทั่วไป แม้ NFR-05 ปัจจุบันจะเขียนไว้เจาะจงเฉพาะ consent ของการ
+  เชื่อมต่อ INT-2/INT-3 เอง ยังไม่ได้ระบุตรงๆ ว่าครอบคลุมความปลอดภัยของกลไก pairing-code (REQ-18) นี้ด้วย
+  หรือไม่ (ดูหัวข้อ 8 ข้อ 7)
 - **Reliability** (NFR-07, NFR-08, NFR-12): ระบบต้อง fallback อย่างสงบเมื่อระบบภายนอกไม่พร้อมใช้งาน โดย
   core loop รายวัน (Onboarding → Recommendation → Logging) ต้องไม่ผูกกับความพร้อมของ Smart Integrations
   (Epic 4, Could ทั้งหมด) และข้อมูล log/streak ต้องไม่สูญหายจาก network ที่ไม่เสถียร นอกจากนี้ การเขียนข้อมูล
@@ -494,6 +582,20 @@ flowchart TD
    Account & Session Management ต้องมีกระบวนการ consent record-keeping แยกต่างหากสำหรับ OAuth/Sign in
    with Apple หรือไม่ (เอกสารนี้จงใจไม่ฟันธงแทน เป็นเรื่องที่ควรยืนยันกับ `test-suite-builder`/เจ้าของ NFR
    doc ต่อ)
+7. **INT-0 — กลไก pairing-code / identity handoff** (Account & Session Management ↔ Integration
+   Gateway): **แก้ไข 2026-08-30 — resolved บางส่วน**: กลไกนี้ได้รับ REQ number formal ของตัวเอง
+   (**REQ-18**) พร้อม Feature ID ของตัวเอง (**INT-0**) แล้ว ยืนยันจากผู้ใช้งานเมื่อ 2026-08-30 ตามที่
+   `feature-list-journey` บันทึกไว้ใน
+   [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../01-requirements/01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+   และ [backlog.md § INT-0](../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
+   (เดิมก่อนหน้านี้ map เป็น implicit precondition ของ REQ-12/REQ-13 เท่านั้น ไม่มี REQ ของตัวเอง — ดู
+   [user-journeys.md § Open Questions ข้อ 7](../01-prototypes/user-journeys.md#open-questions) ที่ยัง
+   เหลือเฉพาะประเด็น rate limiting ของ INT-0 ต่อไป ไม่ใช่ประเด็นเรื่อง REQ number อีกแล้ว) — เอกสารนี้เพียง
+   ปรับ citation ของ component interaction (§3.1, §3.8), data flow (§4.5), และ conceptual data entity
+   (§5, Pairing Credential) ที่โมเดลกลไกนี้ไว้แล้วให้ตรงกับ REQ-18/INT-0 เท่านั้น (citation fix ล้วนๆ ไม่ใช่
+   การ re-model เนื้อหา) — **ส่วนที่ยังไม่ resolved**: ยังไม่มีความปลอดภัย/NFR ที่ระบุครอบคลุมกลไกนี้โดยตรง
+   (ดูหัวข้อ 7 ข้อ Security/Privacy ด้านบน) — เป็นเรื่องที่ควรยืนยันกับ `test-suite-builder`/เจ้าของ NFR doc
+   ต่อเช่นเดียวกับข้อ 6
 
 ## 9. ความสัมพันธ์กับเอกสารอื่น
 
@@ -518,13 +620,23 @@ flowchart TD
 > ถ้าทีมเปลี่ยน stack ในอนาคต ให้รัน `tech-stack-builder` ก่อน แล้วภาคผนวกนี้จะถูก sync ตามในการรัน
 > `architecture-builder` ครั้งถัดไป
 
-มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-(sync ล่าสุด 2026-08-29 — ฉบับละเอียดระดับ per-table/collection ตามแนวทาง Hybrid ที่ `api-db-spec-builder`
-และ `tech-stack-builder` ยืนยันร่วมกันแล้ว ไม่ใช่แนวทางเบื้องต้นแบบเดิมอีกต่อไป ดู [tech-stack.md](tech-stack.md)
-§2 และ §5 สำหรับเหตุผลการเลือก Firebase เอง — แถวแรก "Account & Session Management" ก็ sync ครบแล้วเช่นกัน
-(รอบใหม่ 2026-08-29) มิเรอร์ทั้งจาก [tech-stack.md §6.1](tech-stack.md#61-hlas-conceptual-component--firebase-implementation)
-แถวแรก และ [§6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น) ที่ขยาย
-mapping ระดับ operation ทั้ง 8 ตัวของ `api-spec.md` §3.1 เสร็จสมบูรณ์แล้ว):
+> **อัปเดต 2026-08-30 (Backend/API compute layer เปลี่ยนจาก Firebase Cloud Functions → Express.js บน
+> Google Cloud Run)**: ทุกจุดด้านล่างที่เคยเขียนว่า "Cloud Function `{ชื่อ}`" เปลี่ยนเป็น **Express route
+> handler** จริง (`apps/web/server/routes/{component-slug}/index.ts`, mount ผ่าน `apps/web/server/index.ts`
+> ด้วย prefix `/api`) — Database (Cloud Firestore) **ไม่เปลี่ยนแปลง** เพราะยังเข้าถึงผ่าน Firebase Admin
+> SDK ตัวเดียวกัน เพียงแค่เรียกจาก Express process ที่รันบน **Google Cloud Run** แทน Cloud Functions
+> runtime — เพิ่ม mapping ใหม่สำหรับ**กลไก pairing-code identity handoff** (§3.1/§3.8/§4.5/§5 ของเอกสารนี้)
+> ในแถว Account & Session Management และแก้จำนวน operation ของ component นั้นจาก 8 เป็น **10** ให้ตรงกับ
+> [tech-stack.md §6.3.1](tech-stack.md#631-account--session-management-onb-0--identity-handoff--ข้อยกเว้นของกติกาข้างต้น)
+> ฉบับล่าสุด — เป็น mechanical re-sync ล้วนๆ ตามกติกา Stack Mapping Appendix freshness ไม่ใช่การตัดสินใจ
+> เนื้อหาใหม่
+
+มิเรอร์จาก [tech-stack.md § 6.1](tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
+(sync ล่าสุด 2026-08-30 — ฉบับ Express.js/Cloud Run ที่ `tech-stack-builder` เพิ่ง reconcile จาก Firebase
+Cloud Functions/Firebase Hosting เดิม ตามการ re-architecture จริงของโค้ดที่เกิดขึ้นตั้งแต่ 2026-08-29 — ดู
+[tech-stack.md](tech-stack.md) §2 สำหรับ mini Discovery Questionnaire ที่ยืนยัน Google Cloud Run เป็น
+hosting และ §5 สำหรับตารางเปรียบเทียบ Cloud Run/Render/Fly.io/VM แบบเต็ม — Database/Authentication
+(Cloud Firestore/Firebase Authentication) ไม่เปลี่ยนจากรอบก่อนหน้า):
 
 > เกณฑ์ embed vs. subcollection ที่ใช้ด้านล่าง (mirror จาก `database-schema.md` §8.2): ข้อมูล **bounded**
 > (ขอบเขตจำกัดชัดเจน, 1:1/multi-select เล็กกับผู้ใช้หรือ 1 เซสชัน, ไม่มี pattern query อิสระ) → **embed**
@@ -533,20 +645,23 @@ mapping ระดับ operation ทั้ง 8 ตัวของ `api-spec.md
 
 | Conceptual Component (หัวข้อ 3) | Concrete Implementation |
 |---|---|
-| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยกสำหรับ credential** เพราะ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) map ตรงกับ Firebase Auth's `UserRecord` เองครบทุก field: `id` = Firebase Auth UID (`uid`) — ค่าเดียวกับที่ `users/{userId}` ของ Personalization & Profile (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว จึงไม่มี FK lookup จริงให้ต้องทำ; `signup_method` derive จาก `UserRecord.providerData[0].providerId`; `email` = `UserRecord.email`; `credential_reference` ไม่มี field ให้เข้าถึงแม้ผ่าน Admin SDK เพราะ Firebase Auth เก็บ password hash ไว้ภายในเองทั้งหมด; `external_provider_reference` = `UserRecord.providerData[0].uid`; `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบปัจจุบัน (session)" = Firebase Auth ID Token + Refresh Token ที่ client SDK เก็บ persistence เอง ไม่มี server-side session store ให้ query (อ่านได้จาก Cloud Function ผ่าน Firebase Admin SDK เท่านั้น) — **ระดับ operation** (8 operation ของ `api-spec.md` §3.1): 7 ใน 8 เป็น **client SDK call ตรง** (สมัคร/เข้าสู่ระบบด้วย email-password, Google, Apple, และออกจากระบบ — ไม่ต้องมี Cloud Function เพราะ Firebase Auth SDK ทำหน้าที่นี้ให้เองอยู่แล้ว) มีเพียง `POST /auth/forgot-password` เท่านั้นที่ต้องเป็น **Cloud Function `forgotPassword`** เพื่อ enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) ซึ่ง client SDK เพียงอย่างเดียวไม่รองรับ — รายละเอียดเต็มดู [tech-stack.md §6.3.1](tech-stack.md#631-account--session-management-onb-0--ข้อยกเว้นของกติกาข้างต้น) |
-| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}` — สร้างโดย **Account & Session Management** ด้านบนเสมอ) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` (`goalType`/`targetWeightKg`/`dailyCalorieTargetKcal`/`isSafetyFloorApplied`) และ embedded array field `equipmentTypes: string[]` อยู่ใน document เดียวกัน (bounded) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + Cloud Function `profileUpdate` enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
-| Content Recommendation | Cloud Function `recommendation` (Callable) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry — สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (bounded); ระหว่างสลับวิดีโอ (REC-3) อัปเดต embedded array field `rejectedVideoIds: []` ใน document เดียวกัน |
-| Exertion & Calorie Calculation | คำนวณ MET ที่ client ตาม NFR-01/03 → Cloud Function `sessionComplete` validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เก็บเป็น embedded map field `wearableReading` ใน document เดียวกัน — ทุก operation ที่รับ `sessionId` จาก client ต้อง `get()` ยืนยันว่า document นั้นมีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ (**referential existence validation** — NFR-12, เพราะ Firestore ไม่มี FK) |
-| Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) ใช้ ID เดียวกับ `dailyLogs/{date}` เพื่ออ่าน 3 เอกสารของวันเดียวกันด้วย `get()` ตรง; Cloud Function ของ `PUT /planner/days/{date}` อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag; Cloud Function `cheatRest` อ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` เพื่อ enforce กติกา "วันนี้เท่านั้น" |
-| Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` (unbounded, ISO date) + embedded map field `streakSnapshot` ภายใน `users/{userId}` (1:1); all-or-nothing enforce ที่ Cloud Function ที่เขียน `dailyLogs/{date}`; Cloud Function trigger จาก Firestore `onWrite` ของ `dailyLogs/{date}`/`dayStatus/{date}` recompute `streakSnapshot` ทุกครั้งที่ต้นทางเปลี่ยน |
-| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` (unbounded) + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` (1:1) — Cloud Function `forecast` คำนวณจากประวัติ `dailyLogs`/`weightRecords` แล้วเขียนทับ `weightForecastSnapshot` |
-| Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` (bounded — 2 ประเภทตายตัวตาม INT-2/INT-3 ปัจจุบัน) — Cloud Function `integrations` orchestrate การเชื่อมต่อ + native module ฝั่ง client (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) |
+| Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยกสำหรับ credential** เพราะ `user_account` (thin identity anchor ตาม `database-schema.md` §3.1) map ตรงกับ Firebase Auth's `UserRecord` เองครบทุก field: `id` = Firebase Auth UID — ค่าเดียวกับที่ `users/{userId}` ของ Personalization & Profile (แถวถัดไป) ใช้เป็น document ID อยู่แล้ว — ไม่เปลี่ยนจากรอบก่อน สิ่งที่เปลี่ยน (2026-08-30) คือ compute layer: **ระดับ operation** (10 operation ของ `api-spec.md` §3.1 — เพิ่มจาก 8 เดิม): 7 ตัวยังเป็น **client SDK call ตรง** (สมัคร/เข้าสู่ระบบด้วย email-password, Google, Apple, ออกจากระบบ — ไม่มี route), `POST /auth/forgot-password` เป็น **Express route** `POST /api/auth/forgot-password` (แทนที่ Cloud Function เดิม, ไม่มี `authenticate` middleware เพราะยังไม่มี session ตอนเรียก) enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) เหมือนเดิม — **เพิ่มใหม่ 2026-08-30: กลไก pairing-code identity handoff** (§3.1/§3.8/§4.5/§5) ไม่ persist ใต้ `users/{userId}` แบบ entity อื่น แต่ใช้ **top-level collection `pairingCodes/{code}`** (document ID = รหัส 6 หลักเอง) เก็บ `uid`/`createdAt`/`expiresAt` (TTL 5 นาที) — mint ผ่าน **Express route** `POST /api/pairing/create-code` (ต้องยืนยันตัวตนก่อน) เรียกจากหน้า Profile ของเว็บไคลเอนต์; redeem ผ่าน **Express route** `POST /api/pairing/redeem` (ข้อยกเว้นเดียว ไม่ต้องยืนยันตัวตน) อ่าน document แล้วตรวจ `expiresAt`, สำเร็จแล้ว **`delete()` document ทิ้งทันทีแทนการตั้ง `is_used` flag** (single-use ผ่านการลบ) แล้วเรียก **`auth.createCustomToken(uid)`** คืน custom token ให้ `apps/mobile` เข้าสู่ระบบต่อด้วย `signInWithCustomToken` — รายละเอียดเต็มดู [tech-stack.md §6.1](tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation) และ [§6.3.1](tech-stack.md#631-account--session-management-onb-0--identity-handoff--ข้อยกเว้นของกติกาข้างต้น) |
+| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง; embedded map field `goalSelection` และ embedded array field `equipmentTypes: string[]` อยู่ในเอกสารเดียวกัน (bounded) + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ + **Express route** `GET /api/profile`, `PUT /api/profile/personal-info`, `PUT /api/profile/equipment`, `PUT /api/profile/goal` (แทนที่ Cloud Function `profileUpdate` เดิม) enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client (React+Vite) ก่อนส่งเหมือนเดิม |
+| Content Recommendation | **Express route** `GET /api/workouts/today/recommendation`, `POST /api/workouts/today/recommendation/swap`, `POST /api/workouts/sessions` (แทนที่ Cloud Function `recommendation` เดิม) เรียก YouTube Data API v3 + ตรรกะ matching/widen-retry — สร้าง document `users/{userId}/workoutSessions/{sessionId}` พร้อม embedded array field `sessionVideos: []` (bounded); ระหว่างสลับวิดีโอ (REC-3) อัปเดต embedded array field `rejectedVideoIds: []` ในเอกสารเดียวกัน |
+| Exertion & Calorie Calculation | คำนวณ MET ที่ client (React+Vite) ตาม NFR-01/03 → **Express route** `POST /api/workouts/sessions/:sessionId/complete` (แทนที่ Cloud Function `sessionComplete` เดิม) validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เขียนผ่าน **Express route** `POST /api/integrations/wearable/readings` เป็น embedded map field `wearableReading` ในเอกสารเดียวกัน — referential existence validation (**NFR-12**, Firestore ไม่มี FK) ทำผ่าน helper กลาง `assertDocExists()` (`apps/web/server/assertDocExists.ts`) แทนที่ให้แต่ละ Cloud Function `get()` เองแยกกันแบบเดิม |
+| Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) — **Express route** `GET /api/planner/week`, `PUT /api/planner/days/:date`, `POST /api/planner/days/:date/cheat-rest`, `DELETE /api/planner/days/:date/cheat-rest` (แทนที่ Cloud Function เดิม) อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag/enforce กติกา "วันนี้เท่านั้น" |
+| Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` (unbounded, ISO date) + embedded map field `streakSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/logs`, `GET /api/logs/:date`, `GET /api/streak`; all-or-nothing enforce ที่ route ที่เขียน `dailyLogs/{date}` เหมือนเดิม — **เปลี่ยนสำคัญ (2026-08-30)**: เดิม Cloud Functions มี Firestore `onWrite` trigger recompute `streakSnapshot` อัตโนมัติ แต่ Express ไม่มี event-driven infrastructure แบบนั้นให้ใช้ฟรี จึงเปลี่ยนเป็นฟังก์ชัน `recomputeStreak(userId)` ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` ต้องเรียกเองโดยตรงหลังเขียนเสร็จ (explicit call แทน implicit trigger) |
+| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` (unbounded) + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast` (แทนที่ Cloud Function `forecast` เดิม) คำนวณจากประวัติ `dailyLogs`/`weightRecords` แล้วเขียนทับ `weightForecastSnapshot` |
+| Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` (bounded) — **Express route** `POST /api/integrations/smart-scale/connect`, `DELETE /api/integrations/smart-scale`, `POST /api/integrations/smart-scale/sync`, `POST /api/integrations/wearable/connect`, `DELETE /api/integrations/wearable`, `POST /api/integrations/wearable/readings` (แทนที่ Cloud Function `integrations` เดิม) orchestrate การเชื่อมต่อ + native module ฝั่ง `apps/mobile` เท่านั้น (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — รับ identity handoff จากกลไก pairing-code (แถว Account & Session Management ด้านบน) ก่อนเริ่มกระบวนการจับคู่จริงตามหัวข้อ 3.8/4.5 |
 
 ⚠️ **Referential existence validation เป็นกติกา cross-cutting** ไม่ได้ผูกกับ component เดียว (ดูหัวข้อ 7 —
-Reliability/NFR-12) — ทุก Cloud Function ที่รับ id อ้างอิงจาก client ต้อง `get()` ยืนยันว่า document ปลายทาง
-มีอยู่จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ
+Reliability/NFR-12) — ทุก **Express route** ที่รับ id อ้างอิงจาก client ต้องยืนยันว่า document ปลายทางมีอยู่
+จริงและเป็นของผู้ใช้คนเดียวกันก่อนเขียนเสมอ ผ่าน helper กลาง `assertDocExists()`/`NotFoundError`
+(`apps/web/server/assertDocExists.ts`)
 
-ดูรายละเอียดเหตุผลการเลือก stack, ประวัติการตัดสินใจ 2026-08-29, mapping ที่เหลือ (logical type → Firestore
-field type ที่ §6.2, REST convention → Firebase Cloud Functions routing ที่ §6.3, mapping ระดับ operation
-ทั้ง 8 ตัวของ Account & Session Management ที่ §6.3.1), และรายละเอียด per-table เต็มรูปแบบ (สอดคล้องกับ
-[`database-schema.md` §8.2/§8.3](database-schema.md)) ที่ [tech-stack.md](tech-stack.md)
+ดูรายละเอียดเหตุผลการเลือก stack (รวมเหตุผลการเลือก **Google Cloud Run** เป็น hosting แทน Firebase
+Hosting/Render/Fly.io/VM ผ่าน mini Discovery Questionnaire), ประวัติการตัดสินใจ 2026-08-29/2026-08-30,
+mapping ที่เหลือ (logical type → Firestore field type ที่ §6.2 — ไม่เปลี่ยนแปลง, REST convention →
+**Express.js routing** ที่ §6.3, mapping ระดับ operation ทั้ง 10 ตัวของ Account & Session Management ที่
+§6.3.1), และรายละเอียด per-table เต็มรูปแบบ (สอดคล้องกับ [`database-schema.md` §8.2/§8.3](database-schema.md))
+ที่ [tech-stack.md](tech-stack.md)

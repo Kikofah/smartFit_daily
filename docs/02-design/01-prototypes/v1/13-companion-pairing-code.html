@@ -1,0 +1,135 @@
+<!-- Feature: INT-2, INT-3 | REQ: REQ-12, REQ-13 -->
+<!-- New screen added 2026-08-30 by prototype-builder's consistency audit against user-journeys.md's
+     INT-2/INT-3 P1-P6 (added 2026-08-30 alongside the pairing-code identity-handoff mechanism in
+     01-spec/20260823-04-smart-integrations.md, backlog.md, high-level-architecture.md §4.5/§5,
+     api-spec.md §3.1, database-schema.md §3.17, detailed-design/04-smart-integrations.md). Mirrors
+     the mobile companion app's real apps/mobile/app/pairing-code.tsx: since ONB-0 is web-only, this
+     companion app has no auth screen of its own -- the user requests a 6-digit code on the web
+     Profile screen (11-device-integrations.html, P1-P3) and enters it here (P4-P6) to sign in
+     silently (no password ever typed on this device) before reaching 12-device-pairing.html.
+     No bottom tab nav here: the mobile companion app is scoped to INT-2/INT-3 only (device pairing),
+     not the full 4-tab product -- matches 12-device-pairing.html's own precedent of omitting it. -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เชื่อมต่อกับบัญชีของคุณ - smartFit daily</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-paper: #F6F2EA;
+  --color-paper-alt: #EFE9DC;
+  --color-paper-sunken: #E7DFCF;
+  --color-ink: #33302A;
+  --color-ink-muted: #6B6459;
+  --color-ink-faint: #9C9484;
+  --color-border: #DAD2C1;
+  --color-border-strong: #C4B9A2;
+  --color-clay: #B4694C;
+  --color-clay-strong: #9C5940;
+  --color-sage: #7E8F6C;
+  --color-sage-strong: #687858;
+  --color-sand: #C9A26B;
+  --color-success: var(--color-sage);
+  --color-warning: #BE9A4D;
+  --color-danger: #A85A45;
+  --color-info: #7A8B86;
+  --font-family-base: "IBM Plex Sans Thai", "IBM Plex Sans", -apple-system, "Noto Sans Thai", "Segoe UI", sans-serif;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+  --border-width: 1px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px;
+  --shadow-float: 0 2px 8px rgba(51,48,42,0.06);
+}
+html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-family-base); color:var(--color-ink); }
+.device-frame { max-width:420px; min-height:100vh; margin:0 auto; background:var(--color-paper); position:relative; padding-bottom: 88px; }
+.screen-content { padding: var(--space-8); }
+.text-display { font-size:28px; line-height:36px; font-weight:600; margin:0; }
+.text-h1 { font-size:22px; line-height:30px; font-weight:600; margin:0; }
+.text-h2 { font-size:18px; line-height:26px; font-weight:500; margin:0; }
+.text-h3 { font-size:16px; line-height:22px; font-weight:500; margin:0; }
+.text-body { font-size:15px; line-height:22px; font-weight:400; margin:0; }
+.text-body-sm { font-size:13px; line-height:18px; font-weight:400; margin:0; color: var(--color-ink-muted); }
+.text-caption { font-size:12px; line-height:16px; font-weight:500; margin:0; color: var(--color-ink-muted); }
+.btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 var(--space-4); border-radius:var(--radius-md); font-size:15px; font-weight:500; cursor:pointer; border:none; font-family:inherit; text-decoration:none; box-sizing:border-box; }
+.btn-primary { background:var(--color-clay); color:var(--color-paper); width:100%; }
+.btn-primary:active { background:var(--color-clay-strong); }
+.btn-secondary { background:var(--color-paper-alt); color:var(--color-ink); border:var(--border-width) solid var(--color-border-strong); }
+.btn-ghost { background:transparent; color:var(--color-ink-muted); border:none; }
+.btn-ghost:hover { text-decoration:underline; }
+.card { background:var(--color-paper-alt); border-radius:var(--radius-lg); overflow:hidden; }
+</style>
+<style>
+  /* Page-specific styles, composed from the shared kit above */
+  .center-panel { display:flex; flex-direction:column; justify-content:center; min-height: calc(100vh - 176px); gap: var(--space-4); }
+
+  /* Demo state toggle (not part of real UI, for prototype review only -- same pattern as
+     12-device-pairing.html's demo-toggle) */
+  .demo-toggle { display:flex; gap: var(--space-2); margin-bottom: var(--space-8); background: var(--color-paper-sunken); border-radius: var(--radius-md); padding: var(--space-1); }
+  .demo-toggle button { flex:1; min-height:40px; border:none; border-radius: var(--radius-sm); background:transparent; font-family:inherit; font-size:11px; font-weight:500; color: var(--color-ink-muted); cursor:pointer; padding: 0 var(--space-1); }
+  .demo-toggle button.active { background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-float); }
+
+  /* Forms & Inputs pattern (DESIGN.md 3.7): paper-sunken fill, no border by default, clay border
+     on focus. Large letter-spaced digits since this is a 6-digit code, not prose text. */
+  .code-input { width:100%; box-sizing:border-box; background: var(--color-paper-sunken); border: var(--border-width) solid transparent; border-radius: var(--radius-md); padding: var(--space-3); font-family:inherit; font-size:28px; font-weight:600; letter-spacing:0.4em; text-align:center; color: var(--color-ink); }
+  .code-input:focus { outline:none; border-color: var(--color-clay); }
+  .code-input::placeholder { color: var(--color-ink-faint); letter-spacing:0.4em; }
+
+  /* Validation error (3.7): a genuinely invalid/expired code is a real error, unlike the
+     "ไม่ครบเป้าหมาย" case in DESIGN.md 4.2 -- --color-danger is the correct token here. */
+  .field-error { color: var(--color-danger); }
+
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="device-frame">
+  <div class="screen-content">
+
+    <!-- Demo state toggle -->
+    <div class="demo-toggle">
+      <button type="button" class="active" id="btnDemoValid" onclick="setDemoMode('valid')">ตัวอย่าง: รหัสถูกต้อง</button>
+      <button type="button" id="btnDemoInvalid" onclick="setDemoMode('invalid')">ตัวอย่าง: รหัสผิด/หมดอายุ</button>
+    </div>
+
+    <div class="center-panel">
+      <h1 class="text-h1">เชื่อมต่อกับบัญชีของคุณ</h1>
+      <p class="text-body-sm">ไปที่หน้าโปรไฟล์ในเว็บแอป smartFit daily แล้วกด "ขอรหัสจับคู่อุปกรณ์" เพื่อรับรหัส 6 หลัก จากนั้นกรอกรหัสนั้นที่นี่</p>
+
+      <input type="text" class="code-input" id="codeInput" placeholder="000000" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <p class="text-body-sm field-error hidden" id="codeError">รหัสนี้ไม่ถูกต้องหรือหมดอายุแล้ว ขอรหัสใหม่จากหน้าโปรไฟล์บนเว็บแล้วลองอีกครั้ง</p>
+
+      <button type="button" class="btn btn-primary" onclick="handleSubmit()">เชื่อมต่อ</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Demo-only: which outcome pressing "เชื่อมต่อ" simulates (real app calls
+  // POST /pairing/redeem -- see apps/web/server/routes/pairing/index.ts -- which returns a
+  // custom token on success or 410 "invalid or expired" otherwise).
+  var demoMode = 'valid';
+
+  function setDemoMode(mode) {
+    demoMode = mode;
+    document.getElementById('btnDemoValid').classList.toggle('active', mode === 'valid');
+    document.getElementById('btnDemoInvalid').classList.toggle('active', mode === 'invalid');
+    document.getElementById('codeError').classList.add('hidden');
+  }
+
+  function handleSubmit() {
+    if (demoMode === 'valid') {
+      // P5-P6: code correct, not expired, not yet used -> server mints token, silent sign-in,
+      // land on the device-pairing screen (12).
+      window.location.href = '12-device-pairing.html';
+    } else {
+      // P5 "ไม่": loop back to re-entering the code, per the journey's flowchart edge P5 -- ไม่ --> P4.
+      document.getElementById('codeError').classList.remove('hidden');
+    }
+  }
+</script>
+</body>
+</html>
