@@ -312,3 +312,26 @@ recompute-on-cache-miss (Express route `GET /api/workouts/today/recommendation` 
 §8, `detailed-design/02-daily-youtube-recommendation.md`/`04-smart-integrations.md`) sync กับ
 `tech-stack.md` ฉบับ Gemini+weight-records ครบทุกไฟล์แล้ว ไม่มีจุดใดค้าง** — ดู log
 [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`api-db-spec-builder`, factual correction)**: แก้ 2 จุดใน `api-spec.md` ที่ยังอ้าง
+กลไก "widen-retry"/tolerance ตัวเลขที่ไม่มีจริงในโค้ดสำหรับ REC-1/REC-3 (Content Recommendation) — แก้
+error/edge case ของ `POST /workouts/today/recommendation/swap` (หัวข้อ 3.3) ให้ตรงกับพฤติกรรมจริง
+(single-pass: ค้นหา 1 ครั้ง + AI ranking 1 ครั้ง คืน `409` เมื่อไม่เหลือ candidate) และ resolve จุดที่ยังไม่
+ได้ระบุเดิมข้อ 1 ในหัวข้อ 4 ว่า "ไม่มีตัวเลข tolerance" ให้ตรงกับที่ `detailed-design/02-daily-youtube-
+recommendation.md` resolve ไปแล้วก่อนหน้านี้ในวันเดียวกัน — citation/factual correction ล้วนๆ ไม่กระทบ
+`database-schema.md` — ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`architecture-builder`, factual correction ของเนื้อหาหลัก §4/§8 ไม่ใช่แค่ภาคผนวก)**:
+fresh audit พบว่ารอบ Stack Mapping re-sync ก่อนหน้านี้ในวันเดียวกัน (ดูรายการด้านบน) ตัดสิน (ผิด) ว่าหัวข้อ
+1-9 ของ `high-level-architecture.md` ไม่ต้องแก้ — แต่ §4.2 (Flow diagram ของ REC-1) ยังมีโหนด "ขยายเกณฑ์
+ค้นหา แล้วลองใหม่" และ §8 ข้อ 1 ยังตั้งเป็น open point เรื่อง tolerance/widen-retry logic ซึ่งขัดกับ
+single-pass design จริงที่ `detailed-design/02-daily-youtube-recommendation.md`/`tech-stack.md` §6.1
+ยืนยันไปแล้ว — แก้ทั้งสองจุด: §4.2 diagram เปลี่ยนเป็นค้นหาผู้สมัครครั้งเดียว → AI-assisted ranking เลือกตัว
+ที่ดีที่สุดแบบ best-effort ในรอบเดียว → ไม่มีผู้สมัครเลยจึง error (ไม่มี retry/widen) และ §8 ข้อ 1 resolve
+เป็นข้อเท็จจริงที่ยืนยันแล้วแทน — ไม่แตะ §10 (ถูกต้องอยู่แล้ว) ไม่แก้ `user-journeys.md` เอง
+(`feature-journey-writer` แก้คู่ขนาน) — ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`architecture-builder`, follow-up: sync เลข Step กับ `user-journeys.md` ฉบับ 7-step)**:
+`feature-journey-writer` แก้ `user-journeys.md` เสร็จแล้ว (REC-1 จาก 5 step มี widen-retry เป็น **7 step**
+single-pass; REC-3 เป็น **5 step**) — แก้ `high-level-architecture.md` §4.2 ให้เลิกอ้าง "REC-1 (Step 1-5)"/
+"REC-3 (Step 1-4)" ที่ค้างจากรอบก่อน เป็น "REC-1 (Step 1-7)"/"REC-3 (Step 1-5)" พร้อม mapping รายขั้นให้ตรง
+กับ diagram 7 step จริงทุกขั้น และปิด follow-up note ใน §8 ข้อ 1 ที่เคยบอกว่ารอ re-check — pure mechanical
+cross-reference sync ไม่แตะเนื้อหาแนวคิดที่แก้ไปแล้วในรอบก่อนหน้า ไม่ใช้ AskUserQuestion — ดู log
+[2026-08-31](../../05-log/20260831-log.md)

@@ -9,7 +9,8 @@
 INT-3**) สร้างจาก [acceptance-criteria.md](../../../01-requirements/acceptance-criteria.md) (Epic 4 section
 — AC-INT-0-01 ถึง AC-INT-3-03, อัปเดต 2026-08-29 ด้วย AC-INT-1-04/AC-INT-3-03 จาก NFR-13/NFR-12, อัปเดต
 2026-08-30 ด้วยการย้าย AC-INT-2-03–06/AC-INT-3-04 เดิมมาเป็น AC-INT-0-01–04 หลัง `feature-list-journey`
-ตั้ง Feature ID **INT-0**/REQ-18 ให้กลไกรหัสจับคู่อุปกรณ์เป็นของตัวเอง) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
+ตั้ง Feature ID **INT-0**/REQ-18 ให้กลไกรหัสจับคู่อุปกรณ์เป็นของตัวเอง, อัปเดต 2026-08-31 ด้วย
+AC-INT-1-05 ถึง AC-INT-1-07 ใหม่ ครอบคลุม operation `GET /insights/weight-records`) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
 (คำอธิบาย feature), [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md)
 (REQ-18/11/12/13 และค่าคงที่ 7,700 kcal ≈ 1 กก.), และ
 [user-journeys.md](../../../02-design/01-prototypes/user-journeys.md#epic-4-smart-integrations) (flow/Alt-Edge
@@ -46,7 +47,8 @@ Activity Factor 1.55 (ตัวอย่างระดับกิจกรร�
 
 - [INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
   — TC-INT-0-001 ถึง 005 (renumbering 2026-08-30 จาก TC-INT-2-003 ถึง 007 เดิม)
-- [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 005
+- [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 008
+  (006–008 เพิ่ม 2026-08-31, `GET /insights/weight-records`)
 - [INT-2 — ซิงค์ตาชั่งอัจฉริยะ](#int-2--ซิงค์ตาชั่งอัจฉริยะ) — TC-INT-2-001 ถึง 002 (003–007 เดิมย้ายไป
   INT-0 แล้วเมื่อ 2026-08-30)
 - [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 004 (004 เพิ่ม 2026-08-30,
@@ -284,6 +286,60 @@ Journey: [user-journeys.md#int-1--พยากรณ์วันถึงเป�
   user-journeys.md เพราะ scenario นี้มาจาก NFR-13 ไม่ใช่ Alt/Edge Case ของ journey (ดูหมายเหตุใต้
   AC-INT-1-04 ใน acceptance-criteria.md)
 
+### TC-INT-1-006 — ดูประวัติน้ำหนักเรียงจากเก่าไปใหม่ (`GET /insights/weight-records`, เพิ่ม 2026-08-31)
+
+> **หมายเหตุ (เพิ่ม 2026-08-31)**: TC-INT-1-006 ถึง TC-INT-1-008 ครอบคลุม operation ใหม่
+> `GET /insights/weight-records` ที่เพิ่มเข้า [api-spec.md §3.7](../../../02-design/02-technical/api-spec.md)
+> เมื่อ 2026-08-31 (ก่อนหน้านี้ไม่มี test case ครอบคลุมเลย — coverage gap ที่พบระหว่าง self-freshness audit
+> ของ `test-suite-builder`) — endpoint จริงคือ `GET /api/insights/weight-records`
+> (`apps/web/server/routes/insights-forecast/index.ts`)
+
+- **Pre-condition**: ผู้ใช้ (persona ด้านบน) มี Weight Record บันทึกไว้แล้ว 3 รายการ: `2026-08-20` = 80.0 กก.
+  (กรอกเอง), `2026-08-25` = 79.6 กก. (กรอกเอง), `2026-08-30` = 79.2 กก. (ซิงค์จากตาชั่งอัจฉริยะ, ตรงกับ
+  TC-INT-2-001)
+- **Test Steps**:
+  1. เปิดหน้า Progress/Insights ซึ่งเรียก `GET /api/insights/weight-records` โดยไม่ระบุช่วงวันที่
+  2. สังเกตลำดับข้อมูลที่ใช้วาดกราฟแนวโน้มน้ำหนัก
+- **Expected Result**: ระบบคืนรายการ Weight Record ทั้ง 3 รายการเรียง**จากเก่าไปใหม่**ตามเวลาที่บันทึก:
+  `[{date: "2026-08-20", weightKg: 80.0}, {date: "2026-08-25", weightKg: 79.6}, {date: "2026-08-30",
+  weightKg: 79.2}]` — กราฟแนวโน้มน้ำหนักบนหน้า Progress/Insights แสดงเส้นข้อมูลตามลำดับเวลาที่ถูกต้อง
+- **Test Data**: 3 Weight Record: (`2026-08-20`, 80.0 กก.), (`2026-08-25`, 79.6 กก.), (`2026-08-30`, 79.2
+  กก.) → ลำดับที่คาดหวัง = เก่าไปใหม่ตามที่ระบุ
+- **References**: REQ-11 · AC-INT-1-05 · [api-spec.md §3.7](../../../02-design/02-technical/api-spec.md)
+  (`GET /insights/weight-records`) · [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html) —
+  ไม่มีลิงก์ user-journeys.md เพราะเป็นรายละเอียดระดับ endpoint ที่ journey ไม่ได้ลงรายละเอียดแยก (ดูหมายเหตุ
+  ใต้ AC-INT-1-05 ใน acceptance-criteria.md)
+
+### TC-INT-1-007 — กรองประวัติน้ำหนักด้วยช่วงวันที่ (optional `fromDate`/`toDate`)
+
+- **Pre-condition**: ผู้ใช้มี Weight Record ชุดเดียวกับ TC-INT-1-006 (`2026-08-20` = 80.0 กก., `2026-08-25`
+  = 79.6 กก., `2026-08-30` = 79.2 กก.)
+- **Test Steps**:
+  1. เรียก `GET /api/insights/weight-records?fromDate=2026-08-24&toDate=2026-08-30`
+  2. สังเกตรายการที่ได้กลับมา
+- **Expected Result**: ระบบคืนเฉพาะ Weight Record ที่บันทึกอยู่ในช่วง `2026-08-24` ถึง `2026-08-30` เท่านั้น
+  คือ `2026-08-25` (79.6 กก.) และ `2026-08-30` (79.2 กก.) — ไม่รวม `2026-08-20` เพราะอยู่นอกช่วง ยังคงเรียง
+  จากเก่าไปใหม่เหมือน TC-INT-1-006
+- **Test Data**: `fromDate=2026-08-24`, `toDate=2026-08-30` → ผลลัพธ์ที่คาดหวัง = 2 รายการ (79.6 กก.,
+  79.2 กก.) จากทั้งหมด 3 รายการ
+- **References**: REQ-11 · AC-INT-1-06 · [api-spec.md §3.7](../../../02-design/02-technical/api-spec.md)
+  (`GET /insights/weight-records` — request: ช่วงวันที่ optional) —
+  ไม่มีลิงก์ user-journeys.md ด้วยเหตุผลเดียวกับ TC-INT-1-006
+
+### TC-INT-1-008 — ยังไม่มี Weight Record เลย คืนรายการว่างเปล่า ไม่ error
+
+- **Pre-condition**: ผู้ใช้เพิ่งผ่าน onboarding และยังไม่เคยมี Weight Record บันทึกไว้เลย (ยังไม่เคยกรอกน้ำหนัก
+  หรือซิงค์จากตาชั่งอัจฉริยะ)
+- **Test Steps**:
+  1. เปิดหน้า Progress/Insights ครั้งแรก ซึ่งเรียก `GET /api/insights/weight-records`
+  2. สังเกต response และเนื้อหาที่แสดงแทนกราฟแนวโน้มน้ำหนัก
+- **Expected Result**: ระบบคืน `200 OK` พร้อมรายการว่างเปล่า (`[]`) — ไม่ใช่ error ใด ๆ — หน้าจอแสดง empty
+  state ของกราฟแนวโน้มน้ำหนักแทนกราฟที่มีข้อมูลจริง
+- **Test Data**: ผู้ใช้ไม่มี Weight Record ใด ๆ ในระบบ → คาดหวังผลลัพธ์ = `[]`
+- **References**: REQ-11 · AC-INT-1-07 · [api-spec.md §3.7](../../../02-design/02-technical/api-spec.md)
+  (`GET /insights/weight-records`) · [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html) —
+  ไม่มีลิงก์ user-journeys.md ด้วยเหตุผลเดียวกับ TC-INT-1-006
+
 ---
 
 ## INT-2 — ซิงค์ตาชั่งอัจฉริยะ
@@ -469,13 +525,21 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 | INT-1 | AC-INT-1-02 | TC-INT-1-002 | 1:1 |
 | INT-1 | AC-INT-1-03 | TC-INT-1-003, TC-INT-1-004 | 1 AC → 2 TC (variation: ขาดดุล = 0 / ขาดดุลสวนทางเป้าหมาย) |
 | INT-1 | AC-INT-1-04 (ใหม่, NFR-13, เพิ่ม 2026-08-29) | TC-INT-1-005 | 1:1 — "not testable in this round" (Epic 4/Could, ดู test-plan.md §1) |
+| INT-1 | AC-INT-1-05 (ใหม่, เพิ่ม 2026-08-31, `GET /insights/weight-records`) | TC-INT-1-006 | 1:1 |
+| INT-1 | AC-INT-1-06 (ใหม่, เพิ่ม 2026-08-31) | TC-INT-1-007 | 1:1 |
+| INT-1 | AC-INT-1-07 (ใหม่, เพิ่ม 2026-08-31) | TC-INT-1-008 | 1:1 |
 | INT-2 | AC-INT-2-01 | TC-INT-2-001 | 1:1 |
 | INT-2 | AC-INT-2-02 | TC-INT-2-002 | 1:1 |
 | INT-3 | AC-INT-3-01 | TC-INT-3-001 | 1:1 |
 | INT-3 | AC-INT-3-02 | TC-INT-3-002 | 1:1 |
 | INT-3 | AC-INT-3-03 (ใหม่, NFR-12, เพิ่ม 2026-08-29) | TC-INT-3-003 | 1:1 — "not testable in this round" (ดู test-plan.md R12) |
 | INT-3 | AC-INT-0-04 (cross-ref, เดิม AC-INT-3-04) | TC-INT-3-004 | 1:1 — execute ได้จริง (cross-reference ยืนยันเฉพาะฝั่ง wearable ของ TC-INT-0-005) |
-| **รวม** | **13 AC scenario ไม่ซ้ำ** (ครบทุก AC ของ INT-0/1/2/3 ใน acceptance-criteria.md — TC-INT-3-004 map ซ้ำกับ AC-INT-0-04) | **16 test case** | |
+| **รวม** | **16 AC scenario ไม่ซ้ำ** (ครบทุก AC ของ INT-0/1/2/3 ใน acceptance-criteria.md — TC-INT-3-004 map ซ้ำกับ AC-INT-0-04) | **19 test case** | |
+
+> อัปเดต 2026-08-31 (`test-suite-builder`, coverage gap): เพิ่ม **TC-INT-1-006 ถึง TC-INT-1-008** ครอบคลุม
+> **AC-INT-1-05 ถึง AC-INT-1-07** ใหม่ (operation `GET /insights/weight-records` ที่เพิ่มเข้า
+> `api-spec.md §3.7` เมื่อ 2026-08-31 ซึ่งก่อนหน้านี้ไม่มี test case ครอบคลุมเลย) — AC ไม่ซ้ำจาก 13 เป็น
+> **16**, test case จาก 16 เป็น **19**
 
 > อัปเดต 2026-08-30 (reconcile ตาม CLAUDE.md § "Docs/code drift"): +5 AC scenario / +6 test case จากกลไก
 > รหัสจับคู่อุปกรณ์ (pairing-code identity handoff) ที่ implement จริงแล้วใน `apps/web/server/routes/pairing/`

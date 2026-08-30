@@ -3,7 +3,16 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 7) — เพิ่ม operation ใหม่ `GET /insights/weight-records` ในหัวข้อ
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 8, factual correction) — แก้ error/edge case ของ `POST
+  /workouts/today/recommendation/swap` (REC-3, หัวข้อ 3.3) จากเดิมที่อ้าง "ขยายเกณฑ์แล้ว" (widen-retry
+  loop) เป็น "การค้นหาผู้สมัคร 1 ครั้ง + ขั้นตอนจับคู่/ประเมินด้วย AI 1 ครั้ง (single-pass) ไม่เหลือ
+  candidate ที่ใช้งานได้เลย" ให้ตรงกับ implementation จริงที่ shipped แล้ว (ยืนยันแล้วใน
+  `detailed-design/02-daily-youtube-recommendation.md` และ `tech-stack.md` §6.1 ในรอบ reconcile ก่อนหน้า
+  ของวันเดียวกัน) — resolve จุดที่ยังไม่ได้ระบุเดิมข้อ 1 ในหัวข้อ 4 (ตัวเลข tolerance) ว่า "ไม่มีตัวเลข
+  tolerance ใช้ AI ranking แบบ best-effort ครั้งเดียวแทน" ไม่ใช่การตัดสินใจ business rule ใหม่ — ไม่กระทบ
+  `database-schema.md` (ไม่มี column ใดอ้าง tolerance ตัวเลข) — ดู [log
+  2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 7) — เพิ่ม operation ใหม่ `GET /insights/weight-records` ในหัวข้อ
   3.7 (Insights & Forecast) — Weight Record entity (HLA §5) เดิมเขียนได้ผ่าน `POST
   /integrations/smart-scale/sync` (หัวข้อ 3.8) เท่านั้น ไม่มีทางอ่านประวัติกลับมาเลย ทำให้กราฟแนวโน้ม
   น้ำหนักของ INT-1 (Progress screen) ต้องพึ่ง mock data ต่อไปไม่ได้ แม้ `GET /insights/forecast` จะคำนวณ
@@ -138,7 +147,7 @@ operation ใดที่ไม่มี component รองรับ
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
 | ดูวิดีโอแนะนำวันนี้ | `GET /workouts/today/recommendation` | REC-1, REC-4/REQ-04, REQ-07 | — | Video/Workout Content ที่จับคู่ (รวม warmup/cooldown ถ้าความเข้มข้นสูง) พร้อมเป้าหมายแคลอรี่วันนี้ | `204` ถ้าวันนี้เป็น Cheat/Rest Day (ไม่มีวิดีโอแนะนำ) | NFR-01 (ต้องไม่มี latency ที่สังเกตได้) |
-| เปลี่ยนวิดีโอ | `POST /workouts/today/recommendation/swap` | REC-3/REQ-06 | id ของวิดีโอที่เพิ่งถูกปฏิเสธ (สะสมจาก client) | Video/Workout Content ใหม่ คงเป้าหมายเดิม | `409` ถ้าหาวิดีโอใหม่ไม่ได้อีก (ขยายเกณฑ์แล้ว) — tolerance ตัวเลขยังไม่ระบุ (ดูจุดที่ยังไม่ได้ระบุ) | — |
+| เปลี่ยนวิดีโอ | `POST /workouts/today/recommendation/swap` | REC-3/REQ-06 | id ของวิดีโอที่เพิ่งถูกปฏิเสธ (สะสมจาก client) | Video/Workout Content ใหม่ คงเป้าหมายเดิม | `409` เมื่อการค้นหาผู้สมัคร 1 ครั้ง + ขั้นตอนจับคู่/ประเมินด้วย AI 1 ครั้ง (single-pass เดียวกับ REC-1 — ไม่มี tolerance ตัวเลข ไม่มีการขยายเกณฑ์/ค้นหาซ้ำ) ไม่เหลือ candidate ที่ใช้งานได้เลย (แก้ 2026-08-31 — ดูจุดที่ยังไม่ได้ระบุที่ resolve แล้วในหัวข้อ 4) | — |
 
 ### 3.4 Exertion & Calorie Calculation
 
@@ -184,8 +193,13 @@ operation ใดที่ไม่มี component รองรับ
 
 ## 4. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
-1. **REC-1/REC-3**: ตัวเลข tolerance การจับคู่วิดีโอ-แคลอรี่ยังไม่ระบุ — `GET /workouts/today/recommendation`
-   และ `POST .../swap` จึงยังบอกไม่ได้ชัดว่า "ไม่พบวิดีโอที่ตรงพอ" (`409`) จะ trigger เมื่อไหร่แน่นอน
+1. ~~**REC-1/REC-3**: ตัวเลข tolerance การจับคู่วิดีโอ-แคลอรี่ยังไม่ระบุ~~ — **resolved 2026-08-31**:
+   ไม่มีตัวเลข tolerance และไม่มีการขยายเกณฑ์ค้นหาซ้ำ (retry/widen) แต่อย่างใด — implementation จริง (ยืนยัน
+   ตรงกับ `detailed-design/02-daily-youtube-recommendation.md` ที่ resolve จุดเดียวกันไปแล้วในรอบเดียวกันนี้)
+   ค้นหาผู้สมัครจาก YouTube เพียง**ครั้งเดียว** แล้วให้ขั้นตอนจับคู่/ประเมินด้วย AI ครั้งเดียวเลือก candidate
+   ที่ดีที่สุด 1 รายการแบบ best-effort (single-pass) — `409` ของทั้ง `GET /workouts/today/recommendation`
+   และ `POST .../swap` trigger เมื่อรอบ single-pass นี้ไม่เหลือ candidate ที่ใช้งานได้เลยเท่านั้น จุดนี้จึงไม่
+   ใช่ open point อีกต่อไป (แก้ error/edge case ของ `POST .../swap` ในหัวข้อ 3.3 ให้ตรงแล้ว)
 2. **REC-4**: ยังไม่ระบุว่าเวลา/แคลอรี่ของ warmup/cooldown นับรวมเข้ากับเป้าหมายรายวันหรือไม่ — กระทบว่า
    `POST /workouts/sessions/{sessionId}/complete`'s เวลาที่ใช้จริง ควรรวมหรือไม่รวมช่วง warmup/cooldown
 3. **INT-1**: จำนวนวัน log ขั้นต่ำก่อนพยากรณ์ได้ยังไม่ระบุ — `GET /insights/forecast`'s เงื่อนไข `422`

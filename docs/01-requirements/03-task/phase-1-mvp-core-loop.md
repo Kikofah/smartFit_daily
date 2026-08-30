@@ -3,7 +3,12 @@
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — เพิ่ม `TASK-ONB-0` (Authentication — REQ-14–17) ตามที่ `backlog.md` เพิ่ม
+- **อัปเดตล่าสุด:** 2026-08-31 — แก้คำอธิบาย `TASK-REC-1` ให้ตรงกับ implementation จริง: ตัดส่วน "ขยายเกณฑ์
+  ค้นหาถ้าไม่พบ" ออก (ไม่มีจริง) เปลี่ยนเป็นค้นหาครั้งเดียวแล้วให้ขั้นตอน AI เลือกวิดีโอที่ดีที่สุดจากผลที่พบ
+  ตามที่แก้ไขแล้วใน `detailed-design/02-daily-youtube-recommendation.md`, `api-spec.md`,
+  `high-level-architecture.md`, `tech-stack.md`, `backlog.md`, `user-journeys.md` — ไม่ reset Status ของ
+  task เดิม (ยังไม่เริ่มเหมือนเดิม)
+- **อัปเดตก่อนหน้า:** 2026-08-29 — เพิ่ม `TASK-ONB-0` (Authentication — REQ-14–17) ตามที่ `backlog.md` เพิ่ม
   Feature ID ใหม่ ONB-0 เข้า MVP Phase, แก้ไข stale reference "Supabase" → "Firebase" ใน `TASK-INFRA-01`
   ให้ตรงกับ `tech-stack.md` ฉบับปัจจุบัน — ไม่ reset Status ของ task เดิมที่มีอยู่แล้ว (ทั้งหมดยัง "ยังไม่
   เริ่ม" เหมือนเดิม)
@@ -26,7 +31,7 @@ Feature ID: ONB-0, ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 (ท�
 | TASK-ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | ONB-1 / REQ-01 | ยังไม่เริ่ม | รับอายุ เพศ น้ำหนัก ส่วนสูง ระดับกิจกรรม คำนวณ BMR/TDEE ด้วยสูตร Mifflin-St Jeor (Precondition: ผ่าน ONB-0 แล้ว — มีบัญชีผู้ใช้จริง) | AC-ONB-1-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
 | TASK-ONB-2 | เลือกอุปกรณ์ที่มี | ONB-2 / REQ-03 | ยังไม่เริ่ม | เลือกอุปกรณ์ (ไม่มี/ดัมเบล/ยิมครบชุด แบบ multi-select) บันทึกเป็น filter ของวิดีโอ | AC-ONB-2-01–03 |
 | TASK-ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus + safety floor) | ONB-3 / REQ-02 | ยังไม่เริ่ม | เลือกประเภทเป้าหมาย แปลงเป็นเป้าหมายแคลอรี่รายวัน ปรับตาม safety floor 1,200–1,500 kcal | AC-ONB-3-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
-| TASK-REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | REC-1 / REQ-04 | ยังไม่เริ่ม | จับคู่วิดีโอตามเป้าหมายแคลอรี่ + filter อุปกรณ์ ขยายเกณฑ์ค้นหาถ้าไม่พบ | AC-REC-1-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
+| TASK-REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | REC-1 / REQ-04 | ยังไม่เริ่ม | จับคู่วิดีโอตามเป้าหมายแคลอรี่ + filter อุปกรณ์ (ค้นหาครั้งเดียว ให้ขั้นตอน AI ประเมิน/เลือกวิดีโอที่ดีที่สุดจากที่พบ ไม่มีการขยายเกณฑ์ค้นหาซ้ำ) | AC-REC-1-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
 | TASK-REC-2 | คำนวณแคลอรี่เผาผลาญจริง (สูตร MET) | REC-2 / REQ-05 | ยังไม่เริ่ม | คำนวณ kcal = MET × น้ำหนักตัว × เวลาจริง หลังจบ/หยุดเซสชัน | AC-REC-2-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
 | TASK-PLN-1 | ปฏิทินวางแผนรายสัปดาห์ | PLN-1 / REQ-08 | ยังไม่เริ่ม | ปฏิทิน fixed calendar week (จ.-อา.) กำหนดกิจกรรมล่วงหน้า วันในอดีตที่มี log เป็น read-only | AC-PLN-1-01–03, [detailed-design/03-planner-logging.md](../../02-design/02-technical/detailed-design/03-planner-logging.md) |
 | TASK-PLN-2 | โหมด Cheat Day / Rest Day | PLN-2 / REQ-09 | ยังไม่เริ่ม | ตั้ง Cheat/Rest Day มาร์ก "ครบเป้าหมาย" — ทับ log เดิมได้เฉพาะวันนี้เท่านั้น | AC-PLN-2-01–04, [detailed-design/03-planner-logging.md](../../02-design/02-technical/detailed-design/03-planner-logging.md) |

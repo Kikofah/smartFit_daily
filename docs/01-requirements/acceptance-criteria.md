@@ -222,11 +222,18 @@ Spec: [01-spec/20260823-02-daily-youtube-recommendation.md](01-spec/20260823-02-
   รายการที่คาดว่าเผาผลาญแคลอรี่ใกล้เคียงเป้าหมายที่สุด
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
 
-#### AC-REC-1-02 — ไม่มีวิดีโอตรงเป้า ระบบขยายเกณฑ์การค้นหา (REQ-04)
-- **Given**: ผู้ใช้เปิดหน้า Daily Dashboard และมีเป้าหมายแคลอรี่ของวันนี้แล้ว
-- **When**: ไม่มีวิดีโอในคลังที่ตรงกับอุปกรณ์ + แคลอรี่เป้าหมายพอดี
-- **Then**: ระบบขยายเกณฑ์การค้นหา (ผ่อนช่วงแคลอรี่) แล้วจับคู่วิดีโอใหม่อีกครั้ง
+#### AC-REC-1-02 — ไม่มีวิดีโอที่ใช้งานได้เลยหลังค้นหาหนึ่งรอบ ระบบแจ้งว่าไม่พบวิดีโอที่ตรงกัน (ไม่มีการขยายเกณฑ์/ค้นซ้ำ, REQ-04)
+- **Given**: ผู้ใช้เปิดหน้า Daily Dashboard และมีเป้าหมายแคลอรี่ที่เหลือของวันนี้แล้ว วันนี้ไม่ใช่ Cheat/Rest Day
+- **When**: ระบบค้นหาวิดีโอจาก YouTube ครั้งเดียว (สูงสุด 15 candidate, ระยะเวลาปานกลาง) แล้วกรอง candidate
+  ที่เจ้าของปิดการฝัง (embed) ออก จนไม่เหลือ candidate ที่ใช้งานได้เลยแม้แต่รายการเดียว — หรือกรณีมี candidate
+  เหลืออยู่แต่ขั้นตอนจับคู่ด้วย AI (ดู AC-REC-1-04) ไม่ได้ผลลัพธ์ที่ใช้งานได้เลย
+- **Then**: ระบบแจ้งผู้ใช้ทันทีว่าไม่พบวิดีโอที่ตรงกัน (`409 Conflict`) โดย**ไม่มี**การขยายเกณฑ์การค้นหาหรือ
+  ค้นหาซ้ำแต่อย่างใด — ค้นหาเพียงรอบเดียว (single-pass) เท่านั้นตาม implementation จริง
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
+- ต้นทาง decision (แก้จากเดิม 2026-08-31 ตามพฤติกรรมจริงที่ ship แล้ว — เดิมเขียนเป็น "ระบบขยายเกณฑ์การค้นหา"
+  ซึ่งไม่มีอยู่จริงใน implementation): [detailed-design/02-daily-youtube-recommendation.md § REC-1 อัลกอริทึม](../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#อัลกอริทึม--ค้นหาวิดีโอครั้งเดียว--จับคู่ด้วย-ai-single-pass-ไม่มี-tolerance-ตัวเลข)
+  (resolve จุดที่ยังไม่ได้ระบุเดิมเรื่อง tolerance/ขยายเกณฑ์แล้วเมื่อ 2026-08-31), [api-spec.md §4 ข้อ
+  1](../02-design/02-technical/api-spec.md) (resolved เช่นกัน)
 
 #### AC-REC-1-03 — วันนี้เป็น Cheat Day/Rest Day ไม่แนะนำวิดีโอ (REQ-04)
 - **Given**: ผู้ใช้เปิดหน้า Daily Dashboard
@@ -234,9 +241,26 @@ Spec: [01-spec/20260823-02-daily-youtube-recommendation.md](01-spec/20260823-02-
 - **Then**: ระบบไม่แนะนำวิดีโอสำหรับวันนี้ (ข้ามขั้นตอน REC-1 ทั้งหมด)
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
 
-> หมายเหตุ: journey ของ REC-1 ยังมี Alt/Edge Case ที่ระบุว่า "เกณฑ์ tolerance ที่แน่นอนว่า 'ใกล้เคียง'
-> แค่ไหนถึงเรียกว่าตรงเป้า ยังไม่ระบุ" — เป็นพารามิเตอร์ที่ยังไม่ถูกกำหนดค่า ไม่ใช่พฤติกรรมที่นิยามไว้
-> จึงไม่แปลงเป็น scenario ในไฟล์นี้ (ดู [Open Questions ของ user-journeys.md](../02-design/01-prototypes/user-journeys.md#open-questions) ข้อ 1)
+#### AC-REC-1-04 — ระบบเลือกวิดีโอที่ดีที่สุดจากที่ค้นพบด้วย AI แบบ best-effort แม้ไม่มีตัวใดตรงเป๊ะ 100% (เพิ่ม 2026-08-31, REQ-04)
+- **Given**: ผู้ใช้มีเป้าหมายแคลอรี่รายวัน (ONB-3) และโปรไฟล์อุปกรณ์ (ONB-2) แล้ว วันนี้ไม่ใช่ Cheat/Rest Day
+  และการค้นหา YouTube ครั้งเดียวคืน candidate ที่ใช้งานได้ (embed ได้) อย่างน้อย 1 รายการ แต่ไม่มีรายการใด
+  ตรงกับเป้าหมายแคลอรี่ที่เหลือแบบเป๊ะ 100%
+- **When**: ระบบส่ง candidate ที่เหลือทั้งหมดเข้าสู่ขั้นตอนจับคู่/ประเมินด้วย AI ครั้งเดียว โดยให้บริบทเป็น
+  อุปกรณ์ที่มีและเป้าหมายแคลอรี่ที่เหลือ (ประเมินจากชื่อ คำอธิบาย และระยะเวลาของวิดีโอเท่านั้น)
+- **Then**: ระบบเลือก candidate **หนึ่งรายการ**ที่เหมาะสมที่สุดแบบ best-effort (ไม่มีตัวเลข tolerance ตายตัว
+  ให้ผ่าน/ไม่ผ่าน) พร้อมประเมินประเภทกิจกรรม ความเข้มข้น และแคลอรี่โดยประมาณของวิดีโอนั้น แล้วแสดงเป็นวิดีโอ
+  แนะนำอย่างน้อย 1 รายการ
+- Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
+- ต้นทาง decision: [detailed-design/02-daily-youtube-recommendation.md § REC-1 อัลกอริทึม ข้อ 4](../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#อัลกอริทึม--ค้นหาวิดีโอครั้งเดียว--จับคู่ด้วย-ai-single-pass-ไม่มี-tolerance-ตัวเลข)
+  ยืนยันจากโค้ดจริง `apps/web/server/services/videoRecommender.ts` (`pickBestVideo`, ใช้ Gemini)
+
+> หมายเหตุ (แก้ไข 2026-08-31): journey/Open Questions เดิมเคยระบุว่า "เกณฑ์ tolerance ที่แน่นอนว่า 'ใกล้เคียง'
+> แค่ไหนถึงเรียกว่าตรงเป้า ยังไม่ระบุ" — ข้อนี้ **resolve แล้ว** จาก audit เทียบกับโค้ดจริงที่ ship แล้ว
+> (commit `b463436`): ไม่มีตัวเลข tolerance ใด ๆ เลย ระบบใช้ขั้นตอนจับคู่ด้วย AI แบบ best-effort แทน (ดู
+> AC-REC-1-04 ด้านบน) — ไม่ใช่การเดา edge case ใหม่ แต่เป็นข้อเท็จจริงที่มีหลักฐานตรงใน
+> `detailed-design/02-daily-youtube-recommendation.md` และ `api-spec.md §4` ที่ resolve จุดเดียวกันนี้ไปแล้ว
+> ในรอบเดียวกัน (`user-journeys.md`'s Open Questions เองอาจยังไม่ได้อัปเดตข้อความ ณ เวลาที่เขียนหมายเหตุนี้ —
+> เป็นความรับผิดชอบของ `feature-list-journey` ไม่ใช่ของไฟล์นี้)
 
 ### REC-2 — คำนวณแคลอรี่เผาผลาญจริง (สูตร MET)
 
@@ -285,12 +309,15 @@ Spec: [01-spec/20260823-02-daily-youtube-recommendation.md](01-spec/20260823-02-
   โดยไม่รวมวิดีโอที่เพิ่งถูกปฏิเสธ แล้วแสดงวิดีโอใหม่แทนที่วิดีโอเดิม
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
 
-#### AC-REC-3-02 — กดเปลี่ยนวิดีโอซ้ำจนไม่เหลือตัวเลือก (REQ-06)
-- **Given**: ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" ซ้ำหลายครั้งจนปฏิเสธวิดีโอที่ตรงเงื่อนไขไปเกือบหมด
-- **When**: ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" อีกครั้งและไม่เหลือวิดีโอที่ตรงเงื่อนไข (อุปกรณ์ + แคลอรี่เป้าหมาย)
-  ที่ยังไม่ถูกปฏิเสธ
-- **Then**: ระบบแจ้งผู้ใช้ว่าไม่มีวิดีโออื่นที่ตรงเป้าหมายแล้ว หรือขยายเกณฑ์การค้นหา
+#### AC-REC-3-02 — กดเปลี่ยนวิดีโอซ้ำจนไม่เหลือ candidate ที่ใช้งานได้ ระบบแจ้งไม่พบ ไม่ขยายเกณฑ์/ค้นซ้ำ (แก้ไข 2026-08-31, REQ-06)
+- **Given**: ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" ซ้ำหลายครั้งจนปฏิเสธวิดีโอไปเกือบหมด
+- **When**: ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" อีกครั้ง แล้วการค้นหา YouTube ครั้งเดียว (ไม่รวมวิดีโอปัจจุบันและที่ถูก
+  ปฏิเสธไปแล้วทั้งหมด) ไม่คืน candidate ที่ใช้งานได้เลยแม้แต่รายการเดียว
+- **Then**: ระบบแจ้งผู้ใช้ทันทีว่าไม่พบวิดีโอที่ตรงพอ (`409 Conflict`) โดย**ไม่มี**การขยายเกณฑ์การค้นหาหรือ
+  ค้นหาซ้ำแต่อย่างใด (ใช้อัลกอริทึมเดียวกับ REC-1 — single-pass)
 - Prototype: [05-daily-dashboard.html](../02-design/01-prototypes/v1/05-daily-dashboard.html)
+- ต้นทาง decision (แก้จากเดิม 2026-08-31 — เดิมเขียนว่า "หรือขยายเกณฑ์การค้นหา" เป็นทางเลือก ซึ่งไม่มีอยู่จริง):
+  [detailed-design/02-daily-youtube-recommendation.md § REC-3](../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06)
 
 ### REC-4 — วอร์มอัพ–คูลดาวน์อัตโนมัติ
 
@@ -542,6 +569,43 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > หมายเหตุ 2](backlog.md#non-functional-requirements-nfr-traceability) — ไม่ใช่ Alt/Edge Case ของ
 > user-journeys.md แต่มีหลักฐานตรงในเอกสารอื่นแล้ว จึงไม่ใช่การเดา
 
+#### AC-INT-1-05 — ดูประวัติน้ำหนักเรียงจากเก่าไปใหม่เพื่อแสดงกราฟแนวโน้ม (เพิ่ม 2026-08-31, REQ-11)
+- **Given**: ผู้ใช้มี Weight Record บันทึกไว้แล้วหลายรายการ (จากการชั่งด้วยตนเองหรือซิงค์จากตาชั่งอัจฉริยะ
+  INT-2) ในช่วงเวลาต่าง ๆ
+- **When**: ผู้ใช้เปิดหน้า Progress/Insights ซึ่งเรียก `GET /insights/weight-records`
+- **Then**: ระบบคืนรายการ Weight Record ทั้งหมดโดยเรียง**จากเก่าไปใหม่ตามเวลาที่บันทึก** (oldest-first) ให้
+  พร้อมใช้วาดกราฟแนวโน้มน้ำหนักและเป็นข้อมูลตั้งต้นของการพยากรณ์ (AC-INT-1-01) ทันที
+- Prototype: [10-progress-insights.html](../02-design/01-prototypes/v1/10-progress-insights.html)
+- ต้นทาง decision: [api-spec.md §3.7](../02-design/02-technical/api-spec.md) (`GET /insights/weight-records`,
+  เพิ่ม 2026-08-31) ยืนยันจากโค้ดจริง `apps/web/server/routes/insights-forecast/index.ts`
+  (`.orderBy('recordedAt', 'asc')`)
+
+#### AC-INT-1-06 — กรองประวัติน้ำหนักด้วยช่วงวันที่ (optional, เพิ่ม 2026-08-31, REQ-11)
+- **Given**: ผู้ใช้มี Weight Record สะสมอยู่หลายช่วงเวลา
+- **When**: ผู้ใช้ (หรือหน้าจอ) เรียก `GET /insights/weight-records` พร้อมระบุช่วงวันที่ (`fromDate`/`toDate`)
+- **Then**: ระบบคืนเฉพาะ Weight Record ที่บันทึกอยู่ในช่วงวันที่ที่ระบุเท่านั้น ยังคงเรียงจากเก่าไปใหม่เหมือน
+  AC-INT-1-05 — ถ้าไม่ระบุช่วงวันที่ ระบบคืนประวัติทั้งหมด
+- Prototype: [10-progress-insights.html](../02-design/01-prototypes/v1/10-progress-insights.html)
+- ต้นทาง decision: [api-spec.md §3.7](../02-design/02-technical/api-spec.md) (`GET /insights/weight-records`
+  — request: ช่วงวันที่ optional) ยืนยันจากโค้ดจริง `apps/web/server/routes/insights-forecast/index.ts`
+  (`fromDate`/`toDate` query params)
+
+#### AC-INT-1-07 — ยังไม่มี Weight Record เลย คืนรายการว่างเปล่า ไม่ error (เพิ่ม 2026-08-31, REQ-11)
+- **Given**: ผู้ใช้เพิ่งผ่าน onboarding และยังไม่เคยมี Weight Record บันทึกไว้เลย (ยังไม่เคยชั่งน้ำหนักหรือ
+  ซิงค์จากตาชั่งอัจฉริยะ)
+- **When**: ผู้ใช้เปิดหน้า Progress/Insights ซึ่งเรียก `GET /insights/weight-records`
+- **Then**: ระบบคืนรายการว่างเปล่า (`[]`) แทนที่จะแจ้ง error — หน้าจอแสดง empty state ของกราฟแนวโน้มน้ำหนัก
+  แทนกราฟที่มีข้อมูลจริง
+- Prototype: [10-progress-insights.html](../02-design/01-prototypes/v1/10-progress-insights.html)
+- ต้นทาง decision: [api-spec.md §3.7](../02-design/02-technical/api-spec.md) (`GET /insights/weight-records`
+  — ไม่มี error/edge case ระบุไว้สำหรับกรณีนี้ ยืนยันจากโค้ดจริงว่าคืน array ว่างเปล่าเมื่อไม่มีเอกสารตรง query)
+
+> หมายเหตุ: 3 scenario ข้างต้น (AC-INT-1-05 ถึง 07) มาจาก operation ใหม่ `GET /insights/weight-records` ที่
+> เพิ่มเข้า [api-spec.md §3.7](../02-design/02-technical/api-spec.md) เมื่อ 2026-08-31 (ก่อนหน้านี้ไม่มี AC
+> ครอบคลุมเลย) — เป็นการเติม coverage gap ที่พบระหว่าง self-freshness audit ของ `test-suite-builder` ไม่ใช่
+> Alt/Edge Case ของ `user-journeys.md` โดยตรง (journey ของ INT-1 บรรยายที่ระดับ flow ไม่ได้ลงราย ละเอียด
+> ระดับ endpoint แยกสำหรับดูประวัติ) แต่มีหลักฐานตรงในโค้ดจริงและ api-spec.md ครบถ้วน จึงไม่ใช่การเดา
+
 ### INT-2 — ซิงค์ตาชั่งอัจฉริยะ
 
 #### AC-INT-2-01 — ซิงค์น้ำหนัก/องค์ประกอบร่างกายจากตาชั่งอัจฉริยะอัตโนมัติ (REQ-12)
@@ -618,7 +682,7 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | ONB-1 | 3 |
 | ONB-2 | 3 |
 | ONB-3 | 5 |
-| REC-1 | 3 |
+| REC-1 | 4 |
 | REC-2 | 4 |
 | REC-3 | 2 |
 | REC-4 | 3 |
@@ -627,10 +691,10 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | PLN-3 | 3 |
 | PLN-4 | 3 |
 | INT-0 | 4 |
-| INT-1 | 4 |
+| INT-1 | 7 |
 | INT-2 | 2 |
 | INT-3 | 3 |
-| **รวม** | **56** |
+| **รวม** | **60** |
 
 > อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
 > AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์
@@ -652,6 +716,16 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > scenario เดียวเพราะกลไกเดียวกันทุกประการ) INT-2 เหลือ 2 scenario เดิม (01/02) INT-3 เหลือ 3 scenario เดิม
 > (01/02/03) รวม Feature ID ในไฟล์นี้จาก 15 เป็น **16** และรวม scenario จาก 57 เป็น **56** (57 − 5 ย้ายออก
 > + 4 ย้ายเข้า INT-0) — เนื้อหา Given-When-Then ไม่เปลี่ยน มีแค่ ID/การจัดกลุ่ม/REQ อ้างอิงที่ปรับ
+>
+> อัปเดต 2026-08-31 (`test-suite-builder`, factual correction + coverage gap): audit เทียบกับโค้ดจริงที่ ship
+> แล้ว (commit `b463436`) พบว่า **AC-REC-1-02 และ AC-REC-3-02 ขัดกับ implementation จริง** (ทั้งคู่เคยบรรยาย
+> "ระบบขยายเกณฑ์การค้นหา" เป็นพฤติกรรมที่เกิดขึ้นได้ ซึ่งไม่มีอยู่จริง — พฤติกรรมจริงคือ single-pass ไม่มีการ
+> ขยายเกณฑ์/ค้นซ้ำเลยทั้ง REC-1 และ REC-3 เพราะใช้อัลกอริทึมเดียวกัน) จึงแก้เนื้อหาทั้งสองให้ตรงกับพฤติกรรม
+> จริง และเพิ่ม **AC-REC-1-04** ใหม่ครอบคลุมขั้นตอนจับคู่ด้วย AI แบบ best-effort (REC-1 จาก 3 เป็น **4**
+> scenario) พร้อมเพิ่ม **AC-INT-1-05 ถึง AC-INT-1-07** ใหม่ 3 scenario ครอบคลุม operation ใหม่
+> `GET /insights/weight-records` ที่เพิ่มเข้า `api-spec.md §3.7` เมื่อ 2026-08-31 ซึ่งก่อนหน้านี้ไม่มี AC
+> ครอบคลุมเลย (INT-1 จาก 4 เป็น **7** scenario) — Feature ID ในไฟล์นี้ยังคง 16 ตัวเท่าเดิม (ไม่มี Feature ID
+> ใหม่) รวม scenario จาก 56 เป็น **60**
 
 ---
 

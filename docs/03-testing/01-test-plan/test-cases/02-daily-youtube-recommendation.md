@@ -69,20 +69,32 @@ Prototype: [05-daily-dashboard.html](../../../02-design/01-prototypes/v1/05-dail
 - **References**: REQ-04, AC-REC-1-01 (variation: อุปกรณ์และเป้าหมายต่างจาก TC-REC-1-001),
   [user-journeys.md#rec-1](../../../02-design/01-prototypes/user-journeys.md#rec-1--แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน-req-04)
 
-### TC-REC-1-003 — ไม่มีวิดีโอตรงเป้า ระบบขยายเกณฑ์การค้นหา
+### TC-REC-1-003 — ไม่มีวิดีโอที่ใช้งานได้เลยหลังค้นหาหนึ่งรอบ ระบบแจ้งไม่พบวิดีโอที่ตรงกัน (ไม่มีการขยายเกณฑ์/ค้นซ้ำ)
 
-- **Pre-condition**: เป้าหมายแคลอรี่วันนี้ = 500 kcal, อุปกรณ์ = "ไม่มีอุปกรณ์" คลังวิดีโอที่กรองผ่านอุปกรณ์
-  แล้วมีเพียง (a) คาร์ดิโอ 210 kcal และ (c) HIIT 240 kcal — ไม่มีรายการใดอยู่ในช่วงเกณฑ์แคลอรี่เริ่มต้นที่
-  ถือว่า "ตรงเป้า" กับ 500 kcal
+> **แก้ไข 2026-08-31 (factual correction)**: test case นี้เดิมทดสอบพฤติกรรม "ระบบขยายเกณฑ์การค้นหา" ซึ่ง
+> ไม่มีอยู่จริงใน implementation ที่ ship แล้ว (audit เทียบกับ `apps/web/server/services/youtube.ts` +
+> `videoRecommender.ts` commit `b463436`) — เขียนใหม่ให้ตรงกับพฤติกรรมจริง: ค้นหา YouTube **ครั้งเดียว**
+> (single-pass) แล้วให้ error ทันทีเมื่อไม่เหลือ candidate ที่ใช้งานได้เลย ไม่มีการขยายเกณฑ์/ค้นซ้ำใด ๆ
+> (ดู [detailed-design/02-daily-youtube-recommendation.md § REC-1 อัลกอริทึม](../../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#อัลกอริทึม--ค้นหาวิดีโอครั้งเดียว--จับคู่ด้วย-ai-single-pass-ไม่มี-tolerance-ตัวเลข))
+
+- **Pre-condition**: เป้าหมายแคลอรี่ที่เหลือของวันนี้ = 500 kcal, อุปกรณ์ = "ไม่มีอุปกรณ์" วันนี้ไม่ใช่
+  Cheat/Rest Day ระบบค้นหา YouTube (`search.list`, `videoDuration=medium`, `safeSearch=strict`, สูงสุด 15
+  candidate) ได้ผลลัพธ์ดิบ 3 รายการ แต่ทั้ง 3 รายการถูกเจ้าของวิดีโอปิดการฝัง (`embeddable: false`) ทั้งหมด
+  เมื่อตรวจสอบผ่าน `videos.list`
 - **Test Steps**:
-  1. เปิดหน้า Daily Dashboard
-  2. สังเกตพฤติกรรมของระบบเมื่อไม่พบวิดีโอที่ตรงเป้าในรอบค้นหาแรก
-- **Expected Result**: ระบบไม่พบวิดีโอที่ตรงเป้าในรอบแรก จึงขยายเกณฑ์การค้นหา (ผ่อนช่วงแคลอรี่ที่ยอมรับได้)
-  แล้วจับคู่วิดีโอใหม่อีกครั้งกับคลังที่กรองอุปกรณ์แล้ว จนได้วิดีโอที่แนะนำ (เช่น (c) HIIT 240 kcal ซึ่งใกล้เคียง
-  ที่สุดในคลังหลังขยายเกณฑ์) แสดงผลอย่างน้อย 1 รายการ (ไม่ใช้ tolerance ที่แน่นอนในการตัดสิน เนื่องจากยังเป็น
-  Open Question — ดูหมายเหตุท้ายไฟล์)
-- **Test Data**: เป้าหมาย 500 kcal, อุปกรณ์ = ไม่มีอุปกรณ์, คลังวิดีโอกรองแล้วเหลือ 210 kcal และ 240 kcal
-- **References**: REQ-04, AC-REC-1-02, [user-journeys.md#rec-1](../../../02-design/01-prototypes/user-journeys.md#rec-1--แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน-req-04)
+  1. เปิดหน้า Daily Dashboard (เรียก `GET /workouts/today/recommendation`)
+  2. สังเกตพฤติกรรมของระบบหลังกรอง candidate ที่ embed ไม่ได้ออกจนไม่เหลือรายการใดเลย
+  3. ตรวจสอบว่าระบบมีการเรียกค้นหา YouTube ซ้ำเป็นรอบที่สอง หรือขยายเกณฑ์การค้นหาแต่อย่างใดหรือไม่
+- **Expected Result**: ระบบค้นหา YouTube **เพียงครั้งเดียว** ได้ candidate ดิบ 3 รายการ กรอง candidate ที่
+  embed ไม่ได้ออกทั้งหมด เหลือ candidate ที่ใช้งานได้ **0 รายการ** จึงคืน `409 Conflict` ("ไม่พบวิดีโอที่
+  ใช้ได้") ให้ผู้ใช้ทันที — **ไม่มี**การเรียกค้นหา YouTube ซ้ำเป็นรอบที่สอง และ**ไม่มี**การขยายเกณฑ์การค้นหา
+  (เช่น เปลี่ยน `videoDuration`, เปลี่ยนคำค้นหา) ใด ๆ ทั้งสิ้น
+- **Test Data**: เป้าหมาย 500 kcal, อุปกรณ์ = ไม่มีอุปกรณ์, ผลค้นหา YouTube ดิบ = 3 รายการ, `embeddable =
+  false` ทั้ง 3 รายการ → candidate ที่ใช้งานได้หลังกรอง = 0 รายการ
+- **References**: REQ-04, AC-REC-1-02 (แก้ไข 2026-08-31),
+  [detailed-design/02-daily-youtube-recommendation.md § REC-1](../../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#rec-1--แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน-req-04),
+  [api-spec.md §4 ข้อ 1](../../../02-design/02-technical/api-spec.md) (resolved 2026-08-31),
+  [user-journeys.md#rec-1](../../../02-design/01-prototypes/user-journeys.md#rec-1--แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน-req-04)
 
 ### TC-REC-1-004 — วันนี้เป็น Cheat Day ไม่แนะนำวิดีโอ
 
@@ -95,6 +107,29 @@ Prototype: [05-daily-dashboard.html](../../../02-design/01-prototypes/v1/05-dail
   `05-daily-dashboard.html` แสดงในโหมด Cheat Day
 - **Test Data**: สถานะวันนี้ = Cheat Day (ตั้งผ่าน PLN-2)
 - **References**: REQ-04, AC-REC-1-03, [user-journeys.md#rec-1](../../../02-design/01-prototypes/user-journeys.md#rec-1--แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน-req-04)
+
+### TC-REC-1-005 — ระบบเลือกวิดีโอที่ดีที่สุดด้วย AI แบบ best-effort แม้ไม่มีตัวใดตรงเป๊ะ 100% (ใหม่ 2026-08-31)
+
+- **Pre-condition**: เป้าหมายแคลอรี่ที่เหลือของวันนี้ = 500 kcal, อุปกรณ์ = "ไม่มีอุปกรณ์" วันนี้ไม่ใช่
+  Cheat/Rest Day การค้นหา YouTube ครั้งเดียวคืน candidate ที่ embed ได้ 2 รายการ: (a) "คาร์ดิโอเผาผลาญเบา ๆ
+  25 นาที" (bodyweight, ประมาณ 210 kcal) และ (c) "HIIT เผาผลาญไว 20 นาที" (bodyweight, ประมาณ 240 kcal) —
+  ไม่มีรายการใดตรงกับ 500 kcal เป๊ะ
+- **Test Steps**:
+  1. เปิดหน้า Daily Dashboard
+  2. สังเกตวิดีโอที่ระบบแนะนำ พร้อมความเข้มข้น/แคลอรี่โดยประมาณที่แสดง
+- **Expected Result**: ระบบส่ง candidate ทั้ง 2 รายการเข้าสู่ขั้นตอนจับคู่ด้วย AI ครั้งเดียว (Gemini) พร้อม
+  บริบทอุปกรณ์ "ไม่มีอุปกรณ์" และเป้าหมายที่เหลือ 500 kcal โดยประเมินจากชื่อ/คำอธิบาย/ระยะเวลาของวิดีโอเท่านั้น
+  (ไม่มี view/like count ให้ใช้) แล้วเลือก candidate **หนึ่งรายการ**ที่ดีที่สุดแบบ best-effort — เช่น (c)
+  "HIIT เผาผลาญไว 20 นาที" (240 kcal ใกล้เคียง 500 kcal ที่สุดในบรรดา candidate ที่มี แม้ไม่ตรงเป๊ะ) พร้อม
+  ประเภทกิจกรรม ความเข้มข้น และแคลอรี่โดยประมาณที่ AI ประเมินได้ แสดงเป็นวิดีโอแนะนำ — ระบบ**ไม่ปฏิเสธ**หรือ
+  คืน error เพียงเพราะไม่มี candidate ใดตรงเป๊ะ 100% กับเป้าหมาย
+- **Test Data**: เป้าหมาย 500 kcal, อุปกรณ์ = ไม่มีอุปกรณ์, candidate ที่ใช้งานได้ = 2 รายการ (≈210 kcal,
+  ≈240 kcal) → คาดว่า AI เลือก (c) ≈240 kcal เป็นวิดีโอที่เหมาะสมที่สุด
+- **References**: REQ-04, AC-REC-1-04,
+  [detailed-design/02-daily-youtube-recommendation.md § REC-1 อัลกอริทึม ข้อ 4](../../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#อัลกอริทึม--ค้นหาวิดีโอครั้งเดียว--จับคู่ด้วย-ai-single-pass-ไม่มี-tolerance-ตัวเลข) —
+  ยืนยันจากโค้ดจริง `apps/web/server/services/videoRecommender.ts` (`pickBestVideo`), ไม่มีลิงก์
+  user-journeys.md โดยตรงเพราะเป็นรายละเอียดกลไกจับคู่ระดับ implementation ที่ journey ไม่ได้ลงราย ละเอียด
+  ระดับนี้ (ดูหมายเหตุใต้ AC-REC-1-04 ใน acceptance-criteria.md)
 
 ---
 
@@ -216,20 +251,30 @@ Prototype: [05-daily-dashboard.html](../../../02-design/01-prototypes/v1/05-dail
   (ถูกปฏิเสธ), วิดีโอใหม่ที่คาดหวัง = HIIT 240 kcal
 - **References**: REQ-06, AC-REC-3-01, [user-journeys.md#rec-3](../../../02-design/01-prototypes/user-journeys.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06)
 
-### TC-REC-3-002 — กดเปลี่ยนวิดีโอซ้ำจนไม่เหลือตัวเลือก
+### TC-REC-3-002 — กดเปลี่ยนวิดีโอซ้ำจนไม่เหลือ candidate ที่ใช้งานได้ ระบบแจ้งไม่พบ ไม่ขยายเกณฑ์/ค้นซ้ำ
+
+> **แก้ไข 2026-08-31 (factual correction)**: Expected Result เดิมระบุว่าระบบ "ขยายเกณฑ์การค้นหา" เป็นทาง
+> เลือกหนึ่ง ซึ่งไม่มีอยู่จริงใน implementation ที่ ship แล้ว (REC-3 ใช้อัลกอริทึมเดียวกับ REC-1 —
+> single-pass ไม่มีการขยายเกณฑ์/ค้นซ้ำ ดู [detailed-design/02-daily-youtube-recommendation.md § REC-3](../../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06))
+> — แก้ให้เหลือผลลัพธ์เดียวที่ตรงกับจริง: แจ้งผู้ใช้ทันทีโดยไม่ขยายเกณฑ์
 
 - **Pre-condition**: ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" มาแล้ว 2 ครั้ง ปฏิเสธไปแล้วทั้ง "คาร์ดิโอเผาผลาญเบา ๆ 25
-  นาที" (210 kcal) และ "HIIT เผาผลาญไว 20 นาที" (240 kcal) อุปกรณ์ = ไม่มีอุปกรณ์ ในคลังไม่มีวิดีโอ
-  bodyweight รายการอื่นที่ยังไม่ถูกปฏิเสธเหลืออยู่แล้ว (เหลือเพียง "เวทเทรนนิ่งทั้งตัว" ที่ต้องใช้ดัมเบล
-  ซึ่งถูกกรองออกด้วย equipment filter อยู่ดี)
+  นาที" (210 kcal) และ "HIIT เผาผลาญไว 20 นาที" (240 kcal) อุปกรณ์ = ไม่มีอุปกรณ์ การค้นหา YouTube ครั้งใหม่
+  (ไม่รวมวิดีโอปัจจุบันและวิดีโอที่ถูกปฏิเสธไปแล้วทั้งหมด) ไม่คืน candidate ที่ใช้งานได้ (embed ได้) เลยแม้แต่
+  รายการเดียว
 - **Test Steps**:
-  1. ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" อีกครั้งเป็นครั้งที่ 3
-- **Expected Result**: ระบบค้นหาวิดีโอใหม่ตามเงื่อนไข (อุปกรณ์ไม่มีอุปกรณ์ + ไม่รวมวิดีโอที่ถูกปฏิเสธแล้ว)
-  แล้วไม่พบวิดีโอที่ตรงเงื่อนไขเหลืออยู่เลย ระบบแจ้งผู้ใช้ว่าไม่มีวิดีโออื่นที่ตรงเป้าหมายแล้ว หรือขยายเกณฑ์
-  การค้นหา (ผ่อนช่วงแคลอรี่ ตามกลไกเดียวกับ REC-1) แทนการค้าง/error
+  1. ผู้ใช้กดปุ่ม "เปลี่ยนวิดีโอ" อีกครั้งเป็นครั้งที่ 3 (เรียก `POST /workouts/today/recommendation/swap`)
+  2. สังเกต response และข้อความที่แสดงบนหน้าจอ
+  3. ตรวจสอบว่าระบบมีการเรียกค้นหา YouTube ซ้ำเป็นรอบที่สอง หรือขยายเกณฑ์การค้นหาแต่อย่างใดหรือไม่
+- **Expected Result**: ระบบค้นหา YouTube ใหม่**เพียงครั้งเดียว** (single-pass, ใช้อัลกอริทึมเดียวกับ REC-1)
+  ตามเงื่อนไข (อุปกรณ์ไม่มีอุปกรณ์ + ไม่รวมวิดีโอปัจจุบัน/ที่ถูกปฏิเสธแล้ว) แล้วไม่เหลือ candidate ที่ใช้งาน
+  ได้เลย จึงคืน `409 Conflict` ("ไม่พบวิดีโอที่ตรงพอ") ให้ผู้ใช้ทันที — **ไม่มี**การเรียกค้นหา YouTube ซ้ำ
+  เป็นรอบที่สอง และ**ไม่มี**การขยายเกณฑ์การค้นหาใด ๆ ทั้งสิ้น
 - **Test Data**: อุปกรณ์ = ไม่มีอุปกรณ์, วิดีโอที่ถูกปฏิเสธแล้ว = {คาร์ดิโอ 210 kcal, HIIT 240 kcal},
-  วิดีโอที่เหลือในคลังหลังกรองอุปกรณ์ = ว่างเปล่า
-- **References**: REQ-06, AC-REC-3-02, [user-journeys.md#rec-3](../../../02-design/01-prototypes/user-journeys.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06)
+  candidate ที่ใช้งานได้จากการค้นหาครั้งใหม่ = 0 รายการ
+- **References**: REQ-06, AC-REC-3-02 (แก้ไข 2026-08-31),
+  [detailed-design/02-daily-youtube-recommendation.md § REC-3](../../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06),
+  [user-journeys.md#rec-3](../../../02-design/01-prototypes/user-journeys.md#rec-3--เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม-req-06)
 
 ---
 
@@ -298,10 +343,11 @@ Prototype: [06-workout-session.html](../../../02-design/01-prototypes/v1/06-work
 `01-spec/` และ `user-journeys.md` (ไม่ใช่แค่ยังไม่มี AC scenario) — ไฟล์นี้จึง **ไม่สร้าง test case ขึ้นมาเอง**
 เพื่อเดา behavior ที่ยังไม่ได้นิยาม ตามกติกาของ `test-suite-builder`:
 
-1. **REC-1 (REQ-04)** — เกณฑ์ tolerance ที่แน่นอนว่าวิดีโอต้อง "ใกล้เคียง" เป้าหมายแคลอรี่แค่ไหนถึงเรียกว่า
-   ตรงเป้า ยังไม่ถูกกำหนดค่า (ดู [Open Questions ข้อ 1](../../../02-design/01-prototypes/user-journeys.md#open-questions))
-   — test case ในไฟล์นี้ (TC-REC-1-001, 002, 003) จึงอธิบาย behavior เชิงคุณภาพ ("จับคู่ที่ใกล้เคียงที่สุด
-   ในคลังที่กรองแล้ว") โดยไม่ยืนยัน threshold ตัวเลขที่แน่นอน
+1. ~~**REC-1 (REQ-04)** — เกณฑ์ tolerance ที่แน่นอนว่าวิดีโอต้อง "ใกล้เคียง" เป้าหมายแคลอรี่แค่ไหนถึงเรียกว่า
+   ตรงเป้า ยังไม่ถูกกำหนดค่า~~ — **resolved 2026-08-31**: ไม่มีตัวเลข tolerance ใด ๆ เลย ระบบใช้ขั้นตอน
+   จับคู่ด้วย AI แบบ best-effort แทน (ดู AC-REC-1-04/TC-REC-1-005 ใหม่) — TC-REC-1-001/002 ยังคงอธิบาย
+   behavior เชิงคุณภาพ ("AI เลือกที่ใกล้เคียงที่สุดจาก candidate ที่ค้นพบ") ซึ่งสอดคล้องกับกลไก best-effort
+   นี้อยู่แล้ว ไม่ใช่ gap อีกต่อไป
 2. **REC-4 (REQ-07)** — เวลา/แคลอรี่ของวอร์มอัพ-คูลดาวน์นับรวมในเป้าหมายรายวัน (สำหรับ PLN-3/REC-1) หรือไม่
    ยังไม่ถูกกำหนด (ดู [Open Questions ข้อ 2](../../../02-design/01-prototypes/user-journeys.md#open-questions))
    — ไม่มี test case ตรวจสอบว่าแคลอรี่จากวอร์มอัพ/คูลดาวน์ถูกรวมเข้ากับยอดสะสมของวันหรือไม่ (TC-REC-4-001/003
@@ -313,11 +359,17 @@ Prototype: [06-workout-session.html](../../../02-design/01-prototypes/v1/06-work
 
 | Feature ID | AC Scenario | Test Case | หมายเหตุ |
 |---|---|---|---|
-| REC-1 | 3 (AC-REC-1-01..03) | 4 (TC-REC-1-001..004) | AC-REC-1-01 มี 2 test case (variation อุปกรณ์/เป้าหมาย) |
+| REC-1 | 4 (AC-REC-1-01..04) | 5 (TC-REC-1-001..005) | AC-REC-1-01 มี 2 test case (variation อุปกรณ์/เป้าหมาย); AC-REC-1-04 ใหม่ (เพิ่ม 2026-08-31, AI best-effort matching) → TC-REC-1-005 |
 | REC-2 | 4 (AC-REC-2-01..04) | 5 (TC-REC-2-001..005) | AC-REC-2-01 มี 2 test case (variation ประเภท/ความเข้มข้น/น้ำหนัก); AC-REC-2-04 ใหม่ (NFR-12, เพิ่ม 2026-08-29) — TC-REC-2-005 ยัง "not testable in this round" (ดู test-plan.md R12) |
 | REC-3 | 2 (AC-REC-3-01..02) | 2 (TC-REC-3-001..002) | 1:1 |
 | REC-4 | 3 (AC-REC-4-01..03) | 3 (TC-REC-4-001..003) | 1:1 |
-| **รวม** | **12** | **14** | |
+| **รวม** | **13** | **15** | |
+
+> อัปเดต 2026-08-31 (`test-suite-builder`, factual correction): audit เทียบกับโค้ดจริงที่ ship แล้ว (commit
+> `b463436`) พบว่า **TC-REC-1-003 และ TC-REC-3-002 ขัดกับ implementation จริง** (ทั้งคู่เคยทดสอบ/อ้างถึง
+> "ระบบขยายเกณฑ์การค้นหา" ซึ่งไม่มีอยู่จริง) จึงเขียนใหม่ให้ตรงกับพฤติกรรมจริง (single-pass, ไม่มีการขยาย
+> เกณฑ์/ค้นซ้ำ) และเพิ่ม **TC-REC-1-005** ใหม่ครอบคลุม **AC-REC-1-04** (การจับคู่ด้วย AI แบบ best-effort) ที่
+> เพิ่มเข้า `acceptance-criteria.md` ในรอบเดียวกัน — REC-1 จาก 3 AC/4 TC เป็น **4 AC/5 TC**
 
 ---
 
