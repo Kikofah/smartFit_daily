@@ -3,7 +3,16 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 6) — Citation-only fix: `feature-journey-writer` formalize กลไก
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 7) — เพิ่ม operation ใหม่ `GET /insights/weight-records` ในหัวข้อ
+  3.7 (Insights & Forecast) — Weight Record entity (HLA §5) เดิมเขียนได้ผ่าน `POST
+  /integrations/smart-scale/sync` (หัวข้อ 3.8) เท่านั้น ไม่มีทางอ่านประวัติกลับมาเลย ทำให้กราฟแนวโน้ม
+  น้ำหนักของ INT-1 (Progress screen) ต้องพึ่ง mock data ต่อไปไม่ได้ แม้ `GET /insights/forecast` จะคำนวณ
+  จริงแล้ว — วางไว้ที่ Insights & Forecast (ไม่ใช่ Integration Gateway) เพราะ HLA §3.7/§5 ระบุชัดว่า
+  component นี้เป็นผู้ **อ่าน** Weight Record history เพื่อพยากรณ์/แสดงแนวโน้ม ส่วน Integration Gateway
+  เป็นผู้ **เขียน** จากการซิงค์อุปกรณ์เท่านั้น — ยืนยันแผนกับผู้ใช้ก่อนเขียนแล้ว (แนวทางเดียว ไม่มีข้อขัดแย้ง)
+  ไม่กระทบ `database-schema.md` (ตาราง `weight_record` มีอยู่แล้วครบ) — ดู [log
+  2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 6) — Citation-only fix: `feature-journey-writer` formalize กลไก
   pairing-code เป็น Feature ID **INT-0** พร้อม business rule **REQ-18** ใหม่ (ดู `backlog.md` § INT-0
   และ `20260823-04-smart-integrations.md` § REQ-18) แทนที่การอ้างว่าเป็น "precondition ทางเทคนิค
   implicit ของ INT-2/INT-3 (REQ-12/REQ-13)" เดิม — แก้ Feature/REQ column ของทั้ง 2 operation ในหัวข้อ
@@ -160,6 +169,7 @@ operation ใดที่ไม่มี component รองรับ
 | Operation | Verb + Path | Feature/REQ | Request | Response | Error/Edge Case | NFR |
 |---|---|---|---|---|---|---|
 | ดูพยากรณ์เป้าหมายน้ำหนัก | `GET /insights/forecast` | INT-1/REQ-11 | — | วันที่คาดว่าจะถึงเป้าหมาย, อัตราขาดดุลเฉลี่ย | `422` ถ้ายังไม่มีน้ำหนักเป้าหมาย (ต้องกรอกที่ ONB-3 ก่อน), `422` ถ้า log สะสมไม่พอ (จำนวนวันขั้นต่ำยังไม่ระบุ — ดูจุดที่ยังไม่ได้ระบุ) | — |
+| ดูประวัติน้ำหนัก | `GET /insights/weight-records` | INT-1/REQ-11 | ช่วงวันที่ (optional) | รายการ Weight Record เรียงตามเวลาที่บันทึก (ใช้แสดงกราฟแนวโน้มน้ำหนักและเป็นข้อมูลตั้งต้นของการพยากรณ์) | — | — |
 
 ### 3.8 Integration Gateway
 

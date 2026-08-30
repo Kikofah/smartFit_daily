@@ -1,4 +1,4 @@
-import { Pressable, Text, StyleSheet } from 'react-native';
+import { ActivityIndicator, Pressable, Text, StyleSheet } from 'react-native';
 import { colors, radius, spacing, typography } from '../constants/theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive';
@@ -8,30 +8,35 @@ interface ButtonProps {
   onPress: () => void;
   variant?: Variant;
   disabled?: boolean;
+  /** Shows a spinner in place of the label and forces disabled — for an in-flight action, to block repeat presses. */
+  loading?: boolean;
 }
 
 /** DESIGN.md §3.1 — one primary action per screen; no bold/black weights, no drop shadow. */
-export function Button({ label, onPress, variant = 'primary', disabled }: ButtonProps) {
+export function Button({ label, onPress, variant = 'primary', disabled, loading }: ButtonProps) {
+  const isDisabled = disabled || loading;
+  const labelStyle = [
+    styles.label,
+    variant === 'primary' ? styles.labelOnClay : styles.labelOnPaper,
+    variant === 'destructive' && styles.labelDestructive,
+  ];
+
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
+      disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
         variantStyles[variant],
         pressed && variant === 'primary' && { backgroundColor: colors.clayStrong },
-        disabled && styles.disabled,
+        isDisabled && styles.disabled,
       ]}
     >
-      <Text
-        style={[
-          styles.label,
-          variant === 'primary' ? styles.labelOnClay : styles.labelOnPaper,
-          variant === 'destructive' && styles.labelDestructive,
-        ]}
-      >
-        {label}
-      </Text>
+      {loading ? (
+        <ActivityIndicator size="small" color={variant === 'primary' ? colors.paper : colors.ink} />
+      ) : (
+        <Text style={labelStyle}>{label}</Text>
+      )}
     </Pressable>
   );
 }

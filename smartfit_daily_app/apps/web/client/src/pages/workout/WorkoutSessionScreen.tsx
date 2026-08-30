@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
 import { useNavigate } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
@@ -9,6 +9,32 @@ import { workoutDraft } from '../../store/workoutDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { workoutSessionScreenStyles as styles } from './styles';
 import type { ActivityType, Intensity } from '@smartfit/shared-types';
+
+declare global {
+  interface Window {
+    YT?: typeof YT;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+const YOUTUBE_PLAYER_ELEMENT_ID = 'workout-session-youtube-player';
+
+/** Loads the YouTube IFrame Player API script once (no-op if already loaded/loading). */
+function loadYouTubeIframeApi(): Promise<typeof YT> {
+  if (window.YT?.Player) return Promise.resolve(window.YT);
+  return new Promise((resolve) => {
+    const previousReady = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previousReady?.();
+      resolve(window.YT!);
+    };
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const script = document.createElement('script');
+      script.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(script);
+    }
+  });
+}
 
 const INTENSITY_LABEL: Record<Intensity, string> = {
   low: 'ความเข้มข้นต่ำ',
@@ -46,11 +72,44 @@ export default function WorkoutSessionScreen() {
   const video = workoutDraft.video;
   const [elapsedSec, setElapsedSec] = useState(0);
   const [warmupSkipped, setWarmupSkipped] = useState(false);
+  // No real video (mock/fallback) still ticks like a plain timer; a real
+  // YouTube video starts "not yet confirmed playing" until its first
+  // onStateChange(PLAYING) event, so autoplay starting up doesn't fake time.
+  const [isPlaying, setIsPlaying] = useState(!video?.externalVideoId);
+  const playerRef = useRef<YT.Player | null>(null);
 
+  // Elapsed time only ticks while the video is actually playing — pauses the
+  // moment the user pauses the embedded YouTube player, resumes on play.
   useEffect(() => {
+    if (!isPlaying) return;
     const id = setInterval(() => setElapsedSec((s) => s + 1), 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!video?.externalVideoId) return;
+    let cancelled = false;
+    loadYouTubeIframeApi().then((YT) => {
+      if (cancelled) return;
+      playerRef.current = new YT.Player(YOUTUBE_PLAYER_ELEMENT_ID, {
+        width: '100%',
+        height: '100%',
+        videoId: video.externalVideoId,
+        playerVars: { autoplay: 1, rel: 0 },
+        events: {
+          onStateChange: (event) => {
+            if (event.data === YT.PlayerState.PLAYING) setIsPlaying(true);
+            else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) setIsPlaying(false);
+          },
+        },
+      });
+    });
+    return () => {
+      cancelled = true;
+      playerRef.current?.destroy();
+      playerRef.current = null;
+    };
+  }, [video?.externalVideoId]);
 
   useEffect(() => {
     if (!video) navigate('/', { replace: true });
@@ -100,7 +159,11 @@ export default function WorkoutSessionScreen() {
       </Text>
 
       <View style={styles.playerArea}>
-        <IconPlay size={56} color={colors.paperAlt} />
+        {video.externalVideoId ? (
+          <div id={YOUTUBE_PLAYER_ELEMENT_ID} style={{ width: '100%', height: '100%' }} />
+        ) : (
+          <IconPlay size={56} color={colors.paperAlt} />
+        )}
       </View>
 
       {hasStages && (

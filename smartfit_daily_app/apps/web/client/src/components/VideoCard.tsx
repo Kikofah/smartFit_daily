@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { colors, radius, spacing, typography } from '../constants/theme';
 import { Button } from './Button';
 import { IconPlay } from './Icon';
 
 interface VideoCardProps {
+  /** YouTube video ID (REC-1/REC-4) — when present, shows the real YouTube thumbnail behind the play icon. */
+  externalVideoId?: string;
   title: string;
   durationLabel: string;
   activityTypeLabel: string;
@@ -11,10 +13,13 @@ interface VideoCardProps {
   includesWarmupCooldown?: boolean;
   onStart: () => void;
   onChangeVideo: () => void;
+  /** REC-3 — swap request in flight; shows a spinner and blocks repeat presses. */
+  isChangingVideo?: boolean;
 }
 
 /** DESIGN.md §3.3 — Video Recommendation Card (REC-1/REC-3/REC-4). */
 export function VideoCard({
+  externalVideoId,
   title,
   durationLabel,
   activityTypeLabel,
@@ -22,11 +27,25 @@ export function VideoCard({
   includesWarmupCooldown,
   onStart,
   onChangeVideo,
+  isChangingVideo,
 }: VideoCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.thumb}>
-        <IconPlay size={40} color={colors.inkFaint} />
+        {externalVideoId && (
+          <Image
+            source={{ uri: `https://img.youtube.com/vi/${externalVideoId}/hqdefault.jpg` }}
+            style={styles.thumbImage}
+            resizeMode="cover"
+          />
+        )}
+        {externalVideoId ? (
+          <View style={styles.playBackdrop}>
+            <IconPlay size={32} color={colors.paper} />
+          </View>
+        ) : (
+          <IconPlay size={40} color={colors.inkFaint} />
+        )}
         {includesWarmupCooldown && (
           <View style={styles.warmupTag}>
             <Text style={styles.warmupTagText}>รวมวอร์มอัพ-คูลดาวน์</Text>
@@ -47,7 +66,12 @@ export function VideoCard({
           <View style={{ flex: 1 }}>
             <Button label="เริ่มออกกำลังกาย" onPress={onStart} />
           </View>
-          <Button label="เปลี่ยนวิดีโอ" variant="secondary" onPress={onChangeVideo} />
+          <Button
+            label="เปลี่ยนวิดีโอ"
+            variant="secondary"
+            onPress={onChangeVideo}
+            loading={isChangingVideo}
+          />
         </View>
       </View>
     </View>
@@ -59,6 +83,15 @@ const styles = StyleSheet.create({
   thumb: {
     aspectRatio: 16 / 9,
     backgroundColor: colors.paperSunken,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbImage: { ...StyleSheet.absoluteFillObject },
+  playBackdrop: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(51,48,42,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
   },

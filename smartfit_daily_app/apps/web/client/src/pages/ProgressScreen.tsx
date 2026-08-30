@@ -7,6 +7,7 @@ import { Card } from '../components/Card';
 import { StreakBadge } from '../components/StreakBadge';
 import { EmptyState } from '../components/EmptyState';
 import { api } from '../services/api';
+import { useProfile } from '../hooks/useProfile';
 import { colors, typography } from '../constants/theme';
 import { progressScreenStyles as styles } from './styles';
 
@@ -16,29 +17,6 @@ import { progressScreenStyles as styles } from './styles';
  * --color-clay (neutral, no up=bad/down=good coloring), target line/band in --color-sage
  * @ ~30% opacity, never a red/green traffic-light scheme for body data.
  */
-
-// TODO(INT-1, api-spec.md §"ดูพยากรณ์เป้าหมายน้ำหนัก"): GET /api/insights/forecast only
-// returns { forecastedGoalDate, averageDailyDeficitKcal } — there is no documented endpoint
-// yet for the underlying WeightRecord history a trend chart needs, and the route itself
-// (apps/web/server/routes/insights-forecast/index.ts) doesn't compute the snapshot yet either.
-// Until both exist, the trend line below is a small realistic mock dataset; only the forecast
-// date/deficit/current-weight numbers attempt the real endpoint first.
-const MOCK_WEIGHT_HISTORY: WeightRecord[] = [
-  { weightKg: 72.1, recordedAt: daysAgoIso(56), source: 'manual' },
-  { weightKg: 71.6, recordedAt: daysAgoIso(46), source: 'manual' },
-  { weightKg: 70.9, recordedAt: daysAgoIso(35), source: 'smart_scale_sync' },
-  { weightKg: 71.3, recordedAt: daysAgoIso(25), source: 'manual' },
-  { weightKg: 70.2, recordedAt: daysAgoIso(14), source: 'smart_scale_sync' },
-  { weightKg: 69.1, recordedAt: daysAgoIso(6), source: 'manual' },
-  { weightKg: 68.4, recordedAt: daysAgoIso(0), source: 'smart_scale_sync' },
-];
-const MOCK_TARGET_WEIGHT_KG = 64;
-
-function daysAgoIso(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString();
-}
 
 function formatThaiDate(iso: string): string {
   const months = [
@@ -66,16 +44,19 @@ function buildChartGeometry(history: WeightRecord[], targetWeightKg: number) {
   const points = history.map((r, i) => ({ x: CHART_PAD_X + i * stepX, y: toY(r.weightKg) }));
   const polyline = points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   const targetY = toY(targetWeightKg);
-  const lastPoint = points[points.length - 1]!; // history is a non-empty const mock dataset
+  const lastPoint = points[points.length - 1]!; // caller only invokes this when history.length > 0
   return { points, polyline, targetY, lastPoint };
 }
 
 export default function ProgressScreen() {
   const navigate = useNavigate();
+  const { profile } = useProfile();
+  const targetWeightKg = profile?.goalSelection?.targetWeightKg;
   const [forecast, setForecast] = useState<WeightForecastSnapshot | null>(null);
-  const [currentWeightKg, setCurrentWeightKg] = useState<number | null>(null);
+  const [weightHistory, setWeightHistory] = useState<WeightRecord[]>([]);
   const [streakDays, setStreakDays] = useState(0);
   const [hasEnoughData, setHasEnoughData] = useState(false);
+  const currentWeightKg = weightHistory[weightHistory.length - 1]?.weightKg ?? profile?.weightKg ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -99,11 +80,20 @@ export default function ProgressScreen() {
         if (snapshot?.forecastedGoalDate) {
           setForecast(snapshot);
           setHasEnoughData(true);
-          setCurrentWeightKg(MOCK_WEIGHT_HISTORY[MOCK_WEIGHT_HISTORY.length - 1]!.weightKg);
         }
       })
       .catch(() => {
         /* 422 (no target weight / not enough logs) -> stays the insufficient-data state */
+      });
+
+    // Real endpoint per api-spec.md §3.7 (added 2026-08-31) — feeds the trend chart below.
+    api
+      .get<WeightRecord[]>('/insights/weight-records')
+      .then((records) => {
+        if (!cancelled) setWeightHistory(records);
+      })
+      .catch(() => {
+        /* stays empty — chart is skipped below when there's no history */
       });
 
     return () => {
@@ -112,8 +102,8 @@ export default function ProgressScreen() {
   }, []);
 
   const geometry = useMemo(
-    () => buildChartGeometry(MOCK_WEIGHT_HISTORY, MOCK_TARGET_WEIGHT_KG),
-    [],
+    () => (weightHistory.length > 0 && targetWeightKg !== undefined ? buildChartGeometry(weightHistory, targetWeightKg) : null),
+    [weightHistory, targetWeightKg],
   );
 
   return (
@@ -136,7 +126,9 @@ export default function ProgressScreen() {
       {hasEnoughData && forecast ? (
         <>
           <Card style={styles.forecastCard}>
-            <Text style={[typography.caption, styles.center]}>คาดว่าจะถึงเป้าหมายน้ำหนัก</Text>
+            <Text style={[typography.caption, styles.center]}>
+              คาดว่าจะถึงเป้าหมายน้ำหนัก{targetWeightKg !== undefined ? ` (${targetWeightKg.toFixed(1)} กก.)` : ''}
+            </Text>
             <Text style={[typography.display, styles.center, styles.forecastDate]}>
               {formatThaiDate(forecast.forecastedGoalDate)}
             </Text>
@@ -155,65 +147,67 @@ export default function ProgressScreen() {
             </View>
           </Card>
 
-          <View>
-            <Text style={[typography.h2, styles.chartTitle]}>แนวโน้มน้ำหนัก</Text>
-            <svg
-              width="100%"
-              height={CHART_HEIGHT}
-              viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-              preserveAspectRatio="xMidYMid meet"
-            >
-              {/* target band + line, sage @ ~30% opacity — DESIGN.md §4.4 */}
-              <polygon
-                points={`${CHART_PAD_X},${geometry.targetY - 15} ${CHART_WIDTH - CHART_PAD_X},${geometry.targetY - 25} ${CHART_WIDTH - CHART_PAD_X},${geometry.targetY + 15} ${CHART_PAD_X},${geometry.targetY + 25}`}
-                fill={colors.sage}
-                fillOpacity={0.3}
-              />
-              <line
-                x1={CHART_PAD_X}
-                y1={geometry.targetY}
-                x2={CHART_WIDTH - CHART_PAD_X}
-                y2={geometry.targetY}
-                stroke={colors.sage}
-                strokeWidth={2}
-                strokeDasharray="4 4"
-              />
-              {/* actual data line: neutral clay, no red/green value judgment on ups/downs */}
-              <polyline
-                points={geometry.polyline}
-                fill="none"
-                stroke={colors.clay}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx={geometry.lastPoint.x} cy={geometry.lastPoint.y} r={4} fill={colors.clay} />
-              <line
-                x1={CHART_PAD_X}
-                y1={160}
-                x2={CHART_WIDTH - CHART_PAD_X}
-                y2={160}
-                stroke={colors.border}
-                strokeWidth={1}
-              />
-              <text x={CHART_PAD_X} y={176} fontSize={11} fill={colors.inkFaint}>
-                8 สัปดาห์ก่อน
-              </text>
-              <text x={CHART_WIDTH - CHART_PAD_X - 50} y={176} fontSize={11} fill={colors.inkFaint}>
-                วันนี้
-              </text>
-            </svg>
-            <View style={styles.legendRow}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendSwatch, { backgroundColor: colors.clay }]} />
-                <Text style={typography.caption}>น้ำหนักจริง</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendSwatch, { backgroundColor: colors.sage, opacity: 0.6 }]} />
-                <Text style={typography.caption}>แนวโน้มเป้าหมาย</Text>
+          {geometry && (
+            <View>
+              <Text style={[typography.h2, styles.chartTitle]}>แนวโน้มน้ำหนัก</Text>
+              <svg
+                width="100%"
+                height={CHART_HEIGHT}
+                viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {/* target band + line, sage @ ~30% opacity — DESIGN.md §4.4 */}
+                <polygon
+                  points={`${CHART_PAD_X},${geometry.targetY - 15} ${CHART_WIDTH - CHART_PAD_X},${geometry.targetY - 25} ${CHART_WIDTH - CHART_PAD_X},${geometry.targetY + 15} ${CHART_PAD_X},${geometry.targetY + 25}`}
+                  fill={colors.sage}
+                  fillOpacity={0.3}
+                />
+                <line
+                  x1={CHART_PAD_X}
+                  y1={geometry.targetY}
+                  x2={CHART_WIDTH - CHART_PAD_X}
+                  y2={geometry.targetY}
+                  stroke={colors.sage}
+                  strokeWidth={2}
+                  strokeDasharray="4 4"
+                />
+                {/* actual data line: neutral clay, no red/green value judgment on ups/downs */}
+                <polyline
+                  points={geometry.polyline}
+                  fill="none"
+                  stroke={colors.clay}
+                  strokeWidth={2.5}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx={geometry.lastPoint.x} cy={geometry.lastPoint.y} r={4} fill={colors.clay} />
+                <line
+                  x1={CHART_PAD_X}
+                  y1={160}
+                  x2={CHART_WIDTH - CHART_PAD_X}
+                  y2={160}
+                  stroke={colors.border}
+                  strokeWidth={1}
+                />
+                <text x={CHART_PAD_X} y={176} fontSize={11} fill={colors.inkFaint}>
+                  {formatThaiDate(weightHistory[0]!.recordedAt)}
+                </text>
+                <text x={CHART_WIDTH - CHART_PAD_X - 50} y={176} fontSize={11} fill={colors.inkFaint}>
+                  วันนี้
+                </text>
+              </svg>
+              <View style={styles.legendRow}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSwatch, { backgroundColor: colors.clay }]} />
+                  <Text style={typography.caption}>น้ำหนักจริง</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSwatch, { backgroundColor: colors.sage, opacity: 0.6 }]} />
+                  <Text style={typography.caption}>แนวโน้มเป้าหมาย</Text>
+                </View>
               </View>
             </View>
-          </View>
+          )}
         </>
       ) : (
         <EmptyState

@@ -43,7 +43,11 @@ export const plannerScreenStyles = StyleSheet.create({
     position: 'fixed' as unknown as 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
+    // TabsLayout's fixed bottom tab bar reserves this same spacing[16] (see
+    // its own `content: {paddingBottom: spacing[16]}`) — floating the sheet
+    // by the same amount keeps its Save button from landing underneath the
+    // tab bar instead of overlapping it.
+    bottom: spacing[16],
     maxWidth: 480,
     marginHorizontal: 'auto',
     backgroundColor: colors.paper,
@@ -81,6 +85,7 @@ export const plannerScreenStyles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
+  errorText: { ...typography.caption, color: colors.danger },
 });
 
 export const logHistoryScreenStyles = StyleSheet.create({
@@ -110,6 +115,13 @@ export const logHistoryScreenStyles = StyleSheet.create({
     backgroundColor: colors.paperAlt,
     borderRadius: radius.md,
   },
+  // Status is still conveyed with icon + color together, never color alone
+  // (DESIGN.md §4.2/§4.3) — these are a subtle tint layered on top of the
+  // same icon/label, not a replacement for it. "ยังไม่ถึงวัน / ยังไม่ครบเป้าหมาย"
+  // intentionally has no variant here and stays the plain neutral `logRow`
+  // background, never a red/negative tint.
+  logRowCompleted: { backgroundColor: 'rgba(126,143,108,0.14)' }, // colors.sage tint
+  logRowCheatRest: { backgroundColor: 'rgba(201,162,107,0.16)' }, // colors.sand tint
   logStatusIcon: { width: 20, height: 20, alignItems: 'center', justifyContent: 'center' },
   kcal: { ...typography.body, fontWeight: '500', color: colors.ink },
 });

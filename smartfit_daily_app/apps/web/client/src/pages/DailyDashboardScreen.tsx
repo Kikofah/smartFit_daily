@@ -5,6 +5,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { CalorieRing } from '../components/CalorieRing';
 import { VideoCard } from '../components/VideoCard';
 import { StreakBadge } from '../components/StreakBadge';
+import { EmptyState } from '../components/EmptyState';
 import { IconDashedCircle } from '../components/Icon';
 import { api } from '../services/api';
 import { useProfile } from '../hooks/useProfile';
@@ -12,47 +13,32 @@ import { useAuth } from '../store/AuthContext';
 import { workoutDraft, type WorkoutVideoDraft } from '../store/workoutDraft';
 import { colors, spacing, typography } from '../constants/theme';
 import { dailyDashboardScreenStyles as styles } from './styles';
+import type { ActivityType } from '@smartfit/shared-types';
 
-/** Mock alternates for "เปลี่ยนวิดีโอ" — GET /workouts/today/recommendation/swap is still a 501 stub (YouTube Data API pending). */
-const MOCK_RECOMMENDATIONS: WorkoutVideoDraft[] = [
-  {
-    title: 'คาร์ดิโอเผาผลาญเบา ๆ 25 นาที',
-    durationMinutes: 25,
-    activityType: 'cardio',
-    activityTypeLabel: 'คาร์ดิโอ',
-    intensity: 'medium',
-    estimatedKcal: 210,
-    includesWarmupCooldown: true,
-  },
-  {
-    title: 'เวทเทรนนิ่งทั้งตัว 30 นาที',
-    durationMinutes: 30,
-    activityType: 'strength',
-    activityTypeLabel: 'เวทเทรนนิ่ง',
-    intensity: 'medium',
-    estimatedKcal: 230,
-    includesWarmupCooldown: false,
-  },
-  {
-    title: 'HIIT เผาผลาญไว 20 นาที',
-    durationMinutes: 20,
-    activityType: 'hiit',
-    activityTypeLabel: 'HIIT',
-    intensity: 'high',
-    estimatedKcal: 240,
-    includesWarmupCooldown: true,
-  },
-];
+/** GET /workouts/today/recommendation's response shape (apps/web/server/routes/content-recommendation/index.ts). */
+interface RecommendedVideo {
+  externalVideoId: string;
+  title: string;
+  durationMinutes: number;
+  activityType: ActivityType;
+  intensity: WorkoutVideoDraft['intensity'];
+  estimatedKcal: number;
+  includesWarmupCooldown: boolean;
+}
+
+const ACTIVITY_TYPE_LABEL: Record<ActivityType, string> = {
+  cardio: 'คาร์ดิโอ',
+  strength: 'เวทเทรนนิ่ง',
+  hiit: 'HIIT',
+};
 
 const TODAY_CAPTION = new Date().toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' });
 
 /**
  * "วันนี้" tab — REC-1, REC-3, PLN-2, PLN-4 · REQ-04, REQ-06, REQ-09, REQ-10 —
- * mirrors v1/05-daily-dashboard.html. GET /workouts/today/recommendation is
- * still a 501 stub (YouTube Data API integration pending), so the video card
- * falls back to a realistic mock recommendation cycle; everything else
- * (profile/goal, today's log, streak, Cheat/Rest Day toggle) is wired to the
- * real endpoints.
+ * mirrors v1/05-daily-dashboard.html. The video recommendation is picked by
+ * the YouTube Data API (candidates) + Claude (ranking/estimation) server-side
+ * — see server/services/youtube.ts and server/services/videoRecommender.ts.
  */
 export default function DailyDashboardScreen() {
   const navigate = useNavigate();
@@ -61,7 +47,9 @@ export default function DailyDashboardScreen() {
   const [accumulatedKcal, setAccumulatedKcal] = useState(0);
   const [streakDays, setStreakDays] = useState(0);
   const [isCheatRest, setIsCheatRest] = useState(false);
-  const [videoIdx, setVideoIdx] = useState(0);
+  const [video, setVideo] = useState<RecommendedVideo | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [isSwappingVideo, setIsSwappingVideo] = useState(false);
 
   const displayName = profile?.displayName ?? 'ผู้ใช้งาน';
   const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
@@ -83,12 +71,32 @@ export default function DailyDashboardScreen() {
       .get<{ currentStreakDays: number }>('/streak')
       .then((s) => setStreakDays(s.currentStreakDays))
       .catch(() => {});
+
+    api
+      .get<RecommendedVideo | undefined>('/workouts/today/recommendation')
+      .then((v) => {
+        if (v === undefined) {
+          setIsCheatRest(true); // 204 — today is already a Cheat/Rest Day
+          setVideo(null);
+        } else {
+          setVideo(v);
+        }
+      })
+      .catch((e) => setVideoError((e as Error).message));
   }, [user]);
 
-  const video = MOCK_RECOMMENDATIONS[videoIdx]!;
-
-  function swapVideo() {
-    setVideoIdx((i) => (i + 1) % MOCK_RECOMMENDATIONS.length);
+  async function swapVideo() {
+    if (isSwappingVideo) return;
+    setVideoError(null);
+    setIsSwappingVideo(true);
+    try {
+      const next = await api.post<RecommendedVideo>('/workouts/today/recommendation/swap');
+      setVideo(next);
+    } catch (e) {
+      setVideoError((e as Error).message);
+    } finally {
+      setIsSwappingVideo(false);
+    }
   }
 
   async function setMode(cheatRest: boolean) {
@@ -107,10 +115,21 @@ export default function DailyDashboardScreen() {
   }
 
   async function handleStart() {
+    if (!video) return;
     const { sessionId } = await api.post<{ sessionId: string }>('/workouts/sessions');
+    const videoDraft: WorkoutVideoDraft = {
+      externalVideoId: video.externalVideoId,
+      title: video.title,
+      durationMinutes: video.durationMinutes,
+      activityType: video.activityType,
+      activityTypeLabel: ACTIVITY_TYPE_LABEL[video.activityType],
+      intensity: video.intensity,
+      estimatedKcal: video.estimatedKcal,
+      includesWarmupCooldown: video.includesWarmupCooldown,
+    };
     Object.assign(workoutDraft, {
       sessionId,
-      video,
+      video: videoDraft,
       weightKg,
       goalKcal,
       accumulatedKcalBeforeSession: accumulatedKcal,
@@ -153,14 +172,16 @@ export default function DailyDashboardScreen() {
             วันนี้ตั้งเป็น Cheat Day/Rest Day ไม่ต้องออกกำลังกายก็ได้ สถานะวันนี้นับว่าครบเป้าหมาย และ streak ยังต่อเนื่อง
           </Text>
         </View>
-      ) : (
+      ) : video ? (
         <View>
           <VideoCard
+            externalVideoId={video.externalVideoId}
             title={video.title}
             durationLabel={`${video.durationMinutes} นาที`}
-            activityTypeLabel={video.activityTypeLabel}
+            activityTypeLabel={ACTIVITY_TYPE_LABEL[video.activityType]}
             kcalLabel={`≈ ${video.estimatedKcal} kcal`}
             includesWarmupCooldown={video.includesWarmupCooldown}
+            isChangingVideo={isSwappingVideo}
             onStart={handleStart}
             onChangeVideo={swapVideo}
           />
@@ -168,6 +189,8 @@ export default function DailyDashboardScreen() {
             แคลอรี่เป้าหมายของวันนี้จะไม่เปลี่ยน แม้เปลี่ยนวิดีโอ
           </Text>
         </View>
+      ) : (
+        <EmptyState message={videoError ?? 'กำลังหาวิดีโอที่เหมาะกับคุณ...'} />
       )}
     </ScreenContainer>
   );

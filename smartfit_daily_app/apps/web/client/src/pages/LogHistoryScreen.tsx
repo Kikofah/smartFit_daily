@@ -76,8 +76,16 @@ export default function LogHistoryScreen() {
         <View style={{ gap: spacing[2] }}>
           {logs.map((entry) => {
             const isCheatRest = entry.source === 'cheat_rest_override';
+            const isCompleted = !isCheatRest && entry.completionStatus === 'completed';
             return (
-              <View key={entry.logDate} style={styles.logRow}>
+              <View
+                key={entry.logDate}
+                style={[
+                  styles.logRow,
+                  isCheatRest && styles.logRowCheatRest,
+                  isCompleted && styles.logRowCompleted,
+                ]}
+              >
                 <View style={styles.logStatusIcon}>
                   {isCheatRest && <IconDashedCircle size={18} color={colors.sand} />}
                   {!isCheatRest && entry.completionStatus === 'completed' && (

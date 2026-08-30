@@ -3,6 +3,7 @@ import { db } from '../../firebaseAdmin';
 import { assertDocExists, NotFoundError } from '../../assertDocExists';
 import { asyncHandler } from '../../asyncHandler';
 import { recomputeStreak } from '../logging-streak/recomputeStreak';
+import type { LogCompletionStatus } from '@smartfit/shared-types';
 
 export const router = Router();
 
@@ -33,6 +34,7 @@ router.post(
     }
 
     const wearableReading = (await sessionRef.get()).data()?.wearableReading;
+    const sessionKcal = wearableReading ? wearableReading.calorieValueKcal : calculatedKcal;
 
     await sessionRef.set(
       {
@@ -45,8 +47,25 @@ router.post(
       { merge: true },
     );
 
-    // TODO: also create the corresponding daily_log entry (Logging & Streak,
-    // all-or-nothing per PLN-3) before recomputing the streak.
+    // PLN-3 all-or-nothing: accumulate this session's minutes/kcal onto
+    // today's daily_log (a second session the same day adds on top, it
+    // doesn't overwrite), then compare against the daily target — no
+    // partial credit even 1% under (detailed-design/03-planner-logging.md).
+    const today = new Date().toISOString().slice(0, 10);
+    const logRef = db.doc(`users/${req.userId}/dailyLogs/${today}`);
+    const existingLog = (await logRef.get()).data();
+    const minutesExercised = (existingLog?.minutesExercised ?? 0) + actualDurationMinutes;
+    const accumulatedKcal = (existingLog?.accumulatedKcal ?? 0) + sessionKcal;
+
+    const profile = (await db.doc(`users/${req.userId}`).get()).data();
+    const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
+    const completionStatus: LogCompletionStatus = accumulatedKcal >= goalKcal ? 'completed' : 'incomplete';
+
+    await logRef.set(
+      { minutesExercised, accumulatedKcal, completionStatus, source: 'workout_session' },
+      { merge: true },
+    );
+
     await recomputeStreak(req.userId!);
 
     return res.status(204).send();

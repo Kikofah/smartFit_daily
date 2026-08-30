@@ -3,7 +3,13 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 6) — Citation-only fix: `feature-journey-writer` formalize กลไก
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 7) — เพิ่ม bullet ใหม่ในหัวข้อ 5 (Query/Access Pattern
+  Considerations) ยืนยัน `weight_record` ค้นหาตาม `user_profile_id` + ช่วง `recorded_at` เป็น pattern
+  ที่ INT-1 ใช้จริง — คู่กับ operation ใหม่ `GET /insights/weight-records` ที่เพิ่งเพิ่มใน `api-spec.md`
+  § 3.7 (ไม่มีทางอ่านประวัติ `weight_record` กลับมาได้เลยมาก่อน) — **ไม่แตะตาราง `weight_record` เอง**
+  (หัวข้อ 3.14) เพราะ column ที่มีอยู่ครบพอสำหรับ operation นี้แล้ว ไม่ใช่การ re-model ตาราง — ดู [log
+  2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 6) — Citation-only fix: `feature-journey-writer` formalize กลไก
   pairing-code เป็น Feature ID **INT-0** พร้อม business rule **REQ-18** ใหม่ (ดู `backlog.md` § INT-0
   และ `20260823-04-smart-integrations.md` § REQ-18) แทนที่การอ้างว่าเป็น "precondition ทางเทคนิค
   implicit ของ INT-2/INT-3 (REQ-12/REQ-13)" เดิม — แก้บรรทัด Feature ของตาราง `pairing_credential`
@@ -518,6 +524,10 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
 - **`pairing_credential` ค้นหาตาม `code` (ใหม่ 2026-08-30)** — ไม่ใช่ `user_profile_id`/`user_account_id`
   เหมือนตารางอื่นทั้งหมดข้างต้น เป็น pattern เดียวที่เกิดตอน redeem — เกิดไม่บ่อยและมี TTL สั้น (5 นาที) จึง
   ไม่จำเป็นต้อง optimize เท่า pattern อื่นข้างต้น
+- **`weight_record` ค้นหาตาม `user_profile_id` + ช่วง `recorded_at` (ยืนยัน 2026-08-31)** — pattern ที่
+  INT-1 ใช้ทั้งดึง "น้ำหนักปัจจุบัน" (ล่าสุดรายการเดียว) และดึงประวัติทั้งหมดสำหรับกราฟแนวโน้มน้ำหนักบนหน้า
+  Progress (`api-spec.md` § 3.7 `GET /insights/weight-records`) — ควรออกแบบให้ค้นช่วงเวลา/เรียงตามเวลาได้เร็ว
+  เหมือน `daily_log` ข้างต้น
 
 ## 6. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 

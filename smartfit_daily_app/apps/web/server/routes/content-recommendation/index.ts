@@ -1,15 +1,46 @@
 import { Router } from 'express';
 import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
+import { searchWorkoutVideos } from '../../services/youtube';
+import { pickBestVideo, type PickedVideo } from '../../services/videoRecommender';
+import type { EquipmentType } from '@smartfit/shared-types';
 
 export const router = Router();
 
+/** Maps the user's equipment profile to a YouTube search query — ONB-2/REQ-03. */
+function buildSearchQuery(equipmentTypes: EquipmentType[]): string {
+  if (equipmentTypes.length === 0 || equipmentTypes.includes('none')) return 'bodyweight home workout no equipment';
+  if (equipmentTypes.includes('full_gym')) return 'gym workout';
+  return 'dumbbell home workout';
+}
+
+/** Cached on users/{userId} — see database-schema.md §8.2's embed-vs-subcollection criteria: 1:1 with the user, only the latest value matters, no independent query pattern. */
+interface TodaysRecommendation {
+  computedFor: string; // ISO-8601 date
+  video: PickedVideo;
+  rejectedVideoIds: string[];
+}
+
+async function computeRecommendation(userId: string, excludeIds: string[]): Promise<PickedVideo | null> {
+  const profile = (await db.doc(`users/${userId}`).get()).data();
+  const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
+  const equipmentTypes: EquipmentType[] = profile?.equipmentTypes ?? [];
+
+  const today = new Date().toISOString().slice(0, 10);
+  const accumulatedKcal = (await db.doc(`users/${userId}/dailyLogs/${today}`).get()).data()?.accumulatedKcal ?? 0;
+  const remainingKcal = Math.max(goalKcal - accumulatedKcal, 0);
+
+  const candidates = await searchWorkoutVideos(buildSearchQuery(equipmentTypes), excludeIds);
+  return pickBestVideo(candidates, remainingKcal, equipmentTypes);
+}
+
 /**
  * GET /api/workouts/today/recommendation — REC-1, REC-4 / REQ-04, REQ-07
- * Matches a YouTube video to today's remaining calorie target, widening the
- * search on repeated misses (matching/widen-retry logic — see
- * detailed-design/02-daily-youtube-recommendation.md). Returns no-content if
- * today is a Cheat/Rest Day.
+ * Matches a YouTube video to today's remaining calorie target via the
+ * YouTube Data API (candidates) + Claude (ranking/estimation) — see
+ * detailed-design/02-daily-youtube-recommendation.md. Returns no-content if
+ * today is a Cheat/Rest Day. Cached per user per day so repeat dashboard
+ * loads don't re-hit YouTube/Claude every time.
  */
 router.get(
   '/workouts/today/recommendation',
@@ -20,22 +51,49 @@ router.get(
       return res.status(204).send(); // no recommendation on a Cheat/Rest Day
     }
 
-    // TODO: call the YouTube Data API v3 (external boundary, HLA §6.1) and
-    // apply the matching/widen-retry algorithm.
-    return res.status(501).json({ error: 'YouTube Data API integration not yet implemented.' });
+    const userRef = db.doc(`users/${req.userId}`);
+    const existing = (await userRef.get()).data()?.todaysRecommendation as TodaysRecommendation | undefined;
+    if (existing?.computedFor === today) {
+      return res.json(existing.video);
+    }
+
+    const video = await computeRecommendation(req.userId!, []);
+    if (!video) {
+      return res.status(409).json({ error: 'No matching video found.' });
+    }
+
+    const recommendation: TodaysRecommendation = { computedFor: today, video, rejectedVideoIds: [] };
+    await userRef.set({ todaysRecommendation: recommendation }, { merge: true });
+    return res.json(video);
   }),
 );
 
 /**
  * POST /api/workouts/today/recommendation/swap — REC-3 / REQ-06
+ * Re-runs the match against a fresh YouTube search, excluding every video
+ * already shown today (the current pick + everything previously rejected).
  * Matching tolerance is an open point (api-spec.md §4, item 1).
  */
 router.post(
   '/workouts/today/recommendation/swap',
   asyncHandler(async (req, res) => {
-    // TODO: re-run the matching/widen-retry algorithm excluding
-    // req.body.rejectedExternalVideoIds.
-    return res.status(501).json({ error: 'YouTube Data API integration not yet implemented.' });
+    const today = new Date().toISOString().slice(0, 10);
+    const userRef = db.doc(`users/${req.userId}`);
+    const existing = (await userRef.get()).data()?.todaysRecommendation as TodaysRecommendation | undefined;
+
+    const rejectedVideoIds = [
+      ...(existing?.rejectedVideoIds ?? []),
+      ...(existing?.video ? [existing.video.externalVideoId] : []),
+    ];
+
+    const video = await computeRecommendation(req.userId!, rejectedVideoIds);
+    if (!video) {
+      return res.status(409).json({ error: 'No more matching videos found.' });
+    }
+
+    const recommendation: TodaysRecommendation = { computedFor: today, video, rejectedVideoIds };
+    await userRef.set({ todaysRecommendation: recommendation }, { merge: true });
+    return res.json(video);
   }),
 );
 

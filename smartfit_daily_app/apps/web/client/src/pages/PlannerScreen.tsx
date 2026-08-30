@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useNavigate } from 'react-router-dom';
 import { ScreenContainer } from '../components/ScreenContainer';
@@ -6,8 +6,10 @@ import { Button } from '../components/Button';
 import { Chip } from '../components/Chip';
 import { Switch } from '../components/Switch';
 import { IconCheck, IconDashedCircle } from '../components/Icon';
+import { api } from '../services/api';
+import { useAuth } from '../store/AuthContext';
 import { colors, spacing, typography } from '../constants/theme';
-import type { ActivityPlanType } from '@smartfit/shared-types';
+import type { ActivityPlanType, LogCompletionStatus } from '@smartfit/shared-types';
 import { plannerScreenStyles as styles } from './styles';
 
 /**
@@ -24,16 +26,8 @@ import { plannerScreenStyles as styles } from './styles';
  * a day is read-only when `isPast && status !== 'none'` — any past day that
  * already has a log (completed, missed, or cheat/rest) is locked; only
  * today/future days, or a past day with genuinely no log yet, stay editable.
- *
- * TODO: this screen is currently driven by local mock state matching the
- * canonical example week (Mon 24 Aug 2026 - Sun 30 Aug 2026, today = Thu 27
- * Aug 2026) used by test cases TC-PLN-1-001..003/TC-PLN-2-001..005/TC-PLN-4-001,
- * since GET /api/planner/week (apps/web/server/routes/planner-day-status/index.ts)
- * is still a stub that just dumps the raw weeklyPlanEntries collection without
- * merging in dailyLogs or the derived isReadOnly flag. Wire this screen to:
- *  - `GET /planner/week` to load the week (docs/02-design/02-technical/api-spec.md §3.5)
- *  - `PUT /planner/days/{date}` to save an activity-type choice
- *  - `POST /planner/days/{date}/cheat-rest` / `DELETE .../cheat-rest` for the toggle
+ * The Cheat/Rest toggle is stricter still (detailed-design/03-planner-logging.md's
+ * PLN-2 algorithm step 1) — it rejects ANY past day outright, log or not.
  */
 
 type DayStatusValue = 'completed' | 'cheatrest' | 'missed' | 'none';
@@ -45,83 +39,55 @@ interface DayPlan {
   dayNum: number;
   isToday: boolean;
   isPast: boolean;
+  isReadOnly: boolean; // server-derived (planDate < today AND a dailyLog exists)
   status: DayStatusValue;
   activityType?: ActivityPlanType;
 }
 
-// Canonical example week, matching v1/08-weekly-planner.html exactly.
-const INITIAL_WEEK: DayPlan[] = [
-  {
-    date: '2026-08-24',
-    shortLabel: 'จ',
-    fullLabel: 'จันทร์ 24 ส.ค.',
-    dayNum: 24,
-    isToday: false,
-    isPast: true,
-    status: 'missed', // has a log (260 kcal, ไม่ครบเป้าหมาย) -- see 09-log-history.html
-    activityType: 'cardio',
-  },
-  {
-    date: '2026-08-25',
-    shortLabel: 'อ',
-    fullLabel: 'อังคาร 25 ส.ค.',
-    dayNum: 25,
-    isToday: false,
-    isPast: true,
-    status: 'completed',
-    activityType: 'strength',
-  },
-  {
-    date: '2026-08-26',
-    shortLabel: 'พ',
-    fullLabel: 'พุธ 26 ส.ค.',
-    dayNum: 26,
-    isToday: false,
-    isPast: true,
-    status: 'cheatrest',
-    activityType: undefined,
-  },
-  {
-    date: '2026-08-27',
-    shortLabel: 'พฤ',
-    fullLabel: 'พฤหัสบดี 27 ส.ค. (วันนี้)',
-    dayNum: 27,
-    isToday: true,
-    isPast: false,
-    status: 'none',
-    activityType: undefined,
-  },
-  {
-    date: '2026-08-28',
-    shortLabel: 'ศ',
-    fullLabel: 'ศุกร์ 28 ส.ค.',
-    dayNum: 28,
-    isToday: false,
-    isPast: false,
-    status: 'none',
-    activityType: undefined,
-  },
-  {
-    date: '2026-08-29',
-    shortLabel: 'ส',
-    fullLabel: 'เสาร์ 29 ส.ค.',
-    dayNum: 29,
-    isToday: false,
-    isPast: false,
-    status: 'none',
-    activityType: undefined,
-  },
-  {
-    date: '2026-08-30',
-    shortLabel: 'อา',
-    fullLabel: 'อาทิตย์ 30 ส.ค.',
-    dayNum: 30,
-    isToday: false,
-    isPast: false,
-    status: 'none',
-    activityType: undefined,
-  },
-];
+/** GET /planner/week's response shape (apps/web/server/routes/planner-day-status/index.ts). */
+interface PlannerDayEntry {
+  planDate: string;
+  plannedActivityType?: ActivityPlanType;
+  isDefaultAuto: boolean;
+  isReadOnly: boolean;
+  isCheatRest: boolean;
+  completionStatus?: LogCompletionStatus;
+}
+
+const THAI_DAY_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']; // index = Date.getDay()
+
+function deriveStatus(entry: PlannerDayEntry): DayStatusValue {
+  if (entry.isCheatRest) return 'cheatrest';
+  if (entry.completionStatus === 'completed') return 'completed';
+  if (entry.completionStatus === 'incomplete') return 'missed';
+  return 'none';
+}
+
+function toDayPlan(entry: PlannerDayEntry, todayIso: string): DayPlan {
+  const date = new Date(`${entry.planDate}T00:00:00`);
+  const isToday = entry.planDate === todayIso;
+  return {
+    date: entry.planDate,
+    shortLabel: THAI_DAY_SHORT[date.getDay()]!,
+    fullLabel:
+      date.toLocaleDateString('th-TH', { weekday: 'long', day: 'numeric', month: 'short' }) +
+      (isToday ? ' (วันนี้)' : ''),
+    dayNum: date.getDate(),
+    isToday,
+    isPast: entry.planDate < todayIso,
+    isReadOnly: entry.isReadOnly,
+    status: deriveStatus(entry),
+    activityType: entry.plannedActivityType,
+  };
+}
+
+function weekRangeCaption(days: DayPlan[]): string {
+  if (days.length === 0) return '';
+  const first = new Date(`${days[0]!.date}T00:00:00`);
+  const last = new Date(`${days[days.length - 1]!.date}T00:00:00`);
+  const endLabel = last.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+  return `${first.getDate()} - ${endLabel} ${last.getFullYear()}`;
+}
 
 const ACTIVITY_CHIPS: { label: string; value: ActivityPlanType | undefined }[] = [
   { label: 'คาร์ดิโอ', value: 'cardio' },
@@ -130,50 +96,75 @@ const ACTIVITY_CHIPS: { label: string; value: ActivityPlanType | undefined }[] =
   { label: 'ปล่อยว่าง (แนะนำอัตโนมัติ)', value: undefined },
 ];
 
-function isReadOnlyDay(day: DayPlan): boolean {
-  return day.isPast && day.status !== 'none';
-}
-
 export default function PlannerScreen() {
   const navigate = useNavigate();
-  const [days, setDays] = useState<DayPlan[]>(INITIAL_WEEK);
+  const { user } = useAuth();
+  const [days, setDays] = useState<DayPlan[]>([]);
   const [openDate, setOpenDate] = useState<string | null>(null);
   const [draftActivity, setDraftActivity] = useState<ActivityPlanType | undefined>(undefined);
   const [draftCheat, setDraftCheat] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const openDay = days.find((d) => d.date === openDate) ?? null;
-  const readOnly = openDay ? isReadOnlyDay(openDay) : false;
+  const readOnly = openDay?.isReadOnly ?? false;
+  const cheatRestReadOnly = openDay?.isPast ?? false;
+
+  async function loadWeek() {
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const entries = await api.get<PlannerDayEntry[]>('/planner/week');
+    setDays(entries.map((entry) => toDayPlan(entry, todayIso)));
+  }
+
+  useEffect(() => {
+    // Wait for Firebase Auth to finish restoring the session (see api.ts —
+    // it reads auth.currentUser synchronously) before fetching.
+    if (!user) return;
+    loadWeek().catch(() => setDays([]));
+  }, [user]);
 
   function openSheet(day: DayPlan) {
     setOpenDate(day.date);
     setDraftActivity(day.activityType);
     setDraftCheat(day.status === 'cheatrest');
+    setError(null);
   }
 
   function closeSheet() {
     setOpenDate(null);
   }
 
-  function handleSave() {
-    if (!openDate || readOnly) {
+  async function handleSave() {
+    if (!openDate || !openDay || readOnly) {
       closeSheet();
       return;
     }
-    setDays((prev) =>
-      prev.map((d) =>
-        d.date === openDate
-          ? { ...d, activityType: draftActivity, status: draftCheat ? 'cheatrest' : 'none' }
-          : d,
-      ),
-    );
-    closeSheet();
+    setIsSaving(true);
+    setError(null);
+    try {
+      await api.put(`/planner/days/${openDate}`, { plannedActivityType: draftActivity });
+
+      const wasCheatRest = openDay.status === 'cheatrest';
+      if (draftCheat && !wasCheatRest) {
+        await api.post(`/planner/days/${openDate}/cheat-rest`);
+      } else if (!draftCheat && wasCheatRest) {
+        await api.delete(`/planner/days/${openDate}/cheat-rest`);
+      }
+
+      await loadWeek();
+      closeSheet();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   return (
     <ScreenContainer style={{ paddingTop: 24, gap: 24 }}>
       <View style={{ gap: 4 }}>
         <Text style={[typography.caption]}>แผนออกกำลังกาย</Text>
-        <Text style={typography.h1}>24 - 30 ส.ค. 2026</Text>
+        <Text style={typography.h1}>{weekRangeCaption(days) || 'กำลังโหลด...'}</Text>
       </View>
 
       <View style={styles.weekGrid}>
@@ -255,15 +246,21 @@ export default function PlannerScreen() {
             <View style={styles.toggleRow}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={typography.body}>Cheat Day / Rest Day</Text>
-                <Text style={typography.bodySm}>หยุดนับเป้าหมายแคลอรี่ของวันนี้ streak ไม่ขาด</Text>
+                <Text style={typography.bodySm}>
+                  {cheatRestReadOnly
+                    ? 'ตั้ง Cheat Day / Rest Day ย้อนหลังไม่ได้'
+                    : 'หยุดนับเป้าหมายแคลอรี่ของวันนี้ streak ไม่ขาด'}
+                </Text>
               </View>
-              <Switch value={draftCheat} onValueChange={setDraftCheat} disabled={readOnly} />
+              <Switch value={draftCheat} onValueChange={setDraftCheat} disabled={cheatRestReadOnly} />
             </View>
 
+            {error && <Text style={styles.errorText}>{error}</Text>}
+
             <Button
-              label={readOnly ? 'บันทึก (ปิดใช้งาน)' : 'บันทึก'}
+              label={readOnly ? 'บันทึก (ปิดใช้งาน)' : isSaving ? 'กำลังบันทึก...' : 'บันทึก'}
               onPress={handleSave}
-              disabled={readOnly}
+              disabled={readOnly || isSaving}
             />
           </View>
         </>

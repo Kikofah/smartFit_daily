@@ -7,6 +7,7 @@ export const workoutSessionScreenStyles = StyleSheet.create({
     aspectRatio: 16 / 9,
     backgroundColor: colors.ink,
     borderRadius: radius.lg,
+    overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing[6],

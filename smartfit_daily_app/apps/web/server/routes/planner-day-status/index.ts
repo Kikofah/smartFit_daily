@@ -2,23 +2,59 @@ import { Router } from 'express';
 import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
 import { recomputeStreak } from '../logging-streak/recomputeStreak';
-import type { ActivityPlanType } from '@smartfit/shared-types';
+import type { ActivityPlanType, LogCompletionStatus } from '@smartfit/shared-types';
 
 export const router = Router();
 
+function isoDate(daysOffset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  return d.toISOString().slice(0, 10);
+}
+
+interface PlannerDayEntry {
+  planDate: string;
+  plannedActivityType?: ActivityPlanType;
+  isDefaultAuto: boolean;
+  isReadOnly: boolean;
+  isCheatRest: boolean;
+  completionStatus?: LogCompletionStatus;
+}
+
 /**
  * GET /api/planner/week — PLN-1 / REQ-08
- * The read-only flag per day is NOT persisted — it's computed as
- * `planDate < today AND a dailyLog exists for the same date`
- * (database-schema.md §3.10).
+ * Merges weeklyPlanEntries + dayStatus + dailyLogs for the current Mon-Sun
+ * week (detailed-design/03-planner-logging.md's PLN-1 sequence diagram) —
+ * the read-only flag per day is NOT persisted, it's derived here as
+ * `planDate < today AND a dailyLog exists for the same date`.
  */
 router.get(
   '/planner/week',
   asyncHandler(async (req, res) => {
-    // TODO: fetch the current Mon-Sun week's weeklyPlanEntries + dailyLogs and
-    // merge in the derived isReadOnly flag per day.
-    const snapshot = await db.collection(`users/${req.userId}/weeklyPlanEntries`).get();
-    return res.json(snapshot.docs.map((d) => d.data()));
+    const today = isoDate(0);
+    const mondayOffset = -(((new Date().getDay() + 6) % 7)); // days back to this week's Monday
+
+    const week = await Promise.all(
+      Array.from({ length: 7 }, (_, i) => mondayOffset + i).map(async (dayOffset): Promise<PlannerDayEntry> => {
+        const date = isoDate(dayOffset);
+        const [planSnap, statusSnap, logSnap] = await Promise.all([
+          db.doc(`users/${req.userId}/weeklyPlanEntries/${date}`).get(),
+          db.doc(`users/${req.userId}/dayStatus/${date}`).get(),
+          db.doc(`users/${req.userId}/dailyLogs/${date}`).get(),
+        ]);
+
+        return {
+          planDate: date,
+          plannedActivityType: planSnap.data()?.plannedActivityType,
+          isDefaultAuto: planSnap.data()?.isDefaultAuto ?? true,
+          isReadOnly: date < today && logSnap.exists,
+          isCheatRest: statusSnap.data()?.isCheatRest ?? false,
+          completionStatus: logSnap.data()?.completionStatus,
+        };
+      }),
+    );
+
+    return res.json(week);
   }),
 );
 
@@ -55,6 +91,12 @@ router.post(
   asyncHandler<{ date: string }>(async (req, res) => {
     const { date } = req.params;
     const today = new Date().toISOString().slice(0, 10);
+
+    // Unlike PUT /planner/days/:date, this has NO exception for a past day
+    // with no log yet — PLN-2's algorithm step 1 rejects any past day outright.
+    if (date < today) {
+      return res.status(409).json({ error: 'Past days are read-only — Cheat/Rest cannot be set retroactively.' });
+    }
     if (date !== today) {
       const log = await db.doc(`users/${req.userId}/dailyLogs/${date}`).get();
       if (log.exists) {
