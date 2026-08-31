@@ -10,6 +10,12 @@ import { typography } from '../src/constants/theme';
  * This companion app's main screen (see app/_layout.tsx — trimmed
  * 2026-08-29 when the rest of the product moved to apps/web). Must show a
  * consent prompt before connecting (NFR-05) — no auto-connect.
+ *
+ * The manual weight-entry fallback (when Bluetooth fails) lives in
+ * apps/web/client/src/pages/ProfileScreen.tsx instead, not here — it needs
+ * no native capability, and testing/using it through this Expo app wasn't
+ * practical, so it moved to the web app the rest of the product already
+ * lives in.
  */
 export default function DevicePairingScreen() {
   const router = useRouter();

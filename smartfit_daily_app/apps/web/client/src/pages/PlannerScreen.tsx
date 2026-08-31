@@ -8,6 +8,7 @@ import { Switch } from '../components/Switch';
 import { IconCheck, IconDashedCircle } from '../components/Icon';
 import { api } from '../services/api';
 import { useAuth } from '../store/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 import { colors, spacing, typography } from '../constants/theme';
 import type { ActivityPlanType, LogCompletionStatus } from '@smartfit/shared-types';
 import { plannerScreenStyles as styles } from './styles';
@@ -99,6 +100,8 @@ const ACTIVITY_CHIPS: { label: string; value: ActivityPlanType | undefined }[] =
 export default function PlannerScreen() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { profile } = useProfile();
+  const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal;
   const [days, setDays] = useState<DayPlan[]>([]);
   const [openDate, setOpenDate] = useState<string | null>(null);
   const [draftActivity, setDraftActivity] = useState<ActivityPlanType | undefined>(undefined);
@@ -182,6 +185,7 @@ export default function PlannerScreen() {
               {day.status === 'completed' && <IconCheck size={16} color={colors.sage} />}
               {day.status === 'cheatrest' && <IconDashedCircle size={16} color={colors.sand} />}
             </View>
+            {goalKcal !== undefined && <Text style={styles.dayKcal}>{goalKcal}{'\n'}kcal</Text>}
           </Pressable>
         ))}
       </View>

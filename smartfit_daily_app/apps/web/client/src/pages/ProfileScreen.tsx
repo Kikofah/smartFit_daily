@@ -4,11 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { Input } from '../components/Input';
 import { IconProfile } from '../components/Icon';
 import { useAuth } from '../store/AuthContext';
 import { logout } from '../services/authService';
 import { api } from '../services/api';
-import { colors, typography } from '../constants/theme';
+import { colors, spacing, typography } from '../constants/theme';
 import { profileScreenStyles as styles } from './styles';
 
 /**
@@ -47,6 +48,11 @@ export default function ProfileScreen() {
   const { user } = useAuth();
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [weightKgInput, setWeightKgInput] = useState('');
+  const [manualEntryError, setManualEntryError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncedMessage, setSyncedMessage] = useState<string | null>(null);
 
   const providerId = user?.providerData?.[0]?.providerId;
   const methodLabel = (providerId && METHOD_LABELS[providerId]) || 'เข้าสู่ระบบอยู่';
@@ -63,6 +69,28 @@ export default function ProfileScreen() {
       setError(null);
     } catch (e) {
       setError((e as Error).message);
+    }
+  }
+
+  async function handleManualWeightSync() {
+    const weightKg = Number(weightKgInput);
+    if (!weightKgInput || Number.isNaN(weightKg) || weightKg <= 0) {
+      setManualEntryError('กรุณากรอกน้ำหนักเป็นตัวเลขที่มากกว่า 0');
+      return;
+    }
+
+    setIsSyncing(true);
+    setManualEntryError(null);
+    try {
+      // Same endpoint a real smart-scale sync would call — only `source` differs (REQ-12).
+      await api.post('/integrations/smart-scale/sync', { weightKg, source: 'manual' });
+      setSyncedMessage(`บันทึกน้ำหนัก ${weightKg} กก. แล้ว`);
+      setShowManualEntry(false);
+      setWeightKgInput('');
+    } catch (e) {
+      setManualEntryError((e as Error).message);
+    } finally {
+      setIsSyncing(false);
     }
   }
 
@@ -102,9 +130,42 @@ export default function ProfileScreen() {
           )}
           {error && <Text style={[typography.bodySm, { color: colors.danger }]}>{error}</Text>}
         </Card>
-        <Text style={[typography.caption, styles.deviceNote]}>
-          ไม่เชื่อมต่อก็ใช้แอปได้ปกติ — กรอกน้ำหนักเองได้เสมอ และแคลอรี่เผาผลาญยังคำนวณจากสูตร MET ได้
-        </Text>
+        {!showManualEntry ? (
+          <Pressable
+            onPress={() => {
+              setSyncedMessage(null);
+              setShowManualEntry(true);
+            }}
+          >
+            <Text style={[typography.caption, styles.deviceNote, { textDecorationLine: 'underline' }]}>
+              ไม่เชื่อมต่อก็ใช้แอปได้ปกติ — กรอกน้ำหนักเองได้เสมอ และแคลอรี่เผาผลาญยังคำนวณจากสูตร MET ได้
+            </Text>
+          </Pressable>
+        ) : (
+          <Card style={{ marginTop: spacing[3], gap: spacing[3] }}>
+            <Input
+              label="น้ำหนักปัจจุบัน (กก.)"
+              value={weightKgInput}
+              onChangeText={setWeightKgInput}
+              keyboardType="decimal-pad"
+              placeholder="เช่น 65.5"
+              error={manualEntryError ?? undefined}
+            />
+            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  label={isSyncing ? 'กำลังบันทึก...' : 'บันทึกน้ำหนัก'}
+                  onPress={handleManualWeightSync}
+                  disabled={isSyncing}
+                />
+              </View>
+              <Button label="ยกเลิก" variant="ghost" onPress={() => setShowManualEntry(false)} />
+            </View>
+          </Card>
+        )}
+        {syncedMessage && (
+          <Text style={[typography.bodySm, { color: colors.success, marginTop: spacing[2] }]}>{syncedMessage}</Text>
+        )}
       </View>
 
       <View>

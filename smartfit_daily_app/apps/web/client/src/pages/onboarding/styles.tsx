@@ -19,15 +19,6 @@ export const goalConfirmScreenStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  warningNote: {
-    flexDirection: 'row',
-    gap: spacing[2],
-    backgroundColor: colors.paperSunken,
-    borderRadius: radius.md,
-    padding: spacing[3],
-    marginTop: spacing[4],
-  },
-  warningText: { ...typography.bodySm, color: colors.warning, flex: 1 },
   errorText: { ...typography.caption, color: colors.danger, marginTop: spacing[1] },
 });
 

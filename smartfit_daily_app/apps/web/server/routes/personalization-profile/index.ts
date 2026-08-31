@@ -65,9 +65,13 @@ interface UpdateGoalRequest {
   dailyCalorieTargetKcal: number;
 }
 
-const SAFETY_FLOOR_MIN_KCAL = 1200; // exact value tied to sex/age band — see log 2026-08-27
-
-/** PUT /api/profile/goal — ONB-3 / REQ-02 */
+/**
+ * PUT /api/profile/goal — ONB-3 / REQ-02
+ * `dailyCalorieTargetKcal` is computed client-side (NFR-01/03) as
+ * weightKg × a per-goalType kcal/kg multiplier — see GoalConfirmScreen.tsx.
+ * No safety floor: that concept only made sense for the old TDEE±delta
+ * (diet-style net energy-balance) formula, not a pure exercise-burn target.
+ */
 router.put(
   '/profile/goal',
   asyncHandler(async (req, res) => {
@@ -76,11 +80,7 @@ router.put(
       return res.status(400).json({ error: 'targetWeightKg is required for goalType "lose_weight".' });
     }
 
-    const isSafetyFloorApplied = body.dailyCalorieTargetKcal <= SAFETY_FLOOR_MIN_KCAL;
-    await db.doc(`users/${req.userId}`).set(
-      { goalSelection: { ...body, isSafetyFloorApplied } },
-      { merge: true },
-    );
+    await db.doc(`users/${req.userId}`).set({ goalSelection: body }, { merge: true });
     return res.status(204).send();
   }),
 );

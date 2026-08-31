@@ -12,31 +12,35 @@ import { colors, spacing, typography } from '../../constants/theme';
 import { goalConfirmScreenStyles as styles } from './styles';
 import type { GoalType } from '@smartfit/shared-types';
 
-const GOAL_META: Record<GoalType, { label: string; delta: number; formula: string }> = {
-  lose_weight: { label: 'ลดน้ำหนัก', delta: -500, formula: 'TDEE − 500 kcal/วัน' },
-  tone_up: { label: 'กระชับสัดส่วน', delta: 0, formula: 'TDEE + 0 kcal/วัน (maintenance)' },
-  build_endurance: { label: 'เพิ่มความอึด', delta: 300, formula: 'TDEE + 300 kcal/วัน' },
+/**
+ * kcal to burn via exercise per kg of current body weight per day —
+ * confirmed 2026-08-31, replacing the previous TDEE±delta formula. That one
+ * represented a diet-style net energy-balance target (with a 1,200–1,500
+ * kcal "minimum safe daily intake" safety floor), which never actually fit
+ * this app: it tracks exercise burn only, no food intake at all, so there's
+ * no intake floor to protect against here. These multipliers instead land
+ * in the same range as a single real workout session already estimates
+ * elsewhere in the app (~150–350 kcal for a typical 20–30 min session),
+ * scaled by weight the same way MET-based calorie burn already is.
+ */
+const GOAL_META: Record<GoalType, { label: string; kcalPerKg: number }> = {
+  lose_weight: { label: 'ลดน้ำหนัก', kcalPerKg: 4.5 },
+  tone_up: { label: 'กระชับสัดส่วน', kcalPerKg: 3.0 },
+  build_endurance: { label: 'เพิ่มความอึด', kcalPerKg: 5.5 },
 };
 
 /**
- * เกณฑ์ขั้นต่ำที่ใช้แสดงผลฝั่ง client ต้องตรงกับ SAFETY_FLOOR_MIN_KCAL ฝั่ง server
- * (server/routes/personalization-profile/index.ts) — REQ-02 ยืนยันช่วง 1,200-1,500 kcal/วัน
- * แต่ยังไม่ระบุว่าใช้ปลายไหนกับ profile แบบไหน (เช่น แยกตามเพศ) ถือเป็น open point รอ product/eng ตัดสินใจ
- */
-const SAFETY_FLOOR_MIN_KCAL = 1200;
-
-/**
  * ONB-3 (part b) · REQ-02 — mirrors v1/04-onboarding-goal-confirm.html (step 4 of 4, final).
- * Unlike the prototype's illustrative EXAMPLE_TDEE placeholder, this uses the
- * real tdeeKcal computed on step 1 (threaded via onboardingDraft). Completes
- * onboarding via PUT /api/profile/goal, then navigates to "/".
+ * Uses the real weightKg from step 1 (threaded via onboardingDraft) to
+ * compute the daily exercise-calorie target. Completes onboarding via
+ * PUT /api/profile/goal, then navigates to "/".
  */
 export default function GoalConfirmScreen() {
   const navigate = useNavigate();
   const { profile, isLoading } = useOutletContext<OnboardingContext>();
   const savedGoalSelection = profile?.goalSelection;
   const goalType = onboardingDraft.goalType ?? savedGoalSelection?.goalType;
-  const tdeeKcal = onboardingDraft.tdeeKcal ?? profile?.tdeeKcal;
+  const weightKg = onboardingDraft.weightKg ?? profile?.weightKg;
   const [targetWeightKg, setTargetWeightKg] = useState<number | null>(null);
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,21 +55,19 @@ export default function GoalConfirmScreen() {
     if (isLoading) return;
     if (!goalType) {
       navigate('/onboarding/goal-select', { replace: true });
-    } else if (tdeeKcal === undefined) {
+    } else if (weightKg === undefined) {
       navigate('/onboarding/personal-info', { replace: true });
     }
-  }, [isLoading, goalType, tdeeKcal, navigate]);
+  }, [isLoading, goalType, weightKg, navigate]);
 
   const computed = useMemo(() => {
-    if (!goalType || tdeeKcal === undefined) return null;
+    if (!goalType || weightKg === undefined) return null;
     const goal = GOAL_META[goalType];
-    const raw = tdeeKcal + goal.delta;
-    const isSafetyFloorApplied = raw <= SAFETY_FLOOR_MIN_KCAL;
-    const dailyCalorieTargetKcal = isSafetyFloorApplied ? SAFETY_FLOOR_MIN_KCAL : raw;
-    return { goal, raw, isSafetyFloorApplied, dailyCalorieTargetKcal };
-  }, [goalType, tdeeKcal]);
+    const dailyCalorieTargetKcal = Math.round(weightKg * goal.kcalPerKg);
+    return { goal, dailyCalorieTargetKcal };
+  }, [goalType, weightKg]);
 
-  if (!goalType || tdeeKcal === undefined || !computed) return null;
+  if (!goalType || weightKg === undefined || !computed) return null;
 
   const targetWeightRequired = goalType === 'lose_weight';
   const targetWeightValid = targetWeightRequired
@@ -102,7 +104,7 @@ export default function GoalConfirmScreen() {
 
       <Text style={typography.h1}>เป้าหมายแคลอรี่รายวันของคุณ</Text>
       <Text style={[typography.body, { color: colors.inkMuted, marginTop: spacing[2] }]}>
-        คำนวณจาก TDEE โดยประมาณของคุณและเป้าหมายที่เลือก — ตัวเลขนี้คือพลังงานที่แนะนำให้ได้รับต่อวัน
+        คำนวณจากน้ำหนักตัวปัจจุบันของคุณและเป้าหมายที่เลือก — ตัวเลขนี้คือแคลอรี่ที่ควรเผาผลาญจากการออกกำลังกายต่อวัน
       </Text>
 
       <View style={[styles.summaryCard, { marginTop: spacing[8] }]}>
@@ -113,32 +115,14 @@ export default function GoalConfirmScreen() {
 
       <View style={{ marginTop: spacing[6] }}>
         <View style={styles.breakdownRow}>
-          <Text style={typography.bodySm}>TDEE โดยประมาณ</Text>
-          <Text style={typography.body}>{fmt(tdeeKcal)} kcal</Text>
-        </View>
-        <View style={styles.breakdownRow}>
-          <Text style={typography.bodySm}>สูตรตามเป้าหมาย</Text>
-          <Text style={typography.body}>{computed.goal.formula}</Text>
+          <Text style={typography.bodySm}>น้ำหนักตัวปัจจุบัน</Text>
+          <Text style={typography.body}>{fmt(weightKg)} กก.</Text>
         </View>
         <View style={[styles.breakdownRow, { borderBottomWidth: 0 }]}>
-          <Text style={typography.bodySm}>ค่าที่คำนวณได้</Text>
-          <Text style={typography.body}>{fmt(computed.raw)} kcal</Text>
+          <Text style={typography.bodySm}>สูตรตามเป้าหมาย</Text>
+          <Text style={typography.body}>{computed.goal.kcalPerKg} kcal/กก.</Text>
         </View>
       </View>
-
-      {computed.isSafetyFloorApplied && (
-        <View style={styles.warningNote}>
-          <WarningIcon />
-          <Text style={styles.warningText}>
-            ค่าที่คำนวณได้ต่ำกว่าเกณฑ์ขั้นต่ำเพื่อความปลอดภัยของร่างกาย ระบบจึงปรับเป็น{' '}
-            <Text style={{ fontWeight: '600' }}>{fmt(SAFETY_FLOOR_MIN_KCAL)}</Text> kcal/วันแทน
-          </Text>
-        </View>
-      )}
-
-      <Text style={[typography.caption, { marginTop: spacing[4] }]}>
-        ทุกเป้าหมายจะไม่ถูกปรับให้ต่ำกว่า 1,200–1,500 kcal/วัน เพื่อความปลอดภัยของร่างกาย ไม่ว่าผลคำนวณจะออกมาเท่าไหร่
-      </Text>
 
       <View style={{ marginTop: spacing[6] }}>
         <Stepper
@@ -171,20 +155,5 @@ export default function GoalConfirmScreen() {
         <Button label="เริ่มใช้งาน" onPress={handleStart} />
       </View>
     </ScreenContainer>
-  );
-}
-
-function WarningIcon() {
-  return (
-    <svg width={20} height={20} viewBox="0 0 20 20" fill="none" style={{ marginTop: 2, flexShrink: 0 }}>
-      <path d="M10 7.2V11.3" stroke={colors.warning} strokeWidth={1.5} strokeLinecap="round" />
-      <circle cx={10} cy={13.9} r={0.9} fill={colors.warning} />
-      <path
-        d="M8.8 2.9c.5-.9 1.9-.9 2.4 0l6.9 12.1c.5.9-.1 2-1.2 2H3.1c-1.1 0-1.7-1.1-1.2-2L8.8 2.9z"
-        stroke={colors.warning}
-        strokeWidth={1.3}
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }

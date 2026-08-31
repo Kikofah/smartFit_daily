@@ -3,6 +3,7 @@ import { AuthProvider } from './store/AuthContext';
 import { TabsLayout } from './layouts/TabsLayout';
 import { OnboardingLayout } from './layouts/OnboardingLayout';
 import { RequireAuth } from './layouts/RequireAuth';
+import { RequireOnboarding } from './layouts/RequireOnboarding';
 
 import WelcomeScreen from './pages/auth/WelcomeScreen';
 import SignupScreen from './pages/auth/SignupScreen';
@@ -27,12 +28,12 @@ import LogHistoryScreen from './pages/LogHistoryScreen';
  *
  * Everything past the auth screens is wrapped in <RequireAuth> — typing a
  * protected URL directly while signed out now redirects to /welcome instead
- * of rendering the screen anyway (see useRequireAuth).
- *
- * TODO (same gap as the old apps/mobile/app/_layout.tsx had): this only
- * covers "signed in or not" — it still doesn't redirect between onboarding
- * and the main app based on profile-completeness, so a signed-in user who
- * hasn't finished ONB-1/2/3 yet can still navigate straight to "/".
+ * of rendering the screen anyway (see useRequireAuth). Everything past
+ * onboarding (tabs, workout, log history) is further wrapped in
+ * <RequireOnboarding> — a signed-in user who hasn't finished ONB-1/2/3 yet
+ * gets redirected to whichever step is next instead of reaching "/" directly
+ * (see useRequireOnboarding). Onboarding itself is intentionally NOT wrapped
+ * in RequireOnboarding, since it has to stay reachable mid-onboarding.
  */
 export function App() {
   return (
@@ -52,16 +53,18 @@ export function App() {
               <Route path="/onboarding/goal-confirm" element={<GoalConfirmScreen />} />
             </Route>
 
-            <Route element={<TabsLayout />}>
-              <Route path="/" element={<DailyDashboardScreen />} />
-              <Route path="/planner" element={<PlannerScreen />} />
-              <Route path="/progress" element={<ProgressScreen />} />
-              <Route path="/profile" element={<ProfileScreen />} />
-            </Route>
+            <Route element={<RequireOnboarding />}>
+              <Route element={<TabsLayout />}>
+                <Route path="/" element={<DailyDashboardScreen />} />
+                <Route path="/planner" element={<PlannerScreen />} />
+                <Route path="/progress" element={<ProgressScreen />} />
+                <Route path="/profile" element={<ProfileScreen />} />
+              </Route>
 
-            <Route path="/workout/session" element={<WorkoutSessionScreen />} />
-            <Route path="/workout/result" element={<WorkoutResultScreen />} />
-            <Route path="/log-history" element={<LogHistoryScreen />} />
+              <Route path="/workout/session" element={<WorkoutSessionScreen />} />
+              <Route path="/workout/result" element={<WorkoutResultScreen />} />
+              <Route path="/log-history" element={<LogHistoryScreen />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>

@@ -58,12 +58,20 @@ request — but nothing that needs Firestore/Auth admin access will work). Pick 
 Either way, keep `FIREBASE_PROJECT_ID` set in `apps/web/.env` too — the Admin SDK needs it to
 validate a token's audience claim even before it gets to the credentials check.
 
+### Video recommendation (REC-1) credentials
+
+`GET`/`POST /workouts/today/recommendation` (the daily YouTube video pick) needs two more keys in
+`apps/web/.env` beyond Firebase — `YOUTUBE_API_KEY` (YouTube Data API v3, Google Cloud Console) and
+`GEMINI_API_KEY` (Google AI Studio, aistudio.google.com — separate from a Gemini Advanced/Google One
+subscription, which doesn't grant API access). Without them the route fails gracefully (a caught
+error, not a crash) and the dashboard shows its loading/error state instead of a video. See
+`apps/web/.env.example`'s inline comments for exactly where to get each key.
+
 ### Seeding sample data
 
 `apps/web/scripts/seedSampleUsers.ts` creates 5 realistic sample accounts (varied goals, streaks,
-and integration states — including one that exercises the ONB-3 safety-floor path and one fresh
-account with no data yet, for testing empty states) directly in whichever Firebase project
-`apps/web/client/.env` points at:
+and integration states — including one fresh account with no data yet, for testing empty states)
+directly in whichever Firebase project `apps/web/client/.env` points at:
 
 ```bash
 npm run seed:sample-users --workspace apps/web
@@ -73,6 +81,18 @@ It authenticates via the client SDK (each sample user signs itself up, then writ
 documents), so it needs no Admin SDK credentials — see the script's own header comment for details.
 Safe to re-run: existing sample accounts sign in instead of re-signing up, and every write is an
 idempotent overwrite.
+
+`apps/web/scripts/seedWeightRecords.ts` adds 5 sample `weightRecords` for one *existing* user (by
+Firebase Auth UID) — useful for exercising `GET /insights/weight-records` and the Progress screen's
+trend chart without waiting on a real INT-2 smart-scale sync:
+
+```bash
+npm run seed:weight-records --workspace apps/web -- <userId>
+```
+
+Unlike `seedSampleUsers.ts`, this one uses `firebase-admin` directly (so it needs the Admin SDK
+credentials set up above) and isn't idempotent — re-running it for the same user adds duplicate
+records rather than skipping them, since each write is a plain `.add()`.
 
 ## Status
 
@@ -88,9 +108,23 @@ progress/profile flows is built out against the [`v1` prototypes](docs/02-design
 and [`DESIGN.md`](docs/02-design/01-prototypes/DESIGN.md), sharing a component library in
 `apps/web/client/src/components/` (`Button`, `Card`, `Input`, `Stepper`, `Chip`, `Switch`,
 `CalorieRing`, `VideoCard`, `StreakBadge`, `EmptyState`, `ProgressDots`, `Icon`), and most of it is
-wired to real `apps/web/server` routes backed by Firestore rather than mock data. REC-1/REC-3's
-video recommendation (`GET`/`POST` under `/workouts/today/recommendation`) is fully implemented —
-YouTube Data API v3 supplies candidates, Google Gemini (`gemini-3.6-flash`) ranks/picks the best
-match and estimates its intensity/calories, cached per user per day. One known gap remains: the
-Google/Apple buttons on the auth screens are UI-only stubs with no real OAuth popup flow wired up
-yet.
+wired to real `apps/web/server` routes backed by Firestore rather than mock data:
+
+- **REC-1/REC-3** (video recommendation, `GET`/`POST` under `/workouts/today/recommendation`) —
+  YouTube Data API v3 supplies candidates (embeddable ones only), Google Gemini (`gemini-3.6-flash`)
+  ranks/picks the best match and estimates its intensity/calories, cached per user per day. The
+  workout-session screen plays the real pick back via the official YouTube IFrame Player API, with
+  the session timer pausing/resuming in sync with the video's own play/pause state.
+- **PLN-3/PLN-4** (all-or-nothing daily logging + streak) — completing a workout session accumulates
+  that day's kcal against the daily target (`completionStatus` flips to "ครบเป้าหมาย" once it's met,
+  no partial credit), and the streak is recomputed by walking backward day-by-day from today until
+  the first gap.
+- **INT-1** (weight forecast) — `GET /insights/forecast` computes a real forecasted goal date from
+  the average daily calorie deficit actually logged plus the latest weight record, and
+  `GET /insights/weight-records` feeds the Progress screen's real trend chart (both cached/read from
+  the `weightRecords` subcollection instead of mock data).
+- Every protected route now redirects to `/welcome` if no one is signed in (`useRequireAuth`), which
+  also fixes the "typed a protected URL directly while signed out" gap the routing previously had.
+
+One known gap remains: the Google/Apple buttons on the auth screens are UI-only stubs with no real
+OAuth popup flow wired up yet.

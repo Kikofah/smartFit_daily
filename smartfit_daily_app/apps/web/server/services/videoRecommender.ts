@@ -16,9 +16,21 @@ const PickedVideoSchema = z.object({
   externalVideoId: z.string(),
   activityType: z.enum(['cardio', 'strength', 'hiit']),
   intensity: z.enum(['low', 'medium', 'high']),
-  estimatedKcal: z.number(),
   includesWarmupCooldown: z.boolean(),
 });
+
+/**
+ * kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05 — mirrors
+ * WorkoutSessionScreen.tsx's MET_TABLE exactly, so the "≈ X kcal" shown on
+ * the dashboard before starting matches what a completed session actually
+ * logs. Deliberately independent of the user's remaining/goal kcal — this
+ * is what the video itself burns, not a number picked to fit the goal.
+ */
+const MET_TABLE: Record<PickedVideo['activityType'], Record<PickedVideo['intensity'], number>> = {
+  cardio: { low: 4, medium: 6, high: 8 },
+  strength: { low: 3, medium: 4.5, high: 6 },
+  hiit: { low: 6, medium: 8, high: 10 },
+};
 
 export interface PickedVideo {
   externalVideoId: string;
@@ -42,6 +54,7 @@ export async function pickBestVideo(
   candidates: YoutubeCandidate[],
   remainingKcal: number,
   equipmentTypes: EquipmentType[],
+  weightKg: number,
 ): Promise<PickedVideo | null> {
   if (candidates.length === 0) return null;
 
@@ -55,7 +68,7 @@ export async function pickBestVideo(
 Remaining calorie target for today: ${remainingKcal} kcal.
 Equipment available: ${equipmentTypes.length > 0 ? equipmentTypes.join(', ') : 'none'}.
 
-Only pick a video whose equipment needs (inferred from its title/description) match what's available — if equipment is "none", only pick bodyweight/no-equipment videos. Estimate intensity and calorie burn from the title, description, and duration alone (view/like counts aren't shown and shouldn't factor in).
+Only pick a video whose equipment needs (inferred from its title/description) match what's available — if equipment is "none", only pick bodyweight/no-equipment videos. Estimate intensity from the title, description, and duration alone (view/like counts aren't shown and shouldn't factor in) — pick whichever intensity best fits the remaining calorie target.
 
 Candidates:
 ${JSON.stringify(
@@ -87,13 +100,16 @@ ${JSON.stringify(
   const candidate = candidates.find((c) => c.externalVideoId === parsed.data.externalVideoId);
   if (!candidate) return null; // guard against a hallucinated id
 
+  const metValue = MET_TABLE[parsed.data.activityType][parsed.data.intensity];
+  const estimatedKcal = Math.round(metValue * weightKg * (candidate.durationMinutes / 60));
+
   return {
     externalVideoId: parsed.data.externalVideoId,
     title: candidate.title,
     durationMinutes: candidate.durationMinutes,
     activityType: parsed.data.activityType,
     intensity: parsed.data.intensity,
-    estimatedKcal: parsed.data.estimatedKcal,
+    estimatedKcal,
     includesWarmupCooldown: parsed.data.includesWarmupCooldown,
   };
 }

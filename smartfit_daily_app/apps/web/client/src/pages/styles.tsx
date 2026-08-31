@@ -21,6 +21,7 @@ export const plannerScreenStyles = StyleSheet.create({
   dayLabel: { ...typography.caption, color: colors.inkMuted },
   dayNum: { ...typography.body, fontWeight: '500' },
   dayIcon: { width: 16, height: 16, alignItems: 'center', justifyContent: 'center' },
+  dayKcal: { fontSize: 10, lineHeight: 12, color: colors.inkFaint, textAlign: 'center' },
   legendRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
   legendSwatch: {
     width: 20,

@@ -69,8 +69,8 @@ const ACTIVITY_FACTOR: Record<ActivityLevel, number> = {
   very_active: 1.9,
 };
 
-const GOAL_DELTA: Record<GoalType, number> = { lose_weight: -500, tone_up: 0, build_endurance: 300 };
-const SAFETY_FLOOR_MIN_KCAL = 1200;
+// Mirrors GoalConfirmScreen.tsx's ONB-3 formula — weightKg-based, not TDEE-based (confirmed 2026-08-31).
+const GOAL_KCAL_PER_KG: Record<GoalType, number> = { lose_weight: 4.5, tone_up: 3.0, build_endurance: 5.5 };
 
 function computeTdeeKcal(sex: Sex, weightKg: number, heightCm: number, age: number, activityLevel: ActivityLevel) {
   const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === 'male' ? 5 : -161);
@@ -210,7 +210,7 @@ const SAMPLE_USERS: SampleUser[] = [
     sex: 'male',
     weightKg: 90,
     heightCm: 168,
-    activityLevel: 'sedentary', // low TDEE on purpose — exercises the safety-floor path (ONB-3/REQ-02)
+    activityLevel: 'sedentary',
     equipmentTypes: ['none'],
     goalType: 'lose_weight',
     targetWeightKg: 78,
@@ -248,14 +248,11 @@ const SAMPLE_USERS: SampleUser[] = [
   },
 ];
 
-function buildGoalSelection(user: SampleUser, tdeeKcal: number) {
-  const raw = tdeeKcal + GOAL_DELTA[user.goalType];
-  const isSafetyFloorApplied = raw <= SAFETY_FLOOR_MIN_KCAL;
+function buildGoalSelection(user: SampleUser) {
   return {
     goalType: user.goalType,
     ...(user.targetWeightKg !== undefined ? { targetWeightKg: user.targetWeightKg } : {}),
-    dailyCalorieTargetKcal: isSafetyFloorApplied ? SAFETY_FLOOR_MIN_KCAL : raw,
-    isSafetyFloorApplied,
+    dailyCalorieTargetKcal: Math.round(user.weightKg * GOAL_KCAL_PER_KG[user.goalType]),
   };
 }
 
@@ -288,7 +285,7 @@ async function seedUser(user: SampleUser) {
     activityLevel: user.activityLevel,
     tdeeKcal,
     equipmentTypes: user.equipmentTypes,
-    goalSelection: buildGoalSelection(user, tdeeKcal),
+    goalSelection: buildGoalSelection(user),
     streakSnapshot: { currentStreakDays: streakDays, computedAt: new Date().toISOString() },
     ...(user.goalType === 'lose_weight' && user.weightRecords.length >= 2
       ? {

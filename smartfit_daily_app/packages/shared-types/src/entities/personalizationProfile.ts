@@ -42,11 +42,17 @@ export interface UserProfile {
   };
 }
 
-/** Embedded map field `goalSelection` inside `users/{userId}` — no id/userProfileId (§8.2). */
+/**
+ * Embedded map field `goalSelection` inside `users/{userId}` — no id/userProfileId (§8.2).
+ * `dailyCalorieTargetKcal` is a pure exercise-burn target (weightKg × a
+ * per-goalType kcal/kg multiplier — confirmed 2026-08-31), not a TDEE-based
+ * net energy-balance figure, since this app tracks exercise burn only (no
+ * food-intake logging) — so there's no "minimum safe daily intake" concept
+ * to floor against here.
+ */
 export interface GoalSelection {
   goalType: GoalType;
   /** Required when goalType === 'lose_weight'. */
   targetWeightKg?: number;
   dailyCalorieTargetKcal: number;
-  isSafetyFloorApplied: boolean;
 }

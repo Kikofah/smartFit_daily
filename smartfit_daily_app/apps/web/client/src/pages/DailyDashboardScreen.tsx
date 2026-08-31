@@ -116,7 +116,12 @@ export default function DailyDashboardScreen() {
 
   async function handleStart() {
     if (!video) return;
-    const { sessionId } = await api.post<{ sessionId: string }>('/workouts/sessions');
+    const { sessionId } = await api.post<{ sessionId: string }>('/workouts/sessions', {
+      externalVideoId: video.externalVideoId,
+      activityType: video.activityType,
+      intensity: video.intensity,
+      durationMinutes: video.durationMinutes,
+    });
     const videoDraft: WorkoutVideoDraft = {
       externalVideoId: video.externalVideoId,
       title: video.title,

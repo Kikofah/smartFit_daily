@@ -3,9 +3,13 @@ import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
 import { searchWorkoutVideos } from '../../services/youtube';
 import { pickBestVideo, type PickedVideo } from '../../services/videoRecommender';
-import type { EquipmentType } from '@smartfit/shared-types';
+import type { ActivityType, EquipmentType, Intensity, SessionVideo } from '@smartfit/shared-types';
 
 export const router = Router();
+
+// Mirrors WorkoutSessionScreen.tsx's own warmup/cooldown stage timing exactly.
+const WARMUP_MINUTES = 3;
+const COOLDOWN_MINUTES = 3;
 
 /** Maps the user's equipment profile to a YouTube search query — ONB-2/REQ-03. */
 function buildSearchQuery(equipmentTypes: EquipmentType[]): string {
@@ -25,13 +29,14 @@ async function computeRecommendation(userId: string, excludeIds: string[]): Prom
   const profile = (await db.doc(`users/${userId}`).get()).data();
   const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
   const equipmentTypes: EquipmentType[] = profile?.equipmentTypes ?? [];
+  const weightKg = profile?.weightKg ?? 60;
 
   const today = new Date().toISOString().slice(0, 10);
   const accumulatedKcal = (await db.doc(`users/${userId}/dailyLogs/${today}`).get()).data()?.accumulatedKcal ?? 0;
   const remainingKcal = Math.max(goalKcal - accumulatedKcal, 0);
 
   const candidates = await searchWorkoutVideos(buildSearchQuery(equipmentTypes), excludeIds);
-  return pickBestVideo(candidates, remainingKcal, equipmentTypes);
+  return pickBestVideo(candidates, remainingKcal, equipmentTypes, weightKg);
 }
 
 /**
@@ -97,16 +102,39 @@ router.post(
   }),
 );
 
-/** POST /api/workouts/sessions — REC-1, REC-4 / REQ-04, REQ-07 */
+/**
+ * POST /api/workouts/sessions — REC-1, REC-4 / REQ-04, REQ-07
+ * Writes 1 sessionVideos row (role: main) normally, or 3 (warmup/main/cooldown,
+ * per detailed-design/02-daily-youtube-recommendation.md's REC-4 sequence
+ * diagram) when the picked video's intensity is "high" — same externalVideoId
+ * throughout, since warmup/cooldown are time segments of the one continuous
+ * video (see WorkoutSessionScreen.tsx's stage timer), not separate clips.
+ */
 router.post(
   '/workouts/sessions',
   asyncHandler(async (req, res) => {
+    const { externalVideoId, activityType, intensity, durationMinutes } = req.body as {
+      externalVideoId: string;
+      activityType: ActivityType;
+      intensity: Intensity;
+      durationMinutes: number;
+    };
+
+    const mainVideo: SessionVideo = { role: 'main', externalVideoId, activityType, intensity, durationMinutes };
+    const sessionVideos: SessionVideo[] =
+      intensity === 'high'
+        ? [
+            { role: 'warmup', externalVideoId, activityType, intensity, durationMinutes: WARMUP_MINUTES },
+            mainVideo,
+            { role: 'cooldown', externalVideoId, activityType, intensity, durationMinutes: COOLDOWN_MINUTES },
+          ]
+        : [mainVideo];
+
     const sessionRef = db.collection(`users/${req.userId}/workoutSessions`).doc();
     await sessionRef.set({
       startedAt: new Date().toISOString(),
       status: 'in_progress',
-      // TODO: also write the 1-3 sessionVideos entries (main + warmup/cooldown
-      // if intensity is high) — see database-schema.md §8.2.
+      sessionVideos,
     });
 
     return res.status(201).json({ sessionId: sessionRef.id });
