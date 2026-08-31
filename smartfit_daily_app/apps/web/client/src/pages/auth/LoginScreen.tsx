@@ -5,14 +5,13 @@ import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { loginWithEmail, loginWithGoogle, loginWithApple } from '../../services/authService';
+import { api } from '../../services/api';
+import { nextOnboardingStep } from '../../hooks/onboardingStep';
 import { colors, spacing, typography } from '../../constants/theme';
 import { loginScreenStyles as styles } from './styles';
+import type { UserProfile } from '@smartfit/shared-types';
 
-/**
- * ONB-0 · REQ-15 (login + session persistence) — mirrors v1/00-auth-login.html.
- * TODO: route to "/" if the user already completed onboarding, or
- * /onboarding/personal-info otherwise — needs a useProfile() check.
- */
+/** ONB-0 · REQ-15 (login + session persistence) — mirrors v1/00-auth-login.html. */
 export default function LoginScreen() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -21,6 +20,15 @@ export default function LoginScreen() {
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Routes to "/" if onboarding (ONB-1/2/3) is already done, or whichever
+  // step is next otherwise — fetched fresh rather than via useProfile(),
+  // since AuthContext's user state hasn't necessarily updated yet at the
+  // moment right after a successful login call.
+  async function routeAfterLogin() {
+    const profile = await api.get<UserProfile>('/profile').catch(() => null);
+    navigate(nextOnboardingStep(profile) ?? '/', { replace: true });
+  }
 
   async function handleEmailLogin() {
     const isEmailValid = email.trim() !== '';
@@ -32,7 +40,7 @@ export default function LoginScreen() {
     setError(null);
     try {
       await loginWithEmail(email, password);
-      navigate('/onboarding/personal-info', { replace: true });
+      await routeAfterLogin();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -45,7 +53,7 @@ export default function LoginScreen() {
       // Auth's signInWithPopup(auth, new GoogleAuthProvider())) to obtain a real
       // idToken before calling loginWithGoogle.
       await loginWithGoogle('');
-      navigate('/onboarding/personal-info', { replace: true });
+      await routeAfterLogin();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -57,7 +65,7 @@ export default function LoginScreen() {
       // TODO: replace with a real Sign in with Apple flow to obtain a real
       // idToken/rawNonce pair before calling loginWithApple.
       await loginWithApple('', '');
-      navigate('/onboarding/personal-info', { replace: true });
+      await routeAfterLogin();
     } catch (e) {
       setError((e as Error).message);
     }

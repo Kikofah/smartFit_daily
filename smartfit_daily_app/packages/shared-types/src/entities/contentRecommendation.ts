@@ -20,7 +20,7 @@ export interface WorkoutSession {
   /** Set on complete; whether it includes warmup/cooldown time is an open point (api-spec.md §4). */
   actualDurationMinutes?: number;
   status: WorkoutSessionStatus;
-  /** Embedded array (1-3 items: main + optional warmup/cooldown) — not yet written by POST /workouts/sessions (still a TODO there). */
+  /** Embedded array (1-3 items: main + optional warmup/cooldown), written by POST /workouts/sessions. */
   sessionVideos?: SessionVideo[];
   /** Embedded array, each item written on a REC-3 swap within the same session. */
   rejectedVideoIds?: SessionRejectedVideo[];

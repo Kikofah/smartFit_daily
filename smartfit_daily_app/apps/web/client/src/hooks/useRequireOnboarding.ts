@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfile } from './useProfile';
+import { nextOnboardingStep } from './onboardingStep';
 
 /**
  * Redirects to whichever onboarding step (ONB-1/2/3) is next if the signed-in
@@ -15,15 +16,10 @@ export function useRequireOnboarding() {
 
   useEffect(() => {
     if (isLoading) return;
-    if (!profile) {
-      navigate('/onboarding/personal-info', { replace: true });
-    } else if (!profile.equipmentTypes) {
-      navigate('/onboarding/equipment', { replace: true });
-    } else if (!profile.goalSelection) {
-      navigate('/onboarding/goal-select', { replace: true });
-    }
+    const step = nextOnboardingStep(profile);
+    if (step) navigate(step, { replace: true });
   }, [isLoading, profile, navigate]);
 
-  const isComplete = !isLoading && !!profile?.equipmentTypes && !!profile?.goalSelection;
+  const isComplete = !isLoading && nextOnboardingStep(profile) === null;
   return { isLoading, isComplete };
 }
