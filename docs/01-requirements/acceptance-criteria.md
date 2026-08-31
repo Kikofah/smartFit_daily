@@ -154,34 +154,54 @@ Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-on
 
 ---
 
-### ONB-3 — ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor)
+### ONB-3 — ตั้งเป้าหมายหลัก (แปลงเป็น 2 ค่าแคลอรี่แยกกัน: เผาผลาญ + ที่ควรได้รับ พร้อม safety floor)
+
+> **อัปเดต 2026-08-31** (formalize จาก codebase จริงที่ shipped และตรวจสอบ end-to-end แล้ว — ดู
+> [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)):
+> ขั้นตอนนี้คำนวณค่าแคลอรี่ **2 ค่าแยกกัน** ในคำขอเดียวกัน (`PUT /profile/goal`): (ก)
+> **`dailyCalorieTargetKcal`** (เป้าหมายเผาผลาญจากการออกกำลังกาย = น้ำหนักตัว(kg) × ค่าคงที่ kcal/กก. ต่อ
+> เป้าหมาย — ลดน้ำหนัก=4.5, กระชับสัดส่วน=3.0, เพิ่มความอึด=5.5 — **ไม่มี safety floor** — ค่าที่ REC-1/
+> PLN-3/INT-1 ใช้จริงวันนี้) และ (ข) **`dailyIntakeTargetKcal`** (เป้าหมายที่ควรได้รับต่อวัน = TDEE ±
+> ค่าคงที่ตายตัวตามเป้าหมาย พร้อม safety floor `SAFETY_FLOOR_MIN_KCAL` = 1,200 kcal และ flag
+> `isSafetyFloorApplied` — เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารในอนาคต **ยังไม่มีฟีเจอร์ใดใช้คำนวณจริง**) —
+> AC-ONB-3-01 ถึง 05 ด้านล่าง (ของเดิมก่อน 2026-08-31) อธิบายโมเดล (ข) เป็นหลัก ส่วน **AC-ONB-3-06 (ใหม่)**
+> ครอบคลุมโมเดล (ก) โดยเฉพาะ
 
 #### AC-ONB-3-01 — เลือกเป้าหมายหลัก ระบบแปลงเป็นค่าแคลอรี่เป้าหมายที่ชัดเจน (REQ-02)
-- **Given**: ผู้ใช้ผ่าน ONB-1 แล้ว (มี TDEE) และ TDEE ที่ได้เมื่อลบ/บวกค่าคงที่ของเป้าหมายแล้วไม่ต่ำกว่า
-  safety floor (1,200–1,500 kcal/วัน)
+- **Given**: ผู้ใช้ผ่าน ONB-1 แล้ว (มี TDEE) และ TDEE ที่ได้เมื่อลบ/บวกค่าคงที่ของเป้าหมายแล้ว
+  (`dailyIntakeTargetKcal` ดิบ) ไม่ต่ำกว่า safety floor (1,200 kcal/วัน)
 - **When**: ผู้ใช้เลือกเป้าหมายหลัก 1 ใน 3 แบบ (ลดน้ำหนัก / กระชับสัดส่วน / เพิ่มความอึด) แล้วยืนยัน
 - **Then**: ระบบแปลงเป้าหมายเป็นค่าคงที่ตายตัว (ลดน้ำหนัก = TDEE − 500, กระชับสัดส่วน = TDEE + 0,
-  เพิ่มความอึด = TDEE + 300 kcal/วัน) บันทึกเป็นเป้าหมายแคลอรี่รายวัน และ onboarding เสร็จสมบูรณ์
+  เพิ่มความอึด = TDEE + 300 kcal/วัน) บันทึกเป็น **`dailyIntakeTargetKcal`** (`isSafetyFloorApplied: false`
+  ในกรณีนี้เพราะยังไม่ต่ำกว่า floor) พร้อมกับ **`dailyCalorieTargetKcal`** (เป้าหมายเผาผลาญจากการออกกำลังกาย
+  = น้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย, ไม่มี safety floor — ดู AC-ONB-3-06) ในคำขอเดียวกัน แล้ว onboarding
+  เสร็จสมบูรณ์
 - Prototype: [04-onboarding-goal-confirm.html](../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html)
 
 #### AC-ONB-3-02 — เปลี่ยนเป้าหมายหลักภายหลัง คำนวณใหม่ทันที (REQ-02)
-- **Given**: ผู้ใช้มีเป้าหมายแคลอรี่รายวันบันทึกไว้แล้วจากเป้าหมายหลักเดิม
+- **Given**: ผู้ใช้มี `dailyIntakeTargetKcal`/`dailyCalorieTargetKcal` บันทึกไว้แล้วจากเป้าหมายหลักเดิม
 - **When**: ผู้ใช้เปลี่ยนเป้าหมายหลัก (เช่น จากลดน้ำหนักเป็นเพิ่มความอึด)
-- **Then**: ระบบคำนวณเป้าหมายแคลอรี่รายวันใหม่ทันทีด้วยสูตรค่าคงที่เดิม (ตาม mapping ในเป้าหมายใหม่)
+- **Then**: ระบบคำนวณทั้ง `dailyIntakeTargetKcal` (TDEE ± ค่าคงที่ตามเป้าหมายใหม่ พร้อม re-evaluate
+  `isSafetyFloorApplied`) และ `dailyCalorieTargetKcal` (น้ำหนักตัว × ค่าคงที่ต่อเป้าหมายใหม่ — ดู
+  AC-ONB-3-06) ใหม่ทันทีด้วยสูตรค่าคงที่เดิม (ตาม mapping ในเป้าหมายใหม่)
 - Prototype: [03-onboarding-goal-select.html](../02-design/01-prototypes/v1/03-onboarding-goal-select.html)
 
-#### AC-ONB-3-03 — TDEE ต่ำมากจนต่ำกว่า safety floor ถูกปรับขึ้นเสมอ (REQ-02)
+#### AC-ONB-3-03 — TDEE ต่ำมากจน `dailyIntakeTargetKcal` ต่ำกว่า safety floor ถูกปรับขึ้นเสมอ (REQ-02)
 - **Given**: ผู้ใช้มี TDEE ต่ำมาก (เช่น น้ำหนักตัวน้อย + ระดับกิจกรรมต่ำ) จนแม้เลือกเป้าหมาย "เพิ่มความอึด"
-  (TDEE + 300) ผลลัพธ์ยังต่ำกว่า safety floor (1,200–1,500 kcal/วัน)
+  (TDEE + 300) ผลลัพธ์ดิบของ `dailyIntakeTargetKcal` ยังต่ำกว่า `SAFETY_FLOOR_MIN_KCAL` (1,200 kcal/วัน)
 - **When**: ผู้ใช้เลือกเป้าหมายหลักและยืนยัน
-- **Then**: ระบบปรับเป้าหมายแคลอรี่รายวันขึ้นเป็นค่า safety floor แทนค่าที่คำนวณได้ ไม่ปล่อยให้ต่ำกว่าเกณฑ์
+- **Then**: ระบบปรับ `dailyIntakeTargetKcal` ขึ้นเป็นค่า safety floor (1,200 kcal/วัน) แทนค่าดิบที่คำนวณได้
+  พร้อมตั้ง `isSafetyFloorApplied = true` ไม่ปล่อยให้ต่ำกว่าเกณฑ์ — ส่วน `dailyCalorieTargetKcal`
+  (เป้าหมายเผาผลาญ = น้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย) **ไม่มี safety floor และไม่ถูกปรับด้วยกลไกนี้** ยังคง
+  คำนวณและบันทึกตามปกติควบคู่กันไปในคำขอเดียวกัน (ดู AC-ONB-3-06)
 - Prototype: [04-onboarding-goal-confirm.html](../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html)
 
 #### AC-ONB-3-04 — เลือก "ลดน้ำหนัก" กรอกน้ำหนักเป้าหมาย (บังคับ) ครบถ้วน บันทึกสำเร็จ (REQ-02)
 - **Given**: ผู้ใช้ผ่าน ONB-1 แล้ว (มี TDEE) และอยู่ที่ขั้นตอนเลือกเป้าหมายหลัก
 - **When**: ผู้ใช้เลือกเป้าหมาย **"ลดน้ำหนัก"** แล้วกรอกน้ำหนักเป้าหมาย (target weight, kg) ที่ถูกต้องในช่อง
   ที่ระบบบังคับให้กรอก แล้วยืนยัน
-- **Then**: ระบบบันทึกทั้งเป้าหมายแคลอรี่รายวัน (TDEE − 500 kcal/วัน ปรับตาม safety floor ถ้าจำเป็น) และ
+- **Then**: ระบบบันทึกทั้ง `dailyIntakeTargetKcal` (TDEE − 500 kcal/วัน ปรับขึ้นเป็น safety floor พร้อม
+  `isSafetyFloorApplied` ถ้าจำเป็น), `dailyCalorieTargetKcal` (น้ำหนักตัว × 4.5 — ดู AC-ONB-3-06) และ
   น้ำหนักเป้าหมายลงโปรไฟล์พร้อมกัน onboarding เสร็จสมบูรณ์ และค่าน้ำหนักเป้าหมายนี้พร้อมใช้เป็น precondition
   "มีเป้าหมายน้ำหนัก" ของ [INT-1](../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11)
   ทันที
@@ -192,7 +212,8 @@ Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-on
 - **Given**: ผู้ใช้ผ่าน ONB-1 แล้ว (มี TDEE) และอยู่ที่ขั้นตอนเลือกเป้าหมายหลัก
 - **When**: ผู้ใช้เลือกเป้าหมาย **"กระชับสัดส่วน"** หรือ **"เพิ่มความอึด"** แล้วไม่กรอกน้ำหนักเป้าหมาย (ข้าม
   ช่องที่ไม่บังคับ) แล้วยืนยัน
-- **Then**: ระบบบันทึกเป้าหมายแคลอรี่รายวันตามปกติ (maintenance หรือ TDEE + 300 ตามที่เลือก) โดยไม่ต้องมี
+- **Then**: ระบบบันทึก `dailyIntakeTargetKcal` ตามปกติ (maintenance หรือ TDEE + 300 ตามที่เลือก) และ
+  `dailyCalorieTargetKcal` (น้ำหนักตัว × 3.0 หรือ × 5.5 ตามเป้าหมาย — ดู AC-ONB-3-06) โดยไม่ต้องมี
   น้ำหนักเป้าหมาย onboarding เสร็จสมบูรณ์เช่นกัน แต่โปรไฟล์จะไม่มีน้ำหนักเป้าหมายบันทึกไว้ ทำให้
   [INT-1](../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11)
   ยังพยากรณ์วันถึงเป้าหมายน้ำหนักให้ไม่ได้ จนกว่าผู้ใช้จะกรอกน้ำหนักเป้าหมายภายหลัง
@@ -200,6 +221,21 @@ Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-on
   (ช่องกรอกน้ำหนักเป้าหมายแบบ stepper input, optional เมื่อเลือกเป้าหมายอื่นที่ไม่ใช่ "ลดน้ำหนัก")
 - หมายเหตุ: ช่องทางที่ผู้ใช้จะกลับมากรอกน้ำหนักเป้าหมายภายหลังยังไม่ถูกระบุ (ดู
   [จุดที่ยังไม่ได้ระบุของ Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#จุดที่ยังไม่ได้ระบุ--ควรยืนยันเพิ่มเติม))
+
+#### AC-ONB-3-06 — คำนวณเป้าหมายแคลอรี่เผาผลาญ (`dailyCalorieTargetKcal`) จากน้ำหนักตัวล้วน ไม่มี safety floor เสมอ (เพิ่ม 2026-08-31, REQ-02)
+- **Given**: ผู้ใช้ผ่าน ONB-1 แล้ว (มีน้ำหนักตัวในโปรไฟล์) และอยู่ที่ขั้นตอนเลือกเป้าหมายหลัก
+- **When**: ผู้ใช้เลือกเป้าหมายหลัก 1 ใน 3 แบบ (ลดน้ำหนัก / กระชับสัดส่วน / เพิ่มความอึด) แล้วยืนยัน
+- **Then**: ระบบคำนวณ `dailyCalorieTargetKcal` = น้ำหนักตัว (kg) × ค่าคงที่ kcal/กก. ต่อเป้าหมาย —
+  ลดน้ำหนัก = ×4.5, กระชับสัดส่วน = ×3.0, เพิ่มความอึด = ×5.5 — **ไม่มี safety floor ไม่ว่ากรณีใดเลย แม้ค่า
+  ที่ได้จะต่ำมากก็ตาม** (ต่างจาก `dailyIntakeTargetKcal` ของ AC-ONB-3-01/03 ที่มี floor) แล้วบันทึกค่านี้เป็น
+  เป้าหมายที่ REC-1 (จับคู่วิดีโอตามแคลอรี่), PLN-3 (all-or-nothing daily logging), และ INT-1 (พยากรณ์วันถึง
+  เป้าหมาย) ใช้คำนวณจริงในแอปวันนี้
+- Prototype: [04-onboarding-goal-confirm.html](../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html)
+- ต้นทาง decision: [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  (ยืนยันแล้ว 2026-08-31, ตรวจสอบ end-to-end ผ่าน browser จริง — signup → onboarding → goal confirm →
+  บันทึกลง Firestore สำเร็จ), [database-schema.md §3.3](../02-design/02-technical/database-schema.md#33-goal_selection--goal-selection--daily-calorie-target)
+  (`goal_selection.daily_calorie_target_kcal`), [api-spec.md §3.2](../02-design/02-technical/api-spec.md)
+  (`PUT /profile/goal`)
 
 > หมายเหตุ: กรณี "เลือก 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมาย (ทั้งที่บังคับ)" — ไม่ได้ถูกแปลงเป็น scenario
 > ในไฟล์นี้ เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันเพียงว่า
@@ -681,7 +717,7 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | ONB-0 | 7 |
 | ONB-1 | 3 |
 | ONB-2 | 3 |
-| ONB-3 | 5 |
+| ONB-3 | 6 |
 | REC-1 | 4 |
 | REC-2 | 4 |
 | REC-3 | 2 |
@@ -694,7 +730,7 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | INT-1 | 7 |
 | INT-2 | 2 |
 | INT-3 | 3 |
-| **รวม** | **60** |
+| **รวม** | **61** |
 
 > อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
 > AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์
@@ -726,6 +762,16 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > `GET /insights/weight-records` ที่เพิ่มเข้า `api-spec.md §3.7` เมื่อ 2026-08-31 ซึ่งก่อนหน้านี้ไม่มี AC
 > ครอบคลุมเลย (INT-1 จาก 4 เป็น **7** scenario) — Feature ID ในไฟล์นี้ยังคง 16 ตัวเท่าเดิม (ไม่มี Feature ID
 > ใหม่) รวม scenario จาก 56 เป็น **60**
+>
+> อัปเดต 2026-08-31 (`test-suite-builder`, รอบ 2 — formalize การแยกเป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น
+> **2 ค่าแยกกัน** ตามที่ `feature-journey-writer`/`api-db-spec-writer` เพิ่งยืนยันจากโค้ดจริงที่ shipped และ
+> ตรวจสอบ end-to-end แล้ว): rescope AC-ONB-3-01 ถึง 05 (เดิมบรรยาย safety floor ว่าครอบคลุมค่าแคลอรี่เป้าหมาย
+> เดียว) ให้ชัดว่าเป็น **`dailyIntakeTargetKcal` เท่านั้น** ที่มี safety floor และเพิ่ม **AC-ONB-3-06** ใหม่
+> ครอบคลุม **`dailyCalorieTargetKcal`** (เป้าหมายเผาผลาญจากน้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย, ไม่มี safety
+> floor, ใช้จริงโดย REC-1/PLN-3/INT-1) — ไม่ใช่การเดา edge case ใหม่ แต่ยืนยันตรงจาก
+> [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+> ที่เพิ่งอัปเดตในรอบเดียวกัน — ONB-3 จาก 5 เป็น **6** scenario รวม scenario จาก 60 เป็น **61**
+> (Feature ID ยังคง 16 ตัวเท่าเดิม)
 
 ---
 

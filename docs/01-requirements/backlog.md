@@ -26,7 +26,7 @@
 | ONB-0 | สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (Authentication) | Onboarding & Personalization | **Must** | REQ-14, REQ-15, REQ-16, REQ-17 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | Onboarding & Personalization | **Must** | REQ-01 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | ONB-2 | เลือกอุปกรณ์ที่มี | Onboarding & Personalization | **Must** | REQ-03 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
-| ONB-3 | ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor) | Onboarding & Personalization | **Must** | REQ-02 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
+| ONB-3 | ตั้งเป้าหมายหลัก (เป้าเผาผลาญจากออกกำลังกาย + เป้า intake แบบ deficit/surplus คงที่ + safety floor) | Onboarding & Personalization | **Must** | REQ-02 | [01-spec](01-spec/20260823-01-onboarding-personalization.md) |
 | REC-1 | แนะนำวิดีโอตรงเป้าแคลอรี่รายวัน | Daily YouTube Recommendation | **Must** | REQ-04 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
 | REC-2 | คำนวณแคลอรี่เผาผลาญจริง (สูตร MET) | Daily YouTube Recommendation | **Must** | REQ-05 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
 | REC-3 | เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม | Daily YouTube Recommendation | **Should** | REQ-06 | [02-spec](01-spec/20260823-02-daily-youtube-recommendation.md) |
@@ -100,20 +100,29 @@ precondition ทางเทคนิคที่ INT-2/INT-3 ต้องผ่
   ระบบบันทึกเป็นโปรไฟล์อุปกรณ์และใช้เป็น filter ทุกครั้งที่เอนจิ้นแนะนำวิดีโอทำงาน (REC-1) เชื่อมโยงโดยตรง
   กับความเป็นไปได้จริงของวิดีโอที่แนะนำในทุก session
 
-#### ONB-3 — ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor)
+#### ONB-3 — ตั้งเป้าหมายหลัก (เป้าเผาผลาญจากออกกำลังกาย + เป้า intake แบบ deficit/surplus คงที่ + safety floor)
 
 - **Priority**: Must — เป้าหมายแคลอรี่รายวันคือแกนกลางของ value proposition ทั้งหมดของแอป
   (การแนะนำวิดีโอ, การบันทึก log, การพยากรณ์) ถ้าค่านี้ผิดหรือคลุมเครือ ทุก feature ปลายทางจะผิดตาม
 - **REQ ที่เกี่ยวข้อง**: REQ-02
-- **คำอธิบาย**: ผู้ใช้เลือกเป้าหมายหลัก (ลดน้ำหนัก / กระชับสัดส่วน / เพิ่มความอึด) ระบบแปลงเป็นค่าคงที่
-  ตายตัวตาม decision ที่ resolve แล้ว: **ลดน้ำหนัก = TDEE − 500 kcal/วัน, กระชับสัดส่วน = TDEE + 0
-  kcal/วัน (maintenance), เพิ่มความอึด = TDEE + 300 kcal/วัน** พร้อม **safety floor ห้ามต่ำกว่า
-  1,200–1,500 kcal/วัน** ค่า 7,700 kcal ≈ 1 กก. ไขมัน ที่ผูกกับ decision นี้ถูกใช้ร่วมกับ INT-1
-  ในการพยากรณ์วันถึงเป้าหมายน้ำหนักด้วย นอกจากนี้ผู้ใช้ยังกรอก **น้ำหนักเป้าหมาย (target weight, kg)**
-  ในขั้นตอนนี้ด้วย — **บังคับกรอก** เมื่อเลือก "ลดน้ำหนัก" (กรณีที่ INT-1 ต้องใช้ค่านี้จริง) และเป็น
-  **ทางเลือก (ไม่บังคับ)** เมื่อเลือก "กระชับสัดส่วน"/"เพิ่มความอึด" ตาม[decision ที่ยืนยันแล้วใน
-  Onboarding spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
-  — ค่านี้เป็นแหล่งที่มาจริงของ precondition "มีเป้าหมายน้ำหนัก" ที่ INT-1 ใช้พยากรณ์วันถึงเป้าหมาย
+- **คำอธิบาย**: ผู้ใช้เลือกเป้าหมายหลัก (ลดน้ำหนัก / กระชับสัดส่วน / เพิ่มความอึด) ระบบแปลงเป็น
+  **ตัวเลขแคลอรี่ 2 ค่าแยกกัน** ตาม[decision ที่ยืนยันแล้วเมื่อ 2026-08-31 ใน Onboarding
+  spec](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว):
+  1. **`dailyCalorieTargetKcal`** (เป้าหมายแคลอรี่จากการออกกำลังกาย) = น้ำหนักตัว (kg) × ค่าคงที่
+     kcal/กก. ต่อเป้าหมาย — **ลดน้ำหนัก = 4.5, กระชับสัดส่วน = 3.0, เพิ่มความอึด = 5.5** kcal/กก. ไม่มี
+     safety floor — เป็นค่าที่ REC-1, PLN-3, และ INT-1 ใช้คำนวณจริงในแอปวันนี้
+  2. **`dailyIntakeTargetKcal`** (เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน) = **ลดน้ำหนัก = TDEE − 500 kcal/วัน,
+     กระชับสัดส่วน = TDEE + 0 kcal/วัน (maintenance), เพิ่มความอึด = TDEE + 300 kcal/วัน** พร้อม
+     **safety floor ห้ามต่ำกว่า 1,200–1,500 kcal/วัน** (implement เป็น 1,200 kcal, ตัวเลขสุดท้ายยัง
+     ไม่ resolve เป็นทางการ) พร้อม flag `isSafetyFloorApplied` — เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารใน
+     อนาคต **ยังไม่มีฟีเจอร์ใดใช้คำนวณจริงจากค่านี้** แสดงบนหน้า Goal Confirm เพื่อสื่อสารเป็น
+     forward-looking context เท่านั้น ค่า 7,700 kcal ≈ 1 กก. ไขมัน ที่ผูกกับ decision เดิมยังถูกใช้ร่วม
+     กับ INT-1 ในการพยากรณ์วันถึงเป้าหมายน้ำหนัก (จาก `dailyCalorieTargetKcal` ไม่ใช่ฟิลด์นี้)
+
+  นอกจากนี้ผู้ใช้ยังกรอก **น้ำหนักเป้าหมาย (target weight, kg)** ในขั้นตอนนี้ด้วย — **บังคับกรอก**
+  เมื่อเลือก "ลดน้ำหนัก" (กรณีที่ INT-1 ต้องใช้ค่านี้จริง) และเป็น **ทางเลือก (ไม่บังคับ)** เมื่อเลือก
+  "กระชับสัดส่วน"/"เพิ่มความอึด" — ค่านี้เป็นแหล่งที่มาจริงของ precondition "มีเป้าหมายน้ำหนัก" ที่ INT-1
+  ใช้พยากรณ์วันถึงเป้าหมาย
 
 ### Epic 2: Daily YouTube Recommendation
 
@@ -267,7 +276,7 @@ precondition ทางเทคนิคที่ INT-2/INT-3 ต้องผ่
 | REQ | คำอธิบายสั้น | Feature ID |
 |---|---|---|
 | REQ-01 | คำนวณ BMR/TDEE | ONB-1 |
-| REQ-02 | แปลงเป้าหมายเป็น deficit/surplus คงที่ + safety floor | ONB-3 |
+| REQ-02 | แปลงเป้าหมายเป็น 2 ค่าแยกกัน: เป้าเผาผลาญจากออกกำลังกาย (ใช้จริง) + เป้า intake แบบ deficit/surplus คงที่ + safety floor (สำรองไว้อนาคต) | ONB-3 |
 | REQ-03 | บันทึกโปรไฟล์อุปกรณ์เพื่อกรองวิดีโอ | ONB-2 |
 | REQ-04 | จับคู่วิดีโอกับแคลอรี่เป้าหมาย | REC-1 |
 | REQ-05 | คำนวณแคลอรี่เผาผลาญจริงด้วยสูตร MET | REC-2 |

@@ -19,6 +19,13 @@ export const goalConfirmScreenStyles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  secondaryCard: {
+    backgroundColor: colors.paperAlt,
+    borderRadius: radius.lg,
+    padding: spacing[4],
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   errorText: { ...typography.caption, color: colors.danger, marginTop: spacing[1] },
 });
 

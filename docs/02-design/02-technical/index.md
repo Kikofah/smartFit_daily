@@ -335,3 +335,60 @@ single-pass; REC-3 เป็น **5 step**) — แก้ `high-level-architectu
 กับ diagram 7 step จริงทุกขั้น และปิด follow-up note ใน §8 ข้อ 1 ที่เคยบอกว่ารอ re-check — pure mechanical
 cross-reference sync ไม่แตะเนื้อหาแนวคิดที่แก้ไปแล้วในรอบก่อนหน้า ไม่ใช้ AskUserQuestion — ดู log
 [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`api-db-spec-builder`, reinstate `dailyIntakeTargetKcal`/`isSafetyFloorApplied`)**:
+`feature-journey-writer` formalize business-rule change ของ ONB-3/REQ-02 (ship+ตรวจสอบ end-to-end จริงแล้ว)
+ที่แยกเป้าหมายแคลอรี่รายวันเป็น **2 ค่า**: `dailyCalorieTargetKcal` (เป้าหมายเผาผลาญจากการออกกำลังกาย ไม่มี
+safety floor — REC-1/PLN-3/INT-1 ใช้จริงเหมือนเดิม ไม่เปลี่ยน) และ `dailyIntakeTargetKcal` (reinstated —
+TDEE ± ค่าส่วนต่าง มี safety floor `SAFETY_FLOOR_MIN_KCAL = 1200` พร้อม `isSafetyFloorApplied`, ยังไม่มี
+feature ใดใช้คำนวณจริง) — ยืนยันจากโค้ดจริงโดยตรง
+(`apps/web/server/routes/personalization-profile/index.ts`,
+`packages/shared-types/src/entities/personalizationProfile.ts`) แก้ `api-spec.md` §3.2 (`PUT /profile/goal`
+request/response) และ `database-schema.md` (ER Diagram, ตาราง `goal_selection` §3.3, §4 ข้อ 2, §8.3 —
+คืนคอลัมน์/กติกา/แถว mapping ของ safety floor ที่เคยถูกลบผิดพลาดกลับมา พร้อมแก้คำอธิบาย
+`daily_calorie_target_kcal` ที่เคยเขียนผิดว่าเป็นค่า intake ที่ปรับ floor แล้ว) — ไม่ใช้ AskUserQuestion
+(formalize decision ที่ยืนยัน/ship แล้วตามที่ระบุในคำสั่งงาน) — **ผลกระทบต่อเอกสารอื่น**: `tech-stack.md`
+§6.1 (แถว Personalization & Profile) ยัง stale ด้วยจุดเดียวกัน (field list ของ `goalSelection` ขาด
+`dailyIntakeTargetKcal`, safety floor logic อ้างผิดว่าเป็นของ `dailyCalorieTargetKcal`) — ควรรัน
+`tech-stack-builder` ต่อ — ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`tech-stack-builder`, factual correction, ปิดท้ายเชน `dailyIntakeTargetKcal`)**:
+แก้แถว **Personalization & Profile** ในหัวข้อ 6.1 ของ `tech-stack.md` ตามที่ `api-db-spec-writer` flag
+ไว้ข้างบน — เดิมระบุ `goalSelection` มีแค่ 4 field และเข้าใจผิดว่า safety floor gate ที่
+`dailyCalorieTargetKcal <= 1200` แก้เป็น 5 field ครบ (เพิ่ม `dailyIntakeTargetKcal`) พร้อมระบุชัดว่า
+safety floor gate เฉพาะ `dailyIntakeTargetKcal` เท่านั้น (`dailyCalorieTargetKcal` ไม่มี safety floor)
+— factual correction ของ design ที่ ship/ยืนยันแล้ว ไม่กระทบตัวเลือก stack จริง จึงไม่ใช้
+AskUserQuestion — ตรวจ §4 (Rationale) แล้วไม่พบข้อความล้าหลังซ้ำอีก — ดู log
+[2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`detailed-design-builder`, ปิดท้ายเชน `dailyIntakeTargetKcal`)**: แก้ section ONB-3
+ใน `detailed-design/01-onboarding-personalization.md` ให้ตรงกับ `database-schema.md` §3.3/`api-spec.md`
+§3.2 ฉบับล่าสุด (ยืนยันจากโค้ดจริง `GoalConfirmScreen.tsx`) — เดิม sequence diagram/algorithm มีการคำนวณ
+เป้าหมายแคลอรี่เดียว (TDEE ± ค่าคงที่ + safety floor) ผิดพลาดและอ้างว่าเป็น input ของ REC-1/PLN-3/INT-1 —
+แก้เป็น**2 การคำนวณคู่ขนาน**: `dailyCalorieTargetKcal` (น้ำหนักตัว × ค่าคงที่ kcal/กก. ตามเป้าหมาย — 4.5/
+3.0/5.5, ไม่มี safety floor, เป็น input จริงของ REC-1/PLN-3/INT-1) และ `dailyIntakeTargetKcal` (TDEE ±
+ค่าส่วนต่างตามเป้าหมาย มี safety floor ที่ 1,200 kcal พร้อม `isSafetyFloorApplied`, ยังไม่มี component ใด
+ใช้จริง) — sequence diagram เพิ่ม `par` block แสดง 2 การคำนวณคู่ขนานฝั่งผู้ใช้ก่อนส่งรวมในคำขอ
+`PUT /profile/goal` เดียว, resolve "จุดที่ยังไม่ได้ระบุ" ข้อ safety floor range (เป็นค่าคงที่ 1,200 kcal
+เดียว ไม่แยกตามเพศ/อายุ), แก้ภาคผนวก Stack Mapping (แถว Personalization & Profile, "Execution ของ
+algorithm section") ให้ระบุว่าทั้งสองค่าคำนวณ client-side พร้อมกันแล้วส่งรวมคำขอเดียว — ไม่ใช้
+AskUserQuestion (formalize decision ที่ยืนยัน/ship แล้วตามที่ระบุในคำสั่งงาน) — **ปิดเชน
+`dailyIntakeTargetKcal` ครบทุกไฟล์แล้ว** (feature-journey-writer → api-db-spec-writer →
+detailed-design-writer → tech-stack-writer) — ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (`detailed-design-builder`, factual correction, PLN-4 execution)**: audit
+`detailed-design/03-planner-logging.md`'s PLN-4 section เทียบกับโค้ดจริงที่เพิ่ง ship
+(`apps/web/server/routes/logging-streak/recomputeStreak.ts`) พบว่าย่อหน้า "Execution ของ algorithm" ท้าย
+ภาคผนวก Stack Mapping อ้างผิดว่า **Streak walk-back (PLN-4)** คำนวณฝั่ง client (React+Vite web client) ตาม
+NFR-01/NFR-03 แล้วส่งผลลัพธ์มาบันทึก — บัคเดียวกับที่พบและแก้แล้วสำหรับ INT-1/Forecast ก่อนหน้าในวันเดียวกัน
+— จริงๆ `recomputeStreak()` เป็นฟังก์ชัน**server-side ล้วน** ที่ loop query Firestore ตรงบน server เอง
+ไม่มี client เกี่ยวข้องเลย ถูกเรียกอัตโนมัติจาก route อื่น (`exertion-calorie`, `planner-day-status`) หลัง
+เขียน `dailyLogs` เสร็จ — แก้ย่อหน้า "Execution ของ algorithm" ให้ตรงกับ execution จริงฝั่ง server เท่านั้น
+(เนื้อหาหลัก sequence diagram/algorithm ของ walk-back logic เอง **ไม่เปลี่ยนแปลง**) พร้อมแก้
+`tech-stack.md` §4 คู่ขนาน (ตัด "streak walk-back (PLN-4)" ออกจากรายการ "Client-side calculation ตาม
+NFR-01/NFR-03") — ไม่ใช้ AskUserQuestion (factual correction ของ implementation ที่ ship แล้ว ตามที่ระบุ
+ในคำสั่งงานนี้โดยตรง) — ดู log [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-08-31 (status-text fix, `sessionVideos`)**: แก้แถว **Content Recommendation** ใน
+`tech-stack.md` §6.1 และภาคผนวก Stack Mapping ของ `high-level-architecture.md` §10 ที่ทั้งคู่ยังระบุว่า
+`POST /api/workouts/sessions` "ยังเป็น TODO ในโค้ดจริง" ไม่เขียน embedded array field `sessionVideos: []`
+— แต่โค้ดจริง (`apps/web/server/routes/content-recommendation/index.ts`, commit `100bbd3`) implement
+แล้ว: เขียน 1 รายการ (main) ตามปกติ หรือ 3 รายการ (warmup/main/cooldown) เมื่อ intensity เป็น `high` ตรงกับ
+REC-1/REC-4's algorithm ใน `detailed-design/02-daily-youtube-recommendation.md` ทุกประการอยู่แล้ว (ไม่มี
+algorithm drift) — pure status-text correction ล้วนๆ ไม่ต้องใช้ AskUserQuestion — ดู log
+[2026-08-31](../../05-log/20260831-log.md)

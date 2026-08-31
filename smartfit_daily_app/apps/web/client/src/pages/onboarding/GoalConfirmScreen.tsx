@@ -14,20 +14,32 @@ import type { GoalType } from '@smartfit/shared-types';
 
 /**
  * kcal to burn via exercise per kg of current body weight per day —
- * confirmed 2026-08-31, replacing the previous TDEE±delta formula. That one
- * represented a diet-style net energy-balance target (with a 1,200–1,500
- * kcal "minimum safe daily intake" safety floor), which never actually fit
- * this app: it tracks exercise burn only, no food intake at all, so there's
- * no intake floor to protect against here. These multipliers instead land
- * in the same range as a single real workout session already estimates
- * elsewhere in the app (~150–350 kcal for a typical 20–30 min session),
- * scaled by weight the same way MET-based calorie burn already is.
+ * confirmed 2026-08-31. This app tracks exercise burn only (no food-intake
+ * logging yet), so this is the number REC-1/PLN-3/INT-1 actually consume —
+ * lands in the same range as a single real workout session already
+ * estimates elsewhere in the app (~150–350 kcal for a typical 20–30 min
+ * session), scaled by weight the same way MET-based calorie burn already is.
  */
 const GOAL_META: Record<GoalType, { label: string; kcalPerKg: number }> = {
   lose_weight: { label: 'ลดน้ำหนัก', kcalPerKg: 4.5 },
   tone_up: { label: 'กระชับสัดส่วน', kcalPerKg: 3.0 },
   build_endurance: { label: 'เพิ่มความอึด', kcalPerKg: 5.5 },
 };
+
+/**
+ * TDEE ± per-goalType delta — the original diet-style net energy-balance
+ * target (REQ-02), reinstated 2026-08-31 alongside the exercise-burn target
+ * above so a future food-intake logging feature has something to build on.
+ * Not consumed by anything today (REC-1/PLN-3/INT-1 all use
+ * dailyCalorieTargetKcal instead) — shown here purely as forward-looking
+ * context, with its safety floor protection kept intact.
+ */
+const GOAL_INTAKE_DELTA_KCAL: Record<GoalType, number> = {
+  lose_weight: -500,
+  tone_up: 0,
+  build_endurance: 300,
+};
+const SAFETY_FLOOR_MIN_KCAL = 1200; // exact value tied to sex/age band — see log 2026-08-27
 
 /**
  * ONB-3 (part b) · REQ-02 — mirrors v1/04-onboarding-goal-confirm.html (step 4 of 4, final).
@@ -41,6 +53,7 @@ export default function GoalConfirmScreen() {
   const savedGoalSelection = profile?.goalSelection;
   const goalType = onboardingDraft.goalType ?? savedGoalSelection?.goalType;
   const weightKg = onboardingDraft.weightKg ?? profile?.weightKg;
+  const tdeeKcal = onboardingDraft.tdeeKcal ?? profile?.tdeeKcal;
   const [targetWeightKg, setTargetWeightKg] = useState<number | null>(null);
   const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,19 +68,24 @@ export default function GoalConfirmScreen() {
     if (isLoading) return;
     if (!goalType) {
       navigate('/onboarding/goal-select', { replace: true });
-    } else if (weightKg === undefined) {
+    } else if (weightKg === undefined || tdeeKcal === undefined) {
       navigate('/onboarding/personal-info', { replace: true });
     }
-  }, [isLoading, goalType, weightKg, navigate]);
+  }, [isLoading, goalType, weightKg, tdeeKcal, navigate]);
 
   const computed = useMemo(() => {
-    if (!goalType || weightKg === undefined) return null;
+    if (!goalType || weightKg === undefined || tdeeKcal === undefined) return null;
     const goal = GOAL_META[goalType];
     const dailyCalorieTargetKcal = Math.round(weightKg * goal.kcalPerKg);
-    return { goal, dailyCalorieTargetKcal };
-  }, [goalType, weightKg]);
 
-  if (!goalType || weightKg === undefined || !computed) return null;
+    const rawIntakeKcal = tdeeKcal + GOAL_INTAKE_DELTA_KCAL[goalType];
+    const isSafetyFloorApplied = rawIntakeKcal < SAFETY_FLOOR_MIN_KCAL;
+    const dailyIntakeTargetKcal = isSafetyFloorApplied ? SAFETY_FLOOR_MIN_KCAL : rawIntakeKcal;
+
+    return { goal, dailyCalorieTargetKcal, dailyIntakeTargetKcal, isSafetyFloorApplied };
+  }, [goalType, weightKg, tdeeKcal]);
+
+  if (!goalType || weightKg === undefined || tdeeKcal === undefined || !computed) return null;
 
   const targetWeightRequired = goalType === 'lose_weight';
   const targetWeightValid = targetWeightRequired
@@ -83,6 +101,7 @@ export default function GoalConfirmScreen() {
         goalType,
         targetWeightKg: targetWeightKg ?? undefined,
         dailyCalorieTargetKcal: computed!.dailyCalorieTargetKcal,
+        dailyIntakeTargetKcal: computed!.dailyIntakeTargetKcal,
       });
       navigate('/', { replace: true });
     } catch (e) {
@@ -122,6 +141,19 @@ export default function GoalConfirmScreen() {
           <Text style={typography.bodySm}>สูตรตามเป้าหมาย</Text>
           <Text style={typography.body}>{computed.goal.kcalPerKg} kcal/กก.</Text>
         </View>
+      </View>
+
+      <View style={[styles.secondaryCard, { marginTop: spacing[6] }]}>
+        <Text style={typography.bodySm}>เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน (สำหรับวางแผนอาหารในอนาคต)</Text>
+        <Text style={[typography.h2, { marginTop: spacing[1] }]}>{fmt(computed.dailyIntakeTargetKcal)} kcal/วัน</Text>
+        <Text style={[typography.caption, { color: colors.inkMuted, marginTop: spacing[1] }]}>
+          คำนวณจาก TDEE ({fmt(tdeeKcal)} kcal){' '}
+          {GOAL_INTAKE_DELTA_KCAL[goalType] === 0
+            ? '(ไม่บวก/ลบ — คงระดับพลังงาน)'
+            : `${GOAL_INTAKE_DELTA_KCAL[goalType] > 0 ? '+' : '−'}${Math.abs(GOAL_INTAKE_DELTA_KCAL[goalType])} kcal`}
+          {computed.isSafetyFloorApplied && ' — ปรับให้ไม่ต่ำกว่าเกณฑ์ความปลอดภัยขั้นต่ำแล้ว'}
+          . ยังไม่ถูกใช้คำนวณอะไรในแอปตอนนี้ เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารในอนาคต
+        </Text>
       </View>
 
       <View style={{ marginTop: spacing[6] }}>

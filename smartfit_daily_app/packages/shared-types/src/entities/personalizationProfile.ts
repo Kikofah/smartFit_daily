@@ -44,15 +44,21 @@ export interface UserProfile {
 
 /**
  * Embedded map field `goalSelection` inside `users/{userId}` — no id/userProfileId (§8.2).
+ * Carries two distinct calorie figures (confirmed 2026-08-31, reinstating
+ * intake tracking alongside the exercise-burn target added the same day):
  * `dailyCalorieTargetKcal` is a pure exercise-burn target (weightKg × a
- * per-goalType kcal/kg multiplier — confirmed 2026-08-31), not a TDEE-based
- * net energy-balance figure, since this app tracks exercise burn only (no
- * food-intake logging) — so there's no "minimum safe daily intake" concept
- * to floor against here.
+ * per-goalType kcal/kg multiplier) — this is the number REC-1/PLN-3/INT-1
+ * actually consume today, since the app tracks exercise burn only.
+ * `dailyIntakeTargetKcal` is the original TDEE ± per-goalType delta
+ * (diet-style net energy-balance target, floored at `isSafetyFloorApplied`
+ * per REQ-02) — not consumed by anything yet, kept/displayed for a future
+ * food-intake logging feature so the safety-floor protection isn't lost.
  */
 export interface GoalSelection {
   goalType: GoalType;
   /** Required when goalType === 'lose_weight'. */
   targetWeightKg?: number;
   dailyCalorieTargetKcal: number;
+  dailyIntakeTargetKcal: number;
+  isSafetyFloorApplied: boolean;
 }

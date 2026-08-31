@@ -3,7 +3,16 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 8, factual correction) — แก้ error/edge case ของ `POST
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 9) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
+  ONB-3/REQ-02 เป็น **2 ค่าแยกกัน** (ยืนยันแล้ว ตรวจสอบกับโค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`
+  และ `packages/shared-types/src/entities/personalizationProfile.ts` โดยตรง): แก้ Request ของ
+  `PUT /profile/goal` (หัวข้อ 3.2) ให้ระบุทั้ง `dailyCalorieTargetKcal` (เป้าหมายเผาผลาญจากการออกกำลังกาย —
+  ไม่มี safety floor, ใช้โดย REC-1/PLN-3/INT-1 เหมือนเดิม) และ `dailyIntakeTargetKcal` (เป้าหมายที่ควรได้รับ
+  ต่อวัน, reinstated — TDEE ± ค่าส่วนต่างตามเป้าหมาย มี safety floor) และแก้ Response ให้ระบุ
+  `isSafetyFloorApplied` กลับเข้ามา (server re-derive ซ้ำจาก `dailyIntakeTargetKcal` เท่านั้น) — ไม่กระทบ
+  operation อื่นใด (REC-1/PLN-3/INT-1 ยังใช้ `dailyCalorieTargetKcal` เหมือนเดิมตามที่เอกสารบรรยายไว้แล้ว) —
+  ดู [log 2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 8, factual correction) — แก้ error/edge case ของ `POST
   /workouts/today/recommendation/swap` (REC-3, หัวข้อ 3.3) จากเดิมที่อ้าง "ขยายเกณฑ์แล้ว" (widen-retry
   loop) เป็น "การค้นหาผู้สมัคร 1 ครั้ง + ขั้นตอนจับคู่/ประเมินด้วย AI 1 ครั้ง (single-pass) ไม่เหลือ
   candidate ที่ใช้งานได้เลย" ให้ตรงกับ implementation จริงที่ shipped แล้ว (ยืนยันแล้วใน
@@ -140,7 +149,7 @@ operation ใดที่ไม่มี component รองรับ
 | ดูโปรไฟล์ปัจจุบัน | `GET /profile` | — | — | User Profile + Equipment Profile + Goal Selection (ถ้ามี) | `404` ถ้ายังไม่เคยทำ ONB-1 เลย | NFR-04 (ข้อมูลสุขภาพ) |
 | ตั้ง/แก้ข้อมูลส่วนตัว | `PUT /profile/personal-info` | ONB-1/REQ-01 | อายุ, เพศ, น้ำหนัก, ส่วนสูง, ระดับกิจกรรม | User Profile พร้อม TDEE ที่คำนวณใหม่ | `400` ค่าติดลบ/นอกช่วงที่สมเหตุสมผล | NFR-01 (คำนวณ client-side ไม่มี latency), NFR-04 |
 | ตั้ง/แก้อุปกรณ์ที่มี | `PUT /profile/equipment` | ONB-2/REQ-03 | รายการอุปกรณ์ที่เลือก (multi-select: ไม่มี/ดัมเบล/ยิมครบชุด) | Equipment Profile ที่บันทึกแล้ว | `400` เลือก "ไม่มีอุปกรณ์" พร้อมตัวอื่น (mutual exclusion ตาม decision ที่ resolve แล้ว) | — |
-| ตั้ง/แก้เป้าหมายหลัก | `PUT /profile/goal` | ONB-3/REQ-02 | ประเภทเป้าหมาย, น้ำหนักเป้าหมาย (บังคับเมื่อ "ลดน้ำหนัก") | Goal Selection พร้อมเป้าหมายแคลอรี่รายวันหลังปรับ safety floor | `400` ขาดน้ำหนักเป้าหมายตอนเลือก "ลดน้ำหนัก" | — |
+| ตั้ง/แก้เป้าหมายหลัก | `PUT /profile/goal` | ONB-3/REQ-02 | ประเภทเป้าหมาย, น้ำหนักเป้าหมาย (บังคับเมื่อ "ลดน้ำหนัก"), **เป้าหมายแคลอรี่จากการออกกำลังกาย** (`dailyCalorieTargetKcal` — น้ำหนักตัว × ค่าคงที่ kcal/กก. ต่อเป้าหมาย, ไม่มี safety floor), **เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน** (`dailyIntakeTargetKcal` — TDEE ± ค่าส่วนต่างตามเป้าหมาย, reinstated 2026-08-31) — ทั้งสองค่าคำนวณฝั่ง client (NFR-01/03) | Goal Selection พร้อมทั้งสองเป้าหมายแคลอรี่ และ `isSafetyFloorApplied` (server re-derive ซ้ำจาก `dailyIntakeTargetKcal` เทียบ safety floor ขั้นต่ำ เป็นชั้นตรวจสอบที่สอง ไม่เชื่อค่าจาก client อย่างเดียว — ใช้กับเป้าหมาย intake เท่านั้น เพราะเป้าหมายการออกกำลังกายไม่มี safety floor) | `400` ขาดน้ำหนักเป้าหมายตอนเลือก "ลดน้ำหนัก" | NFR-01 (คำนวณ client-side) |
 
 ### 3.3 Content Recommendation
 

@@ -4,6 +4,12 @@
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 2) — formalize การแยกเป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น **2 ค่าแยกกัน**
+  (`dailyCalorieTargetKcal` เผาผลาญ ไม่มี safety floor / `dailyIntakeTargetKcal` ที่ควรได้รับ มี safety
+  floor) ตามที่ `feature-journey-writer`/`api-db-spec-writer` เพิ่งยืนยันจากโค้ดจริงที่ shipped — rescope
+  TC-ONB-3-001 ถึง 007 ให้ระบุค่าทั้งสองแยกกันชัดเจน และเพิ่ม **TC-ONB-3-008** ใหม่ทดสอบว่า
+  `dailyCalorieTargetKcal` ไม่มี safety floor แม้ในกรณีที่ค่าต่ำมาก — ดู [log
+  2026-08-31](../../../05-log/20260831-log.md)
 
 ต้นทาง (upstream, read-only):
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization) ·
@@ -164,6 +170,10 @@ AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--�
 > เดียวที่แน่นอน — เอกสารนี้ใช้ **1,200 kcal/วัน** (ขอบล่างของช่วงที่ยืนยันแล้ว ตรงกับค่าที่ prototype
 > `04-onboarding-goal-confirm.html` เลือกใช้เป็นตัวอย่างประกอบ) เป็นค่า floor ที่ใช้ใน Test Data ของ
 > AC-ONB-3-03 ด้านล่าง — เป็น content decision เช่นกัน
+>
+> **อัปเดต 2026-08-31**: safety floor ข้างต้นใช้กับ **`dailyIntakeTargetKcal` เท่านั้น**
+> `dailyCalorieTargetKcal` (น้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย — ลดน้ำหนัก=4.5, กระชับสัดส่วน=3.0,
+> เพิ่มความอึด=5.5) **ไม่มี safety floor ไม่ว่ากรณีใด** — ดู AC-ONB-3-06/TC-ONB-3-008 ด้านล่าง
 
 ---
 
@@ -301,20 +311,30 @@ AC: [AC-ONB-2-01](../../../01-requirements/acceptance-criteria.md#ac-onb-2-01--�
 
 ---
 
-## ONB-3 — ตั้งเป้าหมายหลัก (deficit/surplus คงที่ + safety floor) (REQ-02)
+## ONB-3 — ตั้งเป้าหมายหลัก (2 ค่าแคลอรี่แยกกัน: เผาผลาญ + ที่ควรได้รับ พร้อม safety floor) (REQ-02)
 
 Journey: [user-journeys.md § ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) ·
 AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--เลือกเป้าหมายหลัก-ระบบแปลงเป็นค่าแคลอรี่เป้าหมายที่ชัดเจน-req-02),
 [AC-ONB-3-02](../../../01-requirements/acceptance-criteria.md#ac-onb-3-02--เปลี่ยนเป้าหมายหลักภายหลัง-คำนวณใหม่ทันที-req-02),
-[AC-ONB-3-03](../../../01-requirements/acceptance-criteria.md#ac-onb-3-03--tdee-ต่ำมากจนต่ำกว่า-safety-floor-ถูกปรับขึ้นเสมอ-req-02),
+[AC-ONB-3-03](../../../01-requirements/acceptance-criteria.md#ac-onb-3-03--tdee-ต่ำมากจน-dailyintaketargetkcal-ต่ำกว่า-safety-floor-ถูกปรับขึ้นเสมอ-req-02),
 [AC-ONB-3-04](../../../01-requirements/acceptance-criteria.md#ac-onb-3-04--เลือก-ลดน้ำหนัก-กรอกน้ำหนักเป้าหมาย-บังคับ-ครบถ้วน-บันทึกสำเร็จ-req-02),
-[AC-ONB-3-05](../../../01-requirements/acceptance-criteria.md#ac-onb-3-05--เลือก-กระชับสัดส่วนเพิ่มความอึด-ข้ามช่องน้ำหนักเป้าหมาย-ไม่บังคับ-req-02)
+[AC-ONB-3-05](../../../01-requirements/acceptance-criteria.md#ac-onb-3-05--เลือก-กระชับสัดส่วนเพิ่มความอึด-ข้ามช่องน้ำหนักเป้าหมาย-ไม่บังคับ-req-02),
+[AC-ONB-3-06](../../../01-requirements/acceptance-criteria.md#ac-onb-3-06--คำนวณเป้าหมายแคลอรี่เผาผลาญ-dailycalorietargetkcal-จากน้ำหนักตัวล้วน-ไม่มี-safety-floor-เสมอ-เพิ่ม-2026-08-31-req-02)
 
+> **อัปเดต 2026-08-31**: `PUT /profile/goal` คำนวณ **2 ค่าแยกกัน** ในคำขอเดียวกัน — `dailyCalorieTargetKcal`
+> (เผาผลาญจากน้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย, **ไม่มี safety floor**, ใช้จริงโดย REC-1/PLN-3/INT-1) และ
+> `dailyIntakeTargetKcal` (TDEE ± ค่าคงที่ต่อเป้าหมาย, **มี safety floor** 1,200 kcal + flag
+> `isSafetyFloorApplied`, ยังไม่มีฟีเจอร์ใดใช้จริง) — TC-ONB-3-001 ถึง 007 ด้านล่าง (ของเดิม) ระบุค่าทั้งสอง
+> แยกกันชัดเจนแล้ว ส่วน **TC-ONB-3-008 (ใหม่)** ทดสอบเจาะจงว่า `dailyCalorieTargetKcal` ไม่มี safety floor
+> แม้ในกรณีค่าต่ำมาก
+>
 > AC-ONB-3-01 มี 3 test case — หนึ่งรายการต่อเป้าหมาย (ลดน้ำหนัก/กระชับสัดส่วน/เพิ่มความอึด) เพราะแต่ละ
-> เป้าหมายผูกกับค่าคงที่ที่ต่างกัน (−500 / +0 / +300) ซึ่งเป็น business rule หลักของ REQ-02 ที่ต้องตรวจสอบ
-> แยกกันให้ครบทั้ง 3 ทาง ไม่ใช่แค่ตรวจ 1 เส้นทางแล้วสรุปว่าครอบคลุม
-> ทั้ง 7 test case ของ ONB-3 ใช้ TDEE ต่อเนื่องมาจาก TC-ONB-1-001 (2,633 kcal/วัน) ยกเว้น TC-ONB-3-005
-> ที่ต้องใช้ TDEE ต่ำเป็นพิเศษเพื่อทดสอบ safety floor โดยเฉพาะ
+> เป้าหมายผูกกับค่าคงที่ที่ต่างกัน (−500 / +0 / +300 สำหรับ intake, ×4.5 / ×3.0 / ×5.5 สำหรับ burn) ซึ่งเป็น
+> business rule หลักของ REQ-02 ที่ต้องตรวจสอบแยกกันให้ครบทั้ง 3 ทาง ไม่ใช่แค่ตรวจ 1 เส้นทางแล้วสรุปว่าครอบคลุม
+> ทั้ง 7 test case เดิมของ ONB-3 ใช้ TDEE/น้ำหนักต่อเนื่องมาจาก TC-ONB-1-001 (TDEE 2,633 kcal/วัน, น้ำหนัก 75
+> กก.) ยกเว้น TC-ONB-3-005 ที่ต้องใช้ TDEE/น้ำหนักต่ำเป็นพิเศษเพื่อทดสอบ safety floor ของ
+> `dailyIntakeTargetKcal` โดยเฉพาะ (TC-ONB-3-008 ใหม่ใช้ persona เดียวกับ TC-ONB-3-005 ต่อ เพื่อแสดง contrast
+> ว่า `dailyCalorieTargetKcal` ที่คำนวณในคำขอเดียวกันไม่ถูก floor แม้จะต่ำกว่า 1,200 ก็ตาม)
 >
 > AC-ONB-3-05 มี 1 test case ครอบคลุมทั้ง "กระชับสัดส่วน" และ "เพิ่มความอึด" (เลือกใช้ "กระชับสัดส่วน" เป็น
 > ตัวแทน) เพราะพฤติกรรมของช่อง optional-skip ไม่ได้ต่างกันตามเป้าหมายทั้งสอง (ต่างจาก AC-ONB-3-01 ที่ค่า
@@ -330,9 +350,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Case Name | เลือกเป้าหมาย "ลดน้ำหนัก" ระบบแปลงเป็นค่าแคลอรี่เป้าหมาย TDEE − 500 |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 2,633 kcal/วัน ในโปรไฟล์ (จาก TC-ONB-1-001) และมาถึงหน้า `03-onboarding-goal-select.html` |
 | Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "ลดน้ำหนัก" (`lose`)<br>3. กดยืนยัน |
-| Expected Result | ระบบคำนวณ Target = TDEE − 500 = 2,633 − 500 = **2,133 kcal/วัน** ค่านี้สูงกว่า safety floor (1,200 kcal/วัน) จึงไม่ถูกปรับ บันทึกเป็นเป้าหมายแคลอรี่รายวัน และ onboarding เสร็จสมบูรณ์ |
-| Test Data | TDEE = 2,633 kcal/วัน, เป้าหมาย = ลดน้ำหนัก (delta −500) → คาดว่าเป้าหมายแคลอรี่รายวัน = 2,133 kcal/วัน |
-| References | REQ-02 · AC-ONB-3-01 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
+| Expected Result | ระบบคำนวณ **`dailyIntakeTargetKcal`** = TDEE − 500 = 2,633 − 500 = **2,133 kcal/วัน** (สูงกว่า safety floor 1,200 kcal/วัน จึงไม่ถูกปรับ, `isSafetyFloorApplied = false`) และ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 4.5 = 75 × 4.5 = **337.5 kcal/วัน** (ไม่มี safety floor) พร้อมกันในคำขอเดียวกัน บันทึกทั้งสองค่า และ onboarding เสร็จสมบูรณ์ |
+| Test Data | TDEE = 2,633 kcal/วัน, น้ำหนักตัว = 75 กก., เป้าหมาย = ลดน้ำหนัก (intake delta −500, burn ×4.5) → คาดว่า dailyIntakeTargetKcal = 2,133 kcal/วัน (isSafetyFloorApplied=false), dailyCalorieTargetKcal = 337.5 kcal/วัน |
+| References | REQ-02 · AC-ONB-3-01 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
 ### TC-ONB-3-002 — เลือกเป้าหมาย "กระชับสัดส่วน" แปลงเป็น TDEE + 0 (maintenance)
 
@@ -342,9 +362,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Case Name | เลือกเป้าหมาย "กระชับสัดส่วน" ระบบแปลงเป็นค่าแคลอรี่เป้าหมายเท่ากับ TDEE (maintenance) |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 2,633 kcal/วัน ในโปรไฟล์ และมาถึงหน้า `03-onboarding-goal-select.html` |
 | Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "กระชับสัดส่วน" (`maintain`)<br>3. กดยืนยัน |
-| Expected Result | ระบบคำนวณ Target = TDEE + 0 = 2,633 + 0 = **2,633 kcal/วัน** สูงกว่า safety floor จึงไม่ถูกปรับ บันทึกเป็นเป้าหมายแคลอรี่รายวัน และ onboarding เสร็จสมบูรณ์ |
-| Test Data | TDEE = 2,633 kcal/วัน, เป้าหมาย = กระชับสัดส่วน (delta +0) → คาดว่าเป้าหมายแคลอรี่รายวัน = 2,633 kcal/วัน |
-| References | REQ-02 · AC-ONB-3-01 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
+| Expected Result | ระบบคำนวณ **`dailyIntakeTargetKcal`** = TDEE + 0 = 2,633 + 0 = **2,633 kcal/วัน** (สูงกว่า safety floor จึงไม่ถูกปรับ, `isSafetyFloorApplied = false`) และ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 3.0 = 75 × 3.0 = **225.0 kcal/วัน** (ไม่มี safety floor) พร้อมกันในคำขอเดียวกัน บันทึกทั้งสองค่า และ onboarding เสร็จสมบูรณ์ |
+| Test Data | TDEE = 2,633 kcal/วัน, น้ำหนักตัว = 75 กก., เป้าหมาย = กระชับสัดส่วน (intake delta +0, burn ×3.0) → คาดว่า dailyIntakeTargetKcal = 2,633 kcal/วัน (isSafetyFloorApplied=false), dailyCalorieTargetKcal = 225.0 kcal/วัน |
+| References | REQ-02 · AC-ONB-3-01 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
 ### TC-ONB-3-003 — เลือกเป้าหมาย "เพิ่มความอึด" แปลงเป็น TDEE + 300
 
@@ -354,9 +374,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Case Name | เลือกเป้าหมาย "เพิ่มความอึด" ระบบแปลงเป็นค่าแคลอรี่เป้าหมาย TDEE + 300 |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 2,633 kcal/วัน ในโปรไฟล์ และมาถึงหน้า `03-onboarding-goal-select.html` |
 | Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "เพิ่มความอึด" (`endurance`)<br>3. กดยืนยัน |
-| Expected Result | ระบบคำนวณ Target = TDEE + 300 = 2,633 + 300 = **2,933 kcal/วัน** สูงกว่า safety floor จึงไม่ถูกปรับ บันทึกเป็นเป้าหมายแคลอรี่รายวัน และ onboarding เสร็จสมบูรณ์ |
-| Test Data | TDEE = 2,633 kcal/วัน, เป้าหมาย = เพิ่มความอึด (delta +300) → คาดว่าเป้าหมายแคลอรี่รายวัน = 2,933 kcal/วัน |
-| References | REQ-02 · AC-ONB-3-01 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
+| Expected Result | ระบบคำนวณ **`dailyIntakeTargetKcal`** = TDEE + 300 = 2,633 + 300 = **2,933 kcal/วัน** (สูงกว่า safety floor จึงไม่ถูกปรับ, `isSafetyFloorApplied = false`) และ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 5.5 = 75 × 5.5 = **412.5 kcal/วัน** (ไม่มี safety floor) พร้อมกันในคำขอเดียวกัน บันทึกทั้งสองค่า และ onboarding เสร็จสมบูรณ์ |
+| Test Data | TDEE = 2,633 kcal/วัน, น้ำหนักตัว = 75 กก., เป้าหมาย = เพิ่มความอึด (intake delta +300, burn ×5.5) → คาดว่า dailyIntakeTargetKcal = 2,933 kcal/วัน (isSafetyFloorApplied=false), dailyCalorieTargetKcal = 412.5 kcal/วัน |
+| References | REQ-02 · AC-ONB-3-01 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
 ### TC-ONB-3-004 — เปลี่ยนเป้าหมายหลักภายหลัง คำนวณเป้าหมายแคลอรี่ใหม่ทันที
 
@@ -364,22 +384,22 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 |---|---|
 | Test ID | TC-ONB-3-004 |
 | Test Case Name | ผู้ใช้เปลี่ยนเป้าหมายหลักจาก "ลดน้ำหนัก" เป็น "เพิ่มความอึด" ระบบคำนวณเป้าหมายแคลอรี่ใหม่ทันที |
-| Pre-condition | ผู้ใช้มีเป้าหมายแคลอรี่รายวันบันทึกไว้แล้ว = 2,133 kcal/วัน จากเป้าหมาย "ลดน้ำหนัก" (จาก TC-ONB-3-001, TDEE ยังคงเป็น 2,633 kcal/วัน) |
+| Pre-condition | ผู้ใช้มี `dailyIntakeTargetKcal` = 2,133 kcal/วัน และ `dailyCalorieTargetKcal` = 337.5 kcal/วัน บันทึกไว้แล้วจากเป้าหมาย "ลดน้ำหนัก" (จาก TC-ONB-3-001, TDEE ยังคงเป็น 2,633 kcal/วัน, น้ำหนักตัวยังคงเป็น 75 กก.) |
 | Test Steps | 1. เปิดหน้าตั้งค่าเป้าหมายหลัก (Settings หรือหน้าเลือกเป้าหมาย)<br>2. เปลี่ยนเป้าหมายจาก "ลดน้ำหนัก" เป็น "เพิ่มความอึด" (`endurance`)<br>3. ยืนยันการเปลี่ยนแปลง |
-| Expected Result | ระบบคำนวณเป้าหมายแคลอรี่รายวันใหม่ทันทีด้วยสูตรค่าคงที่เดิมของ REQ-02: Target = TDEE + 300 = 2,633 + 300 = **2,933 kcal/วัน** แทนที่ค่าเดิม (2,133 kcal/วัน) โดยไม่ต้องคำนวณ TDEE ใหม่ |
-| Test Data | TDEE = 2,633 kcal/วัน (ไม่เปลี่ยน), เป้าหมายเดิม = ลดน้ำหนัก (2,133 kcal/วัน) → เป้าหมายใหม่ = เพิ่มความอึด (คาดว่า 2,933 kcal/วัน) |
-| References | REQ-02 · AC-ONB-3-02 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [03-onboarding-goal-select.html](../../../02-design/01-prototypes/v1/03-onboarding-goal-select.html) |
+| Expected Result | ระบบคำนวณทั้งสองค่าใหม่ทันทีด้วยสูตรค่าคงที่เดิมของ REQ-02: `dailyIntakeTargetKcal` = TDEE + 300 = 2,633 + 300 = **2,933 kcal/วัน** (แทนที่ 2,133, `isSafetyFloorApplied = false`) และ `dailyCalorieTargetKcal` = น้ำหนักตัว × 5.5 = 75 × 5.5 = **412.5 kcal/วัน** (แทนที่ 337.5) โดยไม่ต้องคำนวณ TDEE ใหม่ |
+| Test Data | TDEE = 2,633 kcal/วัน (ไม่เปลี่ยน), น้ำหนักตัว = 75 กก. (ไม่เปลี่ยน), เป้าหมายเดิม = ลดน้ำหนัก (dailyIntakeTargetKcal 2,133 / dailyCalorieTargetKcal 337.5) → เป้าหมายใหม่ = เพิ่มความอึด (คาดว่า dailyIntakeTargetKcal 2,933, dailyCalorieTargetKcal 412.5) |
+| References | REQ-02 · AC-ONB-3-02 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [03-onboarding-goal-select.html](../../../02-design/01-prototypes/v1/03-onboarding-goal-select.html) |
 
-### TC-ONB-3-005 — TDEE ต่ำมากจนแม้เลือก "เพิ่มความอึด" ยังต่ำกว่า safety floor ถูกปรับขึ้นเป็น floor
+### TC-ONB-3-005 — TDEE ต่ำมากจนแม้เลือก "เพิ่มความอึด" `dailyIntakeTargetKcal` ยังต่ำกว่า safety floor ถูกปรับขึ้นเป็น floor
 
 | Field | รายละเอียด |
 |---|---|
 | Test ID | TC-ONB-3-005 |
-| Test Case Name | ผู้ใช้ตัวเล็ก + กิจกรรมต่ำ ทำให้ TDEE ต่ำมาก แม้เลือกเป้าหมาย "เพิ่มความอึด" (TDEE + 300) ผลลัพธ์ยังต่ำกว่า safety floor ระบบต้องปรับขึ้นเป็น floor เสมอ |
+| Test Case Name | ผู้ใช้ตัวเล็ก + กิจกรรมต่ำ ทำให้ TDEE ต่ำมาก แม้เลือกเป้าหมาย "เพิ่มความอึด" (TDEE + 300) `dailyIntakeTargetKcal` ยังต่ำกว่า safety floor ระบบต้องปรับขึ้นเป็น floor เสมอ (ส่วน `dailyCalorieTargetKcal` ไม่ถูกปรับ — ดู TC-ONB-3-008) |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว ด้วยข้อมูลที่ทำให้ TDEE ต่ำมาก: อายุ 70 ปี, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรมระดับ sedentary (1.2) → BMR = 10×32 + 6.25×135 − 5×70 − 161 = 652.75 kcal → TDEE = 652.75 × 1.2 = **783 kcal/วัน** และมาถึงหน้า `03-onboarding-goal-select.html` |
-| Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "เพิ่มความอึด" (`endurance`) — เป้าหมายที่ให้ค่าบวกมากที่สุดในบรรดา 3 ทางเลือก<br>3. กดยืนยัน |
-| Expected Result | ระบบคำนวณ Target ดิบ = TDEE + 300 = 783 + 300 = 1,083 kcal/วัน ซึ่ง**ต่ำกว่า safety floor (1,200 kcal/วัน)** ระบบจึงปรับเป้าหมายแคลอรี่รายวันขึ้นเป็น **1,200 kcal/วัน** (ค่า floor) แทนค่าที่คำนวณได้ ไม่ปล่อยให้ต่ำกว่าเกณฑ์ แม้จะเลือกเป้าหมายที่ให้แคลอรี่สูงสุดแล้วก็ตาม |
-| Test Data | อายุ 70, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรม sedentary → TDEE = 783 kcal/วัน; เป้าหมาย = เพิ่มความอึด (TDEE + 300 = 1,083 kcal/วัน ดิบ) → คาดว่าเป้าหมายแคลอรี่รายวันสุดท้ายหลังปรับ = 1,200 kcal/วัน (safety floor) |
+| Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "เพิ่มความอึด" (`endurance`) — เป้าหมายที่ให้ค่า intake บวกมากที่สุดในบรรดา 3 ทางเลือก<br>3. กดยืนยัน |
+| Expected Result | ระบบคำนวณ `dailyIntakeTargetKcal` ดิบ = TDEE + 300 = 783 + 300 = 1,083 kcal/วัน ซึ่ง**ต่ำกว่า safety floor (1,200 kcal/วัน)** ระบบจึงปรับขึ้นเป็น **1,200 kcal/วัน** (ค่า floor) พร้อมตั้ง **`isSafetyFloorApplied = true`** แทนค่าที่คำนวณได้ ไม่ปล่อยให้ต่ำกว่าเกณฑ์ แม้จะเลือกเป้าหมายที่ให้ intake สูงสุดแล้วก็ตาม — ในคำขอเดียวกัน ระบบยังคำนวณ `dailyCalorieTargetKcal` = น้ำหนักตัว × 5.5 = 32 × 5.5 = **176.0 kcal/วัน** ควบคู่กันไปด้วย (ไม่มี safety floor เกี่ยวข้อง) |
+| Test Data | อายุ 70, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรม sedentary → TDEE = 783 kcal/วัน; เป้าหมาย = เพิ่มความอึด (intake TDEE + 300 = 1,083 kcal/วัน ดิบ, burn 32 × 5.5) → คาดว่า dailyIntakeTargetKcal สุดท้ายหลังปรับ = 1,200 kcal/วัน (isSafetyFloorApplied=true), dailyCalorieTargetKcal = 176.0 kcal/วัน |
 | References | REQ-02 · AC-ONB-3-03 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
 ### TC-ONB-3-006 — เลือกเป้าหมาย "ลดน้ำหนัก" กรอกน้ำหนักเป้าหมาย (บังคับ) ครบถ้วน บันทึกสำเร็จ
@@ -390,9 +410,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Case Name | เลือกเป้าหมาย "ลดน้ำหนัก" กรอกน้ำหนักเป้าหมายในช่องบังคับครบถ้วน ระบบบันทึกทั้งเป้าหมายแคลอรี่และน้ำหนักเป้าหมาย |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 2,633 kcal/วัน (น้ำหนักปัจจุบัน 75 กก., จาก TC-ONB-1-001) และมาถึงขั้นตอนเลือกเป้าหมายหลัก |
 | Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "ลดน้ำหนัก" (`lose`)<br>3. ระบบแสดงช่องกรอกน้ำหนักเป้าหมาย (target weight) เป็นช่องบังคับ<br>4. กรอกน้ำหนักเป้าหมาย = 70.0 กก.<br>5. กดยืนยัน |
-| Expected Result | ระบบคำนวณ Target = TDEE − 500 = 2,633 − 500 = **2,133 kcal/วัน** (สูงกว่า safety floor ไม่ถูกปรับ) บันทึกทั้งเป้าหมายแคลอรี่รายวัน (2,133 kcal/วัน) และน้ำหนักเป้าหมาย (70.0 กก.) ลงโปรไฟล์พร้อมกัน onboarding เสร็จสมบูรณ์ และค่าน้ำหนักเป้าหมายนี้พร้อมใช้เป็น precondition "มีเป้าหมายน้ำหนัก" ของ INT-1 ทันที |
-| Test Data | TDEE = 2,633 kcal/วัน (น้ำหนักปัจจุบัน 75 กก.), เป้าหมาย = ลดน้ำหนัก (delta −500), น้ำหนักเป้าหมาย = 70.0 กก. (บังคับกรอก, ต่ำกว่าน้ำหนักปัจจุบัน 5 กก. — เลือกใช้ delta 5 กก. ให้สอดคล้องกับ persona ของ INT-1 ใน `test-cases/04-smart-integrations.md` ที่ใช้ delta เดียวกัน แม้ตัวเลขน้ำหนักตั้งต้นจะต่างกัน) → คาดว่าเป้าหมายแคลอรี่รายวัน = 2,133 kcal/วัน, น้ำหนักเป้าหมายบันทึกไว้ = 70.0 กก. |
-| References | REQ-02 · AC-ONB-3-04 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · [INT-1 precondition](../../../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11) — **หมายเหตุ**: ยังไม่มี prototype screen ใน `v1` ที่ implement ช่องกรอกน้ำหนักเป้าหมายนี้จริง (gap) |
+| Expected Result | ระบบคำนวณ **`dailyIntakeTargetKcal`** = TDEE − 500 = 2,633 − 500 = **2,133 kcal/วัน** (สูงกว่า safety floor ไม่ถูกปรับ, `isSafetyFloorApplied = false`) และ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 4.5 = 75 × 4.5 = **337.5 kcal/วัน** (ไม่มี safety floor) บันทึกทั้งสองค่าและน้ำหนักเป้าหมาย (70.0 กก.) ลงโปรไฟล์พร้อมกัน onboarding เสร็จสมบูรณ์ และค่าน้ำหนักเป้าหมายนี้พร้อมใช้เป็น precondition "มีเป้าหมายน้ำหนัก" ของ INT-1 ทันที |
+| Test Data | TDEE = 2,633 kcal/วัน (น้ำหนักปัจจุบัน 75 กก.), เป้าหมาย = ลดน้ำหนัก (intake delta −500, burn ×4.5), น้ำหนักเป้าหมาย = 70.0 กก. (บังคับกรอก, ต่ำกว่าน้ำหนักปัจจุบัน 5 กก. — เลือกใช้ delta 5 กก. ให้สอดคล้องกับ persona ของ INT-1 ใน `test-cases/04-smart-integrations.md` ที่ใช้ delta เดียวกัน แม้ตัวเลขน้ำหนักตั้งต้นจะต่างกัน) → คาดว่า dailyIntakeTargetKcal = 2,133 kcal/วัน (isSafetyFloorApplied=false), dailyCalorieTargetKcal = 337.5 kcal/วัน, น้ำหนักเป้าหมายบันทึกไว้ = 70.0 กก. |
+| References | REQ-02 · AC-ONB-3-04 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · [INT-1 precondition](../../../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11) — **หมายเหตุ**: ยังไม่มี prototype screen ใน `v1` ที่ implement ช่องกรอกน้ำหนักเป้าหมายนี้จริง (gap) |
 
 ### TC-ONB-3-007 — เลือกเป้าหมาย "กระชับสัดส่วน" ข้ามช่องน้ำหนักเป้าหมาย (ไม่บังคับ) onboarding ยังเสร็จสมบูรณ์ได้
 
@@ -402,9 +422,21 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Case Name | เลือกเป้าหมาย "กระชับสัดส่วน" ไม่กรอกน้ำหนักเป้าหมาย (ช่องไม่บังคับ) ระบบยังบันทึกเป้าหมายแคลอรี่ได้ปกติแต่ INT-1 ยังใช้งานไม่ได้ |
 | Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 2,633 kcal/วัน และมาถึงขั้นตอนเลือกเป้าหมายหลัก |
 | Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "กระชับสัดส่วน" (`maintain`)<br>3. ระบบแสดงช่องกรอกน้ำหนักเป้าหมาย (target weight) เป็นช่องไม่บังคับ<br>4. ไม่กรอกน้ำหนักเป้าหมาย (เว้นว่างไว้)<br>5. กดยืนยัน |
-| Expected Result | ระบบบันทึกเป้าหมายแคลอรี่รายวัน = TDEE + 0 = **2,633 kcal/วัน** ตามปกติ (ไม่ต้องมีน้ำหนักเป้าหมาย เพราะไม่บังคับ) onboarding เสร็จสมบูรณ์ แต่โปรไฟล์ไม่มีน้ำหนักเป้าหมายบันทึกไว้ ทำให้ INT-1 (พยากรณ์วันถึงเป้าหมายน้ำหนัก) ยังใช้งานไม่ได้จนกว่าผู้ใช้จะกลับมากรอกน้ำหนักเป้าหมายภายหลัง (ช่องทางที่แน่ชัดยังไม่ถูกระบุใน upstream) |
-| Test Data | TDEE = 2,633 kcal/วัน, เป้าหมาย = กระชับสัดส่วน (delta +0), น้ำหนักเป้าหมาย = (ไม่กรอก/null) → คาดว่าเป้าหมายแคลอรี่รายวัน = 2,633 kcal/วัน, น้ำหนักเป้าหมายในโปรไฟล์ = ไม่มีค่า (null) |
-| References | REQ-02 · AC-ONB-3-05 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) (Alt/Edge Case ข้อ 3) · [INT-1 precondition/edge case](../../../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11) — **หมายเหตุ**: ยังไม่มี prototype screen ใน `v1` ที่ implement ช่องกรอกน้ำหนักเป้าหมายนี้จริง (gap) |
+| Expected Result | ระบบบันทึก **`dailyIntakeTargetKcal`** = TDEE + 0 = **2,633 kcal/วัน** (`isSafetyFloorApplied = false`) และ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 3.0 = 75 × 3.0 = **225.0 kcal/วัน** ตามปกติ (ไม่ต้องมีน้ำหนักเป้าหมาย เพราะไม่บังคับ) onboarding เสร็จสมบูรณ์ แต่โปรไฟล์ไม่มีน้ำหนักเป้าหมายบันทึกไว้ ทำให้ INT-1 (พยากรณ์วันถึงเป้าหมายน้ำหนัก) ยังใช้งานไม่ได้จนกว่าผู้ใช้จะกลับมากรอกน้ำหนักเป้าหมายภายหลัง (ช่องทางที่แน่ชัดยังไม่ถูกระบุใน upstream) |
+| Test Data | TDEE = 2,633 kcal/วัน, น้ำหนักตัว = 75 กก., เป้าหมาย = กระชับสัดส่วน (intake delta +0, burn ×3.0), น้ำหนักเป้าหมาย = (ไม่กรอก/null) → คาดว่า dailyIntakeTargetKcal = 2,633 kcal/วัน (isSafetyFloorApplied=false), dailyCalorieTargetKcal = 225.0 kcal/วัน, น้ำหนักเป้าหมายในโปรไฟล์ = ไม่มีค่า (null) |
+| References | REQ-02 · AC-ONB-3-05 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) (Alt/Edge Case ข้อ 3) · [INT-1 precondition/edge case](../../../02-design/01-prototypes/user-journeys.md#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก-req-11) — **หมายเหตุ**: ยังไม่มี prototype screen ใน `v1` ที่ implement ช่องกรอกน้ำหนักเป้าหมายนี้จริง (gap) |
+
+### TC-ONB-3-008 — `dailyCalorieTargetKcal` ไม่มี safety floor แม้ค่าที่คำนวณได้ต่ำมาก (ต่างจาก `dailyIntakeTargetKcal`)
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-3-008 |
+| Test Case Name | ผู้ใช้ตัวเล็ก + น้ำหนักน้อยมาก (persona เดียวกับ TC-ONB-3-005) ยืนยันว่า `dailyCalorieTargetKcal` ไม่ถูกปรับขึ้นด้วย safety floor เลย แม้ค่าที่คำนวณได้จะต่ำกว่า 1,200 kcal มาก ในขณะที่ `dailyIntakeTargetKcal` ที่คำนวณในคำขอเดียวกันถูก floor |
+| Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว ด้วยข้อมูลเดียวกับ TC-ONB-3-005: อายุ 70 ปี, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรม sedentary (1.2) → TDEE = 783 kcal/วัน และมาถึงหน้า `03-onboarding-goal-select.html` |
+| Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "กระชับสัดส่วน" (`maintain`) — เป้าหมายที่ให้ค่า burn ต่ำที่สุดในบรรดา 3 ทางเลือก (×3.0) เพื่อทดสอบกรณีสุดโต่ง<br>3. กดยืนยัน |
+| Expected Result | ระบบคำนวณ **`dailyCalorieTargetKcal`** = น้ำหนักตัว × 3.0 = 32 × 3.0 = **96.0 kcal/วัน** และบันทึกค่านี้ไว้ **ตามที่คำนวณได้ทุกประการ ไม่มีการปรับขึ้นด้วยกลไก safety floor ใด ๆ เลย** (ไม่มี field `isSafetyFloorApplied` ผูกกับค่านี้) แม้จะต่ำกว่า `SAFETY_FLOOR_MIN_KCAL` (1,200 kcal) มากก็ตาม — ในคำขอเดียวกัน `dailyIntakeTargetKcal` = TDEE + 0 = 783 kcal/วัน ดิบ ซึ่งต่ำกว่า floor เช่นกัน จึงถูกปรับขึ้นเป็น 1,200 kcal/วัน พร้อม `isSafetyFloorApplied = true` — ยืนยัน contrast ที่ชัดเจนระหว่างสองฟิลด์ในคำขอเดียวกัน |
+| Test Data | อายุ 70, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรม sedentary → TDEE = 783 kcal/วัน; เป้าหมาย = กระชับสัดส่วน (burn 32 × 3.0 = 96.0 ดิบ, intake TDEE + 0 = 783 ดิบ) → คาดว่า dailyCalorieTargetKcal = 96.0 kcal/วัน (ไม่ถูกปรับ), dailyIntakeTargetKcal = 1,200 kcal/วัน (isSafetyFloorApplied=true) |
+| References | REQ-02 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
 ---
 
@@ -430,12 +462,13 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-3 | AC-ONB-3-03 | 1 | TC-ONB-3-005 |
 | ONB-3 | AC-ONB-3-04 | 1 | TC-ONB-3-006 |
 | ONB-3 | AC-ONB-3-05 | 1 | TC-ONB-3-007 |
-| **รวม** | **18 AC scenario** | **23 test case** | TC-ONB-0-001 … TC-ONB-3-007 |
+| ONB-3 | AC-ONB-3-06 (ใหม่ 2026-08-31) | 1 (dedicated — ค่า `dailyCalorieTargetKcal` ยัง verify แทรกอยู่ใน TC-ONB-3-001–007 ด้วย) | TC-ONB-3-008 |
+| **รวม** | **19 AC scenario** | **24 test case** | TC-ONB-0-001 … TC-ONB-3-008 |
 
 ครบทุก AC scenario ของ ONB-0/ONB-1/ONB-2/ONB-3 ตาม
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization)
-(18/18 scenario มี test case อย่างน้อย 1 รายการ — เพิ่ม AC-ONB-0-07/TC-ONB-0-007 เมื่อ 2026-08-30 หลัง ONB-0
-ถูกยืนยันเป็น web-only จาก codebase จริง) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
+(19/19 scenario มี test case อย่างน้อย 1 รายการ — เพิ่ม AC-ONB-3-06/TC-ONB-3-008 เมื่อ 2026-08-31 หลังการแยก
+เป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น 2 ค่า) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
 1. กรณี "เลือกเป้าหมาย 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมายทั้งที่เป็นช่องบังคับ" (ONB-3) ไม่มี AC scenario
    รองรับ เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันแค่ว่า
    ช่องนี้ "บังคับกรอก" แต่ไม่ได้ระบุ behavior การ validation (ข้อความ error, ปุ่มถูกบล็อกหรือไม่ ฯลฯ) เมื่อ
@@ -453,7 +486,10 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
    ผูกกับสูตร Mifflin-St Jeor ทั่วไป (sedentary=1.2, light=1.375, moderate=1.55, active=1.725,
    very_active=1.9) เพื่อให้ผลคำนวณใน Expected Result ตรวจสอบได้จริง — ต้องยืนยันกับทีมผลิตภัณฑ์/
    engineering ก่อนใช้เป็นฐานของการ implement จริง ถ้าค่าจริงต่างจากนี้ ต้องแก้ Test Data ของ
-   TC-ONB-1-001, TC-ONB-1-002, TC-ONB-1-005 และ TDEE ต้นทางที่ TC-ONB-3-001 ถึง TC-ONB-3-005 อ้างอิงต่อ
+   TC-ONB-1-001, TC-ONB-1-002, TC-ONB-1-005 และ TDEE ต้นทางที่ TC-ONB-3-001 ถึง TC-ONB-3-008 อ้างอิงต่อ
+   (น้ำหนักตัวจาก TC-ONB-1-001 = 75 กก. ก็เป็น input ตรงของสูตร `dailyCalorieTargetKcal` ด้วยตั้งแต่
+   2026-08-31 — ถ้าน้ำหนักตัวต้นทางเปลี่ยน ต้องแก้ Test Data ของค่า burn ใน TC-ONB-3-001 ถึง 004, 006, 007
+   ตามไปด้วย)
 2. **ค่า safety floor ที่แน่นอน (ภายในช่วง 1,200–1,500 kcal/วัน)** — REQ-02 ยืนยันเฉพาะช่วง ไม่ได้ปักหมุด
    ตัวเลขเดียว ใช้ 1,200 kcal/วัน (ขอบล่างของช่วง ตรงกับตัวอย่างใน prototype
    `04-onboarding-goal-confirm.html`) เป็นค่าที่ใช้ใน TC-ONB-3-005 — ถ้าค่าจริงต่างจากนี้ (เช่น 1,500)
@@ -473,6 +509,13 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
    ตาม `01-spec/20260823-01-onboarding-personalization.md`) เลือกใช้ค่าที่ครบทั้งตัวเลข/ตัวพิมพ์ใหญ่-เล็ก/
    สัญลักษณ์เพื่อให้ Test Data มีความหมายตรวจสอบได้ ไม่ใช่ค่าที่ยืนยันจากผู้ใช้งาน ถ้ามีการกำหนด password
    policy จริงในภายหลัง ต้องกลับมาแก้ Test Data นี้ให้ตรงตามกติกาจริง
+6. **(เพิ่ม 2026-08-31)** ค่าคงที่ kcal/กก. ของ `dailyCalorieTargetKcal` (ลดน้ำหนัก=4.5, กระชับสัดส่วน=3.0,
+   เพิ่มความอึด=5.5) **ไม่ใช่ค่าที่ประดิษฐ์ขึ้นเองในเอกสารนี้** — ยืนยันแล้วใน
+   [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+   ตรวจสอบกับโค้ดจริง `apps/web/client/src/pages/onboarding/GoalConfirmScreen.tsx` แล้ว — TC-ONB-3-008
+   เลือกใช้ persona เดียวกับ TC-ONB-3-005 (น้ำหนัก 32 กก.) แต่เปลี่ยนเป้าหมายเป็น "กระชับสัดส่วน" (×3.0 ซึ่ง
+   ให้ค่า burn ต่ำที่สุดในบรรดา 3 ทางเลือก) เพื่อให้เห็น contrast ชัดเจนที่สุดระหว่าง `dailyCalorieTargetKcal`
+   ที่ไม่ถูก floor กับ `dailyIntakeTargetKcal` ที่ถูก floor ในคำขอเดียวกัน
 
 ---
 

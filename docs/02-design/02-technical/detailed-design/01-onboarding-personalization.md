@@ -3,7 +3,22 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 5) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ทั้งหมดให้ตรงกับ
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 6) — `feature-journey-writer`/`api-db-spec-writer` formalize การแยก
+  เป้าหมายแคลอรี่ของ **ONB-3/REQ-02 เป็น 2 ค่าคู่ขนาน** (ยืนยันจากโค้ดจริงที่ deploy แล้ว —
+  `GoalConfirmScreen.tsx`): เดิม sequence diagram/algorithm ของ ONB-3 มีค่าเดียว (TDEE ± ค่าคงที่ + safety
+  floor) ผิดพลาดและอ้างว่าเป็น input ของ REC-1/PLN-3/INT-1 — แก้เป็น **2 การคำนวณคู่ขนาน**:
+  `dailyCalorieTargetKcal` (น้ำหนักตัว × ค่าคงที่ kcal/กก. ต่อเป้าหมาย — ลดน้ำหนัก 4.5/กระชับสัดส่วน
+  3.0/เพิ่มความอึด 5.5, ไม่มี safety floor, เป็น input จริงของ REC-1/PLN-3/INT-1) และ
+  `dailyIntakeTargetKcal` (TDEE ± ค่าส่วนต่างตามเป้าหมาย มี safety floor ที่ `SAFETY_FLOOR_MIN_KCAL` =
+  1,200 kcal พร้อม `isSafetyFloorApplied` — reinstated, ยังไม่มี component ใดใช้จริง เตรียมไว้สำหรับฟีเจอร์
+  บันทึกอาหารในอนาคต) — sequence diagram เพิ่ม `par` block แสดง 2 การคำนวณคู่ขนานฝั่งผู้ใช้ก่อนส่งรวมใน
+  `PUT /profile/goal` เดียว, ปรับ "จุดที่ยังไม่ได้ระบุ" ข้อ safety floor range ให้ระบุว่าปัจจุบัน implement
+  เป็นค่าคงที่ 1,200 kcal เดียว (ไม่แยกตามเพศ/อายุ) แต่**ยังไม่ resolve เป็นทางการ** — เป็นแค่ placeholder
+  ตาม comment ในโค้ดเอง ไม่ใช่การตัดสินใจใหม่ (ยังคง open point เดิมไว้), แก้ภาคผนวก Stack Mapping (แถว Personalization & Profile และ
+  "Execution ของ algorithm section") ให้ระบุว่าทั้งสองค่าคำนวณ client-side พร้อมกันแล้วส่งรวมคำขอเดียว —
+  ตรงกับ `database-schema.md` §3.3 และ `api-spec.md` §3.2 ฉบับล่าสุด (ดู
+  [log 2026-08-31](../../../05-log/20260831-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 5) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ทั้งหมดให้ตรงกับ
   `tech-stack.md` §6.1/§6.3.1 ฉบับล่าสุด (Express.js บน **Google Cloud Run** แทนที่ Firebase Cloud Functions
   เดิม, จำนวน operation ของ Account & Session Management แก้จาก 8 เป็น **10** ให้ตรงกับ `api-spec.md` §3.1)
   — เนื้อหาหลัก (sequence diagram ทั้ง 3, algorithm ของ ONB-1/ONB-3) ไม่เปลี่ยนแปลงเพราะยัง conceptual ล้วน —
@@ -233,48 +248,91 @@ sequenceDiagram
 
 ## ONB-3 — ตั้งเป้าหมายหลัก (REQ-02)
 
+> **หมายเหตุ (แก้ 2026-08-31)**: `feature-journey-writer`/`api-db-spec-writer` formalize การแยกเป้าหมาย
+> แคลอรี่ของ REQ-02 เป็น **2 ค่าคำนวณคู่ขนานกัน** (ยืนยันจากโค้ดจริงที่ deploy แล้ว) — เดิมหัวข้อนี้เคย
+> อธิบายเป็นค่าเดียว (TDEE ± ค่าคงที่ + safety floor) ผิดพลาด ตอนนี้แก้ให้ตรงกับ `database-schema.md` §3.3
+> (`goal_selection.daily_calorie_target_kcal` / `.daily_intake_target_kcal`) และ `api-spec.md` §3.2
+> (`PUT /profile/goal`) แล้ว:
+> 1. **`dailyCalorieTargetKcal`** (เป้าหมายเผาผลาญจากการออกกำลังกาย) = น้ำหนักตัว (kg) × ค่าคงที่ kcal/กก.
+>    ต่อเป้าหมาย — **ไม่มี safety floor** — เป็นค่าที่ REC-1/PLN-3/INT-1 ใช้จริงในแอปวันนี้
+> 2. **`dailyIntakeTargetKcal`** (เป้าหมายที่ควรได้รับต่อวัน, reinstated) = TDEE ± ค่าส่วนต่างตามเป้าหมาย
+>    มี safety floor — **ยังไม่มี component ใดใช้คำนวณจริง ณ ปัจจุบัน** เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารใน
+>    อนาคต
+
 ### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     actor U as ผู้ใช้
     participant PP as Personalization & Profile
-    U->>PP: PUT /profile/goal (ประเภทเป้าหมาย, น้ำหนักเป้าหมาย)
+    U->>PP: PUT /profile/goal (ประเภทเป้าหมาย, น้ำหนักเป้าหมาย, dailyCalorieTargetKcal, dailyIntakeTargetKcal — คำนวณฝั่งผู้ใช้แล้วทั้งคู่)
     alt เลือก "ลดน้ำหนัก" แต่ไม่กรอกน้ำหนักเป้าหมาย
         PP-->>U: 400 Bad Request (target weight required)
     else ข้อมูลครบถ้วน
-        PP->>PP: อ่าน tdee_kcal จาก user_profile
-        PP->>PP: คำนวณ Target kcal = TDEE บวก/ลบค่าคงที่ตามประเภทเป้าหมาย
-        alt Target kcal ต่ำกว่า Safety Floor (1,200-1,500 kcal)
-            PP->>PP: ปรับ Target kcal = Safety Floor, ตั้ง is_safety_floor_applied = true
+        par คำนวณเป้าหมายเผาผลาญ (ฝั่งผู้ใช้ ก่อนส่งคำขอ)
+            U->>U: dailyCalorieTargetKcal = น้ำหนักตัว × ค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ไม่มี safety floor)
+        and คำนวณเป้าหมายรับพลังงาน (ฝั่งผู้ใช้ ก่อนส่งคำขอ)
+            U->>U: อ่าน tdee_kcal จาก User Profile ที่โหลดไว้แล้ว
+            U->>U: dailyIntakeTargetKcal = TDEE ± ค่าส่วนต่างตามประเภทเป้าหมาย
+            alt dailyIntakeTargetKcal ต่ำกว่า Safety Floor (1,200 kcal)
+                U->>U: ปรับ dailyIntakeTargetKcal = Safety Floor, ตั้ง isSafetyFloorApplied = true
+            end
         end
-        PP->>PP: บันทึกลงตาราง goal_selection (รวม target_weight_kg ถ้ามี)
-        PP-->>U: 200 OK (Goal Selection พร้อมเป้าหมายแคลอรี่รายวัน)
+        PP->>PP: re-derive safety floor ซ้ำจาก dailyIntakeTargetKcal ที่ส่งมา (ชั้นตรวจสอบที่สอง — ไม่เชื่อค่าจาก client อย่างเดียว)
+        PP->>PP: บันทึกลงตาราง goal_selection (daily_calorie_target_kcal, daily_intake_target_kcal, is_safety_floor_applied, target_weight_kg ถ้ามี)
+        PP-->>U: 200 OK (Goal Selection พร้อมเป้าหมายแคลอรี่ทั้งสองค่า + isSafetyFloorApplied)
     end
 ```
 
-### อัลกอริทึม — คำนวณเป้าหมายแคลอรี่รายวัน + Safety Floor
+### อัลกอริทึม — คำนวณเป้าหมายแคลอรี่รายวัน (2 ค่าคู่ขนาน) + Safety Floor
 
-1. รับ input: ประเภทเป้าหมาย (ลดน้ำหนัก/กระชับสัดส่วน/เพิ่มความอึด), น้ำหนักเป้าหมาย (บังคับเมื่อเลือก
-   "ลดน้ำหนัก" ตาม decision ที่ resolve แล้ว 2026-08-28)
-2. ตรวจสอบ: ถ้าเลือก "ลดน้ำหนัก" แต่ไม่มีน้ำหนักเป้าหมาย → คืน error (`400`) และหยุดกระบวนการ
-3. อ่าน TDEE ปัจจุบันจาก `user_profile.tdee_kcal`
-4. คำนวณ Target kcal ตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
+รับ input ร่วม: ประเภทเป้าหมาย (ลดน้ำหนัก/กระชับสัดส่วน/เพิ่มความอึด), น้ำหนักเป้าหมาย (บังคับเมื่อเลือก
+"ลดน้ำหนัก" ตาม decision ที่ resolve แล้ว 2026-08-28) — ตรวจสอบก่อน: ถ้าเลือก "ลดน้ำหนัก" แต่ไม่มีน้ำหนัก
+เป้าหมาย → คืน error (`400`) และหยุดกระบวนการ จากนั้นคำนวณ 2 ค่าคู่ขนานกันดังนี้
+
+**(ก) เป้าหมายเผาผลาญจากการออกกำลังกาย — `dailyCalorieTargetKcal` (ไม่มี safety floor)**
+
+1. อ่านน้ำหนักตัวปัจจุบัน (kg) จาก `user_profile.weight_kg`
+2. คูณด้วยค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
+   - ลดน้ำหนัก: `dailyCalorieTargetKcal = น้ำหนักตัว × 4.5`
+   - กระชับสัดส่วน: `dailyCalorieTargetKcal = น้ำหนักตัว × 3.0`
+   - เพิ่มความอึด: `dailyCalorieTargetKcal = น้ำหนักตัว × 5.5`
+3. ไม่มีขั้นตอน safety floor สำหรับค่านี้ (ไม่ใช่ตัวเลขเชิง diet)
+4. ค่านี้คือ input จริงของ REC-1 (จับคู่วิดีโอ), PLN-3 (ประเมิน all-or-nothing), และ INT-1 (พยากรณ์วันที่
+   ถึงเป้าหมาย) ในแอปวันนี้
+
+**(ข) เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน — `dailyIntakeTargetKcal` (มี safety floor, forward-looking)**
+
+1. อ่าน TDEE ปัจจุบันจาก `user_profile.tdee_kcal`
+2. คำนวณค่าดิบตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
    - ลดน้ำหนัก: `Target = TDEE − 500`
    - กระชับสัดส่วน: `Target = TDEE + 0` (maintenance)
    - เพิ่มความอึด: `Target = TDEE + 300`
-5. ตรวจสอบ safety floor: ถ้า `Target < 1,200–1,500 kcal` (ตัวเลขที่แน่นอนในช่วงนี้ยังไม่ resolve เป็น
-   ทางการ — ดู "จุดที่ยังไม่ได้ระบุ") → ปรับ `Target = Safety Floor` และตั้ง `is_safety_floor_applied = true`
-6. บันทึกผลลัพธ์สุดท้ายลง `goal_selection` (`daily_calorie_target_kcal`, `target_weight_kg` ถ้ามี)
-7. ส่งคืนผลลัพธ์ให้ผู้ใช้ — ค่านี้เป็น input ของ REC-1 (จับคู่วิดีโอ), PLN-3 (ประเมิน all-or-nothing), และ
-   INT-1 (เป็นแหล่งที่มาของน้ำหนักเป้าหมาย)
+3. ตรวจสอบ safety floor: ถ้า `Target < SAFETY_FLOOR_MIN_KCAL` (implement เป็น **1,200 kcal**) → ปรับ
+   `dailyIntakeTargetKcal = SAFETY_FLOOR_MIN_KCAL` และตั้ง `isSafetyFloorApplied = true` มิฉะนั้นใช้ค่าดิบ
+   และตั้ง `isSafetyFloorApplied = false`
+4. ค่านี้**ยังไม่มี component ใดใช้คำนวณจริง ณ ปัจจุบัน** — เก็บไว้เตรียมสำหรับฟีเจอร์บันทึกอาหารในอนาคต
+
+**(ค) รวมผลลัพธ์และส่งคำขอ**
+
+1. ส่งทั้งสองค่า (`dailyCalorieTargetKcal`, `dailyIntakeTargetKcal`) พร้อมประเภทเป้าหมาย/น้ำหนักเป้าหมาย
+   ไปในคำขอเดียวกัน (`PUT /profile/goal`) — คำนวณทั้งคู่เสร็จแล้วก่อนส่ง (client-side, NFR-01/03)
+2. ฝั่งรับคำขอ re-derive safety floor ซ้ำจาก `dailyIntakeTargetKcal` ที่ส่งมาเทียบ
+   `SAFETY_FLOOR_MIN_KCAL` เป็นชั้นตรวจสอบที่สอง (ไม่เชื่อค่า `isSafetyFloorApplied` จาก client อย่างเดียว
+   — ใช้กับ `dailyIntakeTargetKcal` เท่านั้น ไม่เกี่ยวกับ `dailyCalorieTargetKcal`)
+3. บันทึกผลลัพธ์สุดท้ายลง `goal_selection` (`daily_calorie_target_kcal`, `daily_intake_target_kcal`,
+   `is_safety_floor_applied`, `target_weight_kg` ถ้ามี)
+4. ส่งคืนผลลัพธ์ทั้งสองค่าพร้อม `isSafetyFloorApplied` ให้ผู้ใช้
 
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
 1. **ONB-1**: ค่า Activity Factor จริงต่อแต่ละระดับกิจกรรม (5 ระดับ) ยังไม่ resolve เป็นทางการใน
    `01-spec/` — algorithm ข้างต้นอ้างถึงแนวคิด "Activity Factor" แต่ไม่ได้ระบุตัวเลขจริง
-2. **ONB-3**: ตัวเลขที่แน่นอนของ safety floor ภายในช่วง 1,200–1,500 kcal (ขึ้นกับปัจจัยใด — เพศ? เมื่อไหร่
-   ใช้ค่าไหน?) ยังไม่ระบุ
+2. **ONB-3**: ตัวเลขที่แน่นอนของ safety floor ภายในช่วง 1,200–1,500 kcal ยังไม่ resolve เป็นทางการ (ยังคงเป็น
+   open point เดิม — ยังไม่มีการตัดสินใจใหม่) — โค้ดจริงปัจจุบัน implement `SAFETY_FLOOR_MIN_KCAL` เป็นค่าคงที่
+   **1,200 kcal** เดียว (ไม่แยกตามเพศ/อายุ) แต่ comment ในโค้ดเอง (`// exact value tied to sex/age band`)
+   ระบุชัดว่านี่เป็นเพียงค่า placeholder ระหว่างรอ decision จริง ไม่ใช่การ resolve อย่างเป็นทางการ — ใช้กับ
+   `dailyIntakeTargetKcal` เท่านั้น (เปลี่ยนจากเดิมที่เคยผูกกับ field เดียวที่ถูกลบไปแล้ว)
 3. **ONB-3**: กรณีผู้ใช้เลือก "กระชับสัดส่วน"/"เพิ่มความอึด" แล้วข้ามช่องน้ำหนักเป้าหมาย (ไม่บังคับ) — ช่อง
    ทางแจ้งเตือนให้กรอกภายหลังยังไม่ระบุ (ผูกกับ INT-1 ที่ต้องใช้ค่านี้)
 4. **ONB-0**: ยังไม่ระบุว่าต้องมีขั้นตอนยืนยันอีเมล (email verification) ก่อนใช้งานได้จริงหรือไม่ — กระทบว่า
@@ -348,6 +406,13 @@ sequenceDiagram
 > `tech-stack.md` §7 ข้อ 5) — เนื้อหาหลัก (sequence diagram/algorithm) **ไม่เปลี่ยนแปลง** เพราะยัง
 > conceptual ล้วน
 
+> **อัปเดต 2026-08-31 (รอบ 5)**: `feature-journey-writer`/`api-db-spec-writer` formalize การแยกเป้าหมาย
+> แคลอรี่ของ ONB-3/REQ-02 เป็น 2 ค่าคู่ขนาน (`dailyCalorieTargetKcal` ไม่มี floor, `dailyIntakeTargetKcal`
+> มี floor) — แก้แถว "Personalization & Profile" และหัวข้อ "Execution ของ algorithm section" ให้ระบุว่าทั้ง
+> สองค่าคำนวณฝั่ง client พร้อมกันแล้วส่งรวมในคำขอ `PUT /api/profile/goal` เดียวกัน และ server re-derive
+> safety floor ซ้ำเฉพาะ `dailyIntakeTargetKcal` เท่านั้น — เป็น mechanical re-sync ตามข้อเท็จจริงที่ยืนยัน
+> แล้วจากโค้ดจริง ไม่ใช่การตัดสินใจ stack ใหม่ (ดู [log 2026-08-31](../../../05-log/20260831-log.md))
+
 มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
 และ [§ 6.3.1](../tech-stack.md#631-account--session-management-onb-0--identity-handoff--ข้อยกเว้นของกติกาข้างต้น)
 (อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
@@ -355,14 +420,18 @@ sequenceDiagram
 | Conceptual Component | Concrete Implementation |
 |---|---|
 | Account & Session Management | **Firebase Authentication จัดการ credential/session ทั้งหมดเอง — ไม่มี Firestore collection แยก** เพราะ `user_account` (thin identity anchor) map ตรงกับ Firebase Auth's `UserRecord` ครบทุก field: `id` = Firebase Auth UID (ค่าเดียวกับ document ID ของ `users/{userId}` ที่ Personalization & Profile ใช้ — ไม่มี FK lookup จริงให้ทำ), `signup_method` derive จาก `providerData[0].providerId`, `email` = `UserRecord.email`, `credential_reference` ไม่มี field ให้เข้าถึงเลยเพราะ Firebase เก็บ password hash ไว้ภายในเอง, `external_provider_reference` = `providerData[0].uid`, `created_at` = `UserRecord.metadata.creationTime`; "สถานะเข้าสู่ระบบ (session)" (ephemeral) = ID Token/Refresh Token ที่ client SDK เก็บ persistence เอง ไม่มี server-side session store ให้ query — **operation-level mapping (10 operation รวม pairing-code แล้ว)**: 7 ใน 10 operation (`signup/email`, `signup/google`, `signup/apple`, `login/email`, `login/google`, `login/apple`, `logout`) เป็น **client SDK call ตรง จาก `apps/web/client/src/services/authService.ts`** (Google/Apple signup กับ login เป็น SDK call เดียวกันจริง แยกด้วย field `isNewUser` ที่ SDK คืนมาแทนการแยก route) — `POST /auth/forgot-password` เป็น **Express route** `POST /api/auth/forgot-password` (`apps/web/server/routes/account-session/forgotPassword.ts`, ไม่ผ่าน `authenticate` middleware, แทนที่ Cloud Function `forgotPassword` เดิม) เพราะต้อง enforce เงื่อนไข `422` (บัญชี Google/Apple ไม่มีรหัสผ่านให้รีเซ็ต) ที่ client SDK เพียงอย่างเดียวไม่รองรับการแยกกรณีนี้ — อีก 2 operation ใหม่ (`POST /auth/pairing-codes`, `.../redeem`, precondition ของ Epic 4) เป็น **Express route** เช่นกัน (`apps/web/server/routes/pairing/index.ts` — รายละเอียดเต็มอยู่ที่ `04-smart-integrations.md` ภาคผนวก) |
-| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) เก็บ `profile`/`goalSelection`/`equipmentSelection` เป็น field/embedded map ในตัว document เดียวกัน + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ (ยังไม่ได้เขียนจริง) + **Express route** `GET /api/profile`, `PUT /api/profile/personal-info`, `PUT /api/profile/equipment`, `PUT /api/profile/goal` (แทนที่ Cloud Function `profileUpdate` เดิม — 3 route handler แยกในไฟล์เดียว `apps/web/server/routes/personalization-profile/index.ts`) enforce equipment mutual exclusion และ safety floor — คำนวณ TDEE/target kcal ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
+| Personalization & Profile | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) เก็บ `profile`/`goalSelection`/`equipmentSelection` เป็น field/embedded map ในตัว document เดียวกัน + Firestore Security Rule จำกัดสิทธิ์ต่อผู้ใช้ (ยังไม่ได้เขียนจริง) + **Express route** `GET /api/profile`, `PUT /api/profile/personal-info`, `PUT /api/profile/equipment`, `PUT /api/profile/goal` (แทนที่ Cloud Function `profileUpdate` เดิม — 3 route handler แยกในไฟล์เดียว `apps/web/server/routes/personalization-profile/index.ts`) enforce equipment mutual exclusion และ re-derive safety floor ของ `dailyIntakeTargetKcal` ซ้ำ (แก้ 2026-08-31 — `dailyCalorieTargetKcal` ไม่มี safety floor) — คำนวณ TDEE (ONB-1) และทั้งสองเป้าหมายแคลอรี่ (ONB-3) ที่ฝั่ง client ก่อนส่งเหมือนเดิม |
 
 **Execution ของ algorithm section**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
-(NFR-01/NFR-03 — client-side calculation) การคำนวณ **TDEE (ONB-1)** และ **Safety Floor (ONB-3)**
-เกิดขึ้นฝั่ง **React+Vite web client โดยตรง** (`apps/web/client` — เปลี่ยนจาก React Native client เดิม
-เพราะ ONB-* ทั้งหมดย้ายเข้า `apps/web` แล้วหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ INT-2/INT-3, ดู
-`tech-stack.md` §7 ข้อ 5) เพื่อไม่มี network latency แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกผ่าน **Express route**
-ใต้ `PUT /api/profile/*` (แทนที่ Firebase Cloud Function `profileUpdate` เดิม — ไม่ใช่เขียนตรงเข้า Firestore
-document `users/{userId}` จาก client เอง) เพื่อให้ route นั้น validate/บังคับกติกาธุรกิจ (เช่น safety floor,
-equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม — **ONB-0 ไม่มี algorithm section
-จึงไม่มี client-side/server-side split ให้ระบุเพิ่ม** (REQ-14–17 ไม่ใช่ feature เชิงคำนวณ)
+(NFR-01/NFR-03 — client-side calculation) การคำนวณ **TDEE (ONB-1)** และ**ทั้งสองเป้าหมายแคลอรี่ของ ONB-3**
+(`dailyCalorieTargetKcal` เป้าหมายเผาผลาญ ไม่มี floor, และ `dailyIntakeTargetKcal` เป้าหมายรับพลังงาน มี
+safety floor — แก้ไข 2026-08-31 ให้ตรงกับการแยกเป็น 2 ค่าคู่ขนาน) เกิดขึ้นฝั่ง **React+Vite web client
+โดยตรง** (`apps/web/client/src/pages/onboarding/GoalConfirmScreen.tsx` — เปลี่ยนจาก React Native client
+เดิมเพราะ ONB-* ทั้งหมดย้ายเข้า `apps/web` แล้วหลังตัดขอบเขต `apps/mobile` เหลือเฉพาะ INT-2/INT-3, ดู
+`tech-stack.md` §7 ข้อ 5) เพื่อไม่มี network latency — ทั้งสองค่าคำนวณเสร็จพร้อมกันฝั่ง client ก่อน แล้วส่ง
+**รวมในคำขอ `PUT /api/profile/*` เดียวกัน** (ไม่ใช่ 2 คำขอแยก) ไปบันทึกผ่าน **Express route** (แทนที่
+Firebase Cloud Function `profileUpdate` เดิม — ไม่ใช่เขียนตรงเข้า Firestore document `users/{userId}` จาก
+client เอง) เพื่อให้ route นั้น validate/บังคับกติกาธุรกิจ (เช่น re-derive safety floor ของ
+`dailyIntakeTargetKcal` ซ้ำ, equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม —
+**ONB-0 ไม่มี algorithm section จึงไม่มี client-side/server-side split ให้ระบุเพิ่ม** (REQ-14–17 ไม่ใช่
+feature เชิงคำนวณ)

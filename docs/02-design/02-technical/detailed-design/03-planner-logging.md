@@ -3,13 +3,27 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-30 (รอบ 2) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ให้ตรงกับ
+- **อัปเดตล่าสุด:** 2026-08-31 (`detailed-design-builder`, factual correction) — audit เทียบกับโค้ดจริงที่
+  เพิ่ง ship (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) พบว่าย่อหน้า "Execution ของ
+  algorithm" ท้ายภาคผนวก Stack Mapping (ด้านล่าง) อ้างผิดว่า **Streak walk-back (PLN-4)** คำนวณฝั่ง
+  **React+Vite web client** ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
+  (NFR-01/NFR-03 — client-side calculation) แล้วส่งผลลัพธ์มาบันทึก — จริงๆ แล้ว `recomputeStreak()` เป็น
+  ฟังก์ชัน**server-side ล้วน** ที่ loop query Firestore ตรงบน server เอง
+  (`for (let offset = 0; ...) { const log = await db.doc(...).get(); ... }`) ไม่มี client เกี่ยวข้องเลย —
+  ถูกเรียกอัตโนมัติจาก route อื่นที่เขียน `dailyLogs` เสร็จแล้ว (`exertion-calorie`, `planner-day-status`)
+  ไม่ใช่ trigger จากผลคำนวณฝั่ง client — เหมือนกรณีเดียวกันที่พบและแก้แล้วสำหรับ INT-1/Forecast ใน
+  `04-smart-integrations.md` วันเดียวกันนี้ (เป็นการเข้าใจเกินจริงจากตอนที่เขียน section นี้ครั้งแรกโดย
+  generalize จาก REC-2's MET calculation ซึ่งมีเหตุผล latency ระหว่างออกกำลังกายจริงเท่านั้น) — แก้ข้อความ
+  "Execution ของ algorithm" ให้ตรงกับ execution จริงฝั่ง server เท่านั้น — เนื้อหาหลัก (sequence
+  diagram/algorithm ของ walk-back logic เองในหัวข้อ PLN-4 ด้านบน) **ไม่เปลี่ยนแปลง** เพราะยัง conceptual
+  ล้วนถูกต้องอยู่แล้ว ไม่พบ drift อื่นในไฟล์นี้ (ดู [log 2026-08-31](../../../05-log/20260831-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 2) — mechanical re-sync หัวข้อ "ภาคผนวก: Stack Mapping" ให้ตรงกับ
   `tech-stack.md` §6.1 ฉบับล่าสุด (Express.js บน **Google Cloud Run** แทนที่ Firebase Cloud Functions เดิม
   — ยืนยันจากโค้ดจริง `apps/web/server/routes/*`) รวมถึงการเปลี่ยนสถาปัตยกรรม streak recompute จาก
   Firestore `onWrite` trigger อัตโนมัติเป็นฟังก์ชัน `recomputeStreak()` ที่ต้องเรียกเอง — เนื้อหาหลัก
   (sequence diagram/algorithm ของ PLN-1/2/3/4) ไม่เปลี่ยนแปลงเพราะยัง conceptual ล้วน — ไม่กระทบจาก
   pairing-code mechanism เหมือนรอบก่อน (ดู [log 2026-08-30](../../../05-log/20260830-log.md))
-- **อัปเดตก่อนหน้า:** 2026-08-30 (รอบ 1) — audit ตามการเปลี่ยนแปลงใน `high-level-architecture.md`/
+- **อัปเดตก่อนหน้านั้น:** 2026-08-30 (รอบ 1) — audit ตามการเปลี่ยนแปลงใน `high-level-architecture.md`/
   `api-spec.md`/`database-schema.md` (Identity Handoff — Pairing-Code Mechanism, entity/ตาราง
   `pairing_credential`) แล้วพบว่า**ไม่กระทบไฟล์นี้เลย** (กลไกนี้เป็น precondition เฉพาะของ INT-2/INT-3 ใน
   `04-smart-integrations.md` เท่านั้น ไม่เกี่ยวกับ PLN-1/2/3/4) — ตรวจ "Firebase Cloud Function `cheatRest`"
@@ -17,7 +31,7 @@
   (ไม่ใช่ในเนื้อหาหลัก — ไม่พบ main-body stack-name violation) — ไม่แตะภาคผนวก Stack Mapping ตามที่ผู้ใช้
   ยืนยันว่า `tech-stack.md` ยังไม่ reconcile จาก Firebase เดิมมาเป็น stack จริงตามโค้ด (**แก้ไขแล้วในรอบ 2
   ด้านบน**)
-- **อัปเดตก่อนหน้านั้น:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
+- **อัปเดตก่อนหน้านั้นอีกที:** 2026-08-29 — sync ภาคผนวก Stack Mapping ให้ตรงกับ `tech-stack.md` ฉบับ Firebase ใหม่
   (audit เนื้อหาหลัก sequence diagram/algorithm ของ PLN-1/2/3/4 แล้วไม่พบ drift)
 - **สร้างโดย:** skill `detailed-design-builder`
 - **อ้างอิงจาก:** [High Level Architecture](../high-level-architecture.md), [API Spec](../api-spec.md),
@@ -200,6 +214,19 @@ sequenceDiagram
 > client** เพราะ PLN-* ทั้งหมดอยู่ใน `apps/web` (ไม่เคยย้าย ไม่ใช่ native-only capability) — เนื้อหาหลัก
 > (sequence diagram/algorithm) **ไม่เปลี่ยนแปลง** เพราะยัง conceptual ล้วน
 
+> **อัปเดต 2026-08-31 (factual correction)**: ย่อหน้า "Execution ของ algorithm" ด้านล่าง (และรอบ 2026-08-30
+> ด้านบน) อ้างผิดว่า Streak walk-back (PLN-4) คำนวณฝั่ง **client** ตาม
+> [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale) (NFR-01/NFR-03) — audit เทียบกับโค้ดจริง
+> (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ยืนยันว่า `recomputeStreak()` เป็นฟังก์ชัน
+> **server-side ล้วน** ที่ loop query Firestore ตรงบน server เอง ไม่มี client เกี่ยวข้องเลย ถูกเรียก
+> อัตโนมัติจาก route อื่น (`exertion-calorie`, `planner-day-status`) หลังเขียน `dailyLogs` เสร็จ ไม่ใช่
+> การรับผลคำนวณที่ client ทำมาก่อนแล้วส่งมาบันทึกแบบที่เขียนไว้เดิม — เดิมเป็นการเข้าใจเกินจริงจากตอนที่เขียน
+> section นี้ครั้งแรกโดย generalize มาจาก REC-2's MET calculation ที่มีเหตุผลด้าน sub-250ms latency ระหว่าง
+> ออกกำลังกายจริงเท่านั้น (เหมือนกรณีเดียวกันที่พบและแก้แล้วสำหรับ INT-1/Forecast ใน
+> `04-smart-integrations.md` วันเดียวกันนี้) — แก้ย่อหน้า "Execution ของ algorithm" ด้านล่างให้ตรงกับ
+> execution จริงฝั่ง server เท่านั้น (`tech-stack.md` §4 เองก็แก้ตัดรายการ "streak walk-back (PLN-4)" ออก
+> จากลิสต์ client-side calculation คู่ขนานแล้ว)
+
 มิเรอร์จาก [tech-stack.md § 6.1](../tech-stack.md#61-hlas-conceptual-component--expressjs--cloud-firestore-implementation)
 (อัปเดต 2026-08-30) เฉพาะ Component ที่ปรากฏในไฟล์นี้:
 
@@ -208,10 +235,16 @@ sequenceDiagram
 | Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date) — **Express route** `GET /api/planner/week`, `PUT /api/planner/days/:date`, `POST /api/planner/days/:date/cheat-rest`, `DELETE /api/planner/days/:date/cheat-rest` (แทนที่ Cloud Function `cheatRest`/read-only-flag Cloud Function เดิม — `apps/web/server/routes/planner-day-status/index.ts`) อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag/enforce กติกา "วันนี้เท่านั้น" (nested check ตาม Detailed Design ข้างต้น) |
 | Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` + embedded map field `streakSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/logs`, `GET /api/logs/:date`, `GET /api/streak` (`apps/web/server/routes/logging-streak/index.ts`) — **เปลี่ยนสำคัญ 2026-08-30**: ไม่มี Firestore `onWrite` trigger อัตโนมัติอีกต่อไป (Express ไม่มี event-driven infrastructure ให้ใช้ฟรีเหมือน Cloud Functions) แทนที่ด้วยฟังก์ชันธรรมดา `recomputeStreak(userId)` (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` (`exertion-calorie` และ `planner-day-status`) ต้อง `import` แล้วเรียกเองโดยตรงหลังเขียนเสร็จ |
 
-**Execution ของ algorithm**: ตาม [tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale)
-(NFR-01/NFR-03 — client-side calculation) การคำนวณ **Streak walk-back (PLN-4)** เกิดขึ้นฝั่ง **React+Vite
-web client โดยตรง** (`apps/web/client`) เพื่อไม่มี network latency ก่อน แล้วส่งผลลัพธ์ที่คำนวณแล้วไปบันทึกลง
-Firestore ผ่าน Express route ที่เกี่ยวข้อง — ฝั่ง server การ recompute/validate streak เป็นเกราะป้องกัน
-ชั้นที่สองนี้ตอนนี้เปลี่ยนจาก Firestore `onWrite` trigger อัตโนมัติเดิมของ Cloud Functions เป็นการเรียก
-ฟังก์ชัน **`recomputeStreak()` ตรงจากทุก Express route** ที่เขียน `dailyLogs`/`dayStatus` เอง (ดูตารางด้านบน
-— ต้องระวังเวลาเพิ่ม route ใหม่ที่เขียน `dailyLogs` ในอนาคตไม่ให้ลืมเรียก) รันบน **Google Cloud Run**
+**Execution ของ algorithm**: **แก้ไขแล้ว (2026-08-31)** — ข้อความเดิมอ้าง
+[tech-stack.md § 4](../tech-stack.md#4-เหตุผลการเลือก-rationale) (NFR-01/NFR-03 — client-side calculation)
+ผิดพลาดว่า Streak walk-back (PLN-4) คำนวณฝั่ง client — จริงๆ แล้วการคำนวณ **Streak walk-back (PLN-4)**
+เกิดขึ้น**ฝั่ง server ทั้งหมด** ผ่านฟังก์ชัน **`recomputeStreak()`**
+(`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ที่ loop query เอกสาร `dailyLogs` ย้อนหลังทีละ
+วันตรงบน server เอง (`for (let offset = 0; ...) { const log = await db.doc(...).get(); ... }`) ไม่มี
+client-side precomputation ใดๆ เลย — ฟังก์ชันนี้ถูกเรียก**อัตโนมัติจากทุก Express route ที่เขียน
+`dailyLogs`/`dayStatus` เอง** (`exertion-calorie`, `planner-day-status` — ดูตารางด้านบน, ต้องระวังเวลาเพิ่ม
+route ใหม่ที่เขียน `dailyLogs` ในอนาคตไม่ให้ลืมเรียก) ทันทีหลังเขียนเสร็จ ไม่ใช่ trigger จากผลคำนวณฝั่ง
+client แต่อย่างใด — เดิมเป็นการเข้าใจเกินจริงจากตอนที่เขียน section นี้ครั้งแรกโดย generalize มาจาก
+REC-2's MET calculation ซึ่งมีเหตุผลด้าน sub-250ms latency ระหว่างออกกำลังกายจริงตาม NFR-02 เท่านั้น —
+Streak walk-back (PLN-4) ไม่มีข้อจำกัด latency ระหว่าง UI แบบเดียวกัน จึงไม่ควรอ้าง NFR-01/03 กับ Feature
+นี้อีกต่อไป — รันบน **Google Cloud Run** เหมือนเดิม

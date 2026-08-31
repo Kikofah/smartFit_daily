@@ -3,7 +3,19 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 9) — mechanical re-sync หัวข้อ 8 (ภาคผนวก: Stack Mapping) เท่านั้น
+- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 10) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
+  ONB-3/REQ-02 เป็น **2 ค่าแยกกัน** (ยืนยันแล้ว ตรวจสอบกับโค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`
+  และ `packages/shared-types/src/entities/personalizationProfile.ts` โดยตรง): เพิ่มคอลัมน์
+  `daily_intake_target_kcal` (`decimal`) และคืนคอลัมน์ `is_safety_floor_applied` (`boolean`) กลับเข้า
+  ตาราง `goal_selection` (หัวข้อ 3.3 และ ER Diagram หัวข้อ 2) — คอลัมน์ทั้งสองเคยมีอยู่แต่ถูกลบไปในการแก้ไข
+  ก่อนหน้าที่ผิดพลาด แก้คำอธิบายของ `daily_calorie_target_kcal` ที่เคยผิดว่าเป็นค่า intake ที่ปรับ safety
+  floor แล้ว ให้ถูกต้องว่าเป็น**เป้าหมายเผาผลาญจากการออกกำลังกาย ไม่มี safety floor** (ใช้โดย
+  REC-1/PLN-3/INT-1 เหมือนเดิม) ส่วน `daily_intake_target_kcal`/`is_safety_floor_applied` เป็นคู่ intake
+  ที่ reinstate กลับมา (ยังไม่มี component ใดบริโภคค่านี้ เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารในอนาคต) — คืน
+  แถว "Safety floor" กลับเข้าหัวข้อ 4 (Relationships & Constraints) และหัวข้อ 8.3 (FK/Constraint
+  Enforcement) โดยอ้างอิงว่า `PUT /api/profile/goal` re-derive `isSafetyFloorApplied` ซ้ำฝั่ง server จาก
+  `dailyIntakeTargetKcal` — ดู [log 2026-08-31](../../05-log/20260831-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 9) — mechanical re-sync หัวข้อ 8 (ภาคผนวก: Stack Mapping) เท่านั้น
   ตามที่ `tech-stack-writer` เพิ่งอ่านโค้ดจริง (`apps/web/server/services/videoRecommender.ts`) แล้ว
   reconcile `tech-stack.md` §6.1 แถว **Content Recommendation** ให้ระบุรายละเอียดการ embed
   `users/{userId}.todaysRecommendation` (`computedFor`/`video`/`rejectedVideoIds`) ครบแล้ว — เพิ่มแถวใหม่ 2
@@ -157,6 +169,7 @@ erDiagram
         enum goal_type
         decimal target_weight_kg
         decimal daily_calorie_target_kcal
+        decimal daily_intake_target_kcal
         boolean is_safety_floor_applied
     }
     EQUIPMENT_SELECTION {
@@ -325,8 +338,9 @@ erDiagram
 | `user_profile_id` | `identifier` | ใช่ | FK → `user_profile.id` | ความสัมพันธ์ 1:1 (เฉพาะเป้าหมาย**ปัจจุบัน** — ประวัติเป้าหมายเก่าไม่ persist ตาม HLA) |
 | `goal_type` | `enum` | ใช่ | — | ลดน้ำหนัก / กระชับสัดส่วน / เพิ่มความอึด |
 | `target_weight_kg` | `decimal` | บังคับเมื่อ `goal_type = ลดน้ำหนัก`, ไม่บังคับอื่น | — | ตาม decision ที่ resolve แล้ว 2026-08-28 |
-| `daily_calorie_target_kcal` | `decimal` | ใช่ | — | TDEE ± ค่าคงที่ตามเป้าหมาย ปรับด้วย safety floor แล้ว |
-| `is_safety_floor_applied` | `boolean` | ใช่ | — | true ถ้าค่าที่คำนวณได้ต่ำกว่า 1,200–1,500 kcal และถูกปรับขึ้น |
+| `daily_calorie_target_kcal` | `decimal` | ใช่ | — | **เป้าหมายแคลอรี่จากการออกกำลังกาย** — น้ำหนักตัว (kg) × ค่าคงที่ kcal/กก. ตามเป้าหมาย (ลดน้ำหนัก = 4.5, กระชับสัดส่วน = 3.0, เพิ่มความอึด = 5.5) **ไม่มี safety floor** (ไม่ใช่ตัวเลขเชิง diet) — เป็นค่าที่ REC-1/PLN-3/INT-1 ใช้คำนวณจริงในแอปวันนี้ (แก้คำอธิบายเดิมที่ผิด 2026-08-31 — เดิมเข้าใจผิดว่าเป็นค่า intake ที่ปรับ safety floor แล้ว) |
+| `daily_intake_target_kcal` | `decimal` | ใช่ | — | **เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน (intake, reinstated 2026-08-31)** — TDEE ± ค่าส่วนต่างตามเป้าหมาย (ลดน้ำหนัก = TDEE − 500, กระชับสัดส่วน = TDEE + 0, เพิ่มความอึด = TDEE + 300) ปรับขึ้นเป็น `SAFETY_FLOOR_MIN_KCAL` (implement เป็น 1,200 kcal) เมื่อค่าดิบต่ำกว่านั้น — เตรียมไว้สำหรับฟีเจอร์บันทึกอาหารในอนาคต **ยังไม่มี component ใดใช้คำนวณจริง ณ ปัจจุบัน** |
+| `is_safety_floor_applied` | `boolean` | ใช่ | — | true ถ้า `daily_intake_target_kcal` ที่คำนวณได้ต่ำกว่า `SAFETY_FLOOR_MIN_KCAL` (1,200 kcal) และถูกปรับขึ้นเป็นค่า floor แทน — ใช้กับ `daily_intake_target_kcal` เท่านั้น (ไม่เกี่ยวกับ `daily_calorie_target_kcal`) คำนวณฝั่ง client แล้ว re-derive ซ้ำที่ server เป็นชั้นตรวจสอบที่สอง (ดูหัวข้อ 8.3) |
 
 ### 3.4 `equipment_selection` ← Equipment Profile
 
@@ -586,8 +600,11 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 - **กติกาที่ enforce ไม่ได้ที่ระดับ schema — เป็นหน้าที่ของ application/service layer เท่านั้น**:
   1. **Equipment mutual exclusion** (`equipment_selection`) — เลือก "ไม่มีอุปกรณ์" ต้อง deselect ตัวอื่น
      — เจ้าของ: **Personalization & Profile** component (HLA หัวข้อ 3.2)
-  2. **Safety floor** (`goal_selection.daily_calorie_target_kcal` ต้องไม่ต่ำกว่า 1,200–1,500) —
-     เจ้าของ: **Personalization & Profile**
+  2. **Safety floor (reinstated 2026-08-31)** — `goal_selection.daily_intake_target_kcal` ต้องไม่ต่ำกว่า
+     `SAFETY_FLOOR_MIN_KCAL` (implement เป็น 1,200 kcal) ถ้าค่าดิบต่ำกว่านั้นต้องปรับขึ้นเป็นค่า floor พร้อม
+     ตั้ง `is_safety_floor_applied = true` — ใช้กับ `daily_intake_target_kcal` เท่านั้น
+     (`daily_calorie_target_kcal` เป็นเป้าหมายเผาผลาญ ไม่มี safety floor) — คำนวณฝั่ง client ก่อน แล้ว
+     re-derive ซ้ำที่ server เป็นชั้นตรวจสอบที่สอง — เจ้าของ: **Personalization & Profile**
   3. **All-or-nothing** (`daily_log.completion_status` ต้อง ≥100% เท่านั้นถึงเป็น "ครบเป้าหมาย" ไม่มีค่า
      กลาง) — เจ้าของ: **Logging & Streak**
   4. **PLN-1 read-only** (`weekly_plan_entry`/`day_status` ของวันในอดีตที่มี `daily_log` แล้ว ห้ามแก้ไข) —
@@ -782,7 +799,7 @@ Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่า�
 | กติกาเดิม (จากหัวข้อ 4) | สถานะใน Firestore | Express Route ที่ต้อง enforce | Component เจ้าของ (HLA §3) |
 |---|---|---|---|
 | Equipment mutual exclusion (`equipment_selection`) | เก็บเป็น `equipmentTypes` array embedded — Firestore ไม่มี constraint ใดบังคับความสัมพันธ์ระหว่างค่าในกลุ่ม | Express route `PUT /api/profile/equipment` (`apps/web/server/routes/personalization-profile/index.ts` ตาม tech-stack.md §6.1) | Personalization & Profile |
-| Safety floor (`goal_selection.daily_calorie_target_kcal` ≥ 1,200–1,500) | เก็บใน `goalSelection` embedded map — ไม่มี CHECK constraint | Express route `PUT /api/profile/goal` (route handler แยกในไฟล์เดียวกันข้างต้น `apps/web/server/routes/personalization-profile/index.ts`) | Personalization & Profile |
+| Safety floor (reinstated 2026-08-31 — `goal_selection.daily_intake_target_kcal` ≥ `SAFETY_FLOOR_MIN_KCAL` = 1,200 kcal) | เก็บใน `goalSelection` embedded map — ไม่มี CHECK constraint | Express route `PUT /api/profile/goal` (`apps/web/server/routes/personalization-profile/index.ts`) — คำนวณ `isSafetyFloorApplied` ซ้ำฝั่ง server จาก `dailyIntakeTargetKcal` ที่ client ส่งมา (`isSafetyFloorApplied = dailyIntakeTargetKcal <= SAFETY_FLOOR_MIN_KCAL`) เป็นชั้นตรวจสอบที่สอง ไม่เชื่อ flag จาก client เพียงอย่างเดียว — ไม่ครอบคลุม `daily_calorie_target_kcal` (เป้าหมายเผาผลาญ ไม่มี safety floor) | Personalization & Profile |
 | All-or-nothing (`daily_log.completion_status` ≥100% เท่านั้น ไม่มีค่ากลาง) | เขียนลง `dailyLogs/{date}` โดยตรง ไม่มี CHECK constraint ใดๆ | Express route ที่เขียน `dailyLogs` (`apps/web/server/routes/exertion-calorie/index.ts`'s `POST /api/workouts/sessions/{sessionId}/complete` และ `apps/web/server/routes/planner-day-status/index.ts`'s cheat-rest handler ตาม tech-stack.md §6.1 "Logging & Streak" — **ไม่มี Firestore trigger อัตโนมัติแล้ว** ต้องเรียก validate ตรงในแต่ละ route ที่เขียน) | Logging & Streak |
 | PLN-1 read-only (วันในอดีตที่มี `daily_log` แล้ว ห้ามแก้ `weekly_plan_entry`) | ต้องอ่าน `dailyLogs/{date}` ก่อนอนุญาตเขียน `weeklyPlanEntries/{date}` เอง — ไม่มีกลไกอัตโนมัติใดๆ (แม้ตอนเป็น relational ก็ต้อง enforce ที่ application layer อยู่แล้วตามหัวข้อ 4 เดิม ไม่ใช่เรื่องใหม่จาก Firestore) | Express route `PUT /api/planner/days/{date}` (`apps/web/server/routes/planner-day-status/index.ts` ตาม tech-stack.md §6.1 "Planner & Day-Status") | Planner & Day-Status |
 | PLN-2 "วันนี้เท่านั้น" (ทับ `daily_log` ที่มีอยู่แล้วได้เฉพาะ `status_date` = วันนี้) | ต้องอ่าน `dailyLogs/{date}` ก่อนเขียน `dayStatus/{date}` | Express route `POST /api/planner/days/{date}/cheat-rest` (ไฟล์เดียวกันข้างต้น `apps/web/server/routes/planner-day-status/index.ts`) | Planner & Day-Status |
