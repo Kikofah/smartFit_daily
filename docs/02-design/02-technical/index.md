@@ -392,3 +392,15 @@ NFR-01/NFR-03") — ไม่ใช้ AskUserQuestion (factual correction ข�
 REC-1/REC-4's algorithm ใน `detailed-design/02-daily-youtube-recommendation.md` ทุกประการอยู่แล้ว (ไม่มี
 algorithm drift) — pure status-text correction ล้วนๆ ไม่ต้องใช้ AskUserQuestion — ดู log
 [2026-08-31](../../05-log/20260831-log.md)
+— **อัปเดต 2026-09-07 (`api-db-spec-builder`, ฟีเจอร์ลบบัญชี)**: ฟีเจอร์ลบบัญชีถูก implement จริงแล้ว ก่อน
+เอกสาร (`apps/web/server/routes/account-session/deleteAccount.ts`, `DELETE /api/account`, mount หลัง
+`authenticate` middleware) — เพิ่ม operation ใหม่ `DELETE /account` ท้ายหัวข้อ 3.1 ของ `api-spec.md`
+(grounded ใน **NFR-06** ที่มีอยู่แล้วโดยตรง ไม่มี REQ number เฉพาะ ไม่ใช่ business rule ใหม่) และ resolve
+`database-schema.md` §6 ข้อ 6 (เดิมถามว่า immediate delete หรือ retain ไว้ระยะหนึ่ง) ว่าเป็น **immediate
+hard-delete ทั้งหมด ไม่มี retention window/soft-delete** พร้อมเพิ่มลำดับการลบ cascade เต็มรูปแบบในหัวข้อ 4
+ข้อ 9 ของ `database-schema.md` (subcollection ทั้ง 5 ตัว → document ผู้ใช้เอง → `user_account`) — เพิ่ม
+จุดที่ยังไม่ได้ระบุใหม่ทั้งสองไฟล์: idempotency ของการเรียกซ้ำ และ `pairing_credential` ที่ไม่ถูกลบตามไปด้วย
+ตอนลบบัญชี (orphan risk ที่บรรเทาด้วย TTL 5 นาทีอยู่แล้ว) — ไม่มี Feature ID/REQ ใหม่ ไม่กระทบ `backlog.md`/
+`user-journeys.md`/HLA — ภาคผนวก Stack Mapping ของ `api-spec.md` §6 **ไม่แตะ** (strict mirror, รอ
+`tech-stack-builder` ขยาย `tech-stack.md` §6.3.1 ก่อน) ส่วน `database-schema.md` §8.3 เพิ่มแถวใหม่ได้เอง
+ตาม pattern ที่อนุญาตไว้ตั้งแต่ 2026-08-29 — ดู log [2026-09-07](../../05-log/20260907-log.md)

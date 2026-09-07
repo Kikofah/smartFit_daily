@@ -3,7 +3,37 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 10) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
+- **อัปเดตล่าสุด:** 2026-09-07 (รอบ 12, follow-up) — 2 open point ย่อยที่เพิ่มในรอบ 11 (หัวข้อ 6 ข้อ 12-13)
+  ถูก patch ในโค้ดแล้ว: `DELETE /account` (`apps/web/server/routes/account-session/deleteAccount.ts`)
+  เพิ่ม (1) ลบ `pairingCodes` ที่ `uid == userId` ก่อนลบ document ผู้ใช้/Auth account (ปิดช่องโหว่ Pairing
+  Credential ตกค้าง) (2) try/catch รอบ `auth.deleteUser()` ที่ treat `auth/user-not-found` เป็นความสำเร็จ
+  (ทำให้ operation idempotent) — resolve ข้อ 12/13 ด้วยรูปแบบ `~~...~~` **resolved** ตาม convention เดิม
+  พร้อมแก้ข้อยกเว้น `pairing_credential` ในหัวข้อ 4 ข้อ 9 (เดิมบอกว่าไม่ถูกลบ ตอนนี้ถูกลบด้วยแล้ว) และแก้แถว
+  account deletion cascade ในหัวข้อ 8.3 ให้ตรงกับพฤติกรรมใหม่ — ไม่ใช่การ audit ใหม่ทั้งไฟล์ เป็นการปิด open
+  point 2 ข้อที่ระบุมาโดยตรงเท่านั้น (ดู log [2026-09-07](../../05-log/20260907-log.md))
+- **อัปเดตก่อนหน้า:** 2026-09-07 (รอบ 11) — resolve หัวข้อ 6 ข้อ 6 (`user_account` data retention เมื่อผู้ใช้
+  ขอลบบัญชี): ฟีเจอร์ลบบัญชีถูก implement จริงแล้ว (`apps/web/server/routes/account-session/deleteAccount.ts`,
+  `DELETE /api/account`, mount หลัง `authenticate` middleware) — ลบทุก document ใน 5 subcollection ใต้
+  `users/{userId}` (`dailyLogs`/`dayStatus`/`weeklyPlanEntries`/`weightRecords`/`workoutSessions` — รวม
+  embedded `session_video`/`session_rejected_video`/`actual_calorie_burn`/`wearable_reading` ที่อยู่ในนั้น)
+  ก่อน → ลบ document `users/{userId}` เอง (รวม embedded `goal_selection`/`equipment_selection`/
+  `streak_snapshot`/`weight_forecast_snapshot`/`integration_connection`/`today_recommendation_snapshot`+
+  `today_recommendation_rejected_video`) → ลบ `user_account` (Firebase Auth account) เป็นลำดับสุดท้าย —
+  **ยืนยันเป็น immediate hard-delete ทั้งหมด ไม่มี retention window/soft-delete** (grounded ใน NFR-06 ที่มี
+  อยู่แล้วโดยตรง ไม่ใช่ business rule ใหม่ ไม่ต้องมี Feature ID/REQ ใหม่) resolve หัวข้อ 6 ข้อ 6 ด้วยรูปแบบ
+  `~~...~~` **resolved** ตาม convention เดียวกับข้อ 9 — เพิ่มบรรทัดลำดับการลบใหม่ในหัวข้อ 4 (ข้อ 9,
+  Relationships & Constraints, เจ้าของ: Account & Session Management), เพิ่มแถวใหม่ในหัวข้อ 8.3 (FK/
+  Constraint Enforcement Migration) อ้างอิงไฟล์จริง, และเพิ่มจุดที่ยังไม่ได้ระบุใหม่ 2 ข้อในหัวข้อ 6 (ข้อ 12:
+  `pairing_credential` ที่อ้างถึง `user_account_id` ที่ถูกลบไปแล้วไม่ถูกลบตามไปด้วย — orphan risk ที่บรรเทา
+  ด้วย TTL 5 นาทีอยู่แล้ว, ข้อ 13: idempotency ของการเรียกซ้ำ ตรงกับที่เพิ่มใน `api-spec.md` §4 ข้อ 14) —
+  ชี้แจงว่าข้อ 5 (data retention ของ `daily_log`/`weight_record` ระหว่างที่บัญชียังใช้งานปกติ) เป็นคนละประเด็น
+  กับข้อ 6 ที่เพิ่ง resolve (ข้อ 6 คือตอนขอลบบัญชี ข้อ 5 คือ retention policy ระหว่างใช้งานปกติ) ยังไม่
+  resolve — **ไม่แตะหัวข้อ 8.1/8.2 และไม่แตะหัวข้อ 1-3, 7** เพราะไม่มีตารางใหม่เกิดขึ้น (การลบไม่สร้าง entity
+  ใหม่ ใช้ตารางเดิมที่มีอยู่แล้วทั้งหมด) — **ไม่แตะ `tech-stack.md`** (หน้าที่ `tech-stack-builder`) แต่ flag
+  ในหัวข้อ 8 ว่ายังไม่ reconcile — audit เทียบกับ HLA/`01-spec/`/`backlog.md`/`user-journeys.md` แล้วไม่พบ
+  Feature ID/REQ ใหม่ที่ต้องเพิ่ม เพราะ grounded ใน NFR-06 ที่มีอยู่แล้วเท่านั้น (ดู log
+  [2026-09-07](../../05-log/20260907-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 10) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
   ONB-3/REQ-02 เป็น **2 ค่าแยกกัน** (ยืนยันแล้ว ตรวจสอบกับโค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`
   และ `packages/shared-types/src/entities/personalizationProfile.ts` โดยตรง): เพิ่มคอลัมน์
   `daily_intake_target_kcal` (`decimal`) และคืนคอลัมน์ `is_safety_floor_applied` (`boolean`) กลับเข้า
@@ -623,6 +653,19 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
      boolean flag เดิม, และแถวที่ `expires_at` ผ่านไปแล้วต้องปฏิเสธการแลกเสมอแม้ยังไม่เคยถูกลบ) — เจ้าของ:
      **Account & Session Management** (HLA หัวข้อ 3.1) — ยังไม่มี NFR ที่ระบุครอบคลุมกลไกนี้ตรงๆ (ดู HLA §8
      ข้อ 7)
+  9. **Account deletion cascade (ใหม่ 2026-09-07, ตอบจุดที่ยังไม่ได้ระบุเดิมข้อ 6)** — เมื่อผู้ใช้ขอลบบัญชี
+     (NFR-06) ต้องลบข้อมูลตามลำดับนี้เสมอ (ไม่มีกลไก cascade delete อัตโนมัติระดับ schema ให้ใช้ฟรี): (ก)
+     ทุกแถวใน `workout_session` (รวม `session_video`/`session_rejected_video`/`actual_calorie_burn`/
+     `wearable_reading` ที่ผูกกับแต่ละแถว), `weekly_plan_entry`, `day_status`, `daily_log`, `weight_record`
+     — ที่มี `user_profile_id` ตรงกับผู้ใช้นี้ (ข) แถว `user_profile` เอง (รวม `goal_selection`,
+     `equipment_selection`, `streak_snapshot`, `weight_forecast_snapshot`, `integration_connection`,
+     `today_recommendation_snapshot` + `today_recommendation_rejected_video` ที่ผูกกับ profile นี้) (ค)
+     แถว `user_account` เอง — เป็น **immediate hard-delete ทั้งหมด ไม่มี retention window** — เจ้าของ:
+     **Account & Session Management** (HLA หัวข้อ 3.1) แม้จะต้องแตะตารางที่ component อื่นเป็นเจ้าของตามปกติ
+     (เช่น `daily_log` ของ Logging & Streak) เพราะเป็นกลไก orchestration ระดับบัญชีที่ข้าม component — แถว
+     `pairing_credential` ที่ยังผูกกับ `user_account_id` นี้อยู่ (ถ้ามี แถวที่ยังไม่หมดอายุ/ยังไม่ redeem ณ
+     ตอนขอลบ) **ก็ถูกลบด้วยเช่นกัน** เป็นขั้นตอนแยกก่อนลบ `user_profile`/`user_account` (แก้ไข 2026-09-07 —
+     เดิมเป็นข้อยกเว้นที่ไม่ถูกลบ ดูจุดที่ยังไม่ได้ระบุข้อ 12 ที่ resolve แล้วในหัวข้อ 6)
 
 ## 5. Query/Access Pattern Considerations (เชิงแนวคิด)
 
@@ -659,8 +702,16 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
    ควรเก็บทุกครั้งหรือ resolve เป็นค่าเดียว, wearable ต่างจาก MET มากควร flag อย่างไร) ยังไม่ระบุ
 5. **Data retention**: ยังไม่ระบุว่าจะเก็บ `daily_log`/`weight_record` ประวัติย้อนหลังนานแค่ไหน (ผูกกับ
    NFR-06 data deletion)
-6. **`user_account` data retention**: ยังไม่ระบุว่าเมื่อผู้ใช้ขอลบบัญชี (NFR-06) ต้องลบแถว `user_account`
-   ทันทีหรือ retain ไว้ระยะหนึ่งเพื่อวัตถุประสงค์ audit/PDPA (NFR-11) — เกี่ยวโยงกับจุดที่ 5 ข้างต้น
+6. ~~**`user_account` data retention**: ยังไม่ระบุว่าเมื่อผู้ใช้ขอลบบัญชี (NFR-06) ต้องลบแถว `user_account`
+   ทันทีหรือ retain ไว้ระยะหนึ่งเพื่อวัตถุประสงค์ audit/PDPA (NFR-11)~~ — **resolved 2026-09-07**: ฟีเจอร์
+   ลบบัญชีถูก implement จริงแล้ว (`apps/web/server/routes/account-session/deleteAccount.ts`,
+   `DELETE /api/account`) เป็น **immediate hard-delete ทั้งหมด ไม่มี retention window/soft-delete** — ลบ
+   ทุก subcollection ใต้ `users/{userId}` ก่อน (`dailyLogs`/`dayStatus`/`weeklyPlanEntries`/
+   `weightRecords`/`workoutSessions`) แล้วลบ document `users/{userId}` เอง แล้วจึงลบ `user_account`
+   (Firebase Auth account) เป็นลำดับสุดท้าย (ดูหัวข้อ 4 ข้อ 9 สำหรับลำดับเต็ม) — grounded ใน NFR-06 ที่มี
+   อยู่แล้ว เป็นการตัดสินใจ implementation ที่ยืนยันแล้ว ไม่ใช่ open point อีกต่อไป (หมายเหตุ: คนละประเด็นกับ
+   ข้อ 5 ข้างต้นซึ่งเป็นเรื่อง retention policy ระหว่างบัญชียังใช้งานอยู่ตามปกติ ไม่ใช่ตอนขอลบ — ข้อ 5 ยังไม่
+   resolve)
 7. **`user_account.credential_reference`**: รูปแบบ/วิธีตรวจสอบเชิงตรรกะยังไม่ระบุลึกกว่านี้โดยตั้งใจ (เป็น
    หน้าที่ของ auth provider ที่เลือกจริงตาม `tech-stack.md` ไม่ใช่การตัดสินใจของเอกสารนี้)
 8. **บัญชี Google/Apple ที่อีเมลตรงกับบัญชีที่มีอยู่แล้วด้วยวิธีอื่น**: ยังไม่ระบุว่าควร merge เป็น
@@ -674,6 +725,20 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 11. **`pairing_credential`**: ยังไม่ระบุว่าอนุญาตให้มีแถว unused ที่ยังไม่หมดอายุมากกว่า 1 แถวต่อ
     `user_account_id` เดียวกันพร้อมกันหรือไม่ (เช่น กดขอรหัสซ้ำก่อนรหัสเดิมหมดอายุ) — กระทบว่าควร
     invalidate รหัสเดิมทันทีหรือปล่อยให้ใช้ได้ทั้งคู่ (ตรงกับ open point เดียวกันใน `api-spec.md` §4 ข้อ 13)
+12. ~~**`pairing_credential` กับการลบบัญชี (ใหม่ 2026-09-07)**: เมื่อผู้ใช้ขอลบบัญชี แถว
+    `pairing_credential` ที่ยังผูกกับ `user_account_id` นี้อยู่ (ถ้ามี ยังไม่หมดอายุ/ยังไม่ redeem ณ ตอน
+    ขอลบ) ไม่ถูกลบตามไปด้วย — orphan risk ที่บรรเทาด้วยอายุการใช้งานสั้นอยู่แล้ว (5 นาที ตาม HLA §4.5/§5)
+    แต่ยังไม่มีการตัดสินใจอย่างเป็นทางการว่าควรลบทันทีตอนขอลบบัญชีด้วยหรือปล่อยให้หมดอายุเองตามปกติ (ตรงกับ
+    open point เดียวกันใน `api-spec.md` §4 ข้อ 15)~~ — **resolved 2026-09-07**: implementation เพิ่ม
+    ขั้นตอนใหม่ก่อนลบ document ผู้ใช้ — query `pairingCodes` ที่ `uid == userId` แล้วลบทุกแถวที่พบ (ถ้ามี)
+    ก่อนลบ document `users/{userId}` และก่อนลบ Firebase Auth account — ปิดช่องว่างที่รหัสจับคู่อุปกรณ์ที่ยัง
+    ไม่หมดอายุ/ยังไม่ถูก redeem อาจตกค้างอยู่เกินอายุของบัญชีเจ้าของ ไม่ใช่ open point อีกต่อไป
+13. ~~**Idempotency ของ `DELETE /account` (ใหม่ 2026-09-07)**: ยังไม่ระบุพฤติกรรมเมื่อเรียกซ้ำ/เรียกพร้อมกัน
+    หลายครั้ง — implementation จริงไม่มี idempotency guard (ตรงกับ open point เดียวกันใน `api-spec.md` §4
+    ข้อ 14)~~ — **resolved 2026-09-07**: implementation เพิ่ม try/catch รอบ `auth.deleteUser(userId)` แล้ว
+    — error code `auth/user-not-found` (เช่นตอนเรียกซ้ำด้วย ID token เดิมหลังบัญชีถูกลบไปแล้ว) ถูก treat
+    เป็นความสำเร็จ (ตกไปที่ `204` ปกติ) แทนที่จะปล่อยให้หลุดไปเป็น `500` generic — operation นี้จึง
+    **idempotent**แล้ว ไม่ใช่ open point อีกต่อไป
 
 ## 7. ความสัมพันธ์กับเอกสารอื่น
 
@@ -725,6 +790,14 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 > ค่าล่าสุด ไม่มี pattern query อิสระ) — เพิ่มแถวใหม่ในหัวข้อ 8.2/8.3 ด้านล่าง mechanical re-sync ล้วน
 > (ข้อเท็จจริงที่ตัดสินใจแล้วใน `tech-stack.md`) ไม่แตะหัวข้อ 8.1 เพราะ logical type ทั้งหมดของ 2 ตารางนี้
 > (`string`/`decimal`/`enum`/`boolean`/`date`/`identifier`) มีอยู่แล้วในตาราง mapping เดิมครบทุกชนิด
+
+> **อัปเดต 2026-09-07 (เพิ่มแถวใหม่ในหัวข้อ 8.3 — ไม่ใช่ mechanical re-sync ทั้งหมด)**: เพิ่มแถวใหม่ใน
+> หัวข้อ 8.3 สำหรับ account deletion cascade (`DELETE /account`, ใหม่ในหัวข้อ 3.1 ของ `api-spec.md`) —
+> เนื้อหานี้เป็นการออกแบบเพิ่มเติมโดย `api-db-spec-builder` เอง (ตาม pattern เดียวกับที่หัวข้อ 8.2/8.3
+> อนุญาตไว้ตั้งแต่ 2026-08-29) เพราะ `tech-stack.md` §6.1 แถว Account & Session Management ยังไม่ได้ระบุ
+> operation นี้เลย — ควรนำกลับไปปรับ `tech-stack.md` ให้ตรงกันในการรัน `tech-stack-builder` ครั้งถัดไป —
+> **ไม่แตะหัวข้อ 8.1/8.2** เพราะไม่มี logical type ใหม่หรือตารางใหม่เกิดขึ้น (ใช้ตารางเดิมที่มี mapping
+> อยู่แล้วทั้งหมด)
 
 ### 8.1 Logical Type → Firestore Field Type
 
@@ -808,6 +881,7 @@ Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่า�
 | **(ใหม่ 2026-08-29)** Signup-method-conditional required fields (`user_account.credential_reference`/`external_provider_reference` ต้องกรอกตาม `signup_method`) | ไม่มี Firestore representation เลย (resolve แล้วในหัวข้อ 8.2 — `user_account` ไม่มี document แยก) — Firebase Authentication เองบังคับความสัมพันธ์นี้โดยธรรมชาติของแต่ละ client SDK call: `createUserWithEmailAndPassword`/`signInWithEmailAndPassword` เท่านั้นที่ต้องมีรหัสผ่าน (→ มี `providerData` แบบ `password`) ส่วน `signInWithCredential` (Google/Apple) กำหนด `providerData[0].uid` ให้อัตโนมัติเสมอ ไม่มีทางเรียกผิดชนิดได้จาก client SDK — ไม่มี CHECK constraint แบบ schema-level ให้ใช้ฟรีเหมือนเดิม แต่ก็ไม่ต้องมี Express route มาบังคับเพิ่มเช่นกัน | ไม่ต้องมี Express route (client SDK แต่ละตัวบังคับเอง — ดู `tech-stack.md` §6.3.1) — ยกเว้น `POST /api/auth/forgot-password` ที่มี Express route แยกต่างหาก (`apps/web/server/routes/account-session/forgotPassword.ts`) เพื่อ enforce เงื่อนไขอื่น (ดูหัวข้อ 3.1/`api-spec.md` §3.1) | Account & Session Management |
 | **(ใหม่ 2026-08-30 รอบ 5)** Pairing code single-use + short-lived (`pairing_credential` ต้องถูกลบทิ้งทันทีหลัง redeem สำเร็จ, ปฏิเสธการแลกถ้า `expires_at` ผ่านไปแล้ว) | Top-level document `pairingCodes/{code}` (ดูหัวข้อ 8.2) — Firestore ไม่มี TTL/CHECK constraint อัตโนมัติที่ผูกกับ business logic นี้ | Express route `POST /api/pairing/redeem` (`apps/web/server/routes/pairing/index.ts`, **ไม่มี** `authenticate` middleware) — อ่าน document, เทียบ `expiresAt < now()` แล้วคืน `410 Gone` ถ้าไม่พบ/หมดอายุ, ถ้าสำเร็จเรียก `ref.delete()` ก่อนออก custom token เสมอ (delete-on-redeem แทน `is_used` flag — ดูหัวข้อ 3.17/4 ข้อ 8) | Account & Session Management |
 | **(ใหม่ 2026-08-31 รอบ 9)** Today's recommendation cache ต้อง recompute เมื่อ `computed_for_date` ไม่ตรงกับวันนี้ หรือถูกเรียกจาก swap (REC-3) (`today_recommendation_snapshot`/`today_recommendation_rejected_video`, 1:1 ต่อผู้ใช้, overwrite ทับของเดิมทุกครั้ง) | Embedded map field `todaysRecommendation` ภายใน `users/{userId}` (ดูหัวข้อ 8.2) — ไม่มี TTL/trigger อัตโนมัติที่เปรียบเทียบวันที่ให้ฟรี | Express route `GET /api/workouts/today/recommendation` (`apps/web/server/routes/content-recommendation/index.ts`) เปรียบเทียบ `todaysRecommendation.computedFor` กับวันนี้เอง ก่อนตัดสินใจ recompute (เรียก YouTube Data API v3 + Gemini ใหม่) หรือคืนค่าที่แคชไว้; `POST /api/workouts/today/recommendation/swap` บังคับ recompute เสมอ โดยส่ง `rejectedVideoIds` สะสม + วิดีโอปัจจุบันเข้า exclude list ก่อนค้นหาใหม่ (ดูหัวข้อ 3.18/3.19/5) | Content Recommendation |
+| **(ใหม่ 2026-09-07, แก้ไข 2026-09-07)** Account deletion cascade (ต้องลบทุกตารางที่ผูกกับผู้ใช้ตามลำดับก่อนลบ `user_account` เอง — ดูหัวข้อ 4 ข้อ 9) | ไม่มี cascade delete อัตโนมัติของ Firestore ระหว่าง subcollection/collection แยกกับ parent document เลย (ลบ parent document ไม่ได้ลบ subcollection ที่อยู่ใต้มันอัตโนมัติ หรือลบ document ใน top-level collection อื่นที่แค่มี field อ้างถึง uid — ต้องลบเองทีละเอกสาร) | Express route `DELETE /api/account` (`apps/web/server/routes/account-session/deleteAccount.ts`, ผ่าน `authenticate` middleware) วนลบทุก document ใน 5 subcollection (`dailyLogs`/`dayStatus`/`weeklyPlanEntries`/`weightRecords`/`workoutSessions`) เป็น batch ก่อน แล้ว query top-level collection `pairingCodes` ที่ `uid == userId` ลบทุกแถวที่พบ (ถ้ามี, แก้ไข 2026-09-07 — เดิมไม่ลบ) แล้วจึงลบ document `users/{userId}` เอง (รวม embedded field ทั้งหมดไปพร้อมกันในการลบครั้งเดียว) แล้วเรียก `auth.deleteUser(userId)` เป็นลำดับสุดท้ายภายใน try/catch ที่ treat `auth/user-not-found` เป็นความสำเร็จ (idempotent ต่อการเรียกซ้ำ, แก้ไข 2026-09-07) | Account & Session Management |
 
 ดู [tech-stack.md](tech-stack.md) สำหรับ mapping ที่เหลือ (HLA Component → implementation, REST
 convention → Express.js routing บน Google Cloud Run) และเหตุผลการเลือก stack

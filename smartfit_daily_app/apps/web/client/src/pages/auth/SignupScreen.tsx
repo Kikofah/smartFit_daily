@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { signUpWithEmail, loginWithGoogle, loginWithApple } from '../../services/authService';
+import { signUpWithEmail, loginWithGoogle } from '../../services/authService';
 import { colors, spacing, typography } from '../../constants/theme';
 import { signupScreenStyles as styles } from './styles';
 
@@ -45,22 +45,7 @@ export default function SignupScreen() {
   async function handleGoogleSignup() {
     setError(null);
     try {
-      // TODO: replace with a real Google sign-in popup/redirect flow (e.g. Firebase
-      // Auth's signInWithPopup(auth, new GoogleAuthProvider())) to obtain a real
-      // idToken before calling loginWithGoogle.
-      await loginWithGoogle('');
-      navigate('/onboarding/personal-info', { replace: true });
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
-
-  async function handleAppleSignup() {
-    setError(null);
-    try {
-      // TODO: replace with a real Sign in with Apple flow to obtain a real
-      // idToken/rawNonce pair before calling loginWithApple.
-      await loginWithApple('', '');
+      await loginWithGoogle();
       navigate('/onboarding/personal-info', { replace: true });
     } catch (e) {
       setError((e as Error).message);
@@ -114,7 +99,6 @@ export default function SignupScreen() {
 
       <View style={{ gap: spacing[2] }}>
         <SocialButton label="สมัครด้วย Google" icon={<GoogleIcon />} onPress={handleGoogleSignup} />
-        <SocialButton label="สมัครด้วย Apple" icon={<AppleIcon />} onPress={handleAppleSignup} />
       </View>
 
       <Text style={styles.footerNote}>
@@ -162,15 +146,6 @@ function GoogleIcon() {
     <View style={styles.googleIcon}>
       <Text style={styles.googleIconLabel}>G</Text>
     </View>
-  );
-}
-
-function AppleIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.ink} strokeWidth={1.5}>
-      <path d="M16.5 8.5c-.9-1-2.1-1.6-3.4-1.6-1 0-1.7.3-2.4.3-.7 0-1.5-.3-2.4-.3-2.7 0-5.3 2.2-5.3 6 0 3.2 2.4 7.6 4.3 7.6.9 0 1.3-.6 2.4-.6s1.4.6 2.4.6c1.4 0 2.6-1.8 3.4-3.3-2.2-1-2.6-4.1-.5-5.4a4 4 0 0 0 1.5-3.3z" />
-      <path d="M13.2 5.2c.5-.7.9-1.7.7-2.7-.9.1-1.9.6-2.5 1.3-.5.6-1 1.6-.8 2.6 1 .1 1.9-.5 2.6-1.2z" />
-    </svg>
   );
 }
 

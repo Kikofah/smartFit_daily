@@ -5,6 +5,7 @@ import { authenticate } from './middleware/authenticate';
 import { NotFoundError } from './assertDocExists';
 
 import { router as accountSessionRouter } from './routes/account-session/forgotPassword';
+import { router as deleteAccountRouter } from './routes/account-session/deleteAccount';
 import { router as pairingRouter } from './routes/pairing';
 import { router as personalizationProfileRouter } from './routes/personalization-profile';
 import { router as contentRecommendationRouter } from './routes/content-recommendation';
@@ -39,6 +40,7 @@ app.use('/api', pairingRouter);
 // request.auth.uid).
 const api = express.Router();
 api.use(authenticate);
+api.use(deleteAccountRouter);
 api.use(personalizationProfileRouter);
 api.use(contentRecommendationRouter);
 api.use(exertionCalorieRouter);

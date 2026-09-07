@@ -1,0 +1,16 @@
+**/node_modules
+.git
+**/dist
+**/dist-client
+**/dist-server
+apps/mobile/.expo
+apps/mobile/web-build
+apps/web/config
+# Only the server's .env is a secret (has a local-only credential file path;
+# YOUTUBE_API_KEY/GEMINI_API_KEY are passed via --set-env-vars at deploy time
+# instead). apps/web/client/.env holds Firebase's public web config, which
+# Vite must read at build time to bake into the client bundle — never
+# excluded here.
+apps/web/.env
+apps/mobile/.env
+.firebase

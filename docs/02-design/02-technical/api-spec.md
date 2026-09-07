@@ -3,7 +3,39 @@
 - **ประเภทเอกสาร:** API Spec — Conceptual, REST-style convention (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 9) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
+- **อัปเดตล่าสุด:** 2026-09-07 (รอบ 12, follow-up) — split จุดที่ยังไม่ได้ระบุข้อ 10 (account enumeration
+  policy) เป็น 2 ครึ่ง: **`POST /auth/forgot-password` resolved** — implementation
+  (`apps/web/server/routes/account-session/forgotPassword.ts`) ยืนยัน/ระบุชัดแล้วว่าอีเมลที่ไม่มีอยู่จริง
+  ตกไปที่ response `202` เดียวกันกับอีเมลจริงเสมอ เป็นการตัดสินใจ anti-enumeration ที่ตั้งใจตามแนวทาง OWASP
+  สำหรับ password-reset flow ไม่ใช่ byproduct — **`POST /auth/login/email` ยังไม่ resolve** เพราะเป็น
+  client-side Firebase Auth SDK call โดยตรง (`signInWithEmailAndPassword`) ที่ Firebase เองคืน error code
+  แยกกันชัดเจนระหว่างอีเมลไม่มีอยู่จริงกับรหัสผ่านผิด — leak account existence จริง การปิดช่องนี้ต้องเปลี่ยน
+  ให้ login ผ่าน server ของทีมเองแทน ซึ่งเป็นการเปลี่ยนสถาปัตยกรรมที่ใหญ่กว่าที่มีใครร้องขอไว้ จึงคงเป็น open
+  point เฉพาะครึ่งนี้ต่อไป — แก้แถว `POST /auth/forgot-password`/`POST /auth/login/email` ในหัวข้อ 3.1 ให้
+  ตรงกับสถานะใหม่ — ไม่ใช่การ audit ใหม่ทั้งไฟล์ ปิดเฉพาะจุดที่ระบุมาเท่านั้น (ดู log
+  [2026-09-07](../../05-log/20260907-log.md))
+- **อัปเดตก่อนหน้า:** 2026-09-07 (รอบ 11, follow-up) — 2 ช่องโหว่ย่อยที่พบระหว่าง audit รอบ 10 (open point
+  ข้อ 14-15) ถูก patch ในโค้ดแล้ว: `DELETE /account` (`apps/web/server/routes/account-session/
+  deleteAccount.ts`) เพิ่ม (1) ลบ `pairingCodes` ที่ `uid == userId` ก่อนลบ document ผู้ใช้/Auth account
+  (ปิดช่องโหว่ Pairing Credential ตกค้าง) (2) try/catch รอบ `auth.deleteUser()` ที่ treat
+  `auth/user-not-found` เป็นความสำเร็จ (ทำให้ operation idempotent) — resolve ข้อ 14/15 ด้วยรูปแบบ
+  `~~...~~` **resolved** ตาม convention เดิม พร้อมแก้ Response/Error column ของแถว `DELETE /account`
+  ในหัวข้อ 3.1 ให้ตรงกับพฤติกรรมใหม่ — ไม่ใช่การ audit ใหม่ทั้งไฟล์ เป็นการปิด open point 2 ข้อที่ระบุมา
+  โดยตรงเท่านั้น (ดู log [2026-09-07](../../05-log/20260907-log.md))
+- **อัปเดตก่อนหน้า:** 2026-09-07 (รอบ 10) — เพิ่ม operation ใหม่ `DELETE /account` ท้ายหัวข้อ 3.1 (Account &
+  Session Management) ตามฟีเจอร์ลบบัญชีที่เพิ่ง implement จริงแล้ว
+  (`apps/web/server/routes/account-session/deleteAccount.ts`, mount หลัง `authenticate` middleware ใน
+  `apps/web/server/index.ts`) — grounded ใน **NFR-06** ที่มีอยู่แล้วโดยตรง (ไม่มี REQ number เฉพาะ ไม่ใช่
+  business rule ใหม่ ไม่ต้องเพิ่ม Feature ID/REQ ใหม่ใน `backlog.md`) ลบข้อมูลผู้ใช้ทั้งหมดแบบถาวรทันที (hard
+  delete ทั้งหมด ไม่มี retention window/soft-delete) — คู่กับ `database-schema.md` ที่ resolve จุดที่ยังไม่ได้
+  ระบุเดิมของหัวข้อ 6 ข้อ 6 (immediate delete หรือ retain ไว้ระยะหนึ่ง) ด้วยรอบเดียวกัน ยืนยันจากผู้ใช้แล้วว่า
+  เป็น implementation ที่ตั้งใจ ไม่ใช่ ask-user protocol case — เพิ่ม NFR-06/NFR-11 เข้า NFR column ของ
+  operation ใหม่, เพิ่มจุดที่ยังไม่ได้ระบุใหม่ 1 ข้อในหัวข้อ 4 (ข้อ 14 — idempotency ของการเรียกซ้ำ) — **ไม่แตะ
+  หัวข้อ 6 (ภาคผนวก: Stack Mapping)** เพราะ `tech-stack.md` §6.3.1 ยังไม่ reconcile operation นี้เข้าไป (ยัง
+  นับ 10 operation เดิม) เพิ่มหมายเหตุ drift ไว้แทน รอ `tech-stack-builder` ขยายในรอบถัดไป (pattern เดียวกับ
+  ตอนเพิ่ม pairing-code operations เมื่อ 2026-08-30) — audit หัวข้อ 1, 2, 3.2-3.8, 5 แล้วไม่พบ drift อื่นจาก
+  ฟีเจอร์นี้ (ดู log [2026-09-07](../../05-log/20260907-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 9) — `feature-journey-writer` formalize การแยกเป้าหมายแคลอรี่ของ
   ONB-3/REQ-02 เป็น **2 ค่าแยกกัน** (ยืนยันแล้ว ตรวจสอบกับโค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`
   และ `packages/shared-types/src/entities/personalizationProfile.ts` โดยตรง): แก้ Request ของ
   `PUT /profile/goal` (หัวข้อ 3.2) ให้ระบุทั้ง `dailyCalorieTargetKcal` (เป้าหมายเผาผลาญจากการออกกำลังกาย —
@@ -134,13 +166,14 @@ operation ใดที่ไม่มี component รองรับ
 | สมัครสมาชิกด้วยอีเมล/รหัสผ่าน | `POST /auth/signup/email` | ONB-0/REQ-14 | อีเมล, รหัสผ่าน (credential เชิงแนวคิด) | User Account ที่สร้างใหม่ (`signup_method = email_password`) → พาไปขั้นตอน ONB-1 ต่อทันที | `409` อีเมลนี้มีบัญชีอยู่แล้ว, `400` รูปแบบอีเมล/รหัสผ่านไม่ถูกต้อง (เกณฑ์ password policy ยังไม่ระบุ — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 (เข้ารหัสระหว่างส่ง), NFR-11 (PDPA — บันทึกการสร้างบัญชี) |
 | สมัครสมาชิกผ่าน Google | `POST /auth/signup/google` | ONB-0/REQ-14 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก (เชิงแนวคิด — ไม่ระบุรูปแบบ token/redirect) | User Account ที่สร้างใหม่ (`signup_method = google`) พร้อมอีเมลที่ยืนยันแล้วจากผู้ให้บริการ → พาไปขั้นตอน ONB-1 ต่อทันที | การยืนยันตัวตนกับผู้ให้บริการล้มเหลว → ไม่สร้างบัญชี ไม่มี fallback แบบ "ข้ามไปเลย" ตาม HLA §6.4 (ผู้ใช้ต้องลองใหม่/เปลี่ยนวิธี), อีเมลจากผู้ให้บริการนี้ตรงกับบัญชีที่มีอยู่แล้วด้วยวิธีอื่น → พฤติกรรมยังไม่ระบุ (ดูจุดที่ยังไม่ได้ระบุ) | NFR-04, NFR-11 (NFR-05 ยังเป็น open point ต่อ boundary นี้ — ดู HLA §8 ข้อ 6) |
 | สมัครสมาชิกผ่าน Apple | `POST /auth/signup/apple` | ONB-0/REQ-14 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก (เชิงแนวคิด) | User Account ที่สร้างใหม่ (`signup_method = apple`) พร้อมอีเมลที่ยืนยันแล้ว → พาไปขั้นตอน ONB-1 ต่อทันที | เหมือน `POST /auth/signup/google` ข้างต้นทุกประการ | เหมือน `POST /auth/signup/google` ข้างต้น |
-| เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน | `POST /auth/login/email` | ONB-0/REQ-15 | อีเมล, รหัสผ่าน | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ (session persistence) → พาไปหน้าที่เหมาะสม (ONB-1 ถ้ายังไม่เคยผ่าน หรือ Daily Dashboard ถ้าผ่านแล้ว) | `401` credential ไม่ถูกต้อง, พฤติกรรมเมื่ออีเมลไม่มีอยู่ในระบบเลยยังไม่ระบุแยกจากกรณีรหัสผ่านผิด (account enumeration policy — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 |
+| เข้าสู่ระบบด้วยอีเมล/รหัสผ่าน | `POST /auth/login/email` | ONB-0/REQ-15 | อีเมล, รหัสผ่าน | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ (session persistence) → พาไปหน้าที่เหมาะสม (ONB-1 ถ้ายังไม่เคยผ่าน หรือ Daily Dashboard ถ้าผ่านแล้ว) | `401` credential ไม่ถูกต้อง — **ยังคง leak account existence จริง** (ยังไม่ resolve, แก้ไข 2026-09-07): เพราะเป็น client-side Firebase Auth SDK call โดยตรง Firebase คืน error code แยกกันชัดเจนระหว่างอีเมลไม่มีอยู่จริงกับรหัสผ่านผิด — การปิดช่องนี้ต้องเปลี่ยนให้ login ผ่าน server ของทีมเองแทน ซึ่งเป็นการเปลี่ยนสถาปัตยกรรมที่ใหญ่กว่าที่มีใครร้องขอไว้ (ดูจุดที่ยังไม่ได้ระบุข้อ 10) | NFR-04 |
 | เข้าสู่ระบบผ่าน Google | `POST /auth/login/google` | ONB-0/REQ-15 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ | การยืนยันตัวตนกับผู้ให้บริการล้มเหลว → ต้องลองใหม่/เปลี่ยนวิธี (ไม่มี fallback ตาม HLA §6.4) | NFR-04 |
 | เข้าสู่ระบบผ่าน Apple | `POST /auth/login/apple` | ONB-0/REQ-15 | ผลการยืนยันตัวตนจากผู้ให้บริการภายนอก | User Account ที่ตรงกัน + session ที่ถูกจดจำไว้ | เหมือน `POST /auth/login/google` ข้างต้น | NFR-04 |
-| ขอรีเซ็ตรหัสผ่าน | `POST /auth/forgot-password` | ONB-0/REQ-16 | อีเมลที่ลงทะเบียนไว้ | `204`/`202` คำขอรีเซ็ตถูกส่งแล้ว (ช่องทางส่งจริงไม่ระบุ) | `422` ถ้าบัญชีของอีเมลนั้นสมัครผ่าน Google/Apple (ไม่มีรหัสผ่านให้รีเซ็ตตาม REQ-16), พฤติกรรมเมื่ออีเมลไม่มีอยู่ในระบบเลยยังไม่ระบุ (account enumeration policy — ดูจุดที่ยังไม่ได้ระบุ) | NFR-04 |
+| ขอรีเซ็ตรหัสผ่าน | `POST /auth/forgot-password` | ONB-0/REQ-16 | อีเมลที่ลงทะเบียนไว้ | `204`/`202` คำขอรีเซ็ตถูกส่งแล้ว (ช่องทางส่งจริงไม่ระบุ) | `422` ถ้าบัญชีของอีเมลนั้นสมัครผ่าน Google/Apple (ไม่มีรหัสผ่านให้รีเซ็ตตาม REQ-16) — **เมื่ออีเมลไม่มีอยู่ในระบบเลย ตกไปที่ `202` เดียวกันกับอีเมลจริงเสมอ** (resolved 2026-09-07 — anti-enumeration default ที่ตั้งใจตามแนวทาง OWASP สำหรับ password-reset flow ไม่ใช่ byproduct ดูจุดที่ยังไม่ได้ระบุข้อ 10 ที่ resolve บางส่วนแล้ว) | NFR-04 |
 | ออกจากระบบ | `POST /auth/logout` | ONB-0/REQ-17 | — | `204` ล้าง session ที่จดจำไว้ทันที | — | — |
 | ขอรหัสจับคู่อุปกรณ์ (mint pairing code, เพิ่ม 2026-08-30) | `POST /auth/pairing-codes` | INT-0/REQ-18 (precondition ทางเทคนิคร่วมของ INT-2/INT-3 — formalize เป็น Feature ID/REQ ของตัวเองแล้ว 2026-08-30 รอบ 6 แทนที่การอ้างอิงแบบ implicit เดิม) | — (ต้องยืนยันตัวตนผู้ใช้ก่อนเรียกตามปกติ ตามหัวข้อ 2) | Pairing Credential ที่สร้างใหม่: รหัสจับคู่อุปกรณ์ 6 หลัก + เวลาหมดอายุ (5 นาทีนับจากออกรหัส) | — (ไม่มี edge case พิเศษนอกเหนือจาก `401` มาตรฐานถ้ายังไม่ยืนยันตัวตน) | NFR-04 (เข้ารหัสระหว่างส่ง), NFR-05 (เจตนารมณ์เดียวกับการปกป้อง credential/consent — NFR-05 ปัจจุบันยังไม่ระบุตรงๆ ว่าครอบคลุมกลไกนี้ ดู HLA §8 ข้อ 7) |
 | แลกรหัสจับคู่อุปกรณ์เป็น session (redeem pairing code, เพิ่ม 2026-08-30, แก้ error case 2026-08-30 รอบ 5) | `POST /auth/pairing-codes/redeem` | INT-0/REQ-18 (เหมือนแถวบน) | รหัสจับคู่อุปกรณ์ 6 หลักที่ผู้ใช้กรอกบนไคลเอนต์ที่ไม่มีหน้าจอ auth ของตัวเอง — **operation นี้ไม่ต้องยืนยันตัวตนผู้ใช้ก่อนเรียก** (ข้อยกเว้นเดียวของหัวข้อ 2 Authentication) | session credential ที่ผูกกับ User Account เจ้าของรหัส — เชิงแนวคิดเทียบเท่ากับสิ่งที่ operation เข้าสู่ระบบอื่นในหัวข้อนี้คืนกลับ (session ที่ใช้เรียก endpoint ที่ต้องยืนยันตัวตนต่อจากนี้ได้ทันที) โดยไม่ต้องกรอก credential ซ้ำ | `410` รหัสไม่ถูกต้อง/หมดอายุ/ถูกใช้ไปแล้ว — **กรณีเดียวครอบคลุมทั้ง 3 สถานการณ์เดิม** (ไม่พบรหัสเลย, หมดอายุแล้ว, ถูกใช้ไปแล้ว) เพราะกลไก single-use enforce ด้วยการ**ลบ Pairing Credential ทิ้งถาวรทันทีที่ redeem สำเร็จ**แทนการตั้งสถานะ "ใช้แล้ว" ที่ยังคงเก็บแถวไว้ตรวจสอบ — เมื่อแถวถูกลบไปแล้ว operation นี้แยกไม่ออกอีกต่อไปว่ารหัสที่กรอกมา "ไม่เคยมีอยู่จริงตั้งแต่แรก" หรือ "เคยมีแต่ถูก redeem ไปแล้วก่อนหน้านี้" — เป็นความจริงเชิง implementation ที่ตั้งใจยอมรับ ไม่ใช่ช่องโหว่ (เดิมเอกสารนี้เคยแยกเป็น `404`/`409`/`422` 3 กรณี ซึ่งไม่ตรงกับพฤติกรรมจริง — แก้ไขแล้ว 2026-08-30 รอบ 5) | NFR-04, NFR-05 (เหมือนแถวบน) |
+| ลบบัญชีผู้ใช้ถาวร (hard delete, เพิ่ม 2026-09-07, idempotent+รวม Pairing Credential แก้ไข 2026-09-07) | `DELETE /account` | ONB-0 (grounded ใน **NFR-06** โดยตรง — ไม่มี REQ number เฉพาะ ไม่ใช่ business rule ใหม่) | — (ต้องยืนยันตัวตนผู้ใช้ก่อนเรียกตามปกติ ตามหัวข้อ 2 — ไม่มี confirmation payload เพิ่มเติมที่ระดับ API เอง การยืนยันเป็นหน้าที่ของ UI ฝั่ง client เท่านั้น) | `204` ลบสำเร็จ ไม่มีเนื้อหาตอบกลับ — ลบข้อมูลของผู้ใช้ที่ระบบเก็บไว้ทั้งหมดแบบถาวรทันที (ทุก entity ที่ผูกกับ User Profile/User Account **รวมถึง Pairing Credential ที่ยังไม่หมดอายุ/ยังไม่ redeem ณ ตอนขอลบด้วย** — แก้ไข 2026-09-07, เดิมยกเว้นไว้) ไม่มี retention window/soft-delete — ครอบคลุมทั้ง User Account เองด้วย ไม่ใช่แค่ข้อมูลที่ผูกกับมัน | เรียกซ้ำด้วย ID token เดิมหลังลบสำเร็จแล้วยังคืน `204` เช่นกัน (idempotent — แก้ไข 2026-09-07 ด้วย try/catch ที่ treat `auth/user-not-found` เป็นความสำเร็จ, เดิมจะเป็น `500` generic) — ไม่มี edge case พิเศษอื่นนอกเหนือจาก `401` มาตรฐานถ้ายังไม่ยืนยันตัวตน | NFR-06 (การขอลบข้อมูลส่วนบุคคลทั้งหมด), NFR-11 (สิทธิ์เจ้าของข้อมูลตาม PDPA) |
 
 ### 3.2 Personalization & Profile
 
@@ -226,9 +259,20 @@ operation ใดที่ไม่มี component รองรับ
    เข้าสู่ระบบผ่านผู้ให้บริการยืนยันตัวตนภายนอก (Google/Apple) ด้วยหรือไม่ (HLA §8 ข้อ 6 ทิ้ง open point
    นี้ไว้เช่นกัน) — กระทบว่า `POST /auth/signup/google`, `/apple` และ `POST /auth/login/google`, `/apple`
    ต้องมี consent-prompt step แยกต่างหากในเชิงแนวคิดหรือไม่
-10. **ONB-0**: พฤติกรรมของ `POST /auth/login/email` และ `POST /auth/forgot-password` เมื่ออีเมลไม่มีอยู่
+10. ~~**ONB-0**: พฤติกรรมของ `POST /auth/login/email` และ `POST /auth/forgot-password` เมื่ออีเมลไม่มีอยู่
     ในระบบเลย (ไม่ใช่แค่รหัสผ่านผิด) ยังไม่ระบุ — เกี่ยวข้องกับนโยบาย account enumeration ที่ upstream ยัง
-    ไม่ได้ตัดสินใจ
+    ไม่ได้ตัดสินใจ~~ — **resolved บางส่วน 2026-09-07 (เฉพาะครึ่ง `POST /auth/forgot-password`)**:
+    implementation (`apps/web/server/routes/account-session/forgotPassword.ts`) ยืนยัน/ระบุชัดแล้วว่าเมื่อ
+    อีเมลไม่มีอยู่ในระบบเลย request จะ**ตกไปที่ response `202 { status: 'sent' }` เดียวกันกับกรณีอีเมลมีอยู่
+    จริง**เสมอ (เงื่อนไข `422` ถูกข้ามไปเฉยๆ เมื่อ `auth.getUserByEmail` หาไม่เจอ) — เป็น**การตัดสินใจ
+    anti-enumeration ที่ตั้งใจ**ตามแนวทางที่ OWASP แนะนำสำหรับ password-reset flow (ไม่ให้อีเมลที่ไม่มีจริง
+    ได้ response ต่างจากอีเมลจริง) ไม่ใช่ byproduct ที่ไม่ได้ตั้งใจอีกต่อไป — **ครึ่ง `POST
+    /auth/login/email` ยังไม่ resolve**: operation นี้เป็น client-side Firebase Auth SDK call
+    (`signInWithEmailAndPassword`) โดยตรง ไม่ผ่าน server ของทีมเลย ซึ่ง Firebase เองคืน error code แยกกัน
+    ชัดเจนระหว่าง `auth/user-not-found` กับ `auth/wrong-password` — เท่ากับยัง leak account existence อยู่
+    จริง การจะปิดช่องนี้ต้องเปลี่ยนให้ login ผ่าน server ของทีมเองแทนการเรียก Firebase ตรงจาก client ซึ่งเป็น
+    การเปลี่ยนสถาปัตยกรรมที่ใหญ่กว่าที่มีใครร้องขอไว้ ณ ตอนนี้ — ยังคงเป็น open point อยู่ เฉพาะเจาะจงกับ
+    `POST /auth/login/email` เท่านั้น
 11. **ONB-0/REQ-14 (Google/Apple)**: พฤติกรรมเมื่ออีเมลจากผู้ให้บริการภายนอกตรงกับบัญชีที่มีอยู่แล้วด้วยวิธี
     อื่น (เช่น เคยสมัครด้วย email/password มาก่อน) ยังไม่ระบุ — ควร merge เข้าบัญชีเดียวกันหรือปฏิเสธการ
     สมัครซ้ำ
@@ -242,6 +286,22 @@ operation ใดที่ไม่มี component รองรับ
     ต่อ User Account เดียวกันพร้อมกันหรือไม่ (เช่น กดขอรหัสซ้ำก่อนรหัสเดิมหมดอายุ) — กระทบว่าควร invalidate
     รหัสเดิมทันทีหรือปล่อยให้ใช้ได้ทั้งคู่ และควรมี rate limit ต่อการกดขอรหัสซ้ำถี่ๆ หรือไม่ (brute-force
     risk ของรหัส 6 หลัก — เกี่ยวโยงกับจุดที่ 5 ข้างต้นเรื่อง rate limiting ที่ยังไม่มี requirement รองรับ)
+14. ~~**`DELETE /account`** (เพิ่ม 2026-09-07): ยังไม่ระบุพฤติกรรมเมื่อเรียกซ้ำ (double-submit) หรือเรียก
+    พร้อมกันหลายครั้งก่อนที่รอบแรกจะลบเสร็จ — implementation จริงไม่มี idempotency guard ใดๆ เรียกซ้ำหลังลบ
+    สำเร็จแล้วจะพบว่าบัญชี Firebase Auth ถูกลบไปแล้ว (ทำให้ error ที่ไม่มีการจัดการเฉพาะ กลายเป็น `500`
+    generic ตาม error handler กลาง ไม่ใช่ status code ที่ออกแบบไว้ตั้งใจ) — เป็นพฤติกรรมโดยบังเอิญของ
+    implementation ปัจจุบัน ไม่ใช่ business rule ที่ตัดสินใจแล้ว~~ — **resolved 2026-09-07**: implementation
+    เพิ่ม try/catch รอบ `auth.deleteUser(userId)` แล้ว — error code `auth/user-not-found` (เช่นตอนเรียกซ้ำ
+    ด้วย ID token เดิมหลังบัญชีถูกลบไปแล้ว) ถูก treat เป็นความสำเร็จ (ตกไปที่ `204` ปกติ) แทนที่จะปล่อยให้
+    หลุดไปเป็น `500` generic — operation นี้จึง**idempotent**แล้ว ไม่ใช่ open point อีกต่อไป
+15. ~~**`DELETE /account`** (เพิ่ม 2026-09-07): Pairing Credential ที่ยังผูกกับ User Account ที่ถูกลบไปนี้อยู่
+    (ถ้ามี แถวที่ยังไม่หมดอายุ/ยังไม่ redeem ณ ตอนขอลบบัญชี) ไม่ถูกลบตามไปด้วย — orphan risk ที่บรรเทาด้วย
+    อายุการใช้งานสั้นอยู่แล้ว (5 นาที ตาม HLA §4.5/§5) แต่ยังไม่มีการตัดสินใจอย่างเป็นทางการว่าควรลบทันทีตอน
+    ขอลบบัญชีด้วยหรือปล่อยให้หมดอายุเองตามปกติ (ตรงกับ open point เดียวกันใน `database-schema.md` §6 ข้อ
+    12)~~ — **resolved 2026-09-07**: implementation เพิ่มขั้นตอนใหม่ก่อนลบ document ผู้ใช้ — query
+    `pairingCodes` ที่ `uid == userId` แล้วลบทุกแถวที่พบ (ถ้ามี) ก่อนลบ document `users/{userId}` และก่อนลบ
+    Firebase Auth account — ปิดช่องว่างที่รหัสจับคู่อุปกรณ์ที่ยังไม่หมดอายุ/ยังไม่ถูก redeem อาจตกค้างอยู่
+    เกินอายุของบัญชีเจ้าของ ไม่ใช่ open point อีกต่อไป
 
 ## 5. ความสัมพันธ์กับเอกสารอื่น
 
@@ -279,6 +339,14 @@ operation ใดที่ไม่มี component รองรับ
 > การตัดสินใจใหม่ในเอกสารนี้ — หัวข้อ 1-5 ข้างต้นไม่ต้องแก้ไขใดๆ เพิ่มเติมจากที่แก้ไปแล้วในหัวข้อ 3.1 (ดู
 > อัปเดตล่าสุดด้านบนสุดของเอกสาร สำหรับการแก้ error case ของ `.../redeem` ที่เป็นการแก้เนื้อหาหลัก ไม่ใช่
 > ภาคผนวกนี้)
+
+> **หมายเหตุ 2026-09-07 (ไม่ใช่ mechanical re-sync — drift ที่ยังรอ `tech-stack-builder`)**: เพิ่ม operation
+> ใหม่ `DELETE /account` เข้าหัวข้อ 3.1 แล้ว (11 operation ในเนื้อหาหลักตอนนี้) แต่ `tech-stack.md` §6.3.1
+> ยังไม่ได้ reconcile operation นี้เข้าไปเลย (ยังนับ 10 operation เดิม) — ตารางหัวข้อ 6.3.1 ด้านล่างจึงล้าหลัง
+> ไปอีกชั้นแล้ว ไม่ได้แก้ในรอบนี้เพราะเนื้อหาส่วนนี้เป็น**การมิเรอร์ล้วนๆ**ของ `tech-stack.md` (ต่างจาก
+> `database-schema.md` §8.2/§8.3 ที่อนุญาตให้ออกแบบเพิ่มเติมเองได้) — ยังไม่มีอะไรใน `tech-stack.md` ให้มิเรอร์
+> มาจริงๆ จึงรอ `tech-stack-builder` ขยาย mapping ก่อนในรอบถัดไป (เหมือน pattern เดิมตอนเพิ่ม pairing-code
+> operations เมื่อ 2026-08-30)
 
 มิเรอร์จาก [tech-stack.md § 6.3](tech-stack.md#63-api-specmds-rest-convention--expressjs-routing)
 (อัปเดต 2026-08-30):

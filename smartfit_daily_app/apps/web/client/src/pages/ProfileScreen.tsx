@@ -53,6 +53,9 @@ export default function ProfileScreen() {
   const [manualEntryError, setManualEntryError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncedMessage, setSyncedMessage] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const providerId = user?.providerData?.[0]?.providerId;
   const methodLabel = (providerId && METHOD_LABELS[providerId]) || 'เข้าสู่ระบบอยู่';
@@ -91,6 +94,21 @@ export default function ProfileScreen() {
       setManualEntryError((e as Error).message);
     } finally {
       setIsSyncing(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.delete('/account');
+      // The Firebase Auth account is already gone server-side — this just
+      // clears the client SDK's local session so useAuth() reflects it too.
+      await logout();
+      navigate('/welcome', { replace: true });
+    } catch (e) {
+      setDeleteError((e as Error).message);
+      setIsDeleting(false);
     }
   }
 
@@ -175,6 +193,31 @@ export default function ProfileScreen() {
           <LinkRow label="แก้ไขข้อมูลส่วนตัว" onPress={() => navigate('/onboarding/personal-info')} showTopBorder />
           <LinkRow label="แก้ไขเป้าหมายหลัก / น้ำหนักเป้าหมาย" onPress={() => navigate('/onboarding/goal-select')} showTopBorder />
         </Card>
+      </View>
+
+      <View>
+        <Text style={[typography.h2, styles.sectionTitle, { color: colors.danger }]}>ลบบัญชี</Text>
+        {!showDeleteConfirm ? (
+          <Button label="ลบบัญชีและข้อมูลทั้งหมด" variant="destructive" onPress={() => setShowDeleteConfirm(true)} />
+        ) : (
+          <Card style={{ gap: spacing[3] }}>
+            <Text style={typography.bodySm}>
+              การลบบัญชีจะลบข้อมูลทั้งหมดของคุณอย่างถาวร (ประวัติการออกกำลังกาย, น้ำหนัก, streak, เป้าหมาย) และไม่สามารถกู้คืนได้
+            </Text>
+            {deleteError && <Text style={[typography.bodySm, { color: colors.danger }]}>{deleteError}</Text>}
+            <View style={{ flexDirection: 'row', gap: spacing[2] }}>
+              <View style={{ flex: 1 }}>
+                <Button
+                  label={isDeleting ? 'กำลังลบ...' : 'ยืนยันลบบัญชี'}
+                  variant="destructive"
+                  onPress={handleDeleteAccount}
+                  disabled={isDeleting}
+                />
+              </View>
+              <Button label="ยกเลิก" variant="ghost" onPress={() => setShowDeleteConfirm(false)} disabled={isDeleting} />
+            </View>
+          </Card>
+        )}
       </View>
     </ScreenContainer>
   );
