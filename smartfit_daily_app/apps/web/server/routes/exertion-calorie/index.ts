@@ -3,7 +3,8 @@ import { db } from '../../firebaseAdmin';
 import { assertDocExists, NotFoundError } from '../../assertDocExists';
 import { asyncHandler } from '../../asyncHandler';
 import { recomputeStreak } from '../logging-streak/recomputeStreak';
-import type { LogCompletionStatus } from '@smartfit/shared-types';
+import { selectActualCalorieBurn } from '../../domain/metCalorieBurn';
+import { accumulateDailyLog, determineLogCompletionStatus } from '../../domain/dailyLog';
 
 export const router = Router();
 
@@ -34,15 +35,14 @@ router.post(
     }
 
     const wearableReading = (await sessionRef.get()).data()?.wearableReading;
-    const sessionKcal = wearableReading ? wearableReading.calorieValueKcal : calculatedKcal;
+    const actualCalorieBurn = selectActualCalorieBurn(wearableReading?.calorieValueKcal, calculatedKcal);
+    const sessionKcal = actualCalorieBurn.calculatedKcal;
 
     await sessionRef.set(
       {
         status: 'completed',
         actualDurationMinutes,
-        actualCalorieBurn: wearableReading
-          ? { source: 'wearable', calculatedKcal: wearableReading.calorieValueKcal }
-          : { source: 'met_formula', metValue, calculatedKcal },
+        actualCalorieBurn: actualCalorieBurn.source === 'wearable' ? actualCalorieBurn : { ...actualCalorieBurn, metValue },
       },
       { merge: true },
     );
@@ -54,12 +54,16 @@ router.post(
     const today = new Date().toISOString().slice(0, 10);
     const logRef = db.doc(`users/${req.userId}/dailyLogs/${today}`);
     const existingLog = (await logRef.get()).data();
-    const minutesExercised = (existingLog?.minutesExercised ?? 0) + actualDurationMinutes;
-    const accumulatedKcal = (existingLog?.accumulatedKcal ?? 0) + sessionKcal;
+    const { minutesExercised, accumulatedKcal } = accumulateDailyLog(
+      existingLog?.minutesExercised,
+      existingLog?.accumulatedKcal,
+      actualDurationMinutes,
+      sessionKcal,
+    );
 
     const profile = (await db.doc(`users/${req.userId}`).get()).data();
     const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
-    const completionStatus: LogCompletionStatus = accumulatedKcal >= goalKcal ? 'completed' : 'incomplete';
+    const completionStatus = determineLogCompletionStatus(accumulatedKcal, goalKcal);
 
     await logRef.set(
       { minutesExercised, accumulatedKcal, completionStatus, source: 'workout_session' },

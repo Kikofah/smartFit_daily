@@ -2,36 +2,19 @@ import { Router } from 'express';
 import { db } from '../../firebaseAdmin';
 import { assertDocExists, NotFoundError } from '../../assertDocExists';
 import { asyncHandler } from '../../asyncHandler';
-import type { ActivityLevel, GoalType, Sex, WearablePlatform, WeightRecordSource } from '@smartfit/shared-types';
+import { computeTdeeKcal } from '../../domain/tdee';
+import { computeDailyCalorieTargetKcal } from '../../domain/goalTargets';
+import type { GoalType, WearablePlatform, WeightRecordSource } from '@smartfit/shared-types';
 
 export const router = Router();
 
-// Mirrors PersonalInfoScreen.tsx's ONB-1 formula exactly (Mifflin-St Jeor BMR
-// × Activity Factor) — recomputed here (server-side) rather than client-side
-// per NFR-01/03's usual convention, since this trigger is a device sync/
-// background event (detailed-design/04-smart-integrations.md's INT-2
-// sequence diagram: "IG->>PP: trigger คำนวณ TDEE ใหม่"), not an interactive
-// form submission with a client already computing it.
-const ACTIVITY_FACTOR: Record<ActivityLevel, number> = {
-  sedentary: 1.2,
-  light: 1.375,
-  moderate: 1.55,
-  active: 1.725,
-  very_active: 1.9,
-};
-
-function computeTdeeKcal(sex: Sex, weightKg: number, heightCm: number, age: number, activityLevel: ActivityLevel) {
-  const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === 'male' ? 5 : -161);
-  return Math.round(bmr * ACTIVITY_FACTOR[activityLevel]);
-}
-
-// Mirrors GoalConfirmScreen.tsx's ONB-3 formula exactly — see that file for
-// why this is weightKg-based rather than TDEE-based.
-const GOAL_KCAL_PER_KG: Record<GoalType, number> = {
-  lose_weight: 4.5,
-  tone_up: 3.0,
-  build_endurance: 5.5,
-};
+// computeTdeeKcal mirrors PersonalInfoScreen.tsx's ONB-1 formula exactly
+// (Mifflin-St Jeor BMR × Activity Factor) — recomputed here (server-side)
+// rather than client-side per NFR-01/03's usual convention, since this
+// trigger is a device sync/background event
+// (detailed-design/04-smart-integrations.md's INT-2 sequence diagram:
+// "IG->>PP: trigger คำนวณ TDEE ใหม่"), not an interactive form submission
+// with a client already computing it. See server/domain/tdee.ts.
 
 /** POST /api/integrations/smart-scale/connect — INT-2 / REQ-12. Must follow a consent prompt (NFR-05). */
 router.post(
@@ -100,7 +83,7 @@ router.post(
     // between smart-scale syncs.
     if (profile?.goalSelection?.goalType) {
       const goalType = profile.goalSelection.goalType as GoalType;
-      updates.goalSelection = { dailyCalorieTargetKcal: Math.round(body.weightKg * GOAL_KCAL_PER_KG[goalType]) };
+      updates.goalSelection = { dailyCalorieTargetKcal: computeDailyCalorieTargetKcal(body.weightKg, goalType) };
     }
 
     await db.doc(`users/${req.userId}`).set(updates, { merge: true });

@@ -3,13 +3,10 @@ import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
 import { searchWorkoutVideos } from '../../services/youtube';
 import { pickBestVideo, type PickedVideo } from '../../services/videoRecommender';
-import type { ActivityType, EquipmentType, Intensity, SessionVideo } from '@smartfit/shared-types';
+import { buildSessionVideos } from '../../domain/sessionVideos';
+import type { ActivityType, EquipmentType, Intensity } from '@smartfit/shared-types';
 
 export const router = Router();
-
-// Mirrors WorkoutSessionScreen.tsx's own warmup/cooldown stage timing exactly.
-const WARMUP_MINUTES = 3;
-const COOLDOWN_MINUTES = 3;
 
 /** Maps the user's equipment profile to a YouTube search query — ONB-2/REQ-03. */
 function buildSearchQuery(equipmentTypes: EquipmentType[]): string {
@@ -120,15 +117,7 @@ router.post(
       durationMinutes: number;
     };
 
-    const mainVideo: SessionVideo = { role: 'main', externalVideoId, activityType, intensity, durationMinutes };
-    const sessionVideos: SessionVideo[] =
-      intensity === 'high'
-        ? [
-            { role: 'warmup', externalVideoId, activityType, intensity, durationMinutes: WARMUP_MINUTES },
-            mainVideo,
-            { role: 'cooldown', externalVideoId, activityType, intensity, durationMinutes: COOLDOWN_MINUTES },
-          ]
-        : [mainVideo];
+    const sessionVideos = buildSessionVideos({ externalVideoId, activityType, intensity, durationMinutes });
 
     const sessionRef = db.collection(`users/${req.userId}/workoutSessions`).doc();
     await sessionRef.set({

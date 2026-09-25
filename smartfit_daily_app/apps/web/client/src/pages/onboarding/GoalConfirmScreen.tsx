@@ -19,6 +19,11 @@ import type { GoalType } from '@smartfit/shared-types';
  * lands in the same range as a single real workout session already
  * estimates elsewhere in the app (~150–350 kcal for a typical 20–30 min
  * session), scaled by weight the same way MET-based calorie burn already is.
+ *
+ * Client can't import from server/ (see 2026-09-25 test-suite refactor
+ * report) — kcalPerKg here is kept in sync by hand with
+ * server/domain/goalTargets.ts's GOAL_KCAL_PER_KG, which is the one covered
+ * by unit tests.
  */
 const GOAL_META: Record<GoalType, { label: string; kcalPerKg: number }> = {
   lose_weight: { label: 'ลดน้ำหนัก', kcalPerKg: 4.5 },
@@ -39,7 +44,15 @@ const GOAL_INTAKE_DELTA_KCAL: Record<GoalType, number> = {
   tone_up: 0,
   build_endurance: 300,
 };
-const SAFETY_FLOOR_MIN_KCAL = 1200; // exact value tied to sex/age band — see log 2026-08-27
+// exact value tied to sex/age band — see log 2026-08-27. NOTE: this screen
+// floors (and sets isSafetyFloorApplied) using `rawIntakeKcal <
+// SAFETY_FLOOR_MIN_KCAL` (strictly less than) below, while
+// server/domain/goalTargets.ts's deriveIsSafetyFloorApplied re-derives the
+// same flag server-side using `<=` — a known discrepancy at the exact
+// boundary (dailyIntakeTargetKcal === 1200), preserved as-is by the
+// 2026-09-25 test-suite refactor rather than picked one way. See that
+// module's own comment and the refactor report for details.
+const SAFETY_FLOOR_MIN_KCAL = 1200;
 
 /**
  * ONB-3 (part b) · REQ-02 — mirrors v1/04-onboarding-goal-confirm.html (step 4 of 4, final).

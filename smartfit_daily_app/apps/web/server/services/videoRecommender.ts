@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import { z } from 'zod/v4';
 import type { ActivityType, EquipmentType, Intensity } from '@smartfit/shared-types';
 import type { YoutubeCandidate } from './youtube';
+import { MET_TABLE, computeMetCalorieBurnKcal } from '../domain/metCalorieBurn';
 
 const ai = new GoogleGenAI({}); // reads GEMINI_API_KEY (or GOOGLE_API_KEY)
 
@@ -19,18 +20,11 @@ const PickedVideoSchema = z.object({
   includesWarmupCooldown: z.boolean(),
 });
 
-/**
- * kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05 — mirrors
- * WorkoutSessionScreen.tsx's MET_TABLE exactly, so the "≈ X kcal" shown on
- * the dashboard before starting matches what a completed session actually
- * logs. Deliberately independent of the user's remaining/goal kcal — this
- * is what the video itself burns, not a number picked to fit the goal.
- */
-const MET_TABLE: Record<PickedVideo['activityType'], Record<PickedVideo['intensity'], number>> = {
-  cardio: { low: 4, medium: 6, high: 8 },
-  strength: { low: 3, medium: 4.5, high: 6 },
-  hiit: { low: 6, medium: 8, high: 10 },
-};
+// MET_TABLE/computeMetCalorieBurnKcal (server/domain/metCalorieBurn.ts) mirror
+// WorkoutSessionScreen.tsx's own MET_TABLE/formula exactly, so the "≈ X kcal"
+// shown on the dashboard before starting matches what a completed session
+// actually logs. Deliberately independent of the user's remaining/goal kcal —
+// this is what the video itself burns, not a number picked to fit the goal.
 
 export interface PickedVideo {
   externalVideoId: string;
@@ -101,7 +95,7 @@ ${JSON.stringify(
   if (!candidate) return null; // guard against a hallucinated id
 
   const metValue = MET_TABLE[parsed.data.activityType][parsed.data.intensity];
-  const estimatedKcal = Math.round(metValue * weightKg * (candidate.durationMinutes / 60));
+  const estimatedKcal = computeMetCalorieBurnKcal(metValue, weightKg, candidate.durationMinutes);
 
   return {
     externalVideoId: parsed.data.externalVideoId,

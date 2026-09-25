@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
+import { deriveIsSafetyFloorApplied } from '../../domain/goalTargets';
 import type { ActivityLevel, EquipmentType, GoalType, Sex } from '@smartfit/shared-types';
 
 export const router = Router();
@@ -66,8 +67,6 @@ interface UpdateGoalRequest {
   dailyIntakeTargetKcal: number;
 }
 
-const SAFETY_FLOOR_MIN_KCAL = 1200; // exact value tied to sex/age band — see log 2026-08-27
-
 /**
  * PUT /api/profile/goal — ONB-3 / REQ-02
  * Both `dailyCalorieTargetKcal` (exercise-burn target, weightKg × a
@@ -86,7 +85,7 @@ router.put(
       return res.status(400).json({ error: 'targetWeightKg is required for goalType "lose_weight".' });
     }
 
-    const isSafetyFloorApplied = body.dailyIntakeTargetKcal <= SAFETY_FLOOR_MIN_KCAL;
+    const isSafetyFloorApplied = deriveIsSafetyFloorApplied(body.dailyIntakeTargetKcal);
     await db.doc(`users/${req.userId}`).set(
       { goalSelection: { ...body, isSafetyFloorApplied } },
       { merge: true },

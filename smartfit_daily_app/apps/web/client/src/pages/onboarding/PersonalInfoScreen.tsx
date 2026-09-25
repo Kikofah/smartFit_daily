@@ -21,6 +21,9 @@ const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string }[] = [
   { value: 'very_active', label: 'มากที่สุด — ออกกำลังกายหนัก หรืองานใช้แรงกายมาก' },
 ];
 
+// Client can't import from server/ (see 2026-09-25 test-suite refactor
+// report) — kept in sync by hand with server/domain/tdee.ts's
+// ACTIVITY_FACTOR/computeTdeeKcal, which is the one covered by unit tests.
 const ACTIVITY_FACTOR: Record<ActivityLevel, number> = {
   sedentary: 1.2,
   light: 1.375,

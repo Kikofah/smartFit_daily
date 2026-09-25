@@ -42,7 +42,13 @@ const INTENSITY_LABEL: Record<Intensity, string> = {
   high: 'ความเข้มข้นสูง',
 };
 
-/** kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05. Illustrative MET table pending the real REC-2 reference. */
+/**
+ * kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05. Illustrative MET table
+ * pending the real REC-2 reference. Client can't import from server/ (see
+ * 2026-09-25 test-suite refactor report) — kept in sync by hand with
+ * server/domain/metCalorieBurn.ts's MET_TABLE/computeMetCalorieBurnKcal,
+ * which is the one covered by unit tests.
+ */
 const MET_TABLE: Record<ActivityType, Record<Intensity, number>> = {
   cardio: { low: 4, medium: 6, high: 8 },
   strength: { low: 3, medium: 4.5, high: 6 },
