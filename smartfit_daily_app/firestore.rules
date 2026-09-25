@@ -1,26 +1,18 @@
 rules_version = '2';
 
-// Per-user data isolation (NFR-04, NFR-06) — mirrors database-schema.md §8.2's
-// collection/subcollection mapping. Every document under users/{userId} belongs
-// to exactly one Firebase Auth user; nothing here is readable/writable cross-user.
+// Deny-all for any Firestore client SDK (NFR-04, NFR-06 — defense in depth).
+// Neither apps/web/client nor apps/mobile uses the Firestore client SDK —
+// every read/write goes through apps/web/server's Express routes via the
+// Admin SDK, which always bypasses these rules. So there is no legitimate
+// client-side access to allow here; the Admin SDK server is the only
+// intended accessor of this database.
 //
-// TODO: this is a scaffold only — tech-stack.md §7.2 flags that the actual rule
-// set (equivalent to Supabase's former RLS) has not been designed yet.
+// Revisit this (and design real per-collection rules) if a client ever reads
+// Firestore directly instead of going through the server.
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isOwner(userId) {
-      return request.auth != null && request.auth.uid == userId;
-    }
-
-    match /users/{userId} {
-      allow read, write: if isOwner(userId);
-
-      // Subcollections: workoutSessions, weeklyPlanEntries, dayStatus,
-      // dailyLogs, weightRecords (database-schema.md §8.2)
-      match /{document=**} {
-        allow read, write: if isOwner(userId);
-      }
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -21,6 +21,19 @@ import { router as integrationGatewayRouter } from './routes/integration-gateway
 process.on('unhandledRejection', (reason) => console.error('Unhandled rejection:', reason));
 
 const app = express();
+
+// INT-0 / REQ-18's pairing-redeem rate limit keys its Firestore counter on
+// req.ip. Proxies *append* to X-Forwarded-For, so its leftmost entries are
+// whatever the client sent — `trust proxy: true` would let a client pick a
+// fresh req.ip per request and bypass the limit. Trust a fixed hop count
+// instead: req.ip is then the Nth entry from the right, which only our own
+// proxies write. Default 1 (the entry Cloud Run's front end appends) can't be
+// spoofed, but behind Firebase Hosting that's Hosting's egress IP, so users
+// may share one bucket. Set TRUST_PROXY_HOPS once the real chain is confirmed
+// from the LOG_FORWARDED_FOR output in routes/pairing/index.ts — see
+// https://expressjs.com/en/guide/behind-proxies.html.
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS) || 1);
+
 app.use(express.json());
 
 // ONB-0 / REQ-14-17 — sign-up/login/logout are direct Firebase Authentication
