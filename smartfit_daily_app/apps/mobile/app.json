@@ -12,9 +12,29 @@
       "bundleIdentifier": "com.smartfitdaily.devices"
     },
     "android": {
-      "package": "com.smartfitdaily.devices"
+      "package": "com.smartfitdaily.devices",
+      "permissions": [
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED"
+      ]
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-ble-plx",
+        {
+          "isBackgroundEnabled": false,
+          "bluetoothAlwaysPermission": "อนุญาตให้ smartFit_daily เชื่อมต่อกับตาชั่งอัจฉริยะผ่าน Bluetooth"
+        }
+      ],
+      [
+        "react-native-health",
+        {
+          "healthSharePermission": "อนุญาตให้ smartFit_daily อ่านข้อมูลแคลอรี่ที่เผาผลาญจาก Apple Health"
+        }
+      ],
+      "react-native-health-connect"
+    ],
     "experiments": {
       "typedRoutes": true
     }
