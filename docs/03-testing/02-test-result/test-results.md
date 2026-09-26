@@ -161,4 +161,10 @@
 
 - **Feature ที่ยังไม่มี automated test เลย**: ONB-0, ONB-2, REC-1, REC-3, PLN-1, PLN-2, INT-2 รวมถึง flow UI ทั้งหมด (ครอบคลุมเฉพาะส่วนที่เป็นสูตรคำนวณ/กฎของ ONB-1, ONB-3, REC-2, REC-4, PLN-3, PLN-4, INT-0, INT-1, INT-3)
 - **แอป mobile** (`apps/mobile`) ยังไม่มีเทสต์ สคริปต์ `test` คืนค่าสำเร็จเสมอ
-- รอบนี้รันเฉพาะ `npm run test` ไม่ได้รัน `typecheck` หรือ `lint`
+
+## Static checks (รันเพิ่ม 2026-09-26 หลังรอบเทสต์)
+
+| คำสั่ง | ขอบเขต | ผล |
+|---|---|---|
+| `npm run typecheck` | `apps/web` (server, server-tests, client), `apps/mobile`, `packages/shared-types` | ✅ ผ่าน ไม่มี type error |
+| `npm run lint` | `apps/web`, `apps/mobile` (ESLint `.ts/.tsx`) | ✅ ผ่าน ไม่มี error/warning |

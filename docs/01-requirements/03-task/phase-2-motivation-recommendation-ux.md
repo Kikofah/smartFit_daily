@@ -3,6 +3,8 @@
 - **ประเภทเอกสาร:** Task Breakdown
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
+- **อัปเดตล่าสุด:** 2026-09-26 — Status ทุก task = กำลังทำ ตามการยืนยันของผู้ใช้ (มีโค้ดจริงแล้ว แต่ยังไม่ผ่าน
+  Exit Criteria ของ [Release Plan §3.2](../02-plan/release-plan.md#32-next-phase))
 - **สร้างโดย:** skill `plan-task-builder`
 - **อ้างอิงจาก:** [Release Plan](../02-plan/release-plan.md), [Product Backlog](../backlog.md)
 
@@ -17,9 +19,9 @@
 
 | Task ID | ชื่อ Task | Feature ID/REQ | Status | คำอธิบาย | References |
 |---|---|---|---|---|---|
-| TASK-REC-3 | เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม | REC-3 / REQ-06 | ยังไม่เริ่ม | ผู้ใช้กดเปลี่ยนวิดีโอ คงเป้าหมายเดิม ค้นหาใหม่ไม่รวมวิดีโอที่เพิ่งปฏิเสธ | AC-REC-3-01–02, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
-| TASK-REC-4 | วอร์มอัพ–คูลดาวน์อัตโนมัติ | REC-4 / REQ-07 | ยังไม่เริ่ม | ตรวจความเข้มข้นของวิดีโอหลัก ถ้าสูงประกอบวอร์มอัพ 3 นาที + หลัก + คูลดาวน์ 3 นาที | AC-REC-4-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
-| TASK-PLN-4 | ติดตาม Streak ต่อเนื่อง | PLN-4 / REQ-09, REQ-10 | ยังไม่เริ่ม | ไล่ประวัติ Daily Log ย้อนหลัง นับวันต่อเนื่องที่ครบเป้าหมาย ไม่มี grace period | AC-PLN-4-01–03, [detailed-design/03-planner-logging.md](../../02-design/02-technical/detailed-design/03-planner-logging.md) |
+| TASK-REC-3 | เปลี่ยนวิดีโอโดยคงเป้าแคลอรี่เดิม | REC-3 / REQ-06 | กำลังทำ | ผู้ใช้กดเปลี่ยนวิดีโอ คงเป้าหมายเดิม ค้นหาใหม่ไม่รวมวิดีโอที่เพิ่งปฏิเสธ | AC-REC-3-01–02, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
+| TASK-REC-4 | วอร์มอัพ–คูลดาวน์อัตโนมัติ | REC-4 / REQ-07 | กำลังทำ | ตรวจความเข้มข้นของวิดีโอหลัก ถ้าสูงประกอบวอร์มอัพ 3 นาที + หลัก + คูลดาวน์ 3 นาที | AC-REC-4-01–03, [detailed-design/02-daily-youtube-recommendation.md](../../02-design/02-technical/detailed-design/02-daily-youtube-recommendation.md) |
+| TASK-PLN-4 | ติดตาม Streak ต่อเนื่อง | PLN-4 / REQ-09, REQ-10 | กำลังทำ | ไล่ประวัติ Daily Log ย้อนหลัง นับวันต่อเนื่องที่ครบเป้าหมาย ไม่มี grace period | AC-PLN-4-01–03, [detailed-design/03-planner-logging.md](../../02-design/02-technical/detailed-design/03-planner-logging.md) |
 
 ## 3. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 

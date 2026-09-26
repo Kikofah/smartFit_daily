@@ -3,7 +3,11 @@
 - **ประเภทเอกสาร:** Release Plan — Phase/Milestone Breakdown
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-29 — เพิ่ม **ONB-0** (Authentication — REQ-14–17, Must) เข้า MVP Phase ตามที่
+- **อัปเดตล่าสุด:** 2026-09-26 — เพิ่ม **INT-0** (Pairing Code — REQ-18, Could) เข้า Future Phase ที่ขาดไปตั้งแต่
+  `backlog.md` เพิ่ม Feature ID นี้เมื่อ 2026-08-30 (15→16 Feature ID รวม) — เพิ่ม dependency `ONB-0 → INT-0`
+  และ `INT-0 → INT-2`/`INT-0 → INT-3` (หลักฐาน: HLA §3.1/§4.5 + REQ-18) เข้า §3.3/§4 — ไม่มีการย้าย phase ของ
+  feature เดิม — สร้างโดย `plan-task-builder`
+- **อัปเดตก่อนหน้า:** 2026-08-29 — เพิ่ม **ONB-0** (Authentication — REQ-14–17, Must) เข้า MVP Phase ตามที่
   `backlog.md` เพิ่ม Feature ID ใหม่ (14→15 Feature ID รวม) — เพิ่ม dependency `ONB-0 → ONB-1` (หลักฐาน:
   HLA §3.1 "คุยกับ" + REQ-14) เข้า §3.1/§4, ปรับ §1/§2/Entry Criteria ให้ตรงจำนวน Feature ID ใหม่ และแก้
   ไข stale reference "Supabase" → "Firebase" ใน Infrastructure Prerequisite/`TASK-INFRA-01` ให้ตรงกับ
@@ -16,8 +20,9 @@
 
 ## 1. ขอบเขตและหลักการ (Scope & Principles)
 
-เอกสารนี้แบ่ง Product Backlog (15 Feature ID ในทั้ง 4 Epic — เพิ่ม **ONB-0** Authentication เข้า Epic
-Onboarding & Personalization เมื่อ 2026-08-29) เป็น phase/release โดยใช้กลยุทธ์ **Hybrid
+เอกสารนี้แบ่ง Product Backlog (16 Feature ID ในทั้ง 4 Epic — เพิ่ม **ONB-0** Authentication เข้า Epic
+Onboarding & Personalization เมื่อ 2026-08-29 และ **INT-0** Pairing Code เข้า Epic Smart Integrations เมื่อ
+2026-08-30) เป็น phase/release โดยใช้กลยุทธ์ **Hybrid
 MoSCoW + Dependency-aware** (ยืนยันจากผู้ใช้ 2026-08-28): ใช้ MoSCoW priority (`backlog.md`) เป็นโครงหลัก
 ในการแบ่ง phase (Must → Should → Could) แต่ตรวจสอบก่อนว่ามี feature ระดับ Must ตัวใดต้องพึ่งพา feature
 ระดับ Should/Could จริงหรือไม่ (ถ้ามี ต้องดึง feature นั้นขึ้นมาข้าม phase) — **ตรวจสอบแล้วว่าไม่มีกรณีนี้
@@ -37,7 +42,7 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
 |---|---|---|---|
 | **MVP Phase** | ONB-0, ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 | Core loop รายวันใช้งานได้ครบวงจร: สมัครสมาชิก/เข้าสู่ระบบ → onboarding คำนวณเป้าหมายแคลอรี่ → แนะนำ/บันทึกการออกกำลังกาย → วางแผนรายสัปดาห์ + Cheat/Rest Day → บันทึกผล all-or-nothing | ทุก feature เป็น MoSCoW = Must — ไม่มี feature ใดใน phase นี้ต้องพึ่งพา Should/Could (ONB-0 เพิ่มเข้า MVP Phase เมื่อ 2026-08-29 — เป็น Must ที่ทุก feature อื่นในทุก phase พึ่งพาโดยอ้อมผ่าน ONB-1 ตาม HLA §3.1) |
 | **Next Phase** | REC-3, REC-4, PLN-4 | เพิ่ม streak tracking และ UX เสริมของการแนะนำวิดีโอ ต่อยอดจาก core loop ที่ทำงานแล้วใน MVP Phase | MoSCoW = Should ทั้งหมด — ทุกตัวพึ่งพา component เดียวกับ feature ใน MVP Phase (ดูหัวข้อ 4) |
-| **Future Phase** | INT-1, INT-2, INT-3 | การเชื่อมต่ออุปกรณ์ภายนอก (ตาชั่งอัจฉริยะ, wearable) และพยากรณ์วันถึงเป้าหมายน้ำหนัก | MoSCoW = Could ทั้งหมด — เป็น optional ตาม NFR-07 (core loop ต้องไม่ผูกกับความพร้อมของ Epic นี้) |
+| **Future Phase** | INT-0, INT-1, INT-2, INT-3 | การเชื่อมต่ออุปกรณ์ภายนอก (ตาชั่งอัจฉริยะ, wearable) ผ่านรหัสจับคู่ และพยากรณ์วันถึงเป้าหมายน้ำหนัก | MoSCoW = Could ทั้งหมด — เป็น optional ตาม NFR-07 (core loop ต้องไม่ผูกกับความพร้อมของ Epic นี้) |
 
 ## 3. รายละเอียดต่อ Phase
 
@@ -116,8 +121,13 @@ Dependency ทุกจุดที่อ้างในเอกสารนี
 
 - **Objective**: ซิงค์น้ำหนักจากตาชั่งอัจฉริยะและข้อมูลจาก wearable เข้าโปรไฟล์ พร้อมพยากรณ์วันที่คาดว่าจะ
   ถึงเป้าหมายน้ำหนัก — ทั้งหมดเป็น optional ไม่ผูกกับ core loop รายวัน (NFR-07)
-- **Feature ID**: INT-1 (REQ-11), INT-2 (REQ-12), INT-3 (REQ-13) — ทั้งหมด MoSCoW = Could
+- **Feature ID**: INT-0 (REQ-18 — เพิ่ม 2026-09-26), INT-1 (REQ-11), INT-2 (REQ-12), INT-3 (REQ-13) — ทั้งหมด
+  MoSCoW = Could
 - **Dependency Notes**:
+  - ONB-0 → INT-0 (MVP Phase — HLA §3.1: Account & Session Management ซึ่งรับผิดชอบ ONB-0 เป็นผู้ออกรหัส
+    จับคู่ให้บัญชีที่เข้าสู่ระบบแล้วบนเว็บ, AC-INT-0-01)
+  - INT-0 → INT-2, INT-3 (REQ-18 + HLA §4.5 "INT-0: Identity Handoff — precondition ทางเทคนิคของ
+    INT-2/INT-3" — แอป mobile ต้อง redeem รหัสจับคู่สำเร็จก่อนจึงเข้าหน้าจับคู่อุปกรณ์ได้, AC-INT-0-04)
   - INT-1 → PLN-3, PLN-4 (MVP Phase/Next Phase — HLA §3.6 "Insights & Forecast คุยกับ Logging &
     Streak: อ่านประวัติ log") และ → ONB-3 (MVP Phase — "Personalization & Profile: อ่านน้ำหนักเป้าหมาย")
   - INT-2, INT-3 → ONB-1 (MVP Phase — HLA §3.7 "Integration Gateway คุยกับ Personalization & Profile:
@@ -155,6 +165,7 @@ flowchart TD
         PLN4["PLN-4"]
     end
     subgraph P3["Future Phase (Could)"]
+        INT0["INT-0"]
         INT1["INT-1"]
         INT2["INT-2"]
         INT3["INT-3"]
@@ -165,6 +176,9 @@ flowchart TD
     PLN3 --> INT1
     PLN4 --> INT1
     ONB3 --> INT1
+    ONB0 --> INT0
+    INT0 --> INT2
+    INT0 --> INT3
     ONB1 --> INT2
     ONB1 --> INT3
     REC2 --> INT3
@@ -173,8 +187,8 @@ flowchart TD
 ไม่มีลูกศรใดพุ่งจาก Next Phase/Future Phase ย้อนกลับเข้า MVP Phase — ยืนยันว่าไม่มี Must feature ตัวใด
 พึ่งพา Should/Could จริง (ตามที่ตรวจสอบในหัวข้อ 1)
 
-**หมายเหตุเรื่อง ONB-0**: กราฟข้างต้นวาดเฉพาะเส้น `ONB-0 → ONB-1` เพราะเป็นเส้นเดียวที่มีหลักฐาน "คุยกับ"
-ตรงใน HLA §3.1 — ONB-0 เป็น**precondition โดยอ้อมของทุก feature ที่เหลือในทุก phase** (ไม่ใช่แค่ MVP Phase)
+**หมายเหตุเรื่อง ONB-0**: กราฟข้างต้นวาดเฉพาะเส้น `ONB-0 → ONB-1` และ `ONB-0 → INT-0` (เพิ่ม 2026-09-26)
+เพราะเป็นเส้นที่มีหลักฐานตรงใน HLA §3.1 ("คุยกับ" Personalization & Profile และการออกรหัสจับคู่ของ REQ-18) — ONB-0 เป็น**precondition โดยอ้อมของทุก feature ที่เหลือในทุก phase** (ไม่ใช่แค่ MVP Phase)
 ผ่าน chain ที่มีอยู่แล้วเดิม (ONB-1→ONB-2→ONB-3→REC-1→REC-2→PLN-1→PLN-2→PLN-3→...→ทุก phase ถัดไป) — ไม่ได้
 วาด edge ตรงจาก ONB-0 ไปยัง REC-1/PLN-1/PLN-3 หรือ feature อื่นใน Next/Future Phase เพิ่มเติม เพราะ HLA §3.1
 ไม่ได้ระบุความสัมพันธ์ "คุยกับ" ตรงเหล่านั้นไว้ (มีเฉพาะ Personalization & Profile) การเพิ่ม edge เหล่านั้น
