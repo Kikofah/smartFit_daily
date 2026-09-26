@@ -29,7 +29,7 @@ PLN-2-001/002/006 (2) test case ที่ต้องการความแม
 
 ## สารบัญ
 
-- [PLN-1 — ปฏิทินวางแผนรายสัปดาห์](#pln-1--ปฏิทินวางแผนรายสัปดาห์) — TC-PLN-1-001 ถึง 004
+- [PLN-1 — ปฏิทินวางแผนรายสัปดาห์](#pln-1--ปฏิทินวางแผนรายสัปดาห์) — TC-PLN-1-001 ถึง 005
 - [PLN-2 — โหมด Cheat Day / Rest Day](#pln-2--โหมด-cheat-day--rest-day) — TC-PLN-2-001 ถึง 006
 - [PLN-3 — บันทึกผลรายวัน (all-or-nothing)](#pln-3--บันทึกผลรายวัน-all-or-nothing) — TC-PLN-3-001 ถึง 005
 - [PLN-4 — ติดตาม Streak ต่อเนื่อง](#pln-4--ติดตาม-streak-ต่อเนื่อง) — TC-PLN-4-001 ถึง 004
@@ -100,6 +100,17 @@ Prototype: [08-weekly-planner.html](../../../02-design/01-prototypes/v1/08-weekl
 > [Planner spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-03-planner-logging.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
 > แล้ว — TC-PLN-2-003/004 ถูกแก้ไขให้ใช้ "วันนี้" แทนวันในอดีต และเพิ่ม TC-PLN-2-006 ใหม่เพื่อยืนยันฝั่ง
 > ที่ถูกปิดกั้น (ดูทั้งสองรายการในหัวข้อ PLN-2 ด้านล่าง)
+
+### TC-PLN-1-005 — เปลี่ยนวันที่เคยกำหนดประเภทกิจกรรมไว้แล้วกลับเป็น "ปล่อยว่าง" (เพิ่ม 2026-09-26)
+
+| ฟิลด์ | รายละเอียด |
+|---|---|
+| Test Case Name | ผู้ใช้เปลี่ยนแผนของวันที่เคยกำหนด HIIT ไว้ กลับเป็น "ปล่อยว่าง (แนะนำอัตโนมัติ)" ระบบล้างแผนเดิมและกลับไปใช้ค่า default |
+| Pre-condition | ผู้ใช้เปิดปฏิทินรายสัปดาห์ วันเสาร์ 29 ส.ค. 2026 เป็นวันในอนาคต ยังไม่มี log และเคยกำหนดประเภทกิจกรรมเป็น HIIT ไว้แล้ว (เช่นจากขั้นตอนเดียวกับ TC-PLN-1-002) |
+| Test Steps | 1. เปิดแท็บ Planner/ปฏิทิน<br>2. แตะวันเสาร์ 29 ส.ค. (เห็นชิป HIIT ถูกเลือกอยู่)<br>3. เลือกชิป "ปล่อยว่าง (แนะนำอัตโนมัติ)" และไม่เปิดสวิตช์ Cheat Day/Rest Day<br>4. กด "บันทึก"<br>5. แตะวันเสาร์ 29 ส.ค. อีกครั้ง |
+| Expected Result | บันทึกสำเร็จ ไม่มีข้อความ error ชีทปิดลง และเมื่อเปิดวันเสาร์ 29 ส.ค. อีกครั้ง ไม่มีประเภทกิจกรรม HIIT เหลืออยู่ วันนั้นกลับไปใช้ค่า default คือให้ระบบแนะนำอัตโนมัติตาม REC-1 |
+| Test Data | สัปดาห์ 24–30 ส.ค. 2026, วันที่เลือก = เสาร์ 29 ส.ค. 2026, แผนเดิม = HIIT → แผนใหม่ = ปล่อยว่าง, Cheat/Rest Day = ปิด |
+| References | REQ-08 · AC-PLN-1-02 (variation 2/2: เปลี่ยนจากแผนที่กำหนดไว้แล้วกลับเป็นค่า default — variation 1/2 คือ TC-PLN-1-003) · [user-journeys.md#pln-1](../../../02-design/01-prototypes/user-journeys.md#pln-1--ปฏิทินวางแผนรายสัปดาห์-req-08) ขั้นตอน 6 ("ถ้าปล่อยว่าง → ใช้ค่า default") · automated (API): `server/routes/planner-day-status/index.test.ts` "no activity type … back to auto, earlier plan cleared" — **ก่อนแก้ 2026-09-26 กรณีนี้ได้ 500 บนเว็บจริง** เพราะ server เขียนค่า undefined ลง Firestore |
 
 ---
 
@@ -320,15 +331,36 @@ Prototype: [05-daily-dashboard.html](../../../02-design/01-prototypes/v1/05-dail
 
 ---
 
+## ความครอบคลุมโดย automated E2E
+
+เทสต์อัตโนมัติเหล่านี้รันกับ stack ในเครื่อง + Firebase Emulator (`smartfit_daily_app/apps/web/e2e-local/`, `npm run test:e2e:local` (จาก `apps/web`) — เขียนข้อมูลได้เพราะไม่แตะ
+production, วิดีโอแนะนำถูก stub ที่เบราว์เซอร์ ไม่เรียก YouTube/Gemini จริง ดู [test-plan.md §3](../test-plan.md#3-test-environment))
+ใช้ test data ของตัวเอง (หญิง 25 ปี 60 กก. 165 ซม. ปานกลาง, ไม่มีอุปกรณ์, "กระชับสัดส่วน" → TDEE 2,085 kcal,
+เป้าเผาผลาญ 180 kcal/วัน) จึงเป็น**อีกชุด test data ของ AC เดียวกัน** ไม่ได้แทน test data ใน TC — รันทั้งบน
+desktop และมือถือ (Pixel 7) เพิ่ม 2026-09-26
+
+| Test Case | automated test (`e2e-local/`) | ต่างจาก TC อย่างไร |
+|---|---|---|
+| TC-PLN-1-001 | `planner.spec.ts` "plan today's activity type" — กำหนด HIIT ให้วันนี้ แล้วตรวจผ่าน API ว่าบันทึก `hiit` | ใช้ "วันนี้" จริงของวันที่รัน ไม่ใช่ 27 ส.ค. 2026 |
+| TC-PLN-1-003 | `planner.spec.ts` (ขั้นแรกของเทสต์เดียวกัน) — วันที่ยังไม่ได้วางแผนเป็น `isDefaultAuto = true` | ตรวจผ่าน API ไม่ได้กดชิป "ปล่อยว่าง" |
+| TC-PLN-2-001 | `planner.spec.ts` "set today as Cheat/Rest Day" — เปิดสวิตช์ Cheat/Rest วันนี้ → log `completed`, streak 1 | สวิตช์ในแอปจริงรวม Cheat Day/Rest Day เป็นอันเดียว (TC-PLN-2-002 จึงไม่แยก) |
+| TC-PLN-3-002 | `logging.spec.ts` "31-minute session reaches the 180 kcal target" — 186/180 kcal (103%) → `completed` | เกินเป้าเล็กน้อย ไม่ใช่ "เกินไปมาก" แบบ TC |
+| TC-PLN-3-004 | `logging.spec.ts` "10-minute session stays under the target" — 60/180 kcal (33%) → `incomplete` | ตัวเลขต่างจาก TC แต่เป็นกรณี well below เหมือนกัน |
+| PLN-4 (บางส่วน) | `logging.spec.ts` ทั้ง 2 เทสต์ — streak 1 หลังครบเป้าวันแรก, streak 0 เมื่อวันนี้ไม่ครบ | ครอบคลุมแค่วันเดียว ไม่ได้ทดสอบการนับต่อเนื่องหลายวันแบบ TC-PLN-4-001 (ตัวนั้นมี unit test ที่ `server/domain/streak.test.ts`) |
+
+TC-PLN-1-005 ยังไม่มี E2E มีเฉพาะ API test (ดู References ของ TC)
+
+---
+
 ## สรุปจำนวน Test Case ต่อ Feature
 
 | Feature ID | จำนวน AC Scenario | จำนวน Test Case | Test ID |
 |---|---|---|---|
-| PLN-1 | 3 | 4 | TC-PLN-1-001 ถึง 004 |
+| PLN-1 | 3 | 5 | TC-PLN-1-001 ถึง 005 (AC-PLN-1-02 มี 2 test case: TC-PLN-1-003, TC-PLN-1-005) |
 | PLN-2 | 4 | 6 | TC-PLN-2-001 ถึง 006 |
 | PLN-3 | 3 | 5 | TC-PLN-3-001 ถึง 005 |
 | PLN-4 | 3 | 4 | TC-PLN-4-001 ถึง 004 |
-| **รวม** | **13** | **19** | |
+| **รวม** | **13** | **20** | |
 
 ---
 

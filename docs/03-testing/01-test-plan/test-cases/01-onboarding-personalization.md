@@ -554,6 +554,24 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 
 ---
 
+## ความครอบคลุมโดย automated E2E
+
+เทสต์อัตโนมัติเหล่านี้รันกับ stack ในเครื่อง + Firebase Emulator (`smartfit_daily_app/apps/web/e2e-local/`, `npm run test:e2e:local` (จาก `apps/web`) — เขียนข้อมูลได้เพราะไม่แตะ
+production, วิดีโอแนะนำถูก stub ที่เบราว์เซอร์ ไม่เรียก YouTube/Gemini จริง ดู [test-plan.md §3](../test-plan.md#3-test-environment))
+ใช้ test data ของตัวเอง (หญิง 25 ปี 60 กก. 165 ซม. ปานกลาง, ไม่มีอุปกรณ์, "กระชับสัดส่วน" → TDEE 2,085 kcal,
+เป้าเผาผลาญ 180 kcal/วัน) จึงเป็น**อีกชุด test data ของ AC เดียวกัน** ไม่ได้แทน test data ใน TC — รันทั้งบน
+desktop และมือถือ (Pixel 7) เพิ่ม 2026-09-26
+
+| Test Case | automated test | ต่างจาก TC อย่างไร |
+|---|---|---|
+| TC-ONB-0-001 | `e2e-local/onboarding.spec.ts` (ขั้นแรก) — สมัครสมาชิกด้วยอีเมล/รหัสผ่านแล้วไปหน้า ONB-1 | บัญชีอยู่ใน Auth emulator ไม่ใช่บัญชีจริง |
+| TC-ONB-0-002 | `e2e/login.spec.ts` (production, อ่านอย่างเดียว) — login + reload แล้ว session ยังอยู่ | ใช้บัญชีตัวอย่าง `sample.arunee@smartfit-daily.test` |
+| TC-ONB-0-009, TC-ONB-0-010 | `e2e/login.spec.ts` (production) — ดู References ของ TC ทั้งสอง | — |
+| AC-ONB-1-01 (TC-ONB-1-001/002) | `e2e-local/onboarding.spec.ts` "new user signs up and completes onboarding" — ตรวจผ่าน API ว่า TDEE = 2,085 | test data อีกชุด (หญิง 25 ปี ปานกลาง) ไม่ใช่ชาย 30 ปี/หญิง 28 ปีของ TC |
+| TC-ONB-1-003 | `e2e-local/onboarding.spec.ts` "personal info with missing fields" — ไม่เลือกเพศและระดับกิจกรรม → error ทั้งสองข้อ ไม่ไปขั้นถัดไป | ขาด 2 ช่องพร้อมกัน (TC ขาดแค่เพศ) |
+| TC-ONB-2-003 | `e2e-local/onboarding.spec.ts` — เลือก "ไม่มีอุปกรณ์" → บันทึก `equipmentTypes: ['none']` | ไม่ได้ตรวจว่าวิดีโอที่แนะนำเป็น bodyweight (วิดีโอถูก stub) |
+| AC-ONB-3-01 (TC-ONB-3-002) | `e2e-local/onboarding.spec.ts` — "กระชับสัดส่วน" ที่ 60 กก. → หน้ายืนยันแสดง 180 และ server เก็บ `dailyCalorieTargetKcal = 180` | 60 กก. แทน 75 กก. ของ TC |
+
 ## สรุปจำนวน Test Case ต่อ AC Scenario
 
 | Feature ID | AC Scenario | จำนวน Test Case | Test ID |

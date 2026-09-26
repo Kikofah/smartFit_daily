@@ -4,7 +4,11 @@
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
-- **อัปเดตล่าสุด:** 2026-09-26 (`test-suite-builder`, full-scope audit) — reconcile ทั้งไฟล์ให้ตรงกับสถานะ
+- **อัปเดตล่าสุด:** 2026-09-26 (`test-suite-builder`, รอบ E2E) — เพิ่ม automated E2E 2 ระดับ (production
+  อ่านอย่างเดียว + stack ในเครื่องกับ Firebase Emulator) ใน §2/§3, แก้จำนวน automated test ที่ล้าหลัง
+  (55 → unit/API 111 + E2E 14 + 12), และแก้สถานะ `TASK-INFRA-01` ในตาราง Mock/Stub ของ §3 ที่ยังบอกว่า
+  "ยังไม่เริ่ม" ทั้งที่เสร็จแล้ว
+- **อัปเดตก่อนหน้า:** 2026-09-26 (`test-suite-builder`, full-scope audit) — reconcile ทั้งไฟล์ให้ตรงกับสถานะ
   แอปจริงปัจจุบัน (ดู "หมายเหตุสถานะโปรเจกต์" ที่แก้ไขใหม่ด้านล่าง)
 
 เอกสารนี้อ้างอิงจาก [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) (MoSCoW priority
@@ -27,10 +31,12 @@ Firebase/Firestore ผ่าน Non-Functional Requirements Review ของ `te
 > ใน `apps/web/server/domain/`: `tdee.test.ts` (ONB-1), `goalTargets.test.ts` (ONB-3),
 > `metCalorieBurn.test.ts` (REC-2), `dailyLog.test.ts` (PLN-3), `streak.test.ts` (PLN-4),
 > `sessionVideos.test.ts` (REC-4), `weightForecast.test.ts` (INT-1), `pairingRateLimit.test.ts` (INT-0) —
-> รวม **55 test case อัตโนมัติ** รันด้วย `npm run test -w @smartfit/web` จาก `smartfit_daily_app/` และ
+> (ตัวเลขเดิม **55 test case** — ณ 2026-09-26 รอบ E2E เพิ่มเป็น unit + API route test **111 ข้อ** 15 ไฟล์ และมี
+> automated E2E แล้ว 2 ชุด ดู §3) รันด้วย `npm run test -w @smartfit/web` จาก `smartfit_daily_app/` และ
 > Epic 4 ทั้งหมด (**INT-0, INT-2, INT-3**) มี backend implement จริงแล้วเช่นกัน (ดู §1/§4 R14 และ TC ที่
-> เกี่ยวข้องใน `test-cases/04-smart-integrations.md`) — สิ่งที่**ยังไม่มี**คือ (ก) automated integration/
-> E2E test ระดับ route/API เต็มรูปแบบ (unit test ครอบคลุมเฉพาะ pure domain module) และ (ข) การทดสอบบน
+> เกี่ยวข้องใน `test-cases/04-smart-integrations.md`) — สิ่งที่**ยังไม่มี**คือ (ก) ~~automated integration/
+> E2E test ระดับ route/API เต็มรูปแบบ~~ (**มีแล้ว 2026-09-26** — API route test ด้วย Firestore ปลอม และ E2E
+> 2 ระดับ ดู §3 เหลือแค่ E2E ของ INT-0/1/2/3 และ REC-1/3/4) และ (ข) การทดสอบบน
 > อุปกรณ์มือถือจริง (Bluetooth ตาชั่งอัจฉริยะ, HealthKit/Health Connect permission ของ INT-2/INT-3 — ยัง
 > manual/pending) แผนนี้จึงยังคงเขียนในระดับ **manual/documentation-level test case เป็นหลัก** แต่ต่างจาก
 > เดิมตรงที่ตอนนี้มีทั้งโค้ดจริงให้ตรวจสอบและ automated test บางส่วนที่ execute ได้จริงแล้ว ไม่ใช่ "รอแอป
@@ -97,6 +103,7 @@ Risk Management และ §5 Entry/Exit Criteria
 | **Integration Testing** | YouTube API (REC-1 การค้นหา/กรองวิดีโอ, REC-2 metadata ที่ใช้คำนวณ MET), Health API/wearable (INT-3), Bluetooth สมาร์ตสเกล (INT-2), และ (เพิ่ม 2026-08-30, ขยาย 2026-09-25) **กลไกรหัสจับคู่อุปกรณ์ (pairing-code, รวม rate limit/one-code-per-account/concurrent redeem)** ระหว่างเว็บแอปกับ companion app บนมือถือ — mint (`POST /auth/pairing-codes`)/redeem (`POST /auth/pairing-codes/redeem`) ที่ implement จริงแล้วที่ `apps/web/server/routes/pairing/index.ts` (ดู R14), และ **กลไก pull-sync แคลอรี่จาก wearable ของมือถือ (INT-3)** — `GET /integrations/wearable/latest-session`/`POST /integrations/wearable/readings` ที่ implement จริงแล้วที่ `apps/web/server/routes/integration-gateway/index.ts` | เป็นจุดที่แอปพึ่งพาระบบภายนอกที่ควบคุมไม่ได้เต็มที่ — REC-1/REC-2 อยู่ใน scope Must จึงต้อง integration-test แม้จะยังไม่มี backend จริง (ผ่าน mock ดู §3); INT-2/INT-3 เตรียม test case ไว้แต่ไม่ execute รอบนี้ (Could, นอกขอบเขต) — ยกเว้นกลไก pairing-code และกลไก pull-sync ของ INT-3 ที่ backend จริงมีอยู่แล้ว จึง execute ได้ทันทีในระดับ API testing แม้ INT-0/INT-2/INT-3 เองยังไม่ execute เต็ม epic (ดู R14) |
 | **Usability Testing** | Onboarding flow ทั้งหมด (**ONB-0** → ONB-1 → ONB-2 → ONB-3, ปรับลำดับ 2026-08-29 ให้เริ่มจาก Authentication ซึ่งเป็นจุดเริ่มต้นจริงของทั้งแอปตาม user-journeys.md) | เป็น first-run linear flow ที่ผู้ใช้ใหม่ทุกคนต้องผ่านโดยไม่มีทางย้อนกลับแก้ไขระหว่างทางที่ระบุไว้ชัดเจน (ดู Preconditions/flow ใน [user-journeys.md](../../02-design/01-prototypes/user-journeys.md)) — ถ้าขั้นตอนใดทำให้ผู้ใช้สับสนหรือติดขัด ผู้ใช้จะเข้าแอปไม่ได้เลยตั้งแต่ต้น ต่างจากหน้าจออื่นที่พลาดแล้วยังกลับมาแก้ได้ |
 | **Regression Testing** | กติกา all-or-nothing ของ streak (PLN-3 การสร้าง log และ PLN-4 การนับ/ตัด streak) | เป็นกติกาที่ "เข้มงวด ไม่มี partial credit" ตาม decision ที่ resolve แล้ว ซึ่งเป็นกฎที่ผิดพลาดง่ายเวลามีการแก้โค้ดในอนาคต (เช่น เผลอใส่ grace period หรือ partial credit) — ต้องมี regression suite ที่รันซ้ำทุกครั้งที่โค้ดส่วน logging/streak หรือ Cheat/Rest Day (PLN-2) ถูกแก้ |
+| **Automated E2E Testing** (เพิ่ม 2026-09-26) | 2 ระดับ (ดู §3): (1) **production อ่านอย่างเดียว** — smoke + login (ONB-0) กับเว็บจริง (2) **stack ในเครื่อง + Firebase Emulator** — flow ที่เขียนข้อมูล: onboarding ONB-0→ONB-3, planner PLN-1/PLN-2, บันทึกผล REC-2→PLN-3→PLN-4 | ยืนยันว่าหน้าจอ + API + ข้อมูลที่เก็บจริงทำงานร่วมกันครบทาง ซึ่ง unit/API test แยกส่วนจับไม่ได้ — ระดับ (2) จับ bug จริงได้ตั้งแต่รอบแรก (`PUT /planner/days/:date` ตอบ 500 เมื่อไม่เลือกประเภทกิจกรรม เพราะ Firestore จริงไม่รับค่า undefined แต่ Firestore ปลอมของ API test ไม่เคยถูกทดสอบกรณีนี้ — ดู TC-PLN-1-005) แยกเป็น 2 ระดับเพราะ E2E ของ production ต้องไม่เขียนข้อมูลผู้ใช้จริง (ข้อมูลสุขภาพ — NFR-11) |
 | **NFR-driven Testing** (Performance/Security/Reliability/Usability/Legal Compliance) | ตรงตาม NFR-01–NFR-13 ใน [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md) — NFR-09/NFR-10 (Usability: accessibility, ภาษา) ตรวจสอบได้จริงจาก prototype HTML โดยตรง ต่างจาก NFR อื่นส่วนใหญ่ที่รอ backend NFR-12 (เพิ่ม 2026-08-29, Reliability/Data Integrity — ผูกกับ REC-2 (Must)/INT-3 (Could)) **ฝั่ง INT-3 execute ได้จริงแล้ว (เพิ่ม 2026-09-25 — ดู R12)** ส่วนฝั่ง REC-2 มี backend implement แล้วเช่นกันแต่ยังไม่ปรับ test case ในรอบนี้ (นอกขอบเขต Epic) NFR-13 (เพิ่ม 2026-08-29, Usability/Data Visualization) ตรวจสอบได้จริงจาก prototype `10-progress-insights.html` เหมือน NFR-09/10 แต่ผูกกับ INT-1 เท่านั้นซึ่งอยู่ใน Epic 4 (Could, นอกขอบเขต execution รอบนี้ตาม §1) จึงเตรียม test case ไว้ล่วงหน้าแต่ยังไม่ execute จนกว่า Epic 4 จะเข้า scope | เอกสาร NFR ถูกสร้างขึ้นมาโดยเฉพาะเพื่อเป็นฐานของแผนนี้ (ดู "ความสัมพันธ์กับเอกสารอื่น" ของเอกสารนั้น) — ทดสอบเท่าที่ execute ได้จริงในสถานะปัจจุบันของโปรเจกต์ (ดู §5 Entry/Exit Criteria สำหรับ NFR ที่ยัง block อยู่) |
 
 ---
@@ -120,11 +127,27 @@ test suite อัตโนมัติทุกครั้งที่ push (�
 `computeDailyCalorieTargetKcal`/`computeDailyIntakeTarget`), `metCalorieBurn.test.ts` (REC-2),
 `dailyLog.test.ts` (PLN-3 — `applyCalorieDeltaToDailyLog`, ใช้โดย INT-3's pull-sync ด้วย),
 `streak.test.ts` (PLN-4), `sessionVideos.test.ts` (REC-4), `weightForecast.test.ts` (INT-1), และ
-`pairingRateLimit.test.ts` (INT-0) — รวม **55 test case อัตโนมัติ**, รันด้วย `npm run test -w
-@smartfit/web` จาก `smartfit_daily_app/` — ครอบคลุมเฉพาะ pure domain module ไม่ใช่ route handler/
-integration เต็มรูปแบบ (ยังไม่มี automated integration/E2E test suite) และ INT-2's smart-scale sync logic
+`pairingRateLimit.test.ts` (INT-0) — เดิมรวม **55 test case อัตโนมัติ** และ ณ 2026-09-26 มี **API route test**
+เพิ่มอีก 7 ไฟล์ (`server/routes/**`, `server/middleware/`) ด้วย Firestore/Auth ปลอมในหน่วยความจำ
+(`server/test/fakeFirebase.ts`) รวมเป็น **111 test case** 15 ไฟล์ รันด้วย `npm run test -w @smartfit/web` จาก
+`smartfit_daily_app/` — ส่วน E2E ดูหัวข้อถัดไป และ INT-2's smart-scale sync logic
 (`integration-gateway/index.ts`'s `/smart-scale/*`) เองก็ยังไม่มีไฟล์ domain module/test แยกต่างหาก
 (logic อยู่ในตัว route โดยตรง)
+
+### Automated E2E (Playwright — เพิ่ม 2026-09-26)
+
+| ระดับ | Config / คำสั่ง | รันกับ | ครอบคลุม | จำนวน |
+|---|---|---|---|---|
+| (1) Production อ่านอย่างเดียว | `apps/web/playwright.config.ts` · `npm run test:e2e` | เว็บจริง https://smartfit-daily.web.app (ค่าเริ่มต้น เปลี่ยนได้ด้วย `E2E_BASE_URL`) | หน้าแรก/welcome, API ปฏิเสธคำขอที่ไม่มี session, login (ช่องว่าง, credential ผิด, login สำเร็จ + session อยู่หลัง reload, หน้าที่ต้อง login พาไป `/welcome`) | 7 เทสต์ × 2 = 14 |
+| (2) Stack ในเครื่อง + Firebase Emulator | `apps/web/playwright.local.config.ts` · `npm run test:e2e:local` | Auth/Firestore emulator (project `demo-smartfit` — ต่อ project จริงไม่ได้), Express API และ Vite ที่ Playwright เปิดเอง ข้อมูลอยู่ในหน่วยความจำ หายหลังรันจบ | onboarding ONB-0→ONB-3, planner PLN-1/PLN-2, บันทึกผล REC-2→PLN-3→PLN-4 (ดูตาราง "ความครอบคลุมโดย automated E2E" ใน `test-cases/01`–`03`) | 6 เทสต์ × 2 = 12 |
+
+- ทั้งสองระดับรันบน Desktop Chrome และมือถือ (Pixel 7 viewport) — ยังไม่ใช่อุปกรณ์จริง (ดูหัวข้อถัดไป)
+- ระดับ (1) **ห้ามเขียนข้อมูล** (ไม่สมัครสมาชิก ไม่บันทึกอะไร) — เทสต์ login สำเร็จดัก `/api/workouts/**`
+  ไว้เพื่อไม่ให้ Dashboard บันทึกวิดีโอแนะนำลง Firestore จริง
+- ระดับ (2) ต้องมี Java 11+ สำหรับ Firestore emulator (`brew install openjdk@21`) — server ปิด key ของ
+  YouTube/Gemini และเบราว์เซอร์ stub `GET /api/workouts/today/recommendation` จึงไม่เรียกระบบภายนอก และใช้
+  `page.clock` เร่งเวลา session ออกกำลังกาย
+- ยังไม่มี CI รันทั้งสองระดับอัตโนมัติ (รันด้วยมือเหมือน unit test)
 
 ### อุปกรณ์/OS ที่ควรครอบคลุม (เมื่อมีแอปจริง)
 
@@ -140,10 +163,10 @@ Health API ของ OS โดยตรง ให้เตรียมครอ�
 
 | Dependency | ใช้ใน Feature | สิ่งที่ต้อง mock |
 |---|---|---|
-| YouTube Data API | REC-1, REC-2 | ชุดวิดีโอจำลองพร้อม metadata ครบ (ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา) ให้ REC-1 จับคู่แคลอรี่เป้าหมายได้ และ REC-2 คำนวณ MET ได้โดยไม่ต้องเรียก API จริง — ควรมีชุดที่ "ไม่มีวิดีโอตรงเป้าเป๊ะ" ด้วย เพื่อทดสอบ tolerance (ดู Risk R1 ใน §4) |
+| YouTube Data API (+ Gemini ที่ใช้จัดอันดับวิดีโอ) | REC-1, REC-2 | **E2E ระดับ (2) ทำแล้ว 2026-09-26**: stub ผลแนะนำวิดีโอ 1 ชุดที่เบราว์เซอร์ (คาร์ดิโอ ปานกลาง 30 นาที) และปิด key ฝั่ง server — ส่วน API test ใช้ YouTube/Gemini ปลอมใน `content-recommendation/index.test.ts` — เดิม: ชุดวิดีโอจำลองพร้อม metadata ครบ (ประเภทกิจกรรม, ความเข้มข้น, ระยะเวลา) ให้ REC-1 จับคู่แคลอรี่เป้าหมายได้ และ REC-2 คำนวณ MET ได้โดยไม่ต้องเรียก API จริง — ควรมีชุดที่ "ไม่มีวิดีโอตรงเป้าเป๊ะ" ด้วย เพื่อทดสอบ tolerance (ดู Risk R1 ใน §4) |
 | Health API / wearable (Apple Health, Google Health Connect) | INT-3 | payload จำลองของแคลอรี่เผาผลาญจากอัตราการเต้นหัวใจ รวมถึงกรณีค่าที่ต่างจากค่าประมาณ MET มาก (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ในระดับ OS/มือถือจริง (HealthKit/Health Connect permission prompt, Bluetooth) — **ยกเว้น (เพิ่ม 2026-09-25)**: ฝั่ง server ของกลไก pull-sync (`GET /integrations/wearable/latest-session`, `POST /integrations/wearable/readings`) execute ได้จริงแล้วในระดับ API testing โดย mock เฉพาะค่า Active Calories ที่ "อ่านมาจาก HealthKit" เป็น request body ตรง ๆ ไม่ต้องรอ mobile OS จริง (ดู TC-INT-3-005 ถึง 009, test-plan.md §4 R14) |
 | ตาชั่งอัจฉริยะผ่าน Bluetooth | INT-2 | payload น้ำหนัก/องค์ประกอบร่างกายจำลอง รวมกรณีชั่งหลายครั้งในวันเดียว (ดู Risk R5) — เตรียมไว้แต่ไม่ execute รอบนี้ |
-| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification), และ **ONB-0 (เพิ่ม 2026-08-29 — เฉพาะส่วน session persistence ข้ามการเปิดแอปจริง/session timeout ตาม REQ-15 และการล้าง session ฝั่ง server จริงตาม REQ-17; ส่วนสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่านหน้าจอ (REQ-14/15/16) ทดสอบได้แล้วที่ prototype-level ผ่าน `localStorage` จำลอง)** | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR/ส่วนของ ONB-0 ที่ "not testable" ในรอบนี้ (ดู §5) — จะ unblock ได้เมื่อ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md)) เสร็จจริง — **ปัจจุบัน task นี้ยังเป็น "ยังไม่เริ่ม"** ไม่ใช่ backend จริงในตอนนี้ |
+| Backend/ระบบบัญชีผู้ใช้ (ยังไม่มีจริง) | NFR-04 (encryption at rest), NFR-06 (data deletion), NFR-08 (local persistence ก่อน sync), NFR-11 (PDPA consent record-keeping/breach notification), และ **ONB-0 (เพิ่ม 2026-08-29 — เฉพาะส่วน session persistence ข้ามการเปิดแอปจริง/session timeout ตาม REQ-15 และการล้าง session ฝั่ง server จริงตาม REQ-17; ส่วนสมัครสมาชิก/เข้าสู่ระบบ/ลืมรหัสผ่านหน้าจอ (REQ-14/15/16) ทดสอบได้แล้วที่ prototype-level ผ่าน `localStorage` จำลอง)** | ยัง mock ไม่ได้อย่างมีความหมายเพราะยังไม่มี data model/storage จริงให้ทดสอบ — เป็น NFR/ส่วนของ ONB-0 ที่ "not testable" ในรอบนี้ (ดู §5) — จะ unblock ได้เมื่อ [`TASK-INFRA-01`](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง ตาม MVP Phase ของ [release-plan.md](../../01-requirements/02-plan/release-plan.md)) เสร็จจริง — ~~ปัจจุบัน task นี้ยังเป็น "ยังไม่เริ่ม"~~ **แก้ 2026-09-26: task นี้ "เสร็จแล้ว"** ตาม [phase-1-mvp-core-loop.md](../../01-requirements/03-task/phase-1-mvp-core-loop.md) (backend/Firebase จริง deploy แล้ว) — แต่ยังไม่มี TC ที่ทดสอบ NFR-04/06/08/11 กับ backend จริง จึงยังนับเป็น "not testable in this round" ใน §5 จนกว่าจะ audit §5 แยก |
 
 ---
 

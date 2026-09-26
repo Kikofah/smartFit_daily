@@ -360,6 +360,21 @@ Prototype: [06-workout-session.html](../../../02-design/01-prototypes/v1/06-work
 
 ---
 
+## ความครอบคลุมโดย automated E2E
+
+เทสต์อัตโนมัติเหล่านี้รันกับ stack ในเครื่อง + Firebase Emulator (`smartfit_daily_app/apps/web/e2e-local/`, `npm run test:e2e:local` (จาก `apps/web`) — เขียนข้อมูลได้เพราะไม่แตะ
+production, วิดีโอแนะนำถูก stub ที่เบราว์เซอร์ ไม่เรียก YouTube/Gemini จริง ดู [test-plan.md §3](../test-plan.md#3-test-environment))
+ใช้ test data ของตัวเอง (หญิง 25 ปี 60 กก. 165 ซม. ปานกลาง, ไม่มีอุปกรณ์, "กระชับสัดส่วน" → TDEE 2,085 kcal,
+เป้าเผาผลาญ 180 kcal/วัน) จึงเป็น**อีกชุด test data ของ AC เดียวกัน** ไม่ได้แทน test data ใน TC — รันทั้งบน
+desktop และมือถือ (Pixel 7) เพิ่ม 2026-09-26
+
+| Test Case | automated test (`e2e-local/`) | ต่างจาก TC อย่างไร |
+|---|---|---|
+| AC-REC-2-01 (TC-REC-2-001) | `logging.spec.ts` — วิดีโอคาร์ดิโอความเข้มข้นปานกลาง (MET 6) 60 กก. 31 นาที → หน้าผลลัพธ์แสดง 186 kcal และ server บันทึก 186 kcal | 60 กก. 31 นาที แทน 70 กก. 30 นาทีของ TC — วิดีโอถูก stub เป็น timer ธรรมดา (ไม่มี YouTube player) และใช้ `page.clock` เร่งเวลา |
+
+REC-1/REC-3/REC-4 ยังไม่มี E2E เพราะการเลือกวิดีโอเรียก YouTube/Gemini จริง ซึ่ง E2E ทั้งสองชุดตั้งใจ stub ไว้ —
+ครอบคลุมด้วย API test ที่ `server/routes/content-recommendation/index.test.ts` แทน
+
 ## สรุปจำนวน Test Case ต่อ Feature
 
 | Feature ID | AC Scenario | Test Case | หมายเหตุ |
