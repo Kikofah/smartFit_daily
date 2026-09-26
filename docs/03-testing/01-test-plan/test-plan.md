@@ -4,9 +4,12 @@
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
+- **อัปเดตล่าสุด:** 2026-09-26 (`test-suite-builder`, full-scope audit) — reconcile ทั้งไฟล์ให้ตรงกับสถานะ
+  แอปจริงปัจจุบัน (ดู "หมายเหตุสถานะโปรเจกต์" ที่แก้ไขใหม่ด้านล่าง)
 
 เอกสารนี้อ้างอิงจาก [docs/01-requirements/backlog.md](../../01-requirements/backlog.md) (MoSCoW priority
-และ Feature ID ทั้ง 15 ตัว — รวม **ONB-0** Authentication ที่เพิ่มเข้า Must เมื่อ 2026-08-29) และ
+และ Feature ID ทั้ง **16** ตัว — แก้จาก "15" เมื่อ 2026-09-26 เพราะประโยคเดิมเขียนก่อน **INT-0** จะได้
+Feature ID ของตัวเองเมื่อ 2026-08-30; รวม **ONB-0** Authentication ที่เพิ่มเข้า Must เมื่อ 2026-08-29) และ
 [Non-Functional Requirements](../../01-requirements/01-spec/20260827-05-non-functional-requirements.md)
 (NFR-01–NFR-13 — ขยายจาก NFR-01–08 เมื่อ 2026-08-28 ด้วย NFR-09/10 Usability และ NFR-11 Legal/Regulatory
 Compliance, และขยายอีกครั้ง 2026-08-29 ด้วย **NFR-12** Reliability/Data Integrity — ผูกกับ REC-2, INT-3 —
@@ -15,11 +18,23 @@ Firebase/Firestore ผ่าน Non-Functional Requirements Review ของ `te
 ร่วมกับ "จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม" ของเอกสาร spec ทั้ง 4 ไฟล์ใน
 [01-spec/](../../01-requirements/01-spec/index.md) สำหรับส่วน Risk Management ด้านล่าง
 
-> **หมายเหตุสถานะโปรเจกต์**: ตาม `CLAUDE.md` — โปรเจกต์นี้ยังเป็น Obsidian vault เอกสารล้วน ยังไม่มี
-> application source code, backend, หรือ build/test tooling จริง แผนนี้จึงเขียนในระดับ
-> **documentation/prototype-level testing** (ตรวจสอบความถูกต้องของ business rule ผ่าน spec/prototype/
-> test case) ไม่ใช่การรันชุดทดสอบอัตโนมัติกับระบบจริง — เมื่อมีแอปจริงต้องย้อนกลับมาเติมรายละเอียดเชิง
-> infra (URL, test runner, CI) ในเอกสารนี้
+> **หมายเหตุสถานะโปรเจกต์ (เขียนใหม่ 2026-09-26 — เวอร์ชันเดิมตั้งแต่ 2026-08-27 บอกว่า "ยังไม่มี
+> application source code, backend, หรือ build/test tooling จริง" ซึ่งล้าหลังไปมากแล้ว)**: โปรเจกต์นี้มี
+> **แอปจริงที่ deploy แล้ว** ใน `smartfit_daily_app/` — Express.js + React/Vite (`apps/web`) deploy ขึ้น
+> **Cloud Run** (backend) + **Firebase Hosting** (client), ใช้ **Firebase Authentication** (บัญชีผู้ใช้
+> จริง — ONB-0) และ **Firestore** (backend storage จริง) — ไม่ใช่แค่ scaffolded stub อีกต่อไปสำหรับหลาย
+> เส้นทางหลัก มี **automated unit test จริง** ด้วย Vitest ครอบคลุม pure domain calculation module 8 ไฟล์
+> ใน `apps/web/server/domain/`: `tdee.test.ts` (ONB-1), `goalTargets.test.ts` (ONB-3),
+> `metCalorieBurn.test.ts` (REC-2), `dailyLog.test.ts` (PLN-3), `streak.test.ts` (PLN-4),
+> `sessionVideos.test.ts` (REC-4), `weightForecast.test.ts` (INT-1), `pairingRateLimit.test.ts` (INT-0) —
+> รวม **55 test case อัตโนมัติ** รันด้วย `npm run test -w @smartfit/web` จาก `smartfit_daily_app/` และ
+> Epic 4 ทั้งหมด (**INT-0, INT-2, INT-3**) มี backend implement จริงแล้วเช่นกัน (ดู §1/§4 R14 และ TC ที่
+> เกี่ยวข้องใน `test-cases/04-smart-integrations.md`) — สิ่งที่**ยังไม่มี**คือ (ก) automated integration/
+> E2E test ระดับ route/API เต็มรูปแบบ (unit test ครอบคลุมเฉพาะ pure domain module) และ (ข) การทดสอบบน
+> อุปกรณ์มือถือจริง (Bluetooth ตาชั่งอัจฉริยะ, HealthKit/Health Connect permission ของ INT-2/INT-3 — ยัง
+> manual/pending) แผนนี้จึงยังคงเขียนในระดับ **manual/documentation-level test case เป็นหลัก** แต่ต่างจาก
+> เดิมตรงที่ตอนนี้มีทั้งโค้ดจริงให้ตรวจสอบและ automated test บางส่วนที่ execute ได้จริงแล้ว ไม่ใช่ "รอแอป
+> จริง" อีกต่อไปสำหรับหลาย feature — ดูรายละเอียดต่อใน §1/§3/§4
 
 ---
 
@@ -48,14 +63,28 @@ Firebase/Firestore ผ่าน Non-Functional Requirements Review ของ `te
 
 ### นอกขอบเขต (Out of scope) สำหรับรอบทดสอบนี้
 
-**Could** — ทั้ง Epic 4 (Smart Integrations: **INT-1, INT-2, INT-3**) — **อยู่นอกขอบเขตของรอบทดสอบนี้**
-เพราะยังไม่ถูก implement จริง (MoSCoW = Could ทั้งหมดใน backlog.md, และ NFR-07 ยืนยันว่า core loop
-รายวันต้องไม่ผูกกับความพร้อมของ integration เหล่านี้อยู่แล้ว) — **อย่างไรก็ตาม อาจเขียน test case
-เตรียมไว้ล่วงหน้า** (per `test-suite-builder` ที่ default คือ full backlog coverage) เพื่อให้พร้อมใช้ทันที
-เมื่อ Epic 4 ถูกหยิบขึ้นมา implement จริง โดยไม่ต้อง execute ในรอบนี้
+**Could** — ทั้ง Epic 4 (Smart Integrations: **INT-0, INT-1, INT-2, INT-3**) — **ยังคงอยู่นอกขอบเขต
+"exit-blocking" ของรอบทดสอบนี้ตาม MoSCoW เดิม (ไม่เปลี่ยน priority)** แต่คำอธิบายเดิมที่ว่า "เพราะยังไม่ถูก
+implement จริง" **ล้าหลังแล้ว (แก้ไข 2026-09-26)**: ยืนยันจากโค้ดจริงว่า backend ของทั้ง 4 feature
+implement แล้ว — **INT-0** (pairing-code, rate limit, one-code-per-account — `routes/pairing/index.ts`),
+**INT-1** (พยากรณ์วันถึงเป้าหมาย — `routes/insights-forecast/index.ts` + `domain/weightForecast.ts`),
+**INT-2** (ซิงค์ตาชั่งอัจฉริยะ — `routes/integration-gateway/index.ts`'s `/smart-scale/*`), และ **INT-3**
+(pull-sync จาก wearable — endpoint เดียวกัน's `/wearable/*`) — ระดับ **API/domain logic execute ได้จริง
+แล้ว** (ดู TC-INT-0-001 ถึง 009, TC-INT-3-003 ถึง 009 ใน `test-cases/04-smart-integrations.md` ที่ mark
+ว่า execute ได้จริง) สิ่งที่**ยังไม่ execute ในรอบนี้จริง** คือเฉพาะส่วนที่ต้องพึ่งฮาร์ดแวร์/OS จริงบนมือถือ
+(Bluetooth pairing กับตาชั่งจริง ของ INT-2, HealthKit/Health Connect permission prompt จริงของ INT-3,
+และ end-to-end flow เต็มรูปแบบบน companion app จริง) ซึ่งยังต้องรอการทดสอบบนอุปกรณ์จริง (real-device
+testing) — ไม่ใช่ "รอ implement" อีกต่อไป — เหตุผลที่ทั้ง Epic 4 ยังไม่นับเป็นเงื่อนไข exit ของรอบนี้จึง
+เปลี่ยนจาก "ยังไม่มีโค้ด" เป็น "MoSCoW = Could และยังขาดการทดสอบระดับอุปกรณ์จริง" แทน (NFR-07 ยังคงยืนยันว่า
+core loop รายวันต้องไม่ผูกกับความพร้อมของ integration เหล่านี้อยู่ดี) — ดูรายละเอียด TC ที่ execute ได้จริง
+ในรอบนี้ที่ §4 R14 และ `test-cases/04-smart-integrations.md`
 
-NFR ที่พึ่งพาระบบบัญชีผู้ใช้/backend จริง (NFR-04 ส่วน encryption at rest, NFR-06 data deletion) ก็อยู่
-นอกขอบเขตการ *execute* รอบนี้เช่นกัน ด้วยเหตุผลเดียวกับโปรเจกต์สถานะปัจจุบัน — ดูรายละเอียดใน §4
+NFR ที่พึ่งพาระบบบัญชีผู้ใช้/backend จริงบางส่วนยังอยู่นอกขอบเขตการ *execute* รอบนี้ — **แก้ไข 2026-09-26**:
+NFR-06 (data deletion) **implement แล้วจริง** ผ่าน `DELETE /api/account` (`routes/account-session/deleteAccount.ts`
+— ลบทุก subcollection + Firebase Auth account จริง) จึงย้ายออกจากกลุ่มนี้แล้ว (ดู §4 R7 ที่ปรับปรุงแล้ว) —
+เหลือเฉพาะ NFR-04 ส่วน encryption-at-rest ระดับ audit เอกสาร (Firestore เข้ารหัสข้อมูลที่จัดเก็บเป็น
+default ของแพลตฟอร์มอยู่แล้ว แต่ยังไม่มีการตรวจสอบ/บันทึกหลักฐานอย่างเป็นทางการในรอบนี้) และ NFR-11 (PDPA)
+ส่วน consent record-keeping/breach notification process ที่ยังไม่ implement จริง — ดูรายละเอียดใน §4
 Risk Management และ §5 Entry/Exit Criteria
 
 ---
@@ -74,27 +103,28 @@ Risk Management และ §5 Entry/Exit Criteria
 
 ## 3. Test Environment
 
-### สถานะปัจจุบัน (ไม่มี backend/infra จริง)
+### สถานะปัจจุบัน (มี backend จริง deploy แล้ว — เขียนใหม่ 2026-09-26)
 
-เนื่องจากโปรเจกต์นี้ยังเป็นเอกสารล้วน (ไม่มี application source code) การทดสอบระดับ "environment" ในตอนนี้
-หมายถึงการตรวจสอบความถูกต้อง/ความสอดคล้องของ **prototype HTML** (เมื่อถูกสร้างใน
-`docs/02-design/01-prototypes/v{N}/` โดย `prototype-builder`) เทียบกับ spec/business rule ไม่ใช่การรัน
-ทดสอบกับแอปที่ deploy จริง — เมื่อเริ่มพัฒนาแอปจริง ต้องกลับมาเติมรายละเอียด environment (URL, staging/prod,
-CI runner) ในส่วนนี้
+**แก้ไข 2026-09-26**: ย่อหน้านี้เดิมบอกว่า "ไม่มี backend/infra จริง" ซึ่งล้าหลังไปมากแล้ว — ดู "หมายเหตุ
+สถานะโปรเจกต์" ที่ต้นไฟล์สำหรับรายละเอียดเต็ม สรุปสั้นสำหรับ §3 นี้: มี Express.js backend จริง deploy บน
+**Cloud Run**, client deploy บน **Firebase Hosting**, ข้อมูลเก็บใน **Firestore** จริง, ยืนยันตัวตนผ่าน
+**Firebase Authentication** จริง — การทดสอบระดับ "environment" จึงหมายถึงทั้ง (ก) การตรวจสอบ **prototype
+HTML** (`docs/02-design/01-prototypes/v{N}/`) เทียบกับ spec/business rule เหมือนเดิม **และ** (ข) การอ่าน/
+ตรวจสอบ**โค้ดจริง**ใน `smartfit_daily_app/` เทียบกับ AC/spec โดยตรง (เป็นวิธีหลักที่ TC ส่วนใหญ่ในไฟล์นี้
+และ `test-cases/*.md` ใช้ยืนยันความถูกต้องตอนนี้) — ยังไม่มี URL/staging environment หรือ CI runner ที่รัน
+test suite อัตโนมัติทุกครั้งที่ push (ไม่มี GitHub Actions/CI config ใน repo ณ วันที่เขียนนี้) จึงยังต้อง
+รัน `npm run test -w @smartfit/web` ด้วยมือ — เป็นรายละเอียด infra ที่ยังต้องเติมเมื่อทีมตั้ง CI จริง
 
-> **หมายเหตุ (เพิ่ม 2026-09-25, ขอบเขต INT-0/INT-3/ONB-3)**: ย่อหน้าข้างบนนี้ **ล้าหลังไปมากกว่าที่ระบุไว้ใน
-> "หมายเหตุความสอดคล้องกับ CLAUDE.md" ใกล้ §4 R14 ด้านล่างแล้ว** — นอกจาก backend จริง (`smartfit_daily_app/`)
-> จะมีอยู่แล้ว ตอนนี้ยังมี **automated unit test จริง** สำหรับ pure domain calculation module ด้วย: Vitest
-> ครอบคลุม `apps/web/server/domain/goalTargets.test.ts` (ONB-3 — `computeDailyCalorieTargetKcal`,
-> `computeDailyIntakeTarget`), `apps/web/server/domain/dailyLog.test.ts` (PLN-3 —
-> `applyCalorieDeltaToDailyLog`, ใช้โดย INT-3's pull-sync ด้วย), และ
-> `apps/web/server/domain/weightForecast.test.ts` (INT-1) — รันด้วย `npm run test -w @smartfit/web` จาก
-> `smartfit_daily_app/` รวม **55 test case อัตโนมัติ** ที่ execute ได้จริงแล้ว (ไม่ใช่แค่ manual/
-> documentation-level เหมือน test case ส่วนใหญ่ในไฟล์นี้และ `test-cases/*.md`) — pairing-code (INT-0) และ
-> integration-gateway (INT-3) เองยังไม่มี automated unit/integration test เขียนไว้ (มีแค่การ implement
-> จริง ตรวจสอบผ่าน code inspection สำหรับ TC-INT-0-*/TC-INT-3-* ในรอบนี้) การ reconcile ทั้ง §3 นี้ให้ตรงกับ
-> สถานะโค้ดจริงแบบเต็มรูปแบบ (URL, staging/prod, CI runner ฯลฯ) ยังคงเป็นงานที่ใหญ่กว่าขอบเขตของรอบนี้
-> เหมือนที่บันทึกไว้แล้วใกล้ §4 R14 — ควรตามด้วยการรัน `test-suite-builder` แบบเต็มขอบเขตเพื่อ audit ทั้งไฟล์
+**Automated unit test ที่มีอยู่จริง**: Vitest ครอบคลุม pure domain calculation module 8 ไฟล์ใน
+`apps/web/server/domain/`: `tdee.test.ts` (ONB-1), `goalTargets.test.ts` (ONB-3 —
+`computeDailyCalorieTargetKcal`/`computeDailyIntakeTarget`), `metCalorieBurn.test.ts` (REC-2),
+`dailyLog.test.ts` (PLN-3 — `applyCalorieDeltaToDailyLog`, ใช้โดย INT-3's pull-sync ด้วย),
+`streak.test.ts` (PLN-4), `sessionVideos.test.ts` (REC-4), `weightForecast.test.ts` (INT-1), และ
+`pairingRateLimit.test.ts` (INT-0) — รวม **55 test case อัตโนมัติ**, รันด้วย `npm run test -w
+@smartfit/web` จาก `smartfit_daily_app/` — ครอบคลุมเฉพาะ pure domain module ไม่ใช่ route handler/
+integration เต็มรูปแบบ (ยังไม่มี automated integration/E2E test suite) และ INT-2's smart-scale sync logic
+(`integration-gateway/index.ts`'s `/smart-scale/*`) เองก็ยังไม่มีไฟล์ domain module/test แยกต่างหาก
+(logic อยู่ในตัว route โดยตรง)
 
 ### อุปกรณ์/OS ที่ควรครอบคลุม (เมื่อมีแอปจริง)
 

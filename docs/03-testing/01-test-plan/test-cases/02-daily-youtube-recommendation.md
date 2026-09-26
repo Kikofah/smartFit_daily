@@ -204,28 +204,33 @@ Prototype: [07-workout-result.html](../../../02-design/01-prototypes/v1/07-worko
 
 ### TC-REC-2-005 — ส่ง sessionId ที่ไม่มีอยู่จริง ระบบต้อง reject ก่อนเขียนข้อมูล (NFR-12)
 
-> **หมายเหตุ testability**: ตาม [test-plan.md §4 Risk R12](../test-plan.md#4-risk-management) test case
-> นี้ **ยัง execute ไม่ได้ในรอบนี้** เพราะต้องการ backend/Cloud Function จริงที่ยังไม่มีในโปรเจกต์ —
-> เตรียมไว้ล่วงหน้าตาม error case ที่ระบุไว้แล้วใน api-spec.md §3.3 เพื่อพร้อม execute ทันทีเมื่อ
-> [`TASK-INFRA-01`](../../../01-requirements/03-task/phase-1-mvp-core-loop.md) เสร็จจริง
+> **หมายเหตุ testability (อัปเดต 2026-09-26)**: เดิม test case นี้ mark ว่า "ยัง execute ไม่ได้ในรอบนี้"
+> เพราะสมมติว่าต้องรอ backend/Cloud Function จริง (ดู [test-plan.md §4 Risk
+> R12](../test-plan.md#4-risk-management)) — **ข้อนี้ล้าหลังแล้ว**: ยืนยันจากโค้ดจริงว่า backend ของ
+> `POST /workouts/sessions/{sessionId}/complete` implement แล้วที่
+> `apps/web/server/routes/exertion-calorie/index.ts` (ใช้ `assertDocExists` ตรวจ referential existence
+> ของ `sessionId` ก่อนเขียนข้อมูลเสมอ — ตรงกับ Expected Result ด้านล่างทุกประการ เหมือนกับที่ INT-3's
+> TC-INT-3-003 ถูกอัปเดตไปแล้วเมื่อ 2026-09-25 ด้วยหลักฐานเดียวกัน) — **test case นี้ execute ได้จริงแล้ว
+> ในรอบนี้** ไม่ต้องรอ `TASK-INFRA-01` อีกต่อไป
 
 - **Pre-condition**: มี `sessionId` ตัวอย่างที่ไม่ตรงกับ Workout Session ใดของผู้ใช้ในระบบ เช่น
   `"sess_a1b2c3"` (ไม่เคยถูกสร้างไว้ หรือถูกลบไปแล้ว)
 - **Test Steps**:
-  1. Client เรียก `POST /workouts/sessions/{sessionId}/complete` โดยใช้ `sessionId` = `"sess_a1b2c3"`
+  1. Client เรียก `POST /api/workouts/sessions/{sessionId}/complete` โดยใช้ `sessionId` = `"sess_a1b2c3"`
      พร้อมเวลาที่ใช้จริง 20 นาที
   2. สังเกต response ที่ได้กลับมา
   3. ตรวจสอบว่ามี Actual Calorie Burn หรือ Daily Log ใหม่ถูกสร้างขึ้นจากคำขอนี้หรือไม่
-- **Expected Result**: ระบบ (Cloud Function) ตรวจสอบว่า session ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียว
-  กันก่อนเขียนข้อมูลเสมอ (referential existence validation ตาม NFR-12) พบว่าไม่มีอยู่จริง จึงตอบกลับด้วย
-  `404 sessionId ไม่พบ` (ตามที่ระบุไว้แล้วใน api-spec.md §3.3) ไม่มีการสร้าง Actual Calorie Burn หรือ
-  Daily Log ใด ๆ จากคำขอนี้
+- **Expected Result**: ระบบตรวจสอบว่า session ปลายทางมีอยู่จริงก่อนเขียนข้อมูลเสมอ (referential existence
+  validation ตาม NFR-12 ผ่าน `assertDocExists`) พบว่าไม่มีอยู่จริง จึงตอบกลับด้วย `404` (`"sessionId not
+  found."` ตามที่ระบุไว้แล้วใน api-spec.md §3.3) ไม่มีการสร้าง Actual Calorie Burn หรือ Daily Log ใด ๆ
+  จากคำขอนี้
 - **Test Data**: `sessionId` ทดสอบ = `"sess_a1b2c3"` (ไม่มีอยู่จริงในระบบ), เวลาที่ใช้จริงที่ส่งมาด้วย =
   20 นาที (ค่าตัวอย่าง ไม่มีผลต่อผลลัพธ์เพราะคำขอถูก reject ก่อนคำนวณ)
 - **References**: REQ-05, NFR-12, AC-REC-2-04, [api-spec.md §3.3](../../../02-design/02-technical/api-spec.md),
   [database-schema.md §8.3](../../../02-design/02-technical/database-schema.md#83-fk--constraint-enforcement-migration-ย้ายจาก-schema-level-ไป-cloud-function)
   — ไม่มีลิงก์ user-journeys.md เพราะ scenario นี้เป็นระดับ API/backend validation ไม่ใช่ Alt/Edge Case
-  ของ journey (ดูหมายเหตุใต้ AC-REC-2-04 ใน acceptance-criteria.md)
+  ของ journey (ดูหมายเหตุใต้ AC-REC-2-04 ใน acceptance-criteria.md) · ยืนยันจากโค้ดจริง
+  `apps/web/server/routes/exertion-calorie/index.ts`, `apps/web/server/assertDocExists.ts`
 
 ---
 
@@ -360,7 +365,7 @@ Prototype: [06-workout-session.html](../../../02-design/01-prototypes/v1/06-work
 | Feature ID | AC Scenario | Test Case | หมายเหตุ |
 |---|---|---|---|
 | REC-1 | 4 (AC-REC-1-01..04) | 5 (TC-REC-1-001..005) | AC-REC-1-01 มี 2 test case (variation อุปกรณ์/เป้าหมาย); AC-REC-1-04 ใหม่ (เพิ่ม 2026-08-31, AI best-effort matching) → TC-REC-1-005 |
-| REC-2 | 4 (AC-REC-2-01..04) | 5 (TC-REC-2-001..005) | AC-REC-2-01 มี 2 test case (variation ประเภท/ความเข้มข้น/น้ำหนัก); AC-REC-2-04 ใหม่ (NFR-12, เพิ่ม 2026-08-29) — TC-REC-2-005 ยัง "not testable in this round" (ดู test-plan.md R12) |
+| REC-2 | 4 (AC-REC-2-01..04) | 5 (TC-REC-2-001..005) | AC-REC-2-01 มี 2 test case (variation ประเภท/ความเข้มข้น/น้ำหนัก); AC-REC-2-04 ใหม่ (NFR-12, เพิ่ม 2026-08-29) — **TC-REC-2-005 execute ได้จริงแล้ว (อัปเดต 2026-09-26 — backend implement แล้ว, ดู test-plan.md R12)** |
 | REC-3 | 2 (AC-REC-3-01..02) | 2 (TC-REC-3-001..002) | 1:1 |
 | REC-4 | 3 (AC-REC-4-01..03) | 3 (TC-REC-4-001..003) | 1:1 |
 | **รวม** | **13** | **15** | |
