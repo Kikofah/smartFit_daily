@@ -1,11 +1,23 @@
 <!-- Feature: ONB-0 | REQ: REQ-15, REQ-16 -->
 <!-- Login screen. Same 3 methods as sign-up (email/password, Google, Apple -- Google/Apple
-     simulated as instant success, no real OAuth exists yet). The user journey's flowchart only
-     models two branches out of the "เข้าสู่ระบบสำเร็จ?" decision node: success, or "ลืมรหัสผ่าน"
-     (an independent link, not a failed-attempt retry state) -- so this prototype deliberately does
-     NOT invent a generic "wrong email/password" error UI, since that behavior isn't described
-     anywhere in user-journeys.md's ONB-0 Alt/Edge Cases. Client-side validation here only checks
-     that both fields are non-empty (there is no backend to check real credentials against).
+     simulated as instant success, no real OAuth exists yet).
+     Failed login (updated 2026-09-26, REQ-15 -- user-journeys.md ONB-0 Step 10 + Alt/Edge Cases,
+     AC-ONB-0-08/09/10, TC-ONB-0-008..011, per the Onboarding spec decision "เข้าสู่ระบบไม่สำเร็จ"):
+     the user stays on this screen and sees a Thai message; raw technical auth errors never show.
+       - empty field -> "กรุณากรอกอีเมล" / "กรุณากรอกรหัสผ่าน" under that field, checked before
+         anything else (unchanged from the first v1 build)
+       - wrong password OR an email with no account -> the SAME form-level message
+         "อีเมลหรือรหัสผ่านไม่ถูกต้อง", deliberately not saying which field is wrong (so it can't
+         reveal which emails have accounts) -- so it sits above the submit button in --color-danger,
+         and neither input gets the red error border
+       - malformed email -> "รูปแบบอีเมลไม่ถูกต้อง"; offline -> "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ..."
+         (offline also applies to the Google/Apple buttons)
+     No backend exists, so credentials are checked against ONE demo account -- the test data of
+     TC-ONB-0-002 (newuser@example.com / Passw0rd!23), shown in a small hint line; anything else is
+     treated as wrong credentials. Form-level placement above the button mirrors the real web app
+     (apps/web LoginScreen.tsx) and uses existing DESIGN.md tokens only (confirmed with the user
+     2026-09-26 -- no new component). Disabled-account / too-many-attempts / Google-popup messages
+     exist in the real app but can't be simulated meaningfully here.
      On success, simulates REQ-15's session persistence (writes smartfit_auth_user to localStorage)
      and routes based on whether this browser has any onboarding data saved already: if
      smartfit_onb_personal exists (a returning user who has been through at least
@@ -87,6 +99,9 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 .btn-social { width:100%; gap:var(--space-2); }
 .btn-social + .btn-social { margin-top:var(--space-2); }
 .oauth-icon { display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; border:1.5px solid currentColor; font-size:11px; font-weight:600; line-height:1; flex-shrink:0; }
+.form-error { color:var(--color-danger); margin-top:var(--space-2); display:block; }
+.form-error[hidden] { display:none; }
+.demo-hint { margin-top:var(--space-3); text-align:center; color:var(--color-ink-faint); }
 .footer-note { text-align:center; margin-top:var(--space-6); }
 .footer-note a { color:var(--color-clay); text-decoration:none; font-weight:500; }
 </style>
@@ -130,7 +145,9 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
         </div>
       </div>
 
+      <span class="text-caption form-error" id="form-error" role="alert" hidden></span>
       <button type="submit" class="btn btn-primary" style="margin-top:var(--space-2)">เข้าสู่ระบบ</button>
+      <p class="text-caption demo-hint">บัญชีทดลอง (prototype): newuser@example.com / Passw0rd!23</p>
     </form>
 
     <div class="divider"><span>หรือ</span></div>
@@ -166,6 +183,19 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     passwordToggle.setAttribute('aria-label', showing ? 'แสดงรหัสผ่าน' : 'ซ่อนรหัสผ่าน');
   });
 
+  // Prototype-only stand-in for the auth backend: the TC-ONB-0-002 test account.
+  var DEMO_EMAIL = 'newuser@example.com';
+  var DEMO_PASSWORD = 'Passw0rd!23';
+  var MSG_INVALID_CREDENTIALS = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
+  var MSG_INVALID_EMAIL = 'รูปแบบอีเมลไม่ถูกต้อง';
+  var MSG_OFFLINE = 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่';
+
+  function showFormError(message){
+    var el = byId('form-error');
+    el.textContent = message || '';
+    el.hidden = !message;
+  }
+
   function completeLoginAndRoute(method){
     try {
       localStorage.setItem('smartfit_auth_user', JSON.stringify({
@@ -181,6 +211,7 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 
   byId('loginForm').addEventListener('submit', function(e){
     e.preventDefault();
+    showFormError(null);
     var email = byId('email');
     var password = byId('password');
     var validEmailVal = email.value.trim() !== '';
@@ -194,11 +225,22 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
       if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
+    if (!navigator.onLine) { showFormError(MSG_OFFLINE); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) { showFormError(MSG_INVALID_EMAIL); return; }
+    if (email.value.trim().toLowerCase() !== DEMO_EMAIL || password.value !== DEMO_PASSWORD) {
+      showFormError(MSG_INVALID_CREDENTIALS);
+      return;
+    }
     completeLoginAndRoute('email');
   });
 
-  byId('googleBtn').addEventListener('click', function(){ completeLoginAndRoute('google'); });
-  byId('appleBtn').addEventListener('click', function(){ completeLoginAndRoute('apple'); });
+  function socialLogin(method){
+    showFormError(null);
+    if (!navigator.onLine) { showFormError(MSG_OFFLINE); return; }
+    completeLoginAndRoute(method);
+  }
+  byId('googleBtn').addEventListener('click', function(){ socialLogin('google'); });
+  byId('appleBtn').addEventListener('click', function(){ socialLogin('apple'); });
 })();
 </script>
 </body>

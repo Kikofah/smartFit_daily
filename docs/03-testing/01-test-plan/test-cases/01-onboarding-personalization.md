@@ -4,7 +4,10 @@
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
-- **อัปเดตล่าสุด:** 2026-09-25 (รอบ 3) — เพิ่ม **TC-ONB-3-009 ถึง 011** ครอบคลุม boundary ของ safety floor
+- **อัปเดตล่าสุด:** 2026-09-26 (รอบ 4) — เพิ่ม **TC-ONB-0-008 ถึง 011** ครอบคลุม AC-ONB-0-08/09/10 ใหม่
+  (เข้าสู่ระบบไม่สำเร็จ: credential ผิด 2 variation, ช่องว่าง, ออฟไลน์) ตาม decision "เข้าสู่ระบบไม่สำเร็จ
+  (REQ-15)" ที่เพิ่มใน Onboarding spec ดู [log 2026-09-26](../../../05-log/20260926-log.md)
+- **อัปเดตก่อนหน้า (รอบ 3):** 2026-09-25 — เพิ่ม **TC-ONB-3-009 ถึง 011** ครอบคลุม boundary ของ safety floor
   ที่ exactly 1,200 kcal (ไม่ถูกปรับ), และ **AC-ONB-3-07/08** ใหม่ (server เป็นผู้คำนวณเป้าหมายแคลอรี่เป็น
   ทางการเองจากโปรไฟล์ที่บันทึกไว้ ไม่เชื่อค่าจาก client, และ `409` เมื่อยังไม่ผ่าน ONB-1) — coverage gap ที่
   พบระหว่าง self-freshness audit ของ `test-suite-builder` ดู [log
@@ -50,7 +53,10 @@ AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--�
 [AC-ONB-0-04](../../../01-requirements/acceptance-criteria.md#ac-onb-0-04--บัญชีที่สมัครด้วย-googleapple-ขอรีเซ็ตรหัสผ่านไม่ได้-req-16),
 [AC-ONB-0-05](../../../01-requirements/acceptance-criteria.md#ac-onb-0-05--ออกจากระบบจากหน้าโปรไฟล์-ล้าง-session-ทันที-req-17),
 [AC-ONB-0-06](../../../01-requirements/acceptance-criteria.md#ac-onb-0-06--session-หมดอายุ-ต้องเข้าสู่ระบบใหม่-req-15),
-[AC-ONB-0-07](../../../01-requirements/acceptance-criteria.md#ac-onb-0-07--พื้นผิว-ui-ของ-authentication-ทั้งหมดมีเฉพาะที่เว็บแอปเท่านั้น-เพิ่ม-2026-08-30-req-14-req-15)
+[AC-ONB-0-07](../../../01-requirements/acceptance-criteria.md#ac-onb-0-07--พื้นผิว-ui-ของ-authentication-ทั้งหมดมีเฉพาะที่เว็บแอปเท่านั้น-เพิ่ม-2026-08-30-req-14-req-15),
+[AC-ONB-0-08](../../../01-requirements/acceptance-criteria.md#ac-onb-0-08--เข้าสู่ระบบด้วย-credential-ที่ไม่ถูกต้อง-เห็นข้อความเดียวกันทั้งรหัสผ่านผิดและอีเมลที่ไม่มีบัญชี-เพิ่ม-2026-09-26-req-15),
+[AC-ONB-0-09](../../../01-requirements/acceptance-criteria.md#ac-onb-0-09--ไม่กรอกอีเมลหรือรหัสผ่าน-ระบบเตือนก่อนส่ง-เพิ่ม-2026-09-26-req-15),
+[AC-ONB-0-10](../../../01-requirements/acceptance-criteria.md#ac-onb-0-10--เข้าสู่ระบบไม่สำเร็จด้วยสาเหตุอื่น-เห็นข้อความภาษาไทย-ไม่เห็นข้อความทางเทคนิค-เพิ่ม-2026-09-26-req-15)
 
 > **หมายเหตุการทดสอบ ONB-0**: AC-ONB-0-01 (สมัครสมาชิก) และ AC-ONB-0-02 (เข้าสู่ระบบ) แต่ละอันมี **1 test
 > case** ใช้ **email/password เป็นตัวแทน** เท่านั้น ไม่แยก 3 test case ตามวิธี (email/password, Google,
@@ -154,6 +160,63 @@ AC: [AC-ONB-0-01](../../../01-requirements/acceptance-criteria.md#ac-onb-0-01--�
 | Expected Result | ไม่พบไฟล์หน้าจอ auth ใด ๆ (signup/login/forgot-password/logout) อยู่ใต้ `apps/mobile/app/` เลย มีเพียง `pairing-code.tsx` และ `device-pairing.tsx` เท่านั้นที่เกี่ยวข้องกับการระบุตัวตน/จับคู่อุปกรณ์ ยืนยันว่าพื้นผิว UI ของ Authentication ทั้งหมดอยู่ที่เว็บแอป (`apps/web/client/`) เพียงที่เดียว |
 | Test Data | โฟลเดอร์ตรวจสอบ = `smartfit_daily_app/apps/mobile/app/`; ไฟล์ที่คาดว่าพบ = `pairing-code.tsx`, `device-pairing.tsx` เท่านั้น; ไฟล์ที่คาดว่า**ไม่พบ** = ไฟล์ใด ๆ ที่มีคำว่า `signup`/`login`/`forgot-password`/`logout` ในชื่อหรือเนื้อหา |
 | References | REQ-14, REQ-15 · AC-ONB-0-07 · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) — ไม่มีลิงก์ prototype `v1/` เพราะเป็นการตรวจ codebase จริงของ `apps/mobile/`, ไม่ใช่ prototype HTML |
+
+
+> **หมายเหตุ TC-ONB-0-008 ถึง 011 (เพิ่ม 2026-09-26)**: รันได้ทั้งกับ**เว็บแอปจริง** (`apps/web` หน้า `/login`)
+> และ prototype [`v1/00-auth-login.html`](../../../02-design/01-prototypes/v1/00-auth-login.html) (เพิ่มสถานะนี้แล้ว 2026-09-26 — prototype รับเฉพาะบัญชี
+> ทดลอง `newuser@example.com` / `Passw0rd!23` จึงใช้ test data ชุดเดียวกันได้ตรง ๆ)
+> TC-ONB-0-009 และ TC-ONB-0-010 มี automated E2E test อยู่แล้วใน `smartfit_daily_app/apps/web/e2e/login.spec.ts`
+> ("wrong credentials show an error and stay on login", "empty email and password show validation errors
+> and stay on login") — TC-ONB-0-008 ไม่ทำเป็น automated test กับบัญชีจริง เพราะการกรอกรหัสผ่านผิดซ้ำ ๆ ทำให้
+> ระบบยืนยันตัวตนล็อกบัญชีนั้นชั่วคราวได้
+
+### TC-ONB-0-008 — รหัสผ่านผิดของบัญชีที่มีอยู่ เห็น "อีเมลหรือรหัสผ่านไม่ถูกต้อง"
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-008 |
+| Test Case Name | เข้าสู่ระบบด้วยอีเมลที่มีบัญชีอยู่แล้วแต่รหัสผ่านผิด ระบบแสดงข้อความภาษาไทยและอยู่หน้าเข้าสู่ระบบต่อ |
+| Pre-condition | มีบัญชี email/password `newuser@example.com` อยู่แล้ว (เช่นจาก TC-ONB-0-001) ยังไม่ได้เข้าสู่ระบบ และอยู่ที่หน้า `/login` ของเว็บแอป |
+| Test Steps | 1. กรอกอีเมล = `newuser@example.com`<br>2. กรอกรหัสผ่าน = `WrongPass!99`<br>3. กดปุ่ม "เข้าสู่ระบบ" |
+| Expected Result | ยังอยู่ที่ `/login` ไม่มี session ถูกสร้าง และเห็นข้อความ "อีเมลหรือรหัสผ่านไม่ถูกต้อง" — ไม่มีข้อความที่มีคำว่า `Firebase` หรือ `auth/` บนหน้าจอ |
+| Test Data | อีเมล = `newuser@example.com` (มีบัญชีอยู่), รหัสผ่าน = `WrongPass!99` (ไม่ใช่รหัสผ่านจริง `Passw0rd!23`) |
+| References | REQ-15 · AC-ONB-0-08 (variation 1/2: รหัสผ่านผิด) · prototype [00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html) · [User Journey ONB-0 Step 10 และ Alt/Edge Case](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · [Onboarding spec § เข้าสู่ระบบไม่สำเร็จ](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) |
+
+### TC-ONB-0-009 — อีเมลที่ไม่มีบัญชี เห็นข้อความเดียวกับรหัสผ่านผิด
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-009 |
+| Test Case Name | เข้าสู่ระบบด้วยอีเมลที่ไม่มีบัญชีในระบบ ระบบแสดงข้อความเดียวกับ TC-ONB-0-008 ไม่บอกว่าไม่มีบัญชีนี้ |
+| Pre-condition | ยังไม่ได้เข้าสู่ระบบ และอยู่ที่หน้า `/login` ของเว็บแอป — อีเมลที่ใช้ทดสอบต้องไม่เคยสมัครสมาชิก |
+| Test Steps | 1. กรอกอีเมล = `nobody.here@example.com`<br>2. กรอกรหัสผ่าน = `WrongPass!99`<br>3. กดปุ่ม "เข้าสู่ระบบ"<br>4. เทียบข้อความที่เห็นกับผลของ TC-ONB-0-008 |
+| Expected Result | ยังอยู่ที่ `/login` และเห็นข้อความ "อีเมลหรือรหัสผ่านไม่ถูกต้อง" **ตรงกับ TC-ONB-0-008 ทุกตัวอักษร** — ไม่มีข้อความที่บอกว่าไม่พบบัญชี/อีเมลนี้ |
+| Test Data | อีเมล = `nobody.here@example.com` (ไม่มีบัญชี), รหัสผ่าน = `WrongPass!99` |
+| References | REQ-15 · AC-ONB-0-08 (variation 2/2: อีเมลที่ไม่มีบัญชี) · prototype [00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html) · [User Journey ONB-0 Step 10 และ Alt/Edge Case](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · [Onboarding spec § เข้าสู่ระบบไม่สำเร็จ](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · automated: `e2e/login.spec.ts` "wrong credentials show an error and stay on login" |
+
+### TC-ONB-0-010 — ไม่กรอกอีเมลและรหัสผ่าน ระบบเตือนก่อนส่ง
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-010 |
+| Test Case Name | กด "เข้าสู่ระบบ" โดยเว้นทั้งสองช่องว่าง ระบบแสดงข้อความเตือนใต้แต่ละช่องโดยไม่ส่งไปตรวจสอบ |
+| Pre-condition | ยังไม่ได้เข้าสู่ระบบ และอยู่ที่หน้า `/login` ของเว็บแอป ช่องอีเมลและรหัสผ่านว่าง |
+| Test Steps | 1. ไม่กรอกอะไรเลย<br>2. กดปุ่ม "เข้าสู่ระบบ" |
+| Expected Result | เห็น "กรุณากรอกอีเมล" และ "กรุณากรอกรหัสผ่าน" ยังอยู่ที่ `/login` และไม่มีคำขอเข้าสู่ระบบถูกส่งไปยังระบบยืนยันตัวตน |
+| Test Data | อีเมล = (ว่าง), รหัสผ่าน = (ว่าง) |
+| References | REQ-15 · AC-ONB-0-09 · [User Journey ONB-0 Step 10 และ Alt/Edge Case](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · [Onboarding spec § เข้าสู่ระบบไม่สำเร็จ](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · prototype [00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html) · automated: `e2e/login.spec.ts` "empty email and password show validation errors and stay on login" |
+
+### TC-ONB-0-011 — เชื่อมต่ออินเทอร์เน็ตไม่ได้ขณะเข้าสู่ระบบ เห็นข้อความภาษาไทย ไม่เห็นข้อความทางเทคนิค
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-0-011 |
+| Test Case Name | เข้าสู่ระบบขณะออฟไลน์ ระบบแสดงข้อความภาษาไทยของสาเหตุนั้น และไม่มีข้อความทางเทคนิคดิบ |
+| Pre-condition | เปิดหน้า `/login` ของเว็บแอปไว้แล้ว จากนั้นตัดการเชื่อมต่ออินเทอร์เน็ต (เช่น DevTools → Network → Offline) |
+| Test Steps | 1. กรอกอีเมล = `newuser@example.com`<br>2. กรอกรหัสผ่าน = `Passw0rd!23`<br>3. กดปุ่ม "เข้าสู่ระบบ" |
+| Expected Result | ยังอยู่ที่ `/login` และเห็นข้อความที่ขึ้นต้นด้วย "เชื่อมต่ออินเทอร์เน็ตไม่ได้" — ไม่มีข้อความที่มีคำว่า `Firebase` หรือ `auth/` บนหน้าจอ |
+| Test Data | อีเมล = `newuser@example.com`, รหัสผ่าน = `Passw0rd!23` (ถูกต้อง — ให้แน่ใจว่าล้มเหลวเพราะออฟไลน์ ไม่ใช่เพราะ credential), สถานะเครือข่าย = Offline |
+| References | REQ-15 · AC-ONB-0-10 · prototype [00-auth-login.html](../../../02-design/01-prototypes/v1/00-auth-login.html) (ใช้กรณีออฟไลน์เป็นตัวแทน เพราะเป็นสาเหตุเดียวที่ผู้ทดสอบจำลองได้เองอย่างน่าเชื่อถือ — บัญชีถูกระงับ/ลองผิดหลายครั้ง/pop-up Google ต้องตั้งค่าที่ระบบยืนยันตัวตน) · [User Journey ONB-0 Step 10 และ Alt/Edge Case](../../../02-design/01-prototypes/user-journeys.md#onb-0--สมัครสมาชิก--เข้าสู่ระบบ--ลืมรหัสผ่าน--ออกจากระบบ-req-14-req-15-req-16-req-17) · [Onboarding spec § เข้าสู่ระบบไม่สำเร็จ](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) |
 
 ---
 
@@ -502,6 +565,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-0 | AC-ONB-0-05 | 1 | TC-ONB-0-005 |
 | ONB-0 | AC-ONB-0-06 | 1 (documentation-level, not testable in this round) | TC-ONB-0-006 |
 | ONB-0 | AC-ONB-0-07 (ใหม่ 2026-08-30) | 1 (code-inspection-level) | TC-ONB-0-007 |
+| ONB-0 | AC-ONB-0-08 (ใหม่ 2026-09-26) | 2 (variation: รหัสผ่านผิด / อีเมลที่ไม่มีบัญชี) | TC-ONB-0-008, TC-ONB-0-009 |
+| ONB-0 | AC-ONB-0-09 (ใหม่ 2026-09-26) | 1 | TC-ONB-0-010 |
+| ONB-0 | AC-ONB-0-10 (ใหม่ 2026-09-26) | 1 (ออฟไลน์เป็นตัวแทน) | TC-ONB-0-011 |
 | ONB-1 | AC-ONB-1-01 | 2 (variation: ชาย/หญิง) | TC-ONB-1-001, TC-ONB-1-002 |
 | ONB-1 | AC-ONB-1-02 | 2 (variation: ข้อมูลไม่ครบ/ไม่ถูกต้อง) | TC-ONB-1-003, TC-ONB-1-004 |
 | ONB-1 | AC-ONB-1-03 | 1 | TC-ONB-1-005 |
@@ -517,7 +583,7 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-3 | AC-ONB-3-01/03 (boundary variant, เพิ่ม 2026-09-25) | 1 | TC-ONB-3-009 |
 | ONB-3 | AC-ONB-3-07 (ใหม่ 2026-09-25) | 1 | TC-ONB-3-010 |
 | ONB-3 | AC-ONB-3-08 (ใหม่ 2026-09-25) | 1 | TC-ONB-3-011 |
-| **รวม** | **21 AC scenario** | **27 test case** | TC-ONB-0-001 … TC-ONB-3-011 |
+| **รวม** | **24 AC scenario** | **31 test case** | TC-ONB-0-001 … TC-ONB-3-011 |
 
 ครบทุก AC scenario ของ ONB-0/ONB-1/ONB-2/ONB-3 ตาม
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization)
