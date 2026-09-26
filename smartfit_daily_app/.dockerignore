@@ -3,6 +3,8 @@
 **/dist
 **/dist-client
 **/dist-server
+**/playwright-report
+**/test-results
 apps/mobile/.expo
 apps/mobile/web-build
 apps/web/config
