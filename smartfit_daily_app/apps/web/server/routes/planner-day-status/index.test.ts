@@ -63,6 +63,13 @@ describe('PUT /api/planner/days/:date (PLN-1 / REQ-08)', () => {
     expect(fake.read(`${base}/weeklyPlanEntries/${TOMORROW}`)?.plannedActivityType).toBe('strength');
   });
 
+  it('no activity type ("ปล่อยว่าง", or a Cheat/Rest-only save) → back to auto, earlier plan cleared', async () => {
+    fake.seed(`${base}/weeklyPlanEntries/${TODAY}`, { plannedActivityType: 'cardio', isDefaultAuto: false });
+    const res = await request(app, 'PUT', `/api/planner/days/${TODAY}`, { body: {} });
+    expect(res.status).toBe(204);
+    expect(fake.read(`${base}/weeklyPlanEntries/${TODAY}`)).toEqual({ isDefaultAuto: true });
+  });
+
   it('TC-PLN-1-004 — editing a past day that has a log → 409, plan unchanged', async () => {
     fake.seed(`${base}/dailyLogs/${YESTERDAY}`, { completionStatus: 'completed' });
     const res = await request(app, 'PUT', `/api/planner/days/${YESTERDAY}`, { body: { plannedActivityType: 'hiit' } });

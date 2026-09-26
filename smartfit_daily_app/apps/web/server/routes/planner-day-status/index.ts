@@ -73,10 +73,14 @@ router.put(
       }
     }
 
-    await db.doc(`users/${req.userId}/weeklyPlanEntries/${date}`).set(
-      { plannedActivityType, isDefaultAuto: plannedActivityType === undefined },
-      { merge: true },
-    );
+    // No activity type ("ปล่อยว่าง", or a save that only toggles Cheat/Rest)
+    // means back to auto — JSON drops the undefined key, and Firestore rejects
+    // undefined values, so write the entry without it. A full overwrite (not
+    // merge) also clears any activity type planned earlier; this route is the
+    // only writer of weeklyPlanEntries.
+    await db
+      .doc(`users/${req.userId}/weeklyPlanEntries/${date}`)
+      .set(plannedActivityType === undefined ? { isDefaultAuto: true } : { plannedActivityType, isDefaultAuto: false });
     return res.status(204).send();
   }),
 );
