@@ -1,14 +1,21 @@
 # ผลการรันเทสต์ — smartFit_daily
 
-**รันเมื่อ:** 2026-09-26 (เวลาไทย, UTC+7)
+**อัปเดตล่าสุด:** 2026-09-26 21:21 (เวลาไทย, UTC+7) — แก้เทสต์ flaky แล้ว รันซ้ำ 50 รอบผ่านครบ (ดู
+[ข้อที่ไม่ผ่าน](#ข้อที่ไม่ผ่าน-flaky))
+
+**รอบที่ 2 (21:17):** หลังเพิ่มข้อความ error ภาษาไทยตอน login และ
+E2E ชุด login (commit `ea7c66c`) แล้ว deploy ขึ้น Cloud Run revision `smartfit-daily-web-00005-vtr`
 
 | ชุดเทสต์ | เครื่องมือ | เวลาที่รัน | ผล |
 |---|---|---|---|
-| Unit / API route tests (`apps/web/server/**/*.test.ts`) | Vitest | 20:36:42 (ใช้เวลา 0.8 วินาที) | ✅ ผ่าน 110/110 (15 ไฟล์) |
-| E2E smoke tests (`apps/web/e2e/smoke.spec.ts`) กับเว็บจริง `https://smartfit-daily.web.app` | Playwright | 20:36:48 (ใช้เวลา 3.7 วินาที) | ✅ ผ่าน 6/6 (3 เทสต์ × 2 หน้าจอ: desktop + mobile) |
+| Unit / API route tests (`apps/web/server/**/*.test.ts`) | Vitest | ก่อนแก้: 21:17–21:19 (16 รอบ) · หลังแก้: 21:20:08–21:21:09 (50 รอบ) | ก่อนแก้ ⚠️ 1 ข้อ flaky ไม่ผ่าน 2/16 รอบ · **หลังแก้ ✅ ผ่านครบ 110/110 ทั้ง 50 รอบ** |
+| E2E tests (`apps/web/e2e/*.spec.ts`) กับเว็บจริง `https://smartfit-daily.web.app` | Playwright | ระหว่าง 21:13–21:17 (ผู้ใช้รันเองหลัง deploy `00005-vtr`) | ✅ ผ่าน 14/14 (smoke 3 + login 4 เทสต์ × 2 หน้าจอ: desktop + mobile) |
 | `apps/mobile` | — | — | ไม่มีเทสต์ (สคริปต์ `test` แค่พิมพ์ว่า "no tests yet") |
 
-**รวม: ผ่าน 116 จาก 116 — ไม่มีข้อที่ไม่ผ่าน** จึงไม่มีจุดที่ติดให้รายงานในรอบนี้
+**รวม: ผ่าน 124 จาก 124** (unit 110 + E2E 14) — เทสต์ flaky 1 ข้อที่เจอรอบนี้แก้แล้ว ดู
+[ข้อที่ไม่ผ่าน](#ข้อที่ไม่ผ่าน-flaky)
+
+รอบแรก (2026-09-26 20:36): unit 110/110 และ E2E smoke 6/6 ผ่านทั้งหมด (ยังไม่มี E2E ชุด login)
 
 คำสั่งที่ใช้ (รันจาก `smartfit_daily_app/apps/web/`):
 
@@ -19,9 +26,34 @@ npx playwright test     # E2E บนเว็บที่ deploy แล้ว (�
 
 ---
 
-## 1. E2E smoke tests (Playwright) — รัน 20:36:48
+## ข้อที่ไม่ผ่าน (flaky)
+
+| เทสต์ | ไฟล์ | ผล |
+|---|---|---|
+| `POST /api/forgot-password` › missing email → 400 | `server/routes/account-session/forgotPassword.test.ts:18` | ก่อนแก้ ไม่ผ่าน 2 จาก 16 รอบ (รอบ 21:17:02 และรอบที่ 12 จากการรันซ้ำ) · **หลังแก้ ผ่าน 50/50 รอบ ✅** |
+
+**ติดตรงไหน:** เทสต์ล้มก่อนจะได้ตรวจสถานะ `400` เลย — การส่ง request ไปยัง test server พังด้วย
+`TypeError: fetch failed` (สาเหตุ `SocketError: other side closed`) ที่ `server/test/testApp.ts:49` จึงไม่ใช่
+bug ของ route forgot-password เอง (route นี้ไม่ได้ถูกแก้ตั้งแต่รอบแรก และรอบที่ผ่านก็ได้ `400` ถูกต้อง)
+
+**สาเหตุ:** `request()` ใน `testApp.ts` เปิด server ใหม่บน port สุ่มทุกครั้งแล้วปิด
+ทิ้ง แต่ `fetch` ของ Node เก็บ connection แบบ keep-alive ไว้ใช้ซ้ำ ถ้าระบบปฏิบัติการสุ่มได้ port เดิมของ
+server ที่ปิดไปแล้ว `fetch` อาจหยิบ connection เก่าที่ตายแล้วมาใช้ ทำให้ได้ "other side closed" — ข้อนี้เป็น
+ข้อแรกของไฟล์จึงเจอบ่อยสุด แต่เทสต์ route อื่นที่ใช้ `request()` ก็อาจเจอได้เช่นกัน
+
+**แก้แล้ว (21:20):** `request()` ใน `server/test/testApp.ts` เปลี่ยนจาก `fetch` เป็น `http.request` ของ Node กับ
+`agent: false` (ไม่ใช้ connection ซ้ำ), รอให้ server พร้อมรับ connection (`listening`) ก่อนส่ง request, และปิด
+connection ทั้งหมดก่อนปิด server — แก้เฉพาะไฟล์ช่วยทดสอบ ไม่แตะโค้ดแอป typecheck และ lint ผ่าน
+**ยืนยันผล:** รันทั้งชุด 50 รอบติดกัน ผ่าน 110/110 ทุกรอบ (ถ้ายังพังในอัตราเดิม 2/16 โอกาสที่จะผ่าน 50 รอบติดโดย
+บังเอิญต่ำกว่า 0.2%) — ยังไม่ได้พิสูจน์สาเหตุแยกต่างหาก แต่การหายไปหลังแก้จุดนี้สอดคล้องกับสาเหตุข้างบน
+
+---
+
+## 1. E2E tests (Playwright) — รันระหว่าง 21:13–21:17 หลัง deploy `00005-vtr`
 
 เทสต์แต่ละข้อรัน 2 รอบ คือบน Desktop Chrome และบนมือถือ (Pixel 7)
+
+### `e2e/smoke.spec.ts`
 
 | เทสต์ | ทดสอบอะไร | Desktop | Mobile |
 |---|---|---|---|
@@ -29,9 +61,21 @@ npx playwright test     # E2E บนเว็บที่ deploy แล้ว (�
 | signed-out visitor can reach the welcome screen and open login | ผู้ใช้ที่ยังไม่ล็อกอินเห็นปุ่ม "สมัครสมาชิก" ที่หน้า `/welcome` และกด "มีบัญชีอยู่แล้ว? เข้าสู่ระบบ" แล้วไปถึงหน้า `/login` | ✅ | ✅ |
 | API rejects requests without a session (ONB-0 / REQ-15) | เรียก `GET /api/profile` โดยไม่ล็อกอิน แล้ว server ตอบ 401 (ปฏิเสธ) | ✅ | ✅ |
 
+### `e2e/login.spec.ts` (ใหม่ — ONB-0 / REQ-15)
+
+| เทสต์ | ทดสอบอะไร | Desktop | Mobile |
+|---|---|---|---|
+| empty email and password show validation errors and stay on login | กด "เข้าสู่ระบบ" โดยไม่กรอกอะไร เห็น "กรุณากรอกอีเมล" และ "กรุณากรอกรหัสผ่าน" และยังอยู่ `/login` (TC-ONB-0-010) | ✅ | ✅ |
+| wrong credentials show an error and stay on login | login ด้วยอีเมลที่ไม่มีบัญชี เห็น "อีเมลหรือรหัสผ่านไม่ถูกต้อง" ไม่มีข้อความ `Firebase`/`auth/` และยังอยู่ `/login` (TC-ONB-0-009) — ข้อนี้ผ่านกับเว็บจริงได้หลัง deploy `00005-vtr` เท่านั้น | ✅ | ✅ |
+| TC-ONB-0-002 — valid credentials log in to the dashboard and the session survives a reload | login ด้วยบัญชีตัวอย่าง `sample.arunee@smartfit-daily.test` เข้า Dashboard เห็น "สวัสดี อรุณี เริ่มต้นใหม่" แล้ว reload ยังล็อกอินอยู่ (ดัก `/api/workouts/**` ไว้เพื่อไม่ให้เขียนข้อมูลจริง) | ✅ | ✅ |
+| signed-out visitor opening a protected page is redirected to welcome | เปิด `/planner` ตอนยังไม่ล็อกอิน แล้วถูกพาไป `/welcome` | ✅ | ✅ |
+
 ---
 
-## 2. Unit & API route tests (Vitest) — รัน 20:36:42
+## 2. Unit & API route tests (Vitest) — หลังแก้ รัน 50 รอบ 21:20:08–21:21:09
+
+ทุกข้อผ่านทุกรอบ (ก่อนแก้ `forgotPassword.test.ts` › missing email → 400 ไม่ผ่าน 2 จาก 16 รอบ ดู
+[ข้อที่ไม่ผ่าน](#ข้อที่ไม่ผ่าน-flaky))
 
 ### 2.1 Domain logic (สูตรคำนวณและกฎทางธุรกิจ)
 
@@ -148,7 +192,7 @@ npx playwright test     # E2E บนเว็บที่ deploy แล้ว (�
 
 | เทสต์ | ทดสอบอะไร | ผล |
 |---|---|---|
-| ไม่ส่ง email | ตอบ 400 | ✅ |
+| ไม่ส่ง email | ตอบ 400 | ✅ (ก่อนแก้ flaky 14/16, หลังแก้ 50/50) |
 | TC-ONB-0-003 | บัญชี email/password → ตอบ 202 "sent" และไม่ส่งลิงก์รีเซ็ตกลับมาใน response | ✅ |
 | TC-ONB-0-004 | บัญชี Google → ตอบ 422 (ไม่มีรหัสผ่านให้รีเซ็ต) | ✅ |
 | email ที่ไม่มีในระบบ | ตอบ 202 เหมือนบัญชีจริง (กันการเดาว่ามี email นี้ไหม) | ✅ |
@@ -218,8 +262,8 @@ npx playwright test     # E2E บนเว็บที่ deploy แล้ว (�
 
 ## ข้อสังเกต
 
-- **ไม่มีเทสต์ที่ไม่ผ่านในรอบนี้**
+- เทสต์ flaky 1 ข้อ (`forgotPassword.test.ts` › missing email → 400) ปัญหาอยู่ที่ตัวช่วยทดสอบ `testApp.ts` ไม่ใช่ route — แก้แล้ว รันซ้ำ 50 รอบผ่านครบ
 - Unit/API tests จำลอง Firestore, YouTube และ AI ไว้ทั้งหมด จึงไม่ได้ทดสอบการเชื่อมต่อกับระบบจริง
-- E2E tests รันกับเว็บ production จริง แต่ตั้งใจให้อ่านอย่างเดียว (ไม่สมัครหรือเขียนข้อมูล) จึงครอบคลุมแค่หน้าที่ไม่ต้องล็อกอิน flow ที่ต้องล็อกอิน (onboarding, dashboard, planner, logging) ยังไม่มี E2E test
+- E2E tests รันกับเว็บ production จริง แต่ตั้งใจให้อ่านอย่างเดียว (ไม่สมัครหรือเขียนข้อมูล) — ตอนนี้ครอบคลุมหน้าที่ไม่ต้องล็อกอินและการ login แล้ว แต่ flow หลัง login (onboarding, planner, การบันทึกผล) ยังไม่มี E2E test
 - `apps/mobile` (INT-2/INT-3) ยังไม่มีเทสต์เลย
 - รอบนี้ไม่ได้รัน `npm run typecheck` และ `npm run lint` เพราะไม่ใช่เทสต์

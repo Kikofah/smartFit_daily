@@ -1,4 +1,6 @@
+import { once } from 'events';
 import express, { type Router } from 'express';
+import http from 'http';
 import type { AddressInfo } from 'net';
 import { NotFoundError } from '../assertDocExists';
 
@@ -36,24 +38,52 @@ export interface TestResponse {
   body: unknown;
 }
 
-/** Sends one request to `app` on an ephemeral port — avoids adding supertest as a dependency. */
+/**
+ * Sends one request to `app` on an ephemeral port — avoids adding supertest as a dependency.
+ *
+ * Uses `http.request` with `agent: false` rather than `fetch`: fetch pools
+ * keep-alive connections per host:port, so when the OS hands a later test the
+ * port of an already-closed server, fetch could reuse that dead socket and
+ * fail with "other side closed" (flaky, ~1 in 8 runs).
+ */
 export async function request(
   app: express.Express,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   { body, headers }: { body?: unknown; headers?: Record<string, string> } = {},
 ): Promise<TestResponse> {
-  const server = app.listen(0);
+  const server = app.listen(0, '127.0.0.1');
+  await once(server, 'listening');
   try {
     const { port } = server.address() as AddressInfo;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`, {
-      method,
-      headers: { 'content-type': 'application/json', ...headers },
-      body: body === undefined ? undefined : JSON.stringify(body),
+    const payload = body === undefined ? undefined : JSON.stringify(body);
+    return await new Promise<TestResponse>((resolve, reject) => {
+      const req = http.request(
+        {
+          host: '127.0.0.1',
+          port,
+          path,
+          method,
+          agent: false,
+          headers: {
+            'content-type': 'application/json',
+            ...(payload === undefined ? {} : { 'content-length': Buffer.byteLength(payload) }),
+            ...headers,
+          },
+        },
+        (res) => {
+          let text = '';
+          res.setEncoding('utf8');
+          res.on('data', (chunk: string) => (text += chunk));
+          res.on('end', () => resolve({ status: res.statusCode ?? 0, body: text ? JSON.parse(text) : undefined }));
+          res.on('error', reject);
+        },
+      );
+      req.on('error', reject);
+      req.end(payload);
     });
-    const text = await res.text();
-    return { status: res.status, body: text ? JSON.parse(text) : undefined };
   } finally {
-    server.close();
+    server.closeAllConnections();
+    await new Promise<void>((resolve) => server.close(() => resolve()));
   }
 }
