@@ -26,7 +26,7 @@ pairing-code ของ INT-2/INT-3) รวม 17 หน้าจอ HTML ดู�
 | 10 | `10-progress-insights.html` | INT-1 | REQ-11 |
 | 11 | `11-device-integrations.html` | ONB-0, INT-2, INT-3 | REQ-17, REQ-12, REQ-13 |
 | 12 | `12-device-pairing.html` | INT-2, INT-3 | REQ-12, REQ-13 |
-| 13 | `13-companion-pairing-code.html` | INT-2, INT-3 | REQ-12, REQ-13 |
+| 13 | `13-companion-pairing-code.html` | INT-0, INT-2, INT-3 | REQ-18, REQ-12, REQ-13 |
 
 หลาย feature ที่เป็น "state/action บนหน้าเดิม" ไม่ได้แยกเป็นไฟล์ใหม่ (สอดคล้องกับ user journey ที่ไม่ได้แยก
 screen จริง): REC-3 (เปลี่ยนวิดีโอ) และ PLN-2/PLN-4 อยู่บนไฟล์ 05, PLN-2 (toggle) อยู่บน bottom sheet ของไฟล์ 08,
@@ -298,3 +298,21 @@ ONB-0 เลย (มีอยู่ก่อนแล้วแต่ไม่ไ
 `acceptance-criteria.md` ยังไม่มี AC เฉพาะของกลไกนี้ (`test-suite-writer` พิจารณาแล้วว่ายังเป็น implicit
 precondition ของ REQ-12/REQ-13 ไม่ใช่ REQ ใหม่แยกต่างหาก — ดู `user-journeys.md` § Open Questions ข้อ 7)
 จึงไม่มีอะไรให้ prototype นี้ต้อง trace เพิ่มในชั้นนั้นตอนนี้
+
+## เปลี่ยนแปลงจาก audit (Prototype Consistency Audit, 2026-09-25 — INT-0 rate limit และปุ่มซิงค์ INT-3)
+
+หลังจาก `feature-list-journey` บันทึกการตัดสินใจใหม่ของ REQ-18 (rate limit, 1 บัญชี 1 รหัส) และ REQ-13
+(ปุ่มซิงค์แคลอรี่จาก session ล่าสุด) ลง
+[`01-spec/20260823-04-smart-integrations.md`](../../../01-requirements/01-spec/20260823-04-smart-integrations.md)
+และ [`user-journeys.md`](../user-journeys.md) และ `test-suite-builder` เพิ่ม AC-INT-0-05–08, AC-INT-3-04–08 —
+prototype หน้า 12/13 **ล้าหลัง** (ไม่ขัดแย้งกับเอกสารใด) ผู้ใช้ยืนยันให้แก้ใน `v1/` ตรง ๆ:
+
+1. **`13-companion-pairing-code.html`** — เพิ่ม state "ถูกล็อกชั่วคราว (429)" หลังกรอกรหัสผิด 5 ครั้งใน 15 นาที:
+   ปิดช่องกรอก แสดงเวลาที่ต้องรอแบบ countdown (styling สงบแบบเดียวกับ countdown ของหน้า 11 — ไม่ใช้สีแดง)
+   และปรับข้อความ state "รหัสผิด/หมดอายุ" ให้ครอบคลุมกรณีรหัสถูกแทนที่ด้วยรหัสใหม่ที่สร้างบนเว็บ
+2. **`12-device-pairing.html`** — การ์ด wearable ที่เชื่อมต่อแล้วมีปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกาย
+   ครั้งล่าสุด" พร้อม state: กำลังซิงค์, สำเร็จครั้งแรก (แสดง kcal + "อัปเดตแคลอรี่ของวันนี้แล้ว"), สำเร็จแบบ
+   re-sync, ยังออกกำลังกายไม่เสร็จ (ให้ไปจบบนเว็บก่อน), ไม่พบ session ใน 24 ชม., และเกิดข้อผิดพลาด — พร้อม
+   demo toggle สถานะการเชื่อมต่อตอนเปิดแอป (ยังไม่เชื่อมต่อ / เชื่อมต่อ wearable แล้ว / เชื่อมต่อทั้งคู่แล้ว)
+   ตามที่แอปจริงโหลดสถานะจาก server ตอน relaunch
+3. อัปเดตตารางสรุปและการ์ดใน `index.html` ให้หน้า 13 อ้างอิง INT-0/REQ-18 ด้วย

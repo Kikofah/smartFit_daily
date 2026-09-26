@@ -12,6 +12,29 @@
      unchanged. The "ย้อนกลับ" link in those states now points back to this screen's own
      device-select state (not to 11, which mobile can't reach) -- matches device-pairing.tsx having
      no path back to the web app, only a "ออกจากระบบ" action, added here too. -->
+<!-- 2026-09-25 consistency audit (prototype-builder, INT-3 pull-sync mechanism, resolve per Smart
+     Integrations spec 2026-09-25 decision / user-journeys.md INT-3 steps 3-11 & Alt/Edge Cases /
+     AC-INT-3-04..08 / TC-INT-3-005..009): the device-select landing state used to show only plain
+     "connect" buttons with no way to represent an already-connected device or trigger a sync -- a
+     stale-prototype gap (upstream had resolved the whole pull-sync mechanism, screen never got
+     updated), not a contradiction. Reworked it into two status cards (scale, wearable) whose
+     connected/not-connected state is demo-toggled to represent AC-INT-3-08's "status reloaded from
+     server on relaunch, never resets" -- applied to both cards for internal consistency even though
+     the audit's explicit scope was INT-3, since they share one landing screen and the underlying
+     Alt/Edge Case text says the same about INT-2's scale. When wearable is connected, its card gets
+     the "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด" button (kept as this screen's only primary action --
+     DESIGN.md 4.1 -- by demoting whichever connect button is still needed to secondary once a device
+     is already connected). That opens a new sync-flow section (still on this same screen, not a
+     ?device= sub-route) with its own demo toggle covering: syncing, success (first sync vs. re-sync,
+     using TC-INT-3-005/008's own 520/540 kcal test data for traceability), workout still in progress
+     on the web (--color-info, neutral -- not an error), no session found in the last 24h
+     (--color-info, Empty & Neutral States pattern per DESIGN.md 3.8), and a real sync error
+     (--color-warning, same recoverable framing as this screen's existing failure state).
+     Note: AC-INT-3-08's own Prototype reference only lists 11-device-integrations.html (the web
+     profile page) -- this screen's new "connected" card is additional detail, not a contradiction,
+     since the underlying journey text is about the mobile companion app specifically. Recommended
+     follow-up: have test-suite-builder add this screen to AC-INT-3-08's Prototype reference next
+     time it runs (not done here -- this skill doesn't edit acceptance-criteria.md). -->
 
 <!DOCTYPE html>
 <html lang="th">
@@ -92,6 +115,23 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 
   .status-icon-wrap.success { background: rgba(126,143,108,0.16); color: var(--color-success); }
   .status-icon-wrap.warning { background: rgba(190,154,77,0.16); color: var(--color-warning); }
+  /* Added 2026-09-25 (INT-3 sync states): neutral/informational, not success or warning -- reuses
+     --color-info per DESIGN.md 2.1 semantic table ("ข้อความแจ้งเตือนทั่วไปที่เป็นกลาง"), same token
+     already used for INT-1's own neutral empty state per DESIGN.md 3.8. */
+  .status-icon-wrap.info { background: rgba(122,139,134,0.16); color: var(--color-info); }
+
+  /* Device status cards (deviceSelectState, reworked 2026-09-25 for INT-3 pull-sync) */
+  .device-card { padding: var(--space-4); margin-bottom: var(--space-3); }
+  .device-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom: var(--space-3); gap: var(--space-2); }
+  .status-badge { display:inline-flex; align-items:center; gap: var(--space-1); }
+  .status-badge.connected { color: var(--color-success); }
+  .status-badge.not-connected { color: var(--color-ink-faint); }
+
+  /* Disabled button (reuses existing tokens only, same pattern as 13-companion-pairing-code.html) */
+  .btn:disabled { background: var(--color-paper-alt); color: var(--color-ink-faint); border: var(--border-width) solid var(--color-border); cursor:not-allowed; }
+  .btn:disabled:active { background: var(--color-paper-alt); }
+
+  .demo-toggle.wrap { flex-wrap:wrap; }
 
   /* Manual weigh-in fallback form (Forms & Inputs pattern, 3.7) */
   .form-group { margin-bottom: var(--space-4); }
@@ -123,14 +163,146 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
          buttons on one screen (this replaces the old direct deep-link from 11-device-integrations.html,
          which mobile can no longer reach -- see this file's 2026-08-30 comment above). -->
     <div id="deviceSelectState">
-      <div class="status-panel" style="padding-top: var(--space-8);">
+      <div class="status-panel" style="padding-top: var(--space-6); padding-bottom: var(--space-4);">
         <h1 class="text-h1">เชื่อมต่ออุปกรณ์</h1>
       </div>
-      <button type="button" class="btn btn-primary" onclick="location.href='12-device-pairing.html?device=scale'">เชื่อมต่อตาชั่งอัจฉริยะ</button>
-      <div style="height: var(--space-3);"></div>
-      <button type="button" class="btn btn-secondary" onclick="location.href='12-device-pairing.html?device=wearable'">เชื่อมต่อ Wearable</button>
+
+      <!-- Demo state toggle (2026-09-25): simulates AC-INT-3-08 -- status reloaded from the server
+           profile on relaunch, never resets to "not connected" on its own. Not part of the real UI. -->
+      <div class="demo-toggle wrap" id="statusDemoToggle" style="margin-bottom: var(--space-6);">
+        <button type="button" class="active" onclick="setDeviceStatus('none')">ตัวอย่าง: ยังไม่เชื่อมต่ออุปกรณ์</button>
+        <button type="button" onclick="setDeviceStatus('wearable')">ตัวอย่าง: เชื่อมต่อ Wearable แล้ว</button>
+        <button type="button" onclick="setDeviceStatus('both')">ตัวอย่าง: เชื่อมต่อทั้งคู่แล้ว</button>
+      </div>
+
+      <!-- Scale card -->
+      <div class="card device-card">
+        <div class="device-card-head">
+          <h3 class="text-h3">ตาชั่งอัจฉริยะ</h3>
+          <span class="status-badge not-connected hidden" id="scaleBadgeOff">
+            <span class="text-caption">ยังไม่เชื่อมต่อ</span>
+          </span>
+          <span class="status-badge connected hidden" id="scaleBadgeOn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-caption">เชื่อมต่อแล้ว</span>
+          </span>
+        </div>
+        <button type="button" class="btn hidden" id="scaleActionBtn" onclick="location.href='12-device-pairing.html?device=scale'">เชื่อมต่อตาชั่งอัจฉริยะ</button>
+      </div>
+
+      <!-- Wearable card -->
+      <div class="card device-card">
+        <div class="device-card-head">
+          <h3 class="text-h3">Wearable</h3>
+          <span class="status-badge not-connected hidden" id="wearableBadgeOff">
+            <span class="text-caption">ยังไม่เชื่อมต่อ</span>
+          </span>
+          <span class="status-badge connected hidden" id="wearableBadgeOn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"></path></svg>
+            <span class="text-caption">เชื่อมต่อแล้ว</span>
+          </span>
+        </div>
+        <button type="button" class="btn hidden" id="wearableConnectBtn" onclick="location.href='12-device-pairing.html?device=wearable'">เชื่อมต่อ Wearable</button>
+        <!-- INT-3 (REQ-13): only shown once wearable is connected -- opens the sync-flow section
+             below instead of navigating away, per user-journeys.md § INT-3 steps 3-4. -->
+        <button type="button" class="btn hidden" id="wearableSyncBtn" onclick="startSync()">ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด</button>
+      </div>
+
       <div style="margin-top: var(--space-4); text-align:center;">
         <button type="button" class="btn btn-ghost" onclick="location.href='13-companion-pairing-code.html'">ออกจากระบบ</button>
+      </div>
+    </div>
+
+    <!-- INT-3 sync flow (REQ-13, added 2026-09-25): reached from the wearable card's sync button
+         above, not a ?device= sub-route -- stays on this same screen per user-journeys.md § INT-3. -->
+    <div id="syncFlowSection" class="hidden">
+      <div class="top-bar" style="margin-bottom: var(--space-6);">
+        <button type="button" class="btn btn-ghost back-btn" onclick="backToDeviceSelect()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 5l-7 7 7 7"></path></svg>
+          ย้อนกลับ
+        </button>
+      </div>
+
+      <!-- Demo state toggle: not part of the real UI -->
+      <div class="demo-toggle wrap" id="syncDemoToggle">
+        <button type="button" class="active" onclick="setSyncState('syncing')">กำลังซิงค์</button>
+        <button type="button" onclick="setSyncState('success-first')">สำเร็จ (ครั้งแรก)</button>
+        <button type="button" onclick="setSyncState('success-resync')">สำเร็จ (re-sync)</button>
+        <button type="button" onclick="setSyncState('in-progress')">กำลังออกกำลังกายอยู่</button>
+        <button type="button" onclick="setSyncState('no-session')">ไม่พบ session ใน 24 ชม.</button>
+        <button type="button" onclick="setSyncState('error')">เกิดข้อผิดพลาด</button>
+      </div>
+
+      <!-- Syncing -->
+      <div id="syncStateSyncing">
+        <div class="status-panel">
+          <div class="status-icon-wrap">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="4" width="10" height="16" rx="3"></rect><path d="M11 8h2"></path></svg>
+          </div>
+          <h2 class="text-h3">กำลังซิงค์แคลอรี่จากการออกกำลังกาย...</h2>
+          <div class="connecting-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+
+      <!-- Success: first sync (TC-INT-3-005 test data -- 520 kcal from HealthKit) -->
+      <div id="syncStateSuccessFirst" class="hidden">
+        <div class="status-panel">
+          <div class="status-icon-wrap success">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"></path></svg>
+          </div>
+          <h2 class="text-h3">ซิงค์แคลอรี่สำเร็จ</h2>
+          <p class="text-body-sm">อ่านค่าแคลอรี่ที่เผาผลาญจริง 520 kcal จากการออกกำลังกายครั้งล่าสุดแล้ว แทนที่ค่าประมาณเดิม และอัปเดตแคลอรี่ของวันที่ออกกำลังกายให้แล้ว</p>
+          <button type="button" class="btn btn-secondary" onclick="backToDeviceSelect()">เสร็จสิ้น</button>
+        </div>
+      </div>
+
+      <!-- Success: re-sync (TC-INT-3-008 test data -- delta +20 kcal, idempotent, not double-counted) -->
+      <div id="syncStateSuccessResync" class="hidden">
+        <div class="status-panel">
+          <div class="status-icon-wrap success">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13l4 4L19 7"></path></svg>
+          </div>
+          <h2 class="text-h3">ซิงค์แคลอรี่สำเร็จ</h2>
+          <p class="text-body-sm">ค่าแคลอรี่ของการออกกำลังกายนี้อัปเดตจาก 520 เป็น 540 kcal ปรับแคลอรี่ของวันนั้นเพิ่มขึ้น 20 kcal เท่านั้น (ไม่นับซ้ำ)</p>
+          <button type="button" class="btn btn-secondary" onclick="backToDeviceSelect()">เสร็จสิ้น</button>
+        </div>
+      </div>
+
+      <!-- Workout still in progress on the web (AC-INT-3-05): neutral, not an error -->
+      <div id="syncStateInProgress" class="hidden">
+        <div class="status-panel">
+          <div class="status-icon-wrap info">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v4l3 2"></path></svg>
+          </div>
+          <h2 class="text-h3">การออกกำลังกายยังไม่จบ</h2>
+          <p class="text-body-sm">การออกกำลังกายล่าสุดของคุณยังไม่จบที่หน้าเว็บ Planner ไปกดจบให้เสร็จก่อน แล้วค่อยกลับมาซิงค์อีกครั้ง</p>
+          <button type="button" class="btn btn-secondary" onclick="backToDeviceSelect()">กลับ</button>
+        </div>
+      </div>
+
+      <!-- No session in the last 24h (AC-INT-3-06): Empty & Neutral State pattern, DESIGN.md 3.8 -->
+      <div id="syncStateNoSession" class="hidden">
+        <div class="status-panel">
+          <div class="status-icon-wrap info">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M8 3v4M16 3v4M3 10h18"></path></svg>
+          </div>
+          <h2 class="text-h3">ยังไม่พบการออกกำลังกาย</h2>
+          <p class="text-body-sm">ไม่พบการออกกำลังกายในช่วง 24 ชั่วโมงที่ผ่านมา ไปออกกำลังกายที่หน้าเว็บก่อน แล้วกลับมาซิงค์ได้</p>
+          <button type="button" class="btn btn-secondary" onclick="backToDeviceSelect()">กลับ</button>
+        </div>
+      </div>
+
+      <!-- Real error (e.g. network/HealthKit read failure): recoverable, same warning framing as
+           this screen's existing device-connection failure state above -->
+      <div id="syncStateError" class="hidden">
+        <div class="status-panel">
+          <div class="status-icon-wrap warning">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"></path><circle cx="12" cy="12" r="9"></circle><path d="M12 16.5v.01"></path></svg>
+          </div>
+          <h2 class="text-h3">ซิงค์ไม่สำเร็จ</h2>
+          <p class="text-body-sm">ลองใหม่อีกครั้ง ค่าประมาณแคลอรี่จากสูตร MET เดิมยังคงใช้อยู่ระหว่างนี้</p>
+          <button type="button" class="btn btn-primary" onclick="setSyncState('syncing')">ลองใหม่อีกครั้ง</button>
+        </div>
       </div>
     </div>
 
@@ -228,6 +400,7 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
   var explicitDevice = getExplicitDevice();
   if (!explicitDevice) {
     document.getElementById('connectingState').classList.add('hidden');
+    setDeviceStatus('none'); // AC-INT-3-08: real app loads this from the server profile on launch
   } else {
     document.getElementById('deviceSelectState').classList.add('hidden');
     document.getElementById('backBar').classList.remove('hidden');
@@ -276,6 +449,99 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     var val = parseFloat(input.value) || 0;
     val = Math.round((val + delta) * 10) / 10;
     input.value = val.toFixed(1);
+  }
+
+  // --- Device status cards + INT-3 sync flow (added 2026-09-25) ---------------------------------
+
+  // Demo-only: which connection status this "launch" simulates. Real app calls the server profile
+  // for integrationConnections.scale/wearable.connectionStatus on load (AC-INT-3-08 and the
+  // equivalent Alt/Edge Case text for INT-2's scale) rather than defaulting to "not connected".
+  function setDeviceStatus(mode) {
+    var scaleOn = (mode === 'both');
+    var wearableOn = (mode === 'wearable' || mode === 'both');
+
+    document.getElementById('scaleBadgeOn').classList.toggle('hidden', !scaleOn);
+    document.getElementById('scaleBadgeOff').classList.toggle('hidden', scaleOn);
+    document.getElementById('wearableBadgeOn').classList.toggle('hidden', !wearableOn);
+    document.getElementById('wearableBadgeOff').classList.toggle('hidden', wearableOn);
+
+    // DESIGN.md 4.1: 1 primary action per screen -- whichever device still needs connecting stays
+    // primary; the sync button only becomes primary once there is nothing left to connect.
+    var scaleBtn = document.getElementById('scaleActionBtn');
+    var wearableConnectBtn = document.getElementById('wearableConnectBtn');
+    var wearableSyncBtn = document.getElementById('wearableSyncBtn');
+
+    if (scaleOn) {
+      scaleBtn.classList.add('hidden');
+    } else {
+      scaleBtn.classList.remove('hidden');
+      scaleBtn.classList.remove('btn-primary', 'btn-secondary');
+      scaleBtn.classList.add('btn-primary'); // still needs connecting -> stays this screen's primary
+    }
+
+    if (wearableOn) {
+      wearableConnectBtn.classList.add('hidden');
+      wearableSyncBtn.classList.remove('hidden');
+      wearableSyncBtn.classList.remove('btn-primary', 'btn-secondary');
+      // Only the sole primary action once nothing is left to connect (scale already connected too)
+      // -- otherwise stays secondary so the still-needed scale connect button remains the 1 primary.
+      wearableSyncBtn.classList.add(scaleOn ? 'btn-primary' : 'btn-secondary');
+    } else {
+      wearableSyncBtn.classList.add('hidden');
+      wearableConnectBtn.classList.remove('hidden');
+      wearableConnectBtn.classList.remove('btn-primary', 'btn-secondary');
+      wearableConnectBtn.classList.add(scaleOn ? 'btn-primary' : 'btn-secondary');
+    }
+
+    // Leaving the device-select state's demo toggle buttons in sync with the chosen mode
+    var toggle = document.getElementById('statusDemoToggle');
+    if (toggle) {
+      var btns = toggle.querySelectorAll('button');
+      var modes = ['none', 'wearable', 'both'];
+      btns.forEach(function (btn, i) { btn.classList.toggle('active', modes[i] === mode); });
+    }
+  }
+
+  function startSync() {
+    document.getElementById('deviceSelectState').classList.add('hidden');
+    document.getElementById('syncFlowSection').classList.remove('hidden');
+    setSyncState('syncing');
+  }
+
+  function backToDeviceSelect() {
+    document.getElementById('syncFlowSection').classList.add('hidden');
+    document.getElementById('deviceSelectState').classList.remove('hidden');
+  }
+
+  function setSyncState(state) {
+    var ids = ['syncStateSyncing', 'syncStateSuccessFirst', 'syncStateSuccessResync', 'syncStateInProgress', 'syncStateNoSession', 'syncStateError'];
+    var stateToId = {
+      'syncing': 'syncStateSyncing',
+      'success-first': 'syncStateSuccessFirst',
+      'success-resync': 'syncStateSuccessResync',
+      'in-progress': 'syncStateInProgress',
+      'no-session': 'syncStateNoSession',
+      'error': 'syncStateError'
+    };
+    ids.forEach(function (id) { document.getElementById(id).classList.add('hidden'); });
+    document.getElementById(stateToId[state]).classList.remove('hidden');
+
+    var toggle = document.getElementById('syncDemoToggle');
+    var btns = toggle.querySelectorAll('button');
+    var order = ['syncing', 'success-first', 'success-resync', 'in-progress', 'no-session', 'error'];
+    btns.forEach(function (btn, i) { btn.classList.toggle('active', order[i] === state); });
+
+    // Demo-only pacing: auto-advance from "syncing" to the first success case after a beat, same
+    // spirit as the existing connecting-state pattern above (real syncing is a single request/
+    // response, not a multi-second animation).
+    if (state === 'syncing') {
+      window.clearTimeout(window._syncAdvanceTimer);
+      window._syncAdvanceTimer = window.setTimeout(function () {
+        if (!document.getElementById('syncStateSyncing').classList.contains('hidden')) {
+          setSyncState('success-first');
+        }
+      }, 1400);
+    }
   }
 </script>
 </body>

@@ -4,7 +4,12 @@
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-27
 - **สร้างโดย:** skill `test-suite-builder`
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 2) — formalize การแยกเป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น **2 ค่าแยกกัน**
+- **อัปเดตล่าสุด:** 2026-09-25 (รอบ 3) — เพิ่ม **TC-ONB-3-009 ถึง 011** ครอบคลุม boundary ของ safety floor
+  ที่ exactly 1,200 kcal (ไม่ถูกปรับ), และ **AC-ONB-3-07/08** ใหม่ (server เป็นผู้คำนวณเป้าหมายแคลอรี่เป็น
+  ทางการเองจากโปรไฟล์ที่บันทึกไว้ ไม่เชื่อค่าจาก client, และ `409` เมื่อยังไม่ผ่าน ONB-1) — coverage gap ที่
+  พบระหว่าง self-freshness audit ของ `test-suite-builder` ดู [log
+  2026-09-25](../../../05-log/20260925-log.md)
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 2) — formalize การแยกเป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น **2 ค่าแยกกัน**
   (`dailyCalorieTargetKcal` เผาผลาญ ไม่มี safety floor / `dailyIntakeTargetKcal` ที่ควรได้รับ มี safety
   floor) ตามที่ `feature-journey-writer`/`api-db-spec-writer` เพิ่งยืนยันจากโค้ดจริงที่ shipped — rescope
   TC-ONB-3-001 ถึง 007 ให้ระบุค่าทั้งสองแยกกันชัดเจน และเพิ่ม **TC-ONB-3-008** ใหม่ทดสอบว่า
@@ -319,7 +324,9 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 [AC-ONB-3-03](../../../01-requirements/acceptance-criteria.md#ac-onb-3-03--tdee-ต่ำมากจน-dailyintaketargetkcal-ต่ำกว่า-safety-floor-ถูกปรับขึ้นเสมอ-req-02),
 [AC-ONB-3-04](../../../01-requirements/acceptance-criteria.md#ac-onb-3-04--เลือก-ลดน้ำหนัก-กรอกน้ำหนักเป้าหมาย-บังคับ-ครบถ้วน-บันทึกสำเร็จ-req-02),
 [AC-ONB-3-05](../../../01-requirements/acceptance-criteria.md#ac-onb-3-05--เลือก-กระชับสัดส่วนเพิ่มความอึด-ข้ามช่องน้ำหนักเป้าหมาย-ไม่บังคับ-req-02),
-[AC-ONB-3-06](../../../01-requirements/acceptance-criteria.md#ac-onb-3-06--คำนวณเป้าหมายแคลอรี่เผาผลาญ-dailycalorietargetkcal-จากน้ำหนักตัวล้วน-ไม่มี-safety-floor-เสมอ-เพิ่ม-2026-08-31-req-02)
+[AC-ONB-3-06](../../../01-requirements/acceptance-criteria.md#ac-onb-3-06--คำนวณเป้าหมายแคลอรี่เผาผลาญ-dailycalorietargetkcal-จากน้ำหนักตัวล้วน-ไม่มี-safety-floor-เสมอ-เพิ่ม-2026-08-31-req-02),
+[AC-ONB-3-07](../../../01-requirements/acceptance-criteria.md#ac-onb-3-07--server-คำนวณเป้าหมายแคลอรี่เป็นทางการเอง-ไม่เชื่อค่าตัวเลขที่-client-ส่งมา-authoritative-เพิ่ม-2026-09-25-req-02),
+[AC-ONB-3-08](../../../01-requirements/acceptance-criteria.md#ac-onb-3-08--เรียกตั้งเป้าหมายก่อนผ่าน-onb-1-ยังไม่มีน้ำหนักtdee-ระบบปฏิเสธ-409-เพิ่ม-2026-09-25-req-02)
 
 > **อัปเดต 2026-08-31**: `PUT /profile/goal` คำนวณ **2 ค่าแยกกัน** ในคำขอเดียวกัน — `dailyCalorieTargetKcal`
 > (เผาผลาญจากน้ำหนักตัว × ค่าคงที่ต่อเป้าหมาย, **ไม่มี safety floor**, ใช้จริงโดย REC-1/PLN-3/INT-1) และ
@@ -438,6 +445,50 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | Test Data | อายุ 70, เพศ หญิง, น้ำหนัก 32 กก., ส่วนสูง 135 ซม., กิจกรรม sedentary → TDEE = 783 kcal/วัน; เป้าหมาย = กระชับสัดส่วน (burn 32 × 3.0 = 96.0 ดิบ, intake TDEE + 0 = 783 ดิบ) → คาดว่า dailyCalorieTargetKcal = 96.0 kcal/วัน (ไม่ถูกปรับ), dailyIntakeTargetKcal = 1,200 kcal/วัน (isSafetyFloorApplied=true) |
 | References | REQ-02 · AC-ONB-3-06 · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · prototype [04-onboarding-goal-confirm.html](../../../02-design/01-prototypes/v1/04-onboarding-goal-confirm.html) |
 
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: TC-ONB-3-009 ถึง 011 ด้านล่างเพิ่มเข้ามาระหว่าง self-freshness audit ของ
+> `test-suite-builder` — TC-ONB-3-009 เป็น boundary test ของกติกา "safety floor มีผลเฉพาะเมื่อค่าดิบ
+> ต่ำกว่า 1,200 kcal อย่างเคร่งครัด" ที่ resolve แล้ว (เหมือนรูปแบบของ TC-INT-0-004 ใน
+> `test-cases/04-smart-integrations.md` — ไม่มี AC ใหม่เฉพาะของตัวเอง อ้างอิง AC-ONB-3-01/03 เดิมแทน)
+> ส่วน TC-ONB-3-010/011 ครอบคลุม **AC-ONB-3-07/08** ใหม่ (server เป็นผู้คำนวณเป้าหมายแคลอรี่เป็นทางการเอง
+> ไม่เชื่อค่าจาก client, และ `409` เมื่อยังไม่ผ่าน ONB-1) — ทั้งสามยืนยันตรงกับโค้ดจริง
+> `apps/web/server/domain/goalTargets.ts` และ `apps/web/server/routes/personalization-profile/index.ts`
+
+### TC-ONB-3-009 — `dailyIntakeTargetKcal` ดิบเท่ากับ safety floor พอดี (1,200) ไม่ถูกปรับ (boundary)
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-3-009 |
+| Test Case Name | TDEE ทำให้ `dailyIntakeTargetKcal` ดิบเท่ากับ `SAFETY_FLOOR_MIN_KCAL` (1,200 kcal) พอดี — ไม่ถือว่า "ต่ำกว่า" floor จึงไม่ถูกปรับ (`isSafetyFloorApplied = false`) ต่างจาก TC-ONB-3-005 ที่ดิบต่ำกว่า floor จริง |
+| Pre-condition | ผู้ใช้ผ่าน ONB-1 แล้ว มี TDEE = 1,700 kcal/วัน (ค่าที่ตั้งขึ้นเพื่อให้ผลลัพธ์ตรง boundary พอดี) น้ำหนักตัว = 60.0 กก. และมาถึงหน้าเลือกเป้าหมายหลัก |
+| Test Steps | 1. เปิดหน้าเลือกเป้าหมายหลัก<br>2. เลือก "ลดน้ำหนัก" (intake delta = −500)<br>3. กดยืนยัน แล้วสังเกตค่า `dailyIntakeTargetKcal`/`isSafetyFloorApplied` ที่บันทึก |
+| Expected Result | `dailyIntakeTargetKcal` ดิบ = 1,700 − 500 = **1,200 kcal พอดี** เท่ากับ `SAFETY_FLOOR_MIN_KCAL` — ตามกติกา "ต่ำกว่า floor อย่างเคร่งครัด (strictly less than)" ค่าที่เท่ากับ floor พอดี**ไม่ถือว่าต่ำกว่า** จึง**ไม่ถูกปรับ**: บันทึกค่า 1,200 kcal/วัน (คือค่าดิบเดิม ไม่ใช่ผลจากการ floor) พร้อม `isSafetyFloorApplied = false` — ในคำขอเดียวกัน `dailyCalorieTargetKcal` = 60.0 × 4.5 = **270.0 kcal/วัน** (ไม่มี safety floor เกี่ยวข้องอยู่แล้ว) |
+| Test Data | TDEE = 1,700 kcal/วัน, น้ำหนักตัว = 60.0 กก., เป้าหมาย = ลดน้ำหนัก → intake ดิบ = 1,200 kcal พอดี (คาดว่า isSafetyFloorApplied=false), dailyCalorieTargetKcal = 270.0 kcal/วัน |
+| References | REQ-02 · AC-ONB-3-01 (boundary variant — คู่กับ AC-ONB-3-03 ที่ครอบคลุมฝั่ง "ต่ำกว่า floor" ผ่าน TC-ONB-3-005 อยู่แล้ว) · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) (หมายเหตุ 2026-09-25) · โค้ดจริง `apps/web/server/domain/goalTargets.ts` (`rawIntakeKcal < SAFETY_FLOOR_MIN_KCAL`) — ไม่มีลิงก์ user-journeys.md เพราะเป็น boundary test ระดับ implementation ไม่ใช่ Alt/Edge Case ของ journey โดยตรง (เหมือน TC-INT-0-004) |
+
+### TC-ONB-3-010 — Server เพิกเฉยค่าตัวเลขที่ client ส่งมา คำนวณเป้าหมายแคลอรี่ใหม่เองจากโปรไฟล์ที่บันทึกไว้ (authoritative)
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-3-010 |
+| Test Case Name | Client (เช่น legacy client เก่า) ส่ง `dailyCalorieTargetKcal`/`dailyIntakeTargetKcal` ที่ผิดพลาดมาด้วย `PUT /profile/goal` — server ต้องเพิกเฉยและคำนวณใหม่เองจากน้ำหนักตัว/TDEE ที่บันทึกไว้แล้วเท่านั้น |
+| Pre-condition | ผู้ใช้มีน้ำหนักตัว 75 กก. และ TDEE = 2,633 kcal/วัน บันทึกไว้แล้วจาก ONB-1 (ต่อเนื่องจาก TC-ONB-1-001) |
+| Test Steps | 1. Client เรียก `PUT /api/profile/goal` ด้วย `goalType = "lose_weight"` พร้อมส่ง `dailyCalorieTargetKcal = 999`, `dailyIntakeTargetKcal = 1` (ค่าผิดพลาด/ปลอมที่ตั้งใจทดสอบ) มาในคำขอเดียวกัน<br>2. ตรวจสอบ response<br>3. อ่านค่าที่บันทึกจริงในโปรไฟล์ (`goalSelection`) หลังเรียกเสร็จ |
+| Expected Result | Server รับคำขอได้ (ไม่ reject เพราะมีฟิลด์เกิน) แต่**เพิกเฉยค่า 999/1 ที่ client ส่งมาทั้งหมด** แล้วคำนวณใหม่เองจากน้ำหนักตัว/TDEE ที่บันทึกไว้แล้ว: `dailyCalorieTargetKcal` = 75 × 4.5 = **337.5 kcal/วัน**, `dailyIntakeTargetKcal` = 2,633 − 500 = **2,133 kcal/วัน** (`isSafetyFloorApplied = false`) — ค่าที่บันทึกจริงในโปรไฟล์ตรงกับสูตรเสมอ ไม่ใช่ 999/1 ที่ client ส่งมา |
+| Test Data | Client ส่งมา (ถูกเพิกเฉย): `dailyCalorieTargetKcal = 999`, `dailyIntakeTargetKcal = 1` → ค่าที่บันทึกจริง = `dailyCalorieTargetKcal = 337.5`, `dailyIntakeTargetKcal = 2,133` (isSafetyFloorApplied=false) |
+| References | REQ-02 · AC-ONB-3-07 · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · [User Journey ONB-3](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) (step 6) · โค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`, `apps/web/server/domain/goalTargets.ts` — ไม่มี prototype เฉพาะ (server-side validation) |
+
+### TC-ONB-3-011 — เรียก `PUT /profile/goal` ก่อนผ่าน ONB-1 (ยังไม่มีน้ำหนัก/TDEE) ระบบปฏิเสธด้วย 409
+
+| Field | รายละเอียด |
+|---|---|
+| Test ID | TC-ONB-3-011 |
+| Test Case Name | ผู้ใช้เพิ่งสมัครสมาชิกเสร็จ (ONB-0) แต่ยังไม่เคยกรอกข้อมูลส่วนตัว (ONB-1) เลย พยายามเรียก `PUT /profile/goal` ตรง ๆ — ระบบต้องปฏิเสธด้วย `409` ไม่ใช่ตกกลับไปเชื่อค่าจาก client |
+| Pre-condition | ผู้ใช้สมัครสมาชิกสำเร็จแล้ว (มี `userId`) แต่โปรไฟล์ยังไม่มี `weightKg`/`tdeeKcal` บันทึกไว้เลย (ยังไม่เคยผ่าน ONB-1) |
+| Test Steps | 1. Client เรียก `PUT /api/profile/goal` โดยตรง (ข้าม ONB-1) พร้อม `goalType = "tone_up"`<br>2. สังเกต response<br>3. ตรวจสอบว่ามี `goalSelection` ถูกสร้าง/บันทึกในโปรไฟล์หรือไม่ |
+| Expected Result | ระบบปฏิเสธคำขอด้วย **`409 Conflict`** พร้อมข้อความแจ้งว่าต้องทำ ONB-1 (ข้อมูลส่วนตัว/TDEE) ให้เสร็จก่อน — ไม่มี `goalSelection` ใดถูกสร้าง/บันทึกในโปรไฟล์จากคำขอนี้ |
+| Test Data | โปรไฟล์ไม่มี `weightKg`/`tdeeKcal`, `goalType` ที่ส่งมา = `"tone_up"` (ค่าใดก็ได้ ไม่มีผลเพราะถูกปฏิเสธก่อนคำนวณ) → คาดว่า response = `409`, ไม่มี `goalSelection` ถูกบันทึก |
+| References | REQ-02 · AC-ONB-3-08 · [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) · [User Journey ONB-3 Preconditions](../../../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02) · โค้ดจริง `apps/web/server/routes/personalization-profile/index.ts` — ไม่มี prototype เฉพาะ (server-side precondition guard) |
+
 ---
 
 ## สรุปจำนวน Test Case ต่อ AC Scenario
@@ -463,12 +514,17 @@ AC: [AC-ONB-3-01](../../../01-requirements/acceptance-criteria.md#ac-onb-3-01--�
 | ONB-3 | AC-ONB-3-04 | 1 | TC-ONB-3-006 |
 | ONB-3 | AC-ONB-3-05 | 1 | TC-ONB-3-007 |
 | ONB-3 | AC-ONB-3-06 (ใหม่ 2026-08-31) | 1 (dedicated — ค่า `dailyCalorieTargetKcal` ยัง verify แทรกอยู่ใน TC-ONB-3-001–007 ด้วย) | TC-ONB-3-008 |
-| **รวม** | **19 AC scenario** | **24 test case** | TC-ONB-0-001 … TC-ONB-3-008 |
+| ONB-3 | AC-ONB-3-01/03 (boundary variant, เพิ่ม 2026-09-25) | 1 | TC-ONB-3-009 |
+| ONB-3 | AC-ONB-3-07 (ใหม่ 2026-09-25) | 1 | TC-ONB-3-010 |
+| ONB-3 | AC-ONB-3-08 (ใหม่ 2026-09-25) | 1 | TC-ONB-3-011 |
+| **รวม** | **21 AC scenario** | **27 test case** | TC-ONB-0-001 … TC-ONB-3-011 |
 
 ครบทุก AC scenario ของ ONB-0/ONB-1/ONB-2/ONB-3 ตาม
 [acceptance-criteria.md § Epic 1](../../../01-requirements/acceptance-criteria.md#epic-1-onboarding--personalization)
-(19/19 scenario มี test case อย่างน้อย 1 รายการ — เพิ่ม AC-ONB-3-06/TC-ONB-3-008 เมื่อ 2026-08-31 หลังการแยก
-เป้าหมายแคลอรี่ของ ONB-3/REQ-02 เป็น 2 ค่า) — **มี gap ที่บันทึกไว้ 2 จุด (ไม่มี test case ให้)**:
+(21/21 scenario มี test case อย่างน้อย 1 รายการ — เพิ่ม AC-ONB-3-07/08 และ TC-ONB-3-009 ถึง 011 เมื่อ
+2026-09-25 ระหว่าง self-freshness audit ของ `test-suite-builder`: server-authoritative computation,
+409 เมื่อยังไม่ผ่าน ONB-1, และ boundary test ของ safety floor ที่ exactly 1,200) — **มี gap ที่บันทึกไว้
+2 จุด (ไม่มี test case ให้)**:
 1. กรณี "เลือกเป้าหมาย 'ลดน้ำหนัก' แล้วไม่กรอกน้ำหนักเป้าหมายทั้งที่เป็นช่องบังคับ" (ONB-3) ไม่มี AC scenario
    รองรับ เพราะ `01-spec/20260823-01-onboarding-personalization.md` และ `user-journeys.md` ยืนยันแค่ว่า
    ช่องนี้ "บังคับกรอก" แต่ไม่ได้ระบุ behavior การ validation (ข้อความ error, ปุ่มถูกบล็อกหรือไม่ ฯลฯ) เมื่อ

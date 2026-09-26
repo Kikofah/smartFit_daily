@@ -3,7 +3,36 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 — audit เทียบกับโค้ดจริงที่เพิ่ง ship (commit `b463436`,
+- **อัปเดตล่าสุด:** 2026-09-25 — `feature-list-journey`/`api-db-spec-writer` เพิ่งเติม 2 กติกาธุรกิจใหม่เข้า
+  **INT-0/REQ-18** (rate limit เมื่อกรอกรหัสจับคู่ผิดซ้ำ + one-live-code-per-account) และ 1 กติกาใหม่เข้า
+  **INT-3/REQ-13** (retroactive wearable sync ด้วย delta สำหรับ session ที่ปิดจบไปแล้ว) พร้อม operation ใหม่
+  `GET /integrations/wearable/latest-session` — audit แล้วพบว่าเนื้อหาหลักของทั้ง 2 Feature ID ในไฟล์นี้
+  ล้าหลังจาก upstream ทั้ง 3 ชั้น (Requirement/API Spec/Database Schema) จริง ไม่ใช่ข้อขัดแย้ง — แก้ไขดังนี้:
+  (1) **INT-0 sequence diagram**: เพิ่มขั้นตอนตรวจสอบตัวนับ rate-limit (`pairing_redeem_rate_limit`,
+  `database-schema.md` §3.20 ใหม่) **ก่อน**แม้แต่จะตรวจรหัสที่ส่งมา พร้อม `alt` block ใหม่ `429`+
+  `Retry-After` เมื่อถูกล็อก, เพิ่มขั้นตอน invalidate รหัสเก่าทั้งหมดของบัญชีเดียวกันตอน mint รหัสใหม่
+  (one-live-code-per-account), และทำให้ชัดว่า lookup+delete ของรหัส/ตัวนับ rate-limit เกิดขึ้นแบบ atomic
+  (ธุรกรรมเดียวกัน) — เพิ่ม**อัลกอริทึมใหม่ "ตรวจสอบ Rate Limit การแลกรหัสจับคู่"** (ไม่เคยมีมาก่อน เพราะเดิม
+  INT-0 เป็น lookup ตรงไปตรงมาไม่มี state ของตัวเอง) — resolve หมายเหตุเดิมที่เคยทิ้งไว้ว่ากติกา rate limit
+  ยังไม่ resolve (ดู `01-spec/20260823-04-smart-integrations.md` § REQ-18 decision 2026-09-25) (2) **INT-3
+  sequence diagram เขียนใหม่ทั้งหมด**: flow เดิมเข้าใจผิดว่า wearable reading มาถึง "ระหว่าง/หลังออกกำลังกาย"
+  ก่อน session จะจบ (auto-sync) — flow จริงที่ resolve แล้ว 2026-09-25 คือผู้ใช้จบ session ที่เว็บ Planner
+  ก่อนเสมอ (companion app ไม่มีหน้าจอบันทึกการออกกำลังกายของตัวเอง) แล้วมือถือกด "ซิงค์" เรียก
+  `GET /integrations/wearable/latest-session` หา session ล่าสุดใน 24 ชม. ก่อนอ่าน/ส่งค่า — ถ้า session
+  **ปิดจบไปแล้ว** ต้องแก้ไข `daily_log` ของวันที่ `workout_session.log_date` ระบุด้วย**ส่วนต่าง (delta)**
+  เท่านั้น (retroactive correction, กัน double-count เมื่อ re-sync) แล้ว recompute completion/streak ทันที
+  — คงเส้นทาง pre-complete เดิมไว้ด้วย (reading มาถึงก่อน complete → session-complete เลือกใช้ค่านั้นแทน MET
+  ตามปกติ) — เพิ่ม**อัลกอริทึมใหม่ "แก้ไข Daily Log ย้อนหลังด้วยส่วนต่าง (Delta) เมื่อซิงค์ Wearable หลัง
+  Session ปิดจบแล้ว"** (เดิมไม่มี เพราะ INT-3 เคยเป็น fallback flow ตรงไปตรงมา) (3) sync
+  "ความสัมพันธ์กับเอกสารอื่น" ให้รวมตารางใหม่ `pairing_redeem_rate_limit` (§3.20) และ operation ใหม่
+  `GET /integrations/wearable/latest-session` (4) **ภาคผนวก Stack Mapping**: `tech-stack.md` §6.1/§6.3.1
+  (อัปเดตล่าสุด 2026-08-31) **ยังไม่ได้ sync กับ 3 กติกาใหม่นี้เลย** (ไม่มี mapping ของ
+  `pairing_redeem_rate_limit`, การ invalidate รหัสเก่า, หรือ `GET .../latest-session`) — เพิ่มหมายเหตุ
+  flag ว่า `tech-stack.md` เองล้าหลังจากจุดนี้ (ไม่ใช่ blocker ของรอบนี้) แนะนำให้รัน `tech-stack-builder`
+  ต่อ ไม่ได้แก้ตาราง mapping เอง เพราะยังคง mirror เนื้อหาปัจจุบันของ `tech-stack.md` ตรงตัวอยู่ — audit ส่วน
+  ที่เหลือของไฟล์ (State Diagram Integration Connection, INT-1, INT-2) แล้วไม่พบ drift อื่น (ดู
+  [log 2026-09-25](../../../05-log/20260925-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 — audit เทียบกับโค้ดจริงที่เพิ่ง ship (commit `b463436`,
   `apps/web/server/routes/insights-forecast/index.ts`) พบ 2 จุดที่ INT-1 เนื้อหาหลักขัดกับ implementation
   จริง: (1) **step 4 ของอัลกอริทึม "คำนวณวันพยากรณ์ถึงเป้าหมายน้ำหนัก" เขียนสูตรผิด** — เอกสารเดิมเขียนว่า
   "อัตราขาดดุลเฉลี่ยต่อวัน = ผลรวมส่วนต่าง (เป้าหมาย − แคลอรี่จริง) หารด้วยจำนวนวัน" ซึ่งกลับทิศความสัมพันธ์
@@ -164,30 +193,60 @@ sequenceDiagram
     Note over U,WC: Precondition — ผู้ใช้ล็อกอินอยู่บนเว็บไคลเอนต์แล้ว (ONB-0)
     U->>WC: เปิดหน้าโปรไฟล์ กดขอรหัสจับคู่อุปกรณ์
     WC->>AS: POST /auth/pairing-codes (session ที่ยืนยันตัวตนแล้ว)
+    AS->>AS: ลบ pairing_credential เก่าของ user_account เดียวกันที่ยังไม่หมดอายุ/ยังไม่ถูกใช้ทั้งหมดก่อนเสมอ (one-live-code-per-account, resolve แล้ว 2026-09-25)
     AS->>AS: mint pairing_credential ใหม่ (code 6 หลัก, user_account_id เจ้าของ session, expires_at = created_at + 5 นาที)
     AS-->>WC: 201 Created (รหัสจับคู่ 6 หลัก + เวลาหมดอายุ)
     WC-->>U: แสดงรหัสจับคู่บนหน้าเว็บ
     U->>MC: เปิด companion app กรอกรหัสที่ได้รับ
     MC->>AS: POST /auth/pairing-codes/redeem (รหัสจับคู่ 6 หลัก — ข้อยกเว้นเดียว ไม่ต้องยืนยันตัวตนก่อนเรียก)
-    alt รหัสไม่พบ/หมดอายุแล้ว/ถูกใช้ไปแล้ว (กรณีเดียวครอบคลุมทั้ง 3 สถานการณ์เดิม — ลบแถวทิ้งแทนตั้ง flag)
-        AS-->>MC: 410 Gone
-        MC-->>U: แจ้งรหัสใช้ไม่ได้แล้ว — ให้กลับไปขอรหัสใหม่จากเว็บ
-    else รหัสถูกต้อง ไม่หมดอายุ ยังไม่ถูกใช้
-        AS->>AS: ลบ pairing_credential ทิ้งถาวรทันที (single-use enforcement ผ่านการลบ ไม่ใช่ตั้ง flag)
-        AS-->>MC: 200 OK (session ที่ยืนยันตัวตนแล้ว ผูกกับ user_account เจ้าของรหัส — ไม่ต้องกรอก credential ซ้ำ)
-        MC->>IG: เริ่มกระบวนการจับคู่อุปกรณ์จริงของ INT-2/INT-3 ในนามผู้ใช้คนเดิม
+    AS->>AS: ตรวจสอบตัวนับ pairing_redeem_rate_limit ของ client IP นี้ก่อนเสมอ (ก่อนแม้แต่จะตรวจรหัสที่ส่งมา — resolve แล้ว 2026-09-25)
+    alt ถูกล็อกอยู่ (failed_count ถึงเกณฑ์ 5 ครั้ง ภายใน window 15 นาทีที่ยังไม่หมดอายุ)
+        AS-->>MC: 429 Too Many Requests + header Retry-After
+        MC-->>U: แจ้งลองใหม่ภายหลัง (ยังไม่ตรวจรหัสที่กรอกมาเลย — ป้องกัน probe รหัสระหว่างถูกล็อก)
+    else ยังไม่ถูกล็อก (window หมดอายุแล้ว หรือยังไม่เคยกรอกผิดถึงเกณฑ์)
+        AS->>AS: ตรวจสอบ pairing_credential ตรงกับรหัสที่ส่งมา + อัปเดตตัวนับ rate-limit แบบ atomic (ธุรกรรมเดียวกัน กันการแข่ง race ผ่าน threshold พร้อมกัน)
+        alt รหัสไม่พบ/หมดอายุแล้ว/ถูกใช้ไปแล้ว (กรณีเดียวครอบคลุมทั้ง 3 สถานการณ์เดิม — ลบแถวทิ้งแทนตั้ง flag)
+            AS->>AS: เพิ่ม failed_count ของ IP นี้ +1 (เริ่ม window ใหม่ถ้ายังไม่มีตัวนับ หรือ window เดิมหมดอายุแล้ว)
+            AS-->>MC: 410 Gone
+            MC-->>U: แจ้งรหัสใช้ไม่ได้แล้ว — ให้กลับไปขอรหัสใหม่จากเว็บ
+        else รหัสถูกต้อง ไม่หมดอายุ ยังไม่ถูกใช้
+            AS->>AS: ลบ pairing_credential ทิ้งถาวรทันที (single-use enforcement ผ่านการลบ ไม่ใช่ตั้ง flag)
+            AS->>AS: ลบ/รีเซ็ตตัวนับ pairing_redeem_rate_limit ของ IP นี้ทันที (redeem สำเร็จรีเซ็ตตัวนับ)
+            AS-->>MC: 200 OK (session ที่ยืนยันตัวตนแล้ว ผูกกับ user_account เจ้าของรหัส — ไม่ต้องกรอก credential ซ้ำ)
+            MC->>IG: เริ่มกระบวนการจับคู่อุปกรณ์จริงของ INT-2/INT-3 ในนามผู้ใช้คนเดิม
+        end
     end
 ```
 
-Edge case ที่แสดง: `410 Gone` กรณีเดียวครอบคลุมทั้ง "ไม่พบรหัสเลย"/"หมดอายุแล้ว"/"ถูกใช้ไปแล้ว" ตรงกับ
+Edge case ที่แสดง: (1) `410 Gone` กรณีเดียวครอบคลุมทั้ง "ไม่พบรหัสเลย"/"หมดอายุแล้ว"/"ถูกใช้ไปแล้ว" ตรงกับ
 `api-spec.md` §3.1 ฉบับล่าสุดเป๊ะ (แก้ไข 2026-08-30 รอบ 2 — เดิมเคยแยกเป็น `404`/`409`/`422` 3 กรณี ซึ่งไม่ตรง
 กับพฤติกรรมจริงของโค้ด `apps/web/server/routes/pairing/index.ts` ที่ลบ document ทิ้งทันทีหลัง redeem สำเร็จ
 แทนการตั้ง flag `is_used` ทำให้ 3 สถานการณ์เดิมแยกออกจากกันไม่ได้อีกต่อไปในทางปฏิบัติ) และตรงกับ Alt/Edge
 Case ของ `user-journeys.md` (รหัสจับคู่หมดอายุหรือถูกใช้ไปแล้ว → มือถือกรอกไม่ผ่าน ต้องขอรหัสใหม่จากเว็บ —
-ดู INT-2/INT-3 § Alt/Edge Cases)
+ดู INT-2/INT-3 § Alt/Edge Cases) (2) `429 Too Many Requests` (เพิ่ม 2026-09-25) เมื่อ client เดียวกันกรอก
+ผิด/หมดอายุ/ถูกใช้ไปแล้วซ้ำถึงเกณฑ์ — ตรงกับ Alt/Edge Case "กรอกรหัสผิดซ้ำหลายครั้งติดกัน" ของ
+`user-journeys.md#int-0`
 
-ไม่มีอัลกอริทึมแยก — การตรวจสอบ (404/409/422) เป็นเงื่อนไข lookup ตรงไปตรงมา ครอบคลุมอยู่ใน sequence
-diagram แล้ว
+### อัลกอริทึม — ตรวจสอบ Rate Limit การแลกรหัสจับคู่ (เพิ่ม 2026-09-25)
+
+รับ input: client IP ของคำขอ `POST /auth/pairing-codes/redeem` (ใช้ค่า hash ทางเดียวของ IP เป็นคีย์เสมอ —
+ห้ามเก็บ IP ดิบ ตาม `database-schema.md` §3.20) และรหัสจับคู่ 6 หลักที่ผู้ใช้กรอกมา
+
+1. ค้นหาแถว `pairing_redeem_rate_limit` ที่ตรงกับ `client_ip_hash` ของคำขอนี้
+2. ถ้าพบแถว **และ** `window_started_at` ยังไม่หมดอายุ (ยังไม่เกิน 15 นาทีนับจากเวลานั้น) **และ**
+   `failed_count` ถึงเกณฑ์ 5 ครั้งแล้ว → **ปฏิเสธคำขอทันที** ด้วย `429` พร้อม header `Retry-After`
+   (คำนวณจากเวลาที่ window จะหมดอายุลบเวลาปัจจุบัน) — **ขั้นตอนนี้เกิดขึ้นก่อนแม้แต่จะดึงรหัสจับคู่ที่ผู้ใช้
+   กรอกมาตรวจสอบด้วยซ้ำ** เพื่อป้องกันการ probe รหัสต่อขณะยังถูกล็อกอยู่ — จบกระบวนการ
+3. ถ้าไม่ถูกล็อก (ไม่มีแถว, หรือมีแถวแต่ window หมดอายุแล้ว, หรือ `failed_count` ยังไม่ถึงเกณฑ์) →
+   ดำเนินการตรวจสอบรหัสจับคู่ตามปกติ (lookup `pairing_credential` ด้วย `code`, ตรวจ `expires_at`) — ขั้นตอน
+   นี้และการอัปเดตตัวนับด้านล่างต้องทำภายใต้ธุรกรรมเดียวกัน (atomic) เพื่อกันไม่ให้คำขอพร้อมกันหลายคำขอจาก
+   client เดียวกันแข่งผ่านเกณฑ์ 5 ครั้งไปพร้อมกัน
+4. **ถ้ารหัสไม่ถูกต้อง/หมดอายุ/ถูกใช้ไปแล้ว**: เพิ่ม `failed_count` ของ `client_ip_hash` นี้ขึ้นอีก 1 — ถ้า
+   ยังไม่เคยมีแถวมาก่อน หรือ window เดิมหมดอายุไปแล้ว ให้เริ่ม window ใหม่ (`window_started_at` = เวลาปัจจุบัน,
+   `failed_count` = 1) มิฉะนั้นให้บวกเพิ่มในแถวเดิมของ window ปัจจุบัน แล้วคืน error (`410 Gone`)
+5. **ถ้ารหัสถูกต้อง**: ลบแถว `pairing_credential` ทิ้งถาวร (single-use enforcement) **และ**ลบ/รีเซ็ตแถว
+   `pairing_redeem_rate_limit` ของ `client_ip_hash` นี้ทันที (redeem ที่สำเร็จรีเซ็ตตัวนับของ client นั้น
+   เสมอ ไม่ว่าก่อนหน้านี้จะเคยกรอกผิดมากี่ครั้งก็ตามภายในเกณฑ์) แล้วคืน session ที่ยืนยันตัวตนแล้ว (`200 OK`)
 
 ## INT-2 — ซิงค์ตาชั่งอัจฉริยะ (REQ-12)
 
@@ -224,14 +283,25 @@ Diagram ด้านบนแล้ว
 
 ## INT-3 — ซิงค์ข้อมูล Wearable (REQ-13)
 
+> **แก้ไขทั้งหมด (2026-09-25)**: sequence diagram เดิมเข้าใจผิดว่า wearable reading มาถึงแบบ auto-sync
+> "ระหว่าง/หลังออกกำลังกาย" ก่อน session จะจบเสมอ — flow จริงที่ resolve แล้ว (ดู
+> [decision ของ Smart Integrations spec](../../../01-requirements/01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
+> คือ companion app **ไม่มีหน้าจอบันทึกการออกกำลังกายของตัวเองเลย** ผู้ใช้ต้องจบ session ที่หน้าเว็บ Planner
+> ให้เสร็จก่อนเสมอ แล้วมือถือกดปุ่ม "ซิงค์" เรียก `GET /integrations/wearable/latest-session` หา session
+> ล่าสุดใน 24 ชม.ก่อน แล้วจึงอ่าน/ส่งค่า — ถ้า session **ปิดจบไปแล้ว** ต้องแก้ไข daily log ของวันนั้นแบบ
+> retroactive ด้วยส่วนต่าง (delta) ไม่ใช่ค่าเต็มจำนวน — **ยังคงเส้นทางเดิม (pre-complete) ไว้ด้วย**: ถ้า
+> reading มาถึงก่อน session จะปิดจบ (เช่น ซิงค์ระหว่างที่ session ยังไม่ complete) `POST
+> /workouts/sessions/{sessionId}/complete` (REC-2) จะเลือกใช้ค่านั้นแทนค่าประมาณ MET ตามปกติเมื่อจบ session
+
 ### Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     actor U as ผู้ใช้
+    participant EC as Exertion & Calorie Calculation
     participant IG as Integration Gateway
     participant HA as Health API (Apple Health/Google Health Connect)
-    participant EC as Exertion & Calorie Calculation
+    participant LS as Logging & Streak
     Note over U,IG: Precondition — ผ่านกระบวนการ Identity Handoff (Pairing-Code Mechanism ด้านบน) แล้ว
     U->>IG: POST /integrations/wearable/connect
     IG->>U: ขอ consent
@@ -239,17 +309,67 @@ sequenceDiagram
     IG->>HA: ขอสิทธิ์เข้าถึงข้อมูล
     HA-->>IG: อนุญาตแล้ว
     IG->>IG: บันทึก integration_connection.connection_status = เชื่อมต่อแล้ว
-    Note over HA,EC: ระหว่าง/หลังออกกำลังกาย
-    alt มีข้อมูลจาก wearable สำหรับ session นี้
-        HA->>IG: POST /integrations/wearable/readings (แคลอรี่จาก wearable)
-        IG->>IG: บันทึกลง wearable_reading
-        IG->>EC: ส่งค่านี้ให้ REC-2 ใช้แทนค่าประมาณ MET (ดู 02-daily-youtube-recommendation.md/REC-2)
-    else ไม่มีข้อมูล (ยังไม่เชื่อมต่อ หรือ Health API ไม่ตอบสนอง)
-        EC->>EC: ใช้ค่าประมาณ MET ตามเดิม (fallback ที่คาดหวังไว้ ไม่ใช่ error)
+    Note over U,EC: ที่หน้าเว็บ Planner — companion app ไม่มีหน้าจอบันทึกการออกกำลังกายของตัวเอง (resolve แล้ว 2026-09-25)
+    U->>EC: POST /workouts/sessions/{sessionId}/complete (เวลาที่ใช้จริง)
+    EC->>EC: คำนวณแคลอรี่ด้วยสูตร MET (ค่าเริ่มต้น), ตั้ง workout_session.log_date, สร้าง/แก้ไข Daily Log ของวันนั้น
+    EC-->>U: Actual Calorie Burn (ค่าประมาณจาก MET ในเบื้องต้น)
+    Note over U,IG: ภายหลัง — บนมือถือ (หลังผ่าน INT-0 และเชื่อมต่อ wearable แล้ว)
+    U->>IG: กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด"
+    IG->>IG: GET /integrations/wearable/latest-session (session ล่าสุดที่เริ่มภายใน 24 ชม.ที่ผ่านมา)
+    alt ไม่พบ session ใดใน 24 ชม.ที่ผ่านมาเลย
+        IG-->>U: 404 — ยังไม่พบการออกกำลังกาย
+    else พบ session แต่สถานะยัง "กำลังดำเนินอยู่" (ยังไม่จบที่เว็บ)
+        IG-->>U: 200 OK (สถานะ "กำลังดำเนินอยู่") — แจ้งให้ไปจบการออกกำลังกายที่เว็บให้เสร็จก่อน ยังไม่อ่าน/ส่งค่าใดๆ
+    else session จบแล้ว (completed)
+        IG-->>U: 200 OK (session ที่จบแล้ว พร้อมช่วงเวลา [startedAt, startedAt + ระยะเวลาที่ใช้จริง])
+        U->>HA: อ่านค่า Active Calories เฉพาะช่วงเวลาของ session นั้นเท่านั้น
+        HA-->>U: ค่าแคลอรี่จาก wearable
+        U->>IG: POST /integrations/wearable/readings (sessionId, ค่าแคลอรี่จาก wearable)
+        IG->>IG: บันทึก/เขียนทับ wearable_reading ของ session นี้เสมอ (รองรับ re-sync ซ้ำ)
+        alt session ยังไม่ปิดจบ ณ ขณะที่ reading มาถึง (edge case แข่งเวลา — path เดิม "pre-complete")
+            IG-->>U: 200 { appliedToLog: false, calculatedKcal } — ค่านี้จะถูกใช้แทนค่าประมาณ MET ตอน session-complete แทน (ไม่มีการแก้ Daily Log ในขั้นนี้ เพราะยังไม่เคยมีส่วนสมทบ)
+        else session ปิดจบไปแล้ว (retroactive correction — flow ใหม่ 2026-09-25)
+            IG->>IG: แทนที่ actual_calorie_burn เดิมของ session นี้ด้วยค่าจาก wearable (wearable ชนะ MET ตาม REQ-13)
+            IG->>LS: ส่งค่าใหม่ + workout_session.log_date ให้แก้ไข Daily Log ของวันนั้นด้วยส่วนต่าง (delta) — ดูอัลกอริทึมด้านล่าง
+            LS->>LS: แก้ไข daily_log.accumulated_kcal ของวันนั้นด้วย delta, recompute completion_status (all-or-nothing, PLN-3) และ streak (PLN-4) ใหม่ทันที
+            LS-->>IG: ยืนยันแก้ไขสำเร็จ
+            IG-->>U: 200 { appliedToLog: true, calculatedKcal }
+        end
     end
 ```
 
-ไม่มีอัลกอริทึมแยก — เป็น connect/fallback flow ตรงไปตรงมา ใช้ State Diagram ร่วมกับ INT-2 ด้านบน
+Edge case ที่แสดง: (1) `404` ไม่พบ session ใดใน 24 ชม.ที่ผ่านมา (2) session "กำลังดำเนินอยู่" → แจ้งให้ไปจบ
+ที่เว็บก่อน (ไม่ใช่ error — คืน `200` ปกติพร้อมสถานะนั้นตาม `api-spec.md` §3.8) (3) การ re-sync ซ้ำสำหรับ
+session เดิมทำได้เสมอ ไม่ถือเป็น error — ตรงกับ Alt/Edge Case ของ `user-journeys.md#int-3` ทั้ง 3 กรณี
+
+### อัลกอริทึม — แก้ไข Daily Log ย้อนหลังด้วยส่วนต่าง (Delta) เมื่อซิงค์ Wearable หลัง Session ปิดจบแล้ว (เพิ่ม 2026-09-25)
+
+รับ input: `sessionId`, ค่าแคลอรี่ใหม่จาก wearable (`calorie_value_kcal`)
+
+1. ตรวจสอบว่า `sessionId` มีอยู่จริง (Workout Session) → ถ้าไม่พบ คืน error (`404`)
+2. บันทึก/เขียนทับ `wearable_reading` ของ session นี้เสมอ (ไม่ว่าจะปิดจบแล้วหรือไม่ — รองรับการ re-sync ซ้ำ)
+3. ตรวจสอบว่า session นี้ปิดจบแล้วหรือยัง (มี `actual_calorie_burn` อยู่แล้วหรือไม่):
+   - **ถ้ายังไม่ปิดจบ** → หยุดที่นี่ ไม่มีการแก้ไข daily log ใดๆ (ค่าที่บันทึกไว้จะถูกใช้แทนค่าประมาณ MET
+     ตอน `POST /workouts/sessions/{sessionId}/complete` เรียกในภายหลังตามปกติ — path เดิม) คืนผลลัพธ์
+     `{ appliedToLog: false, calculatedKcal }`
+   - **ถ้าปิดจบไปแล้ว** → ไปข้อ 4 ต่อ (retroactive correction)
+4. อ่านค่า `calculated_kcal` เดิมที่ `actual_calorie_burn` ของ session นี้เคยมีส่วนสมทบไว้แล้ว (ไม่ว่าจะมา
+   จากสูตร MET เดิม หรือค่า wearable ที่เคย sync มาก่อนหน้าในการ re-sync ครั้งก่อน)
+5. คำนวณส่วนต่าง `delta = ค่าใหม่จาก wearable − ค่าเดิมที่เคยมีส่วนสมทบ` (อาจเป็นค่าบวกหรือลบ)
+6. แทนที่ `actual_calorie_burn` ของ session นี้: `source = ค่าจาก wearable`, `calculated_kcal = ค่าใหม่จาก
+   wearable`, ชี้ไปยัง `wearable_reading` แถวล่าสุด (wearable ชนะ MET เสมอเมื่อมีข้อมูล ตาม REQ-13)
+7. อ่าน `workout_session.log_date` ของ session นี้ (วันที่ `daily_log` ที่เคยรวม kcal ของ session นี้ไว้ —
+   **ไม่ใช่ "วันนี้" ของตอนซิงค์เสมอไป** เพราะอาจซิงค์ข้ามเที่ยงคืนได้ — session ที่จบก่อน column นี้จะมีอยู่
+   ให้ fallback ไปใช้วันที่จาก `started_at` แทน)
+8. แก้ไข `daily_log.accumulated_kcal` ของวันที่ `log_date` ระบุ โดย**บวก `delta` เข้าไป** (ไม่ใช่แทนที่ทั้ง
+   จำนวน) — ป้องกันการนับแคลอรี่ซ้ำ (double count) เมื่อวันนั้นมีมากกว่า 1 session
+9. ประเมิน `completion_status` ใหม่ของ `daily_log` วันนั้น (all-or-nothing เข้มงวด: `accumulated_kcal` ที่
+   แก้แล้ว ≥ `dailyCalorieTargetKcal` ของวันนั้นหรือไม่ — PLN-3)
+10. Recompute streak (ไล่ประวัติ log ย้อนหลังจากวันนี้ใหม่ทั้งหมด — PLN-4) ให้ตรงกับค่าที่แก้ไขแล้วทันที
+11. คืนผลลัพธ์ `{ appliedToLog: true, calculatedKcal: ค่าใหม่จาก wearable }` ให้ผู้ใช้
+12. **การ re-sync ซ้ำสำหรับ session เดิม** (เรียก operation นี้อีกครั้งสำหรับ `sessionId` เดียวกัน) ทำได้เสมอ
+    ไม่ถือเป็น error — ทำซ้ำข้อ 4-10 ทุกครั้ง โดยเทียบกับค่าที่ `actual_calorie_burn` มีอยู่ ณ ขณะนั้น (ซึ่ง
+    อาจเป็นค่า wearable จากรอบ sync ก่อนหน้าแล้ว ไม่ใช่ค่า MET เดิมเสมอไป) เพื่อไม่ให้นับแคลอรี่ซ้ำ
 
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
@@ -258,9 +378,14 @@ sequenceDiagram
    `MIN_LOG_DAYS_FOR_FORECAST = 3` แต่ code comment ระบุชัดว่า "picked pragmatically until [this]
    is formally decided" — คือเลือกไว้ใช้งานชั่วคราวเท่านั้น ไม่ใช่ decision ที่ resolve แล้ว ห้ามถือเป็นคำตอบ
    สุดท้าย)
-2. **INT-2**: ลำดับความสำคัญเมื่อชั่งน้ำหนักหลายครั้งในวันเดียวกัน (ค่าล่าสุด vs ค่าเฉลี่ย) ยังไม่ระบุ
-3. **INT-3**: การ reconcile เมื่อค่าจาก wearable ต่างจากค่าประมาณ MET มากยังไม่ระบุ (ปัจจุบัน wearable
-   ชนะเสมอเมื่อมีข้อมูล ไม่มีการเทียบความสมเหตุสมผล)
+2. **INT-2**: ลำดับความสำคัญเมื่อชั่งน้ำหนักหลายครั้งในวันเดียวกัน (ค่าล่าสุด vs ค่าเฉลี่ย) ยังไม่ระบุเป็น
+   ทางการ — **ยืนยันกับผู้ใช้งานแล้ว 2026-09-25 ว่ายังไม่ resolve (happy-path only ก่อน)**: implementation
+   ปัจจุบันใช้ "ชั่งใหม่ทับค่าเดิมของวันเดียวกันเสมอ" (latest write wins) เป็นพฤติกรรมของโค้ด ไม่ใช่กติกาที่
+   resolve อย่างเป็นทางการ
+3. **INT-3**: การ reconcile เมื่อค่าจาก wearable ต่างจากค่าประมาณ MET มากยังไม่ระบุเป็นทางการ — **ยืนยันกับ
+   ผู้ใช้งานแล้ว 2026-09-25 ว่ายังไม่ resolve (happy-path only ก่อน)**: implementation ปัจจุบันให้ wearable
+   ชนะ MET เสมอเมื่อมีข้อมูล ไม่มีการเทียบว่าต่างกันมากน้อยแค่ไหน (ดู "อัลกอริทึม — แก้ไข Daily Log ย้อนหลัง
+   ด้วยส่วนต่าง (Delta)" ด้านบน — delta ไม่ได้ทำการเทียบความสมเหตุสมผลใดๆ ก่อนแทนที่)
 
 ## ความสัมพันธ์กับเอกสารอื่น
 
@@ -268,14 +393,18 @@ sequenceDiagram
   (3.1, สำหรับ Identity Handoff — Pairing-Code Mechanism), "Insights & Forecast" (3.7), "Integration
   Gateway" (3.8), Flow 5 Smart Integration & Insights Flow (4.5 — รวม subgraph PAIR), External
   Integration Boundaries (6), entity "Pairing Credential" (5)
-- [API Spec](../api-spec.md) — section 3.1 Account & Session Management (2 operations ใหม่:
-  `POST /auth/pairing-codes`, `POST /auth/pairing-codes/redeem`), 3.7 Insights & Forecast, 3.8
-  Integration Gateway
+- [API Spec](../api-spec.md) — section 3.1 Account & Session Management (2 operations: `POST
+  /auth/pairing-codes` — เพิ่มพฤติกรรม invalidate รหัสเก่า 2026-09-25, `POST /auth/pairing-codes/redeem` —
+  เพิ่ม error case `429`/`Retry-After` 2026-09-25), 3.7 Insights & Forecast, 3.8 Integration Gateway
+  (เพิ่ม operation ใหม่ `GET /integrations/wearable/latest-session` และแก้ response ของ `POST
+  /integrations/wearable/readings` เป็น `200 { appliedToLog, calculatedKcal }` — ทั้งคู่ 2026-09-25)
 - [Database Schema](../database-schema.md) — ตาราง `weight_forecast_snapshot`, `weight_record`,
-  `integration_connection`, `wearable_reading`, `pairing_credential` (3.17)
+  `integration_connection`, `wearable_reading`, `pairing_credential` (3.17), `pairing_redeem_rate_limit`
+  (3.20 ใหม่ 2026-09-25 — enforcement state เสริมของ `pairing_credential` ไม่ใช่ Conceptual Data Entity
+  แยกใน HLA §5), column `workout_session.log_date` (ใหม่ 2026-09-25)
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-04-smart-integrations.md) —
   INT-0/1/2/3, REQ-18/11/12/13
-- [User Journeys](../../01-prototypes/user-journeys.md) — ลำดับ step ของ INT-1/2/3
+- [User Journeys](../../01-prototypes/user-journeys.md) — ลำดับ step ของ INT-0/1/2/3
 
 ## ภาคผนวก: Stack Mapping
 
@@ -317,6 +446,16 @@ sequenceDiagram
 | Account & Session Management (เฉพาะกลไก pairing-code — ดู `01-onboarding-personalization.md` ภาคผนวกสำหรับ ONB-0 อีก 8 operation) | Top-level collection `pairingCodes/{code}` (document ID = รหัส 6 หลักเอง) เก็บ `uid`/`createdAt`/`expiresAt` — mint ผ่าน **Express route** `POST /api/pairing/create-code` (`apps/web/server/routes/pairing/index.ts`, ต้องผ่าน `authenticate` middleware) เรียกจากหน้าโปรไฟล์ของเว็บไคลเอนต์; redeem ผ่าน **Express route** `POST /api/pairing/redeem` (**ข้อยกเว้นเดียว** ไม่มี `authenticate` middleware) อ่าน document แล้วเรียก `auth.createCustomToken(uid)` — single-use enforce ด้วย `ref.delete()` ทันทีหลัง redeem สำเร็จ (ไม่ใช่ set `is_used` flag) ทำให้ error case ทั้งหมด (ไม่พบ/หมดอายุ/ถูกใช้แล้ว) รวมเป็น `410 Gone` เดียวที่ระดับ Express route |
 | Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast` (แทนที่ Cloud Function `forecast` เดิม — `apps/web/server/routes/insights-forecast/index.ts`) **คำนวณผลพยากรณ์ทั้งหมดเองฝั่ง server** จากประวัติ `dailyLogs`/`weightRecords` จริง (ไม่ใช่แค่คืนค่า snapshot ที่มีอยู่ตรงๆ อีกต่อไป — ยืนยันจากโค้ดจริง 2026-08-31) แล้วบันทึกผลลง `weightForecastSnapshot` เอง |
 | Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` — **Express route** `POST /api/integrations/smart-scale/connect`, `DELETE /api/integrations/smart-scale`, `POST /api/integrations/smart-scale/sync`, `POST /api/integrations/wearable/connect`, `DELETE /api/integrations/wearable`, `POST /api/integrations/wearable/readings` (แทนที่ Cloud Function `integrations` เดิม — `apps/web/server/routes/integration-gateway/index.ts`) + native module ฝั่ง `apps/mobile` เท่านั้น (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — รับ identity handoff จากกลไก pairing-code (แถวด้านบน) ก่อนเริ่มกระบวนการจับคู่จริงตาม HLA §3.8/§4.5 |
+
+> **อัปเดต 2026-09-25 — audit freshness เทียบกับ `tech-stack.md` §6.1/§6.3.1 ปัจจุบัน (ยังเป็นฉบับ
+> 2026-08-31)**: เนื้อหาหลักของไฟล์นี้เพิ่งเพิ่ม 3 กติกาใหม่ (rate-limit การ redeem, one-live-code-per-account
+> ตอน mint, และ `GET /integrations/wearable/latest-session` + retroactive delta correction) แต่
+> `tech-stack.md` **ยังไม่มี mapping ของทั้ง 3 จุดนี้เลย** — แถว "Account & Session Management" ด้านบนยังพูด
+> ถึงแค่ mint/redeem แบบเดิม (ไม่มี `pairingRedeemAttempts`/rate-limit หรือการลบรหัสเก่าตอน mint) และแถว
+> "Integration Gateway" ยังไม่มี `GET .../latest-session` หรือกลไก delta correction เลย — **ตารางด้านบนนี้
+> ยังคง mirror เนื้อหาปัจจุบันของ `tech-stack.md` ตรงตัว (ไม่ได้แก้เพิ่มเอง)** เพราะเป็นข้อเท็จจริงที่ยังไม่
+> เคยถูกบันทึกไว้ที่นั่น ไม่ใช่ mapping ที่ผิดพลาด — แนะนำให้รัน `tech-stack-builder` ต่อเพื่อขยาย mapping
+> ให้ครบทั้ง 3 จุดนี้ (ดู [log 2026-09-25](../../../05-log/20260925-log.md))
 
 **Execution ของ algorithm**: **Forecast (INT-1)** คำนวณทั้งหมด**ฝั่ง server** ผ่าน **Express route
 `GET /api/insights/forecast`** (แทนที่ Firebase Cloud Function `forecast` เดิม —

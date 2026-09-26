@@ -404,3 +404,48 @@ hard-delete ทั้งหมด ไม่มี retention window/soft-delete**
 `user-journeys.md`/HLA — ภาคผนวก Stack Mapping ของ `api-spec.md` §6 **ไม่แตะ** (strict mirror, รอ
 `tech-stack-builder` ขยาย `tech-stack.md` §6.3.1 ก่อน) ส่วน `database-schema.md` §8.3 เพิ่มแถวใหม่ได้เอง
 ตาม pattern ที่อนุญาตไว้ตั้งแต่ 2026-08-29 — ดู log [2026-09-07](../../05-log/20260907-log.md)
+— **อัปเดต 2026-09-25 (`api-db-spec-builder`, INT-0 rate limit/one-code-per-account + INT-3 retroactive
+wearable sync + ONB-3 server-authoritative goal)**: `feature-list-journey` เพิ่งเติม 2 กติกาใหม่เข้า
+REQ-18 (rate limit ของ `POST /auth/pairing-codes/redeem`: 5 ครั้งผิดภายใน 15 นาทีต่อ client IP → `429` +
+`Retry-After`; 1 บัญชีมีรหัสจับคู่ใช้งานได้ทีละ 1 รหัส) พร้อมยืนยัน implementation ของ INT-3 sync
+(retroactive correction ด้วย delta) และ ONB-3 (`PUT /profile/goal` เป็น server-authoritative) ที่ ship
+ไปแล้วในโค้ด — แก้ `api-spec.md` §2/§3.1 (เพิ่ม `429`, แก้ 2 operation ของกลไก pairing-code), §3.2 (แก้
+request/response ของ `PUT /profile/goal` เป็น `204` + เพิ่ม `409`), §3.8 (เพิ่ม
+`GET /integrations/wearable/latest-session`, แก้ response ของ `POST /integrations/wearable/readings` เป็น
+`200`), §4 (resolve open point เดิมเรื่อง rate limit), §6.3.1 (อัปเดตรายละเอียด implementation ของ 2
+operation pairing-code) และแก้ `database-schema.md` เพิ่มตารางใหม่ **3.20 `pairing_redeem_rate_limit`**
+(เก็บ `client_ip_hash`/`failed_count`/`window_started_at`) พร้อม column ใหม่ `workout_session.log_date`
+(หัวข้อ 3.5) — **การตัดสินใจสำคัญที่ทำเอง (ไม่ใช่ mechanical)**: ตาราง `pairing_redeem_rate_limit` **ไม่ใช่**
+Conceptual Data Entity แยกใน HLA §5 (HLA ไม่เคยระบุ rate-limit counter ไว้) — ตัดสินใจว่าไม่ต้องส่งกลับ
+`architecture-builder` ก่อน เพราะเป็น security/anti-abuse state ล้วน ไม่ใช่ "ข้อมูลหลักที่ระบบต้องรู้จัก"
+ตามนิยามของ HLA §5 เอง และ HLA §3.1/§4.5 มอบหมายหน้าที่ตรวจสอบรหัสให้ Account & Session Management ไว้แล้ว
+— แนะนำ (ไม่บังคับ) ให้ `architecture-builder` พิจารณาเติมประโยคสั้นๆ ใน HLA §7 ปิด open point §8 ข้อ 7
+ในรอบถัดไป — เพิ่มกติกาใหม่ 3 ข้อในหัวข้อ 4 ของ `database-schema.md` (ข้อ 10-12) และแถวใหม่ 3 แถวใน §8.2/
+§8.3 (auto-sync แม้ `tech-stack.md` ยังไม่เคยกล่าวถึง 3 เรื่องนี้เลย — ตาม pattern ที่ §8.2/§8.3 อนุญาตออกแบบ
+เพิ่มเติมเองได้ตั้งแต่ 2026-08-29) — **ผลกระทบต่อเอกสารอื่น**: `detailed-design/04-smart-integrations.md`
+(sequence diagram ของ INT-0/INT-3 ยังไม่มี rate-limit/one-code-per-account/retroactive-correction) และ
+`detailed-design/01-onboarding-personalization.md` (ONB-3 sequence diagram ยังบรรยาย `PUT /profile/goal`
+แบบ client-computed-then-validated เดิม ไม่ใช่ server-authoritative) **stale ต่อ** ควรรัน
+`detailed-design-builder` ต่อ — ไม่กระทบ `backlog.md`/`user-journeys.md`/HLA เนื้อหาหลัก — ดู log
+[2026-09-25](../../05-log/20260925-log.md)
+— **อัปเดต 2026-09-25 (`detailed-design-builder`, ปิดท้ายเชนวันนี้)**: sync ทั้ง 2 ไฟล์ที่ถูก flag ไว้ข้างบน
+ให้ทันกับ `api-spec.md`/`database-schema.md` ฉบับล่าสุด — **`04-smart-integrations.md`**: (1) แก้ sequence
+diagram ของ **INT-0** เพิ่มขั้นตอนตรวจ rate-limit (ตาราง `pairing_redeem_rate_limit` §3.20 ใหม่) **ก่อน**
+แม้แต่จะตรวจรหัสที่ส่งมา พร้อม `alt` ใหม่ `429`+`Retry-After`, เพิ่มขั้นตอน invalidate รหัสเก่าทั้งหมดของ
+บัญชีเดียวกันตอน mint (one-live-code-per-account), และเพิ่ม**อัลกอริทึมใหม่**อธิบาย window logic ของ
+rate-limit (2) เขียน sequence diagram ของ **INT-3 ใหม่ทั้งหมด** ให้ตรงกับ flow จริง (จบ session ที่เว็บก่อน
+เสมอ → มือถือเรียก `GET /integrations/wearable/latest-session` → ถ้า session ปิดจบแล้ว แก้ `daily_log` ด้วย
+**ส่วนต่าง (delta)** แบบ retroactive แทนค่าเต็มจำนวน แล้ว recompute completion/streak ทันที — คงเส้นทาง
+pre-complete เดิมไว้ด้วย) พร้อม**อัลกอริทึมใหม่**อธิบายการคำนวณ delta ทีละขั้นตอน — **
+`01-onboarding-personalization.md`**: แก้ sequence diagram/อัลกอริทึมของ **ONB-3** จากโมเดล "client คำนวณ
+แล้ว server ตรวจสอบซ้ำ" เป็น **server-authoritative เต็มรูปแบบ** (server อ่านน้ำหนักตัว/TDEE จากโปรไฟล์เอง
+แล้วคำนวณทั้ง `dailyCalorieTargetKcal`/`dailyIntakeTargetKcal`/`isSafetyFloorApplied` เองทั้งหมด ไม่เชื่อ
+legacy field จาก client, เพิ่ม `alt` ใหม่ `409` เมื่อยังไม่ทำ ONB-1, response เปลี่ยนเป็น `204`) พร้อมย้ำ
+กติกา exact value ไม่ปัดเศษ และ safety floor boundary เข้มงวด (เท่ากับ 1,200 พอดี → ไม่ถูกปรับ) ในอัลกอริทึม
+— ทั้งสองไฟล์: audit ยืนยันว่า participant ทุกตัวยังเป็น Conceptual Component จาก HLA/actor ทั่วไป ไม่มีชื่อ
+stack หลุดเข้าเนื้อหาหลัก — **ภาคผนวก Stack Mapping ของทั้งสองไฟล์ไม่ได้แก้ตาราง mapping เอง** (เพิ่มได้แค่
+หมายเหตุ freshness) เพราะ `tech-stack.md` §6.1/§6.3.1 (ฉบับ 2026-08-31) **ยังไม่ได้ sync กับ 3 กติกาใหม่นี้
+เลย** (ไม่มี mapping ของ `pairing_redeem_rate_limit`/one-live-code-per-account/`GET .../latest-session`/
+server-authoritative goal calc) — แนะนำให้รัน `tech-stack-builder` ต่อเพื่อขยาย mapping ให้ครบ — ไม่กระทบ
+`backlog.md`/`user-journeys.md`/HLA/API Spec/Database Schema เนื้อหาหลัก (เป็นฝ่าย derive ตามเท่านั้น) —
+ดู log [2026-09-25](../../05-log/20260925-log.md)

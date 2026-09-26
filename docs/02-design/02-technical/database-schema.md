@@ -3,7 +3,35 @@
 - **ประเภทเอกสาร:** Database Schema — Conceptual/Logical Data Model (ไม่ผูก DBMS จริง)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-09-07 (รอบ 12, follow-up) — 2 open point ย่อยที่เพิ่มในรอบ 11 (หัวข้อ 6 ข้อ 12-13)
+- **อัปเดตล่าสุด:** 2026-09-25 (รอบ 13) — `feature-list-journey` เพิ่งเติม 2 กติกาธุรกิจใหม่เข้า REQ-18
+  (`01-spec/20260823-04-smart-integrations.md`, ยืนยันจากผู้ใช้งาน 2026-09-25) และ implement จริงแล้วใน
+  `apps/web/server/routes/pairing/index.ts`/`routes/integration-gateway/index.ts`: (1) **rate limit เมื่อ
+  กรอกรหัสจับคู่ผิดซ้ำ** — 5 ครั้งภายใน 15 นาทีต่อ client IP (เก็บเป็น hash เท่านั้น ไม่ใช่ IP ดิบ) → ล็อก
+  ชั่วคราว, รีเซ็ตทันทีเมื่อ redeem สำเร็จ (2) **1 บัญชีมีรหัสจับคู่ที่ใช้งานได้ทีละ 1 รหัส** — ขอรหัสใหม่แล้ว
+  รหัสเก่าที่ยังไม่หมดอายุ/ยังไม่ถูกใช้ถูกลบทิ้งทั้งหมด และ (3) กลไก sync แคลอรี่จาก wearable เข้ากับ session
+  ที่ปิดจบไปแล้ว (retroactive correction ด้วยส่วนต่าง/delta ไม่ใช่ค่าเต็ม เพื่อไม่ให้ re-sync นับซ้ำ) —
+  เพิ่มเนื้อหาดังนี้: **เพิ่มตารางใหม่ 3.20 `pairing_redeem_rate_limit`** (เก็บ `client_ip_hash`/
+  `failed_count`/`window_started_at`) — **หมายเหตุการตัดสินใจสำคัญ**: ตารางนี้**ไม่ใช่** Conceptual Data
+  Entity แยกใน HLA §5 (HLA ไม่เคยระบุ rate-limit counter ไว้เลย ต่างจาก `pairing_credential` ที่มีอยู่แล้ว
+  ใน HLA §5 ตรงๆ) — ตัดสินใจเองว่า**ไม่จำเป็นต้องส่งกลับ `architecture-builder` ก่อน** เพราะเป็น
+  security/anti-abuse state ล้วน (คล้าย lockout counter ที่ HLA ไม่เคยโมเดล failed-login-attempt เป็น data
+  entity ที่ไหนเลยในเอกสารเช่นกัน — เป็นเรื่อง cross-cutting security ไม่ใช่ "ข้อมูลหลักที่ระบบต้องรู้จัก" ตาม
+  นิยามขอบเขตของ HLA §5 เอง) และ HLA §3.1/§4.5 มอบหมายหน้าที่ "ตรวจสอบว่ารหัสถูกต้อง/ไม่หมดอายุ/ยังไม่ถูกใช้"
+  ให้ Account & Session Management ไว้แล้ว ส่วนนี้เป็นเพียงกลไก enforcement เสริมของหน้าที่เดิมนั้น ไม่ใช่
+  concept ทางธุรกิจใหม่ — เก็บเป็นบันทึกไว้ว่าเป็นทางเลือกที่แนะนำ (ไม่ใช่แนวทางเดียว) และแนะนำให้
+  `architecture-builder` พิจารณาเติมประโยคสั้นๆ ใน HLA §7 (Security/Privacy) ตอนรอบถัดไปเพื่อปิด open point
+  §8 ข้อ 7 ให้ครบถ้วนยิ่งขึ้น (ไม่ใช่ blocker) — เพิ่ม column `log_date` (`date`, ไม่บังคับจนกว่าจะจบเซสชัน)
+  ใน **`workout_session` (หัวข้อ 3.5)** — บันทึกว่า kcal ของ session นี้ถูกนำไปรวมกับ `daily_log` ของวันไหน
+  (ตั้งตอนจบเซสชัน) เพื่อให้ wearable reading ที่มาซิงค์ทีหลัง (อาจข้ามเที่ยงคืน) แก้ไข `daily_log` ของวันที่
+  ถูกต้องเสมอ ไม่ใช่ "วันนี้" ของตอนซิงค์ — เพิ่ม note ใหม่ในตาราง 3.17 `pairing_credential` เรื่อง
+  invalidate-on-create — เพิ่มกติกาใหม่ 2 ข้อในหัวข้อ 4 (ข้อ 10-11: one-live-code-per-account,
+  redeem rate limiting), เพิ่ม 1 ข้อใหม่ใน 4 สำหรับ retroactive wearable correction, เพิ่ม bullet ใหม่ใน
+  หัวข้อ 5 (Query/Access Pattern), resolve หัวข้อ 6 ข้อ 11 (`~~...~~` — one-live-code-per-account ยืนยัน
+  แล้ว) — **เพิ่มแถวใหม่ในหัวข้อ 8.2/8.3 (auto-sync ตามกติกา Stack Mapping Appendix freshness แม้
+  `tech-stack.md` ยังไม่ reconcile เรื่องนี้ก็ตาม เพราะเป็นการออกแบบเพิ่มเติมของ `api-db-spec-builder` เอง
+  ตาม pattern เดียวกับที่ `pairing_credential`/account-deletion-cascade เคยทำมาก่อน)** — audit หัวข้อ 1, 2,
+  3.1-3.16, 3.18-3.19, 7 แล้วไม่พบ drift อื่นจากรอบนี้ (ดู log [2026-09-25](../../05-log/20260925-log.md))
+- **อัปเดตก่อนหน้า:** 2026-09-07 (รอบ 12, follow-up) — 2 open point ย่อยที่เพิ่มในรอบ 11 (หัวข้อ 6 ข้อ 12-13)
   ถูก patch ในโค้ดแล้ว: `DELETE /account` (`apps/web/server/routes/account-session/deleteAccount.ts`)
   เพิ่ม (1) ลบ `pairingCodes` ที่ `uid == userId` ก่อนลบ document ผู้ใช้/Auth account (ปิดช่องโหว่ Pairing
   Credential ตกค้าง) (2) try/catch รอบ `auth.deleteUser()` ที่ treat `auth/user-not-found` เป็นความสำเร็จ
@@ -213,6 +241,7 @@ erDiagram
         datetime started_at
         decimal actual_duration_minutes
         enum status
+        date log_date
     }
     SESSION_VIDEO {
         identifier id PK
@@ -319,7 +348,17 @@ erDiagram
         identifier today_recommendation_snapshot_id FK
         string external_video_id
     }
+    PAIRING_REDEEM_RATE_LIMIT {
+        identifier id PK
+        string client_ip_hash
+        integer failed_count
+        datetime window_started_at
+    }
 ```
+
+> หมายเหตุ: `PAIRING_REDEEM_RATE_LIMIT` ไม่มีเส้นความสัมพันธ์ (relationship) ไปยังตารางอื่นใดในไดอะแกรมนี้
+> โดยตั้งใจ — คีย์หลักที่ใช้ค้นหาคือ `client_ip_hash` (hash ของ client IP) ไม่ใช่ผู้ใช้/บัญชี/รหัสจับคู่ใดๆ
+> จึงไม่มี FK ผูกกับ `user_account`/`pairing_credential` (ดูหัวข้อ 3.20/4 สำหรับเหตุผลเต็ม)
 
 ## 3. Table Details
 
@@ -393,6 +432,7 @@ erDiagram
 | `started_at` | `datetime` | ใช่ | — | — |
 | `actual_duration_minutes` | `decimal` | ไม่บังคับจนกว่าจะจบเซสชัน | — | อัปเดตตอน complete — ยังไม่ชัดว่ารวมเวลา warmup/cooldown หรือไม่ (ดูหัวข้อ 6) |
 | `status` | `enum` | ใช่ | — | กำลังดำเนินการ / จบแล้ว / หยุดกลางคัน |
+| `log_date` | `date` | ไม่บังคับจนกว่าจะจบเซสชัน (ใหม่ 2026-09-25) | — | วันที่ของ `daily_log` ที่ kcal ของ session นี้ถูกนำไปรวมด้วย — ตั้งค่าตอนจบเซสชัน (REC-2/PLN-3) เก็บไว้เพื่อให้ INT-3 (wearable reading ที่อาจมาซิงค์ทีหลัง ข้ามเที่ยงคืนได้) แก้ไข `daily_log` ของวันที่ถูกต้องเสมอ ไม่ใช่ "วันนี้" ของตอนซิงค์ — session ที่จบก่อน column นี้มีอยู่ (ก่อน 2026-09-25) ให้ fallback ไปใช้วันที่จาก `started_at` แทน |
 
 ### 3.6 `session_video` ← Video/Workout Content (ที่ใช้ในเซสชันหนึ่งๆ)
 
@@ -559,6 +599,11 @@ REQ-12/REQ-13 เดิม — ดู `backlog.md` § INT-0 และ `20260823-
 > ตารางเชิงตรรกะตามปกติเพื่อความครบถ้วนของ ER model แต่ data retention/cleanup ของแถวที่หมดอายุแล้วแต่ไม่เคย
 > ถูก redeem เลยยังเป็นจุดที่ยังไม่ได้ระบุ (ดูหัวข้อ 6 ข้อ 9-11)
 
+> **เพิ่ม 2026-09-25 — 1 บัญชีมีรหัสจับคู่ที่ใช้งานได้ทีละ 1 รหัสเท่านั้น (ยืนยันกับผู้ใช้งานแล้ว, resolve
+> จุดที่ยังไม่ได้ระบุเดิมข้อ 11)**: การขอรหัสใหม่ (`code` แถวใหม่) ต้องลบทุกแถวเดิมของ `user_account_id`
+> เดียวกันที่ยังไม่หมดอายุ/ยังไม่ถูกใช้ทิ้งก่อนเสมอ (ลบทิ้งจริง ไม่ใช่แค่ทำเครื่องหมาย) — เหลือเฉพาะแถวล่าสุด
+> ที่ใช้งานได้จริงต่อบัญชีหนึ่งๆ ณ เวลาใดเวลาหนึ่ง (ดูหัวข้อ 4 ข้อ 10 สำหรับกติกาเต็ม)
+
 ### 3.18 `today_recommendation_snapshot` ← Video/Workout Content (แคชผลการจับคู่วิดีโอของวันนี้, ใหม่ 2026-08-31)
 
 แคชผลลัพธ์ล่าสุดของการจับคู่วิดีโอแนะนำประจำวัน (REC-1) ไว้ต่อผู้ใช้ 1 แถว เพื่อไม่ต้อง recompute ทุกครั้งที่
@@ -599,6 +644,34 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 > หมายเหตุ: ตารางนี้**ไม่มี column `rejected_at`** ต่างจาก `session_rejected_video` — เพราะรายการทั้งหมดถูก
 > reset ทิ้งโดยธรรมชาติทุกครั้งที่ `today_recommendation_snapshot.computed_for_date` เปลี่ยนเป็นวันใหม่ (ทั้ง
 > ตารางลูกนี้จึงมีอายุไม่เกิน 1 วันเสมอ) ลำดับเวลาภายในวันเดียวกันจึงไม่มีความหมายเชิงธุรกิจใดที่ต้องเก็บไว้
+
+### 3.20 `pairing_redeem_rate_limit` (ส่วนขยายของกลไก enforcement ของ Pairing Credential, ใหม่ 2026-09-25)
+
+ตัวนับความพยายามแลกรหัสจับคู่อุปกรณ์ (`POST /auth/pairing-codes/redeem`) ที่ผิดพลาดต่อ client IP หนึ่งๆ —
+Feature: INT-0/REQ-18 (กติกา rate limit ยืนยันกับผู้ใช้งานแล้ว 2026-09-25)
+
+> **หมายเหตุการ derive (ไม่ใช่ 1:1 กับ Conceptual Data Entity ของ HLA §5)**: ตารางนี้**ไม่ตรงกับ Conceptual
+> Data Entity ใดใน HLA §5 โดยตรง** — เป็น **security/anti-abuse enforcement state** ล้วนๆ (คล้าย lockout
+> counter ของการเข้าสู่ระบบทั่วไปที่ HLA เองก็ไม่เคยโมเดลเป็น data entity ที่ไหนในเอกสารเช่นกัน ไม่ใช่แค่
+> ของกลไก pairing-code นี้) ไม่ใช่ "ข้อมูลหลักที่ระบบต้องรู้จัก" ตามนิยามขอบเขตของ HLA §5 เอง — แต่**ยัง
+> trace กลับไปยัง Conceptual Component ที่มีอยู่แล้วได้เสมอ**: HLA §3.1 มอบหมายหน้าที่ "ตรวจสอบว่ารหัสถูกต้อง
+> ไม่หมดอายุ ยังไม่ถูกใช้" (Flow 5/§4.5, โหนด Q5) ให้ **Account & Session Management** ไว้แล้ว ตารางนี้เป็น
+> เพียงกลไก enforcement เสริมของหน้าที่เดิมนั้น (ป้องกันการ brute-force รหัส 6 หลัก) ไม่ใช่แนวคิดทางธุรกิจใหม่
+> ที่ต้องมี component/entity ของตัวเอง — เทียบเคียงได้กับที่หัวข้อ 4/8.3 ของเอกสารนี้เคยออกแบบกติกา
+> enforcement เพิ่มเติมเอง (เช่น referential existence validation, account deletion cascade) โดยไม่ต้องรอ
+> HLA ระบุไว้ตรงๆ ก่อนมาแล้ว — **เป็นการตัดสินใจของ `api-db-spec-builder` เอง ไม่ใช่ทางเลือกเดียวที่เป็นไปได้**
+> แนะนำให้ `architecture-builder` พิจารณาเติมประโยคสั้นๆ ใน HLA §7 (Security/Privacy) หรือปิด open point §8
+> ข้อ 7 ในรอบถัดไปเพื่อให้ NFR coverage ของกลไกนี้ชัดเจนขึ้น (ไม่ใช่ blocker ของรอบนี้)
+
+| Column | Logical Type | Required | Key | คำอธิบาย |
+|---|---|---|---|---|
+| `id` | `identifier` | ใช่ | PK | — |
+| `client_ip_hash` | `string` | ใช่ | Unique (ใช้เป็นคีย์ค้นหาหลัก — ดูหัวข้อ 5) | ค่า hash ทางเดียวของ client IP ที่ส่งคำขอ redeem — **ห้ามเก็บ IP ดิบ** (privacy-by-design ตามเจตนารมณ์เดียวกับ NFR-04/NFR-11) |
+| `failed_count` | `integer` | ใช่ | — | จำนวนครั้งที่กรอกรหัสผิด/หมดอายุ/ถูกใช้ไปแล้วติดต่อกันภายใน window ปัจจุบัน — ล็อกเมื่อถึง 5 |
+| `window_started_at` | `datetime` | ใช่ | — | เวลาที่เริ่มนับ window ปัจจุบัน (15 นาที) — window ใหม่เริ่มนับใหม่เมื่อ window เดิมหมดอายุแล้วมีความพยายามผิดครั้งใหม่ |
+
+> หมายเหตุ: แถวนี้ถูก**ลบทิ้งทันทีที่ redeem สำเร็จ 1 ครั้ง** (รีเซ็ตตัวนับของ client นั้น) — เป็น ephemeral
+> state ที่ไม่ persist ระยะยาวเช่นเดียวกับ `pairing_credential` (หัวข้อ 3.17) แม้จะเป็นคนละตารางกัน
 
 ## 4. Relationships & Constraints (เชิงแนวคิด)
 
@@ -666,6 +739,26 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
      `pairing_credential` ที่ยังผูกกับ `user_account_id` นี้อยู่ (ถ้ามี แถวที่ยังไม่หมดอายุ/ยังไม่ redeem ณ
      ตอนขอลบ) **ก็ถูกลบด้วยเช่นกัน** เป็นขั้นตอนแยกก่อนลบ `user_profile`/`user_account` (แก้ไข 2026-09-07 —
      เดิมเป็นข้อยกเว้นที่ไม่ถูกลบ ดูจุดที่ยังไม่ได้ระบุข้อ 12 ที่ resolve แล้วในหัวข้อ 6)
+  10. **One live pairing code per account (ใหม่ 2026-09-25, ยืนยันกับผู้ใช้งานแล้ว)** — เมื่อมีการขอรหัสจับคู่
+      ใหม่ (สร้างแถว `pairing_credential` ใหม่) ต้อง**ลบทุกแถวเดิมของ `user_account_id` เดียวกันที่ยังไม่
+      หมดอายุ/ยังไม่ถูกใช้ทิ้งก่อนเสมอ** (ลบทิ้งจริง ไม่ใช่ทำเครื่องหมาย) — เหลือเฉพาะรหัสล่าสุดที่ใช้งานได้
+      จริงต่อบัญชีหนึ่งๆ ป้องกันไม่ให้รหัสเก่าที่ผู้ใช้ลืมไว้ยังใช้ redeem ได้พร้อมกับรหัสใหม่ — เจ้าของ:
+      **Account & Session Management**
+  11. **Pairing redeem rate limiting (`pairing_redeem_rate_limit`, ใหม่ 2026-09-25, ยืนยันกับผู้ใช้งานแล้ว)**
+      — กรอกรหัสผิด/หมดอายุ/ถูกใช้ไปแล้ว **5 ครั้งภายในหน้าต่างเวลา 15 นาที ต่อ `client_ip_hash` เดียวกัน**
+      → ล็อกชั่วคราวจนกว่า window จะหมดอายุ (ปฏิเสธคำขอ**ก่อน**แม้แต่จะตรวจสอบ `pairing_credential.code` ที่
+      ส่งมาด้วยซ้ำ — ป้องกันการ probe รหัสต่อขณะยังล็อกอยู่) และ redeem ที่**สำเร็จ**ต้องรีเซ็ต/ลบตัวนับของ
+      client นั้นทันที — เจ้าของ: **Account & Session Management**
+  12. **Wearable reading แก้ไข daily log ของ session ที่ปิดจบไปแล้วด้วยส่วนต่าง (delta) เท่านั้น (ใหม่
+      2026-09-25, ยืนยันกับผู้ใช้งานแล้ว)** — ถ้า `wearable_reading` มาถึง**หลัง**session นั้นมี
+      `actual_calorie_burn` (ปิดจบแล้ว) อยู่แล้ว ต้องแทนที่ค่า MET เดิมด้วยค่าจาก wearable เสมอ (wearable
+      ชนะ MET ตาม REQ-13) และแก้ไข `daily_log` ของวันที่ `workout_session.log_date` ระบุ (ไม่ใช่ "วันนี้"
+      ของตอนซิงค์) ด้วย**ส่วนต่างระหว่างค่าใหม่กับค่าเดิมที่ session นั้นเคยมีส่วนสมทบไว้แล้วเท่านั้น** — ไม่ใช่
+      ค่าเต็มจำนวน เพื่อไม่ให้ re-sync ซ้ำนับแคลอรี่ซ้ำเมื่อวันนั้นมีหลาย session แล้วต้อง recompute สถานะ
+      "ครบเป้าหมาย" (PLN-3) และ streak (PLN-4) ของวันนั้นใหม่ทันทีหลังแก้ไข — การ re-sync ซ้ำสำหรับ session
+      เดิมทำได้เสมอ ไม่ถือเป็น error (เขียนทับ `wearable_reading` เดิมและคำนวณ delta ซ้ำทุกครั้ง) — เจ้าของ:
+      **Integration Gateway** (เขียนค่า/คำนวณ delta) ร่วมกับ **Logging & Streak** (เจ้าของ logic completion
+      status/streak ที่ถูกเรียกใช้ต่อ)
 
 ## 5. Query/Access Pattern Considerations (เชิงแนวคิด)
 
@@ -683,6 +776,15 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
   INT-1 ใช้ทั้งดึง "น้ำหนักปัจจุบัน" (ล่าสุดรายการเดียว) และดึงประวัติทั้งหมดสำหรับกราฟแนวโน้มน้ำหนักบนหน้า
   Progress (`api-spec.md` § 3.7 `GET /insights/weight-records`) — ควรออกแบบให้ค้นช่วงเวลา/เรียงตามเวลาได้เร็ว
   เหมือน `daily_log` ข้างต้น
+- **`pairing_redeem_rate_limit` ค้นหาตาม `client_ip_hash` เท่านั้น (ใหม่ 2026-09-25)** — pattern เดียวที่
+  เกิดตอนแลกรหัสจับคู่อุปกรณ์ (ทุกครั้งที่มีคำขอ `POST /auth/pairing-codes/redeem` เข้ามา ไม่ว่าจะสำเร็จหรือ
+  ไม่) ไม่ผูกกับ `user_profile_id`/`user_account_id` เหมือนตารางอื่นเลย (ไม่รู้ด้วยซ้ำว่าเป็นของผู้ใช้คนไหน
+  จนกว่าจะ redeem สำเร็จ) — ต้องอ่าน/เขียนพร้อมกับการอ่าน/ลบ `pairing_credential` ในธุรกรรมเดียวกันเสมอ
+  (ป้องกัน race ระหว่างคำขอพร้อมกันจาก client เดียวกัน)
+- **`workout_session.log_date` + `daily_log` ค้นหาร่วมกันตอน INT-3 sync ย้อนหลัง (ใหม่ 2026-09-25)** —
+  เมื่อ wearable reading มาถึงหลัง session ปิดจบไปแล้ว ต้องอ่าน `workout_session.log_date` ก่อนเพื่อรู้ว่า
+  ต้องแก้ `daily_log` ของวันไหน (อาจไม่ใช่วันนี้ถ้า sync ข้ามเที่ยงคืน) แล้วจึงอ่าน/แก้ `daily_log` ของวันนั้น
+  ในธุรกรรมเดียวกับการเขียน `wearable_reading`/`actual_calorie_burn`
 - **`today_recommendation_snapshot`/`today_recommendation_rejected_video` ไม่มี pattern การ query อิสระ
   (ใหม่ 2026-08-31)** — อ่าน/เขียนพร้อมกับ 1 คำขอ recommendation ของวันนั้นเสมอ (`GET`/`swap` ใน `api-spec.md`
   §3.3) เข้าถึงด้วย `user_profile_id` เดียวเท่านั้น (ล่าสุด 1 แถวต่อผู้ใช้) ไม่มีการค้นหาข้ามวัน/ข้ามผู้ใช้เลย
@@ -722,9 +824,11 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 10. **`pairing_credential.code`**: ยังไม่ระบุว่าเก็บค่ารหัสจริง (plaintext) หรือค่า hash — เป็นหน้าที่ของ
     auth provider ที่เลือกจริงตาม `tech-stack.md` เช่นเดียวกับที่ข้อ 7 ข้างต้น (`user_account.credential_
     reference`) ระบุไว้แล้ว ไม่ใช่การตัดสินใจของเอกสารนี้
-11. **`pairing_credential`**: ยังไม่ระบุว่าอนุญาตให้มีแถว unused ที่ยังไม่หมดอายุมากกว่า 1 แถวต่อ
-    `user_account_id` เดียวกันพร้อมกันหรือไม่ (เช่น กดขอรหัสซ้ำก่อนรหัสเดิมหมดอายุ) — กระทบว่าควร
-    invalidate รหัสเดิมทันทีหรือปล่อยให้ใช้ได้ทั้งคู่ (ตรงกับ open point เดียวกันใน `api-spec.md` §4 ข้อ 13)
+11. ~~**`pairing_credential`**: ยังไม่ระบุว่าอนุญาตให้มีแถว unused ที่ยังไม่หมดอายุมากกว่า 1 แถวต่อ
+    `user_account_id` เดียวกันพร้อมกันหรือไม่~~ — **resolved 2026-09-25 (ยืนยันกับผู้ใช้งานแล้ว)**: **ไม่
+    อนุญาต** — การขอรหัสใหม่ต้อง**ลบ**ทุกแถวเดิมของบัญชีเดียวกันที่ยังไม่หมดอายุ/ยังไม่ถูกใช้ทิ้งก่อนเสมอ
+    (1 บัญชีมีรหัสที่ใช้งานได้ทีละ 1 รหัสเท่านั้น — ดูหัวข้อ 3.17/4 ข้อ 10) — ไม่ใช่ open point อีกต่อไป
+    (ตรงกับ open point เดียวกันที่ resolve แล้วใน `api-spec.md` §4 ข้อ 13)
 12. ~~**`pairing_credential` กับการลบบัญชี (ใหม่ 2026-09-07)**: เมื่อผู้ใช้ขอลบบัญชี แถว
     `pairing_credential` ที่ยังผูกกับ `user_account_id` นี้อยู่ (ถ้ามี ยังไม่หมดอายุ/ยังไม่ redeem ณ ตอน
     ขอลบ) ไม่ถูกลบตามไปด้วย — orphan risk ที่บรรเทาด้วยอายุการใช้งานสั้นอยู่แล้ว (5 นาที ตาม HLA §4.5/§5)
@@ -799,6 +903,15 @@ scope อยู่ที่ "1 เซสชันที่เริ่มไป�
 > **ไม่แตะหัวข้อ 8.1/8.2** เพราะไม่มี logical type ใหม่หรือตารางใหม่เกิดขึ้น (ใช้ตารางเดิมที่มี mapping
 > อยู่แล้วทั้งหมด)
 
+> **อัปเดต 2026-09-25 (เพิ่มแถวใหม่ในหัวข้อ 8.2/8.3 — ไม่ใช่ mechanical re-sync ทั้งหมด เหมือน
+> `pairing_credential`/account-deletion-cascade ก่อนหน้า)**: `tech-stack.md` §6.1/§6.2/§6.3 ยังไม่เคยกล่าวถึง
+> rate limiting ของ pairing redeem, one-live-code-per-account, `workout_session.log_date`, หรือ wearable
+> retroactive correction เลย — เนื้อหาที่เพิ่มด้านล่างเป็นการออกแบบเพิ่มเติมโดย `api-db-spec-builder` เอง
+> (ตาม pattern ที่หัวข้อ 8.2/8.3 อนุญาตไว้ตั้งแต่ 2026-08-29) ไม่ใช่การ mirror ข้อความที่มีอยู่แล้ว —
+> ควรนำกลับไปปรับ `tech-stack.md` §6 ให้ตรงกันในการรัน `tech-stack-builder` ครั้งถัดไป — **ไม่แตะหัวข้อ 8.1**
+> เพราะ logical type ของ column ใหม่ทั้งหมด (`string`/`integer`/`datetime`/`date`) มีอยู่แล้วในตาราง mapping
+> เดิมครบทุกชนิด
+
 ### 8.1 Logical Type → Firestore Field Type
 
 มิเรอร์จาก [tech-stack.md § 6.2](tech-stack.md#62-database-schemamds-logical-type--firestore-field-type)
@@ -830,7 +943,7 @@ route" เพราะ compute layer เปลี่ยน):
 | `user_profile` | Top-level collection `users`, document ID = Firebase Auth UID (`users/{userId}`) — field `age`/`sex`/`weightKg`/`heightCm`/`activityLevel`/`tdeeKcal` อยู่ในตัว document โดยตรง | เอกสารเดียวต่อผู้ใช้ 1 คน อ่านพร้อมกันบ่อยที่สุด (แทบทุกหน้าจอ) เป็น root ที่ subcollection อื่นผูกสิทธิ์ผ่าน Firestore Security Rule ได้ตรงไปตรงมาที่สุด |
 | `goal_selection` | Embedded map field `goalSelection` ภายใน `users/{userId}` | 1:1 กับ user, เก็บเฉพาะค่าปัจจุบัน (ไม่มีประวัติ ตาม HLA §5) อ่านพร้อมโปรไฟล์แทบทุกครั้ง (Dashboard/Planner) — embed ลดจำนวน read ต่อครั้ง |
 | `equipment_selection` | Embedded array field `equipmentTypes: string[]` ภายใน `users/{userId}` | multi-select แต่ bounded ชัดเจน (สูงสุด 3 ค่าตาม ONB-2) ไม่มี pattern query แยกจากโปรไฟล์ |
-| `workout_session` | Subcollection `users/{userId}/workoutSessions/{sessionId}` | จำนวนไม่จำกัด เพิ่มทุกครั้งที่ออกกำลังกาย ต้อง query อิสระ (ประวัติ session) — embed ในเอกสาร user จะทำให้เอกสารโตไม่มีขอบเขตและเสี่ยงชนขีดจำกัดขนาด document |
+| `workout_session` | Subcollection `users/{userId}/workoutSessions/{sessionId}` — field `logDate` (ใหม่ 2026-09-25) เก็บ ISO date ของ `daily_log` ที่ kcal ของ session นี้ถูกรวมด้วย ตั้งค่าตอนจบเซสชัน | จำนวนไม่จำกัด เพิ่มทุกครั้งที่ออกกำลังกาย ต้อง query อิสระ (ประวัติ session) — embed ในเอกสาร user จะทำให้เอกสารโตไม่มีขอบเขตและเสี่ยงชนขีดจำกัดขนาด document — `logDate` จำเป็นเพราะ wearable reading (INT-3) อาจมาซิงค์ทีหลังข้ามเที่ยงคืนได้ ต้องรู้ว่าแก้ `dailyLogs/{date}` ไหน |
 | `session_video` | Embedded array field `sessionVideos: []` ภายใน document `workoutSessions/{sessionId}` เดียวกัน | 1 session มีแค่ 1-3 แถว (หลัก+วอร์มอัพ/คูลดาวน์) เขียนครั้งเดียวตอนสร้าง session ไม่มี pattern query แยก |
 | `session_rejected_video` | Embedded array field `rejectedVideoIds: []` (แต่ละรายการเป็น map `{externalVideoId, rejectedAt}`) ภายใน document เดียวกัน | ใช้เฉพาะระหว่าง REC-3 ของ session เดียวกันเท่านั้น ไม่มี pattern query ข้าม session |
 | `actual_calorie_burn` | Embedded map field `actualCalorieBurn` ภายใน document เดียวกัน (เขียนครั้งเดียวตอนจบ/หยุดเซสชันโดย Express route `sessionComplete` handler) | ความสัมพันธ์ 1:1 กับ session ไม่มี pattern query อิสระ อ่านพร้อม session เสมอ |
@@ -845,6 +958,7 @@ route" เพราะ compute layer เปลี่ยน):
 | `pairing_credential` (ใหม่ 2026-08-30 รอบ 5) | **Top-level collection `pairingCodes/{code}`** (document ID = ตัวรหัส 6 หลักเอง — **ไม่ใช่** subcollection ใต้ `users/{userId}` เหมือนตารางอื่นทั้งหมดข้างต้น) เก็บ field `uid` (= `user_account_id`), `createdAt`, `expiresAt` เท่านั้น — **ไม่มี field เทียบเท่า `is_used`** | query หลักคือค้นด้วย `code` ก่อนรู้ด้วยซ้ำว่าเป็นของผู้ใช้คนไหน (ตรงกับหัวข้อ 4/5 เดิม) จึงต้องเป็น top-level collection แยก ไม่ใช่ subcollection ของ user ใดคนหนึ่ง; single-use enforce ด้วย **delete-on-redeem** (`ref.delete()` ทันทีหลัง redeem สำเร็จ) แทนการตั้ง boolean flag — ผลคือไม่มี field ให้ persist สถานะ "ใช้แล้ว" เลย เพราะแถวหายไปพร้อมกับการ redeem สำเร็จ (ดูหัวข้อ 8.3 แถวสุดท้ายสำหรับ enforcement เต็มรูปแบบ) |
 | `today_recommendation_snapshot` (ใหม่ 2026-08-31 รอบ 8, mapping เพิ่ม 2026-08-31 รอบ 9) | Embedded map field **`todaysRecommendation`** ภายใน `users/{userId}` เดียวกับ `streakSnapshot`/`weightForecastSnapshot` — sub-field `computedFor` (ISO date ที่คำนวณล่าสุด, เทียบกับ `computed_for_date`) และ `video` (map ผลลัพธ์ที่เลือก: `externalVideoId`/`title`/`durationMinutes`/`activityType`/`intensity`/`estimatedKcal`/`includesWarmupCooldown`) | 1:1 กับ user เก็บเฉพาะค่าล่าสุด ไม่ persist ประวัติการจับคู่เก่า (เหมือน `streak_snapshot`/`weight_forecast_snapshot` ทุกประการ) และไม่มี pattern query อิสระแยกจากโปรไฟล์ (ดูหัวข้อ 5 เดิม) จึง embed แทนที่จะเป็น top-level/subcollection ตาม `tech-stack.md` §6.1 แถว Content Recommendation |
 | `today_recommendation_rejected_video` (ใหม่ 2026-08-31 รอบ 8, mapping เพิ่ม 2026-08-31 รอบ 9) | Embedded array field **`rejectedVideoIds: string[]`** ภายใน field `todaysRecommendation` เดียวกันข้างต้น (เก็บเฉพาะ `externalVideoId` — **ไม่มี field เทียบเท่า `rejected_at`** ตรงกับที่หัวข้อ 3.19 ระบุไว้แล้วว่าตารางนี้ไม่มี column เวลา) | สะสมทุกครั้งที่ REC-3 ปฏิเสธวิดีโอก่อนเริ่มเซสชันจริงของวันนั้น แต่ bounded ต่อวัน (reset ทันทีที่ `computedFor` เปลี่ยนเป็นวันใหม่ ตามหัวข้อ 3.19) และไม่มี pattern query อิสระ — embed รวมกับ field เดียวกับ snapshot ข้างต้นแทนที่จะเป็น subcollection แยก (ต่างจาก `session_rejected_video` ที่ embed เป็น array ของตัวเองในอีก parent document เพราะ scope คนละระดับ — ดูหัวข้อ 4) |
+| `pairing_redeem_rate_limit` (ใหม่ 2026-09-25 — หัวข้อ 3.20) | **Top-level collection `pairingRedeemAttempts/{sha256(ip)}`** (document ID = SHA-256 hash ของ client IP — **ไม่ใช่** subcollection ใต้ `users/{userId}` เหมือนตารางส่วนใหญ่ และ**ไม่เก็บ IP ดิบเลย**) เก็บ field `failedCount`/`windowStartedAt` เท่านั้น | query หลักคือค้นด้วย hash ของ client IP ก่อนรู้ด้วยซ้ำว่าเป็นของผู้ใช้คนไหน (เหมือน `pairingCodes` แถวบน) จึงต้องเป็น top-level collection แยก อ่าน/เขียนในธุรกรรมเดียวกับ `pairingCodes/{code}` เพื่อกัน race — ลบทิ้งทันทีที่ redeem สำเร็จ (รีเซ็ตตัวนับ) |
 
 ⚠️ ตารางนี้เป็นการออกแบบที่ละเอียดกว่า `tech-stack.md` §6.1 ปัจจุบัน (ซึ่งระบุแค่ชื่อ collection ระดับ
 component คร่าวๆ) — ยึดชื่อ collection ที่ `tech-stack.md` §6.1 ตั้งไว้แล้วเป็นหลัก (`workoutSessions`
@@ -864,6 +978,11 @@ component คร่าวๆ) — ยึดชื่อ collection ที่ `te
 > (`today_recommendation_snapshot`/`today_recommendation_rejected_video` หัวข้อ 3.18/3.19) ที่ยังไม่เคยมี
 > mapping มาก่อนเลย — mechanical re-sync ตาม `tech-stack.md` §6.1 แถว Content Recommendation ฉบับล่าสุด
 
+> **อัปเดต 2026-09-25 (รอบ 13 — ไม่ใช่ mechanical re-sync)**: เพิ่มแถวใหม่ 3 แถวสำหรับ one-live-code-per-
+> account, pairing redeem rate limiting, และ wearable retroactive correction (ดูหัวข้อ 4 ข้อ 10-12) — เป็น
+> การออกแบบเพิ่มเติมโดย `api-db-spec-builder` เอง เพราะ `tech-stack.md` §6.1 ยังไม่เคยระบุ 3 เรื่องนี้เลย
+> ควรนำกลับไปปรับให้ตรงกันในการรัน `tech-stack-builder` ครั้งถัดไป
+
 Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่างจาก relational DB ที่อย่างน้อยยังมี FK บังคับการมีอยู่
 ของ parent row ให้ฟรี ตารางด้านล่างขยายจากหัวข้อ 4 (Relationships & Constraints) เดิม โดยระบุว่ากติกาแต่ละ
 ข้อควรถูก enforce ที่ Express route ตัวไหน (อ้างชื่อ/path จาก `tech-stack.md` §6.1/§6.3 ที่มีอยู่แล้วเมื่อมี
@@ -880,6 +999,9 @@ Firestore ไม่มี FK/CHECK constraint ใดๆ เลย — ต่า�
 | **(ใหม่ — เกิดจาก Firestore ไม่มี FK เลย ไม่ใช่แค่ constraint ทางธุรกิจ)** Referential existence validation: ทุก field ที่เคยเป็น FK ในหัวข้อ 3 (เช่น `workout_session_id` ที่ wearable reading เดิมอ้างถึง) ต้องมีการตรวจสอบว่า document ปลายทางมีอยู่จริงและเป็นของผู้ใช้คนเดียวกัน ก่อนเขียนเสมอ | ส่วนใหญ่ถูกกำจัดไปแล้วด้วยการ embed (8.2) — ที่เหลือคือทุกครั้งที่ client ส่ง id ของ document อื่นมาใน request (เช่น `sessionId` ใน `POST /integrations/wearable/readings`) | Helper กลาง `assertDocExists()`/`NotFoundError` (`apps/web/server/assertDocExists.ts`) ที่ทุก Express route ที่รับ id อ้างอิงจาก client เรียกใช้ซ้ำ (แทนที่แนวคิดเดิมที่ให้แต่ละ Cloud Function `get()` เองแยกกัน — ดู tech-stack.md §6.1 สำหรับรายละเอียด) | เจ้าของแต่ละ Express route ตาม operation นั้น (แปรผันตาม component) |
 | **(ใหม่ 2026-08-29)** Signup-method-conditional required fields (`user_account.credential_reference`/`external_provider_reference` ต้องกรอกตาม `signup_method`) | ไม่มี Firestore representation เลย (resolve แล้วในหัวข้อ 8.2 — `user_account` ไม่มี document แยก) — Firebase Authentication เองบังคับความสัมพันธ์นี้โดยธรรมชาติของแต่ละ client SDK call: `createUserWithEmailAndPassword`/`signInWithEmailAndPassword` เท่านั้นที่ต้องมีรหัสผ่าน (→ มี `providerData` แบบ `password`) ส่วน `signInWithCredential` (Google/Apple) กำหนด `providerData[0].uid` ให้อัตโนมัติเสมอ ไม่มีทางเรียกผิดชนิดได้จาก client SDK — ไม่มี CHECK constraint แบบ schema-level ให้ใช้ฟรีเหมือนเดิม แต่ก็ไม่ต้องมี Express route มาบังคับเพิ่มเช่นกัน | ไม่ต้องมี Express route (client SDK แต่ละตัวบังคับเอง — ดู `tech-stack.md` §6.3.1) — ยกเว้น `POST /api/auth/forgot-password` ที่มี Express route แยกต่างหาก (`apps/web/server/routes/account-session/forgotPassword.ts`) เพื่อ enforce เงื่อนไขอื่น (ดูหัวข้อ 3.1/`api-spec.md` §3.1) | Account & Session Management |
 | **(ใหม่ 2026-08-30 รอบ 5)** Pairing code single-use + short-lived (`pairing_credential` ต้องถูกลบทิ้งทันทีหลัง redeem สำเร็จ, ปฏิเสธการแลกถ้า `expires_at` ผ่านไปแล้ว) | Top-level document `pairingCodes/{code}` (ดูหัวข้อ 8.2) — Firestore ไม่มี TTL/CHECK constraint อัตโนมัติที่ผูกกับ business logic นี้ | Express route `POST /api/pairing/redeem` (`apps/web/server/routes/pairing/index.ts`, **ไม่มี** `authenticate` middleware) — อ่าน document, เทียบ `expiresAt < now()` แล้วคืน `410 Gone` ถ้าไม่พบ/หมดอายุ, ถ้าสำเร็จเรียก `ref.delete()` ก่อนออก custom token เสมอ (delete-on-redeem แทน `is_used` flag — ดูหัวข้อ 3.17/4 ข้อ 8) | Account & Session Management |
+| **(ใหม่ 2026-09-25)** One live pairing code per account (หัวข้อ 4 ข้อ 10 — ขอรหัสใหม่ต้องลบรหัสเก่าที่ยังไม่หมดอายุ/ยังไม่ถูกใช้ของบัญชีเดียวกันทั้งหมดก่อน) | Top-level collection `pairingCodes/{code}` (ดูหัวข้อ 8.2) — Firestore ไม่มี unique-per-`uid` constraint ให้ใช้ฟรี (document ID คือรหัส ไม่ใช่ `uid`) | Express route `POST /api/pairing/create-code` (`apps/web/server/routes/pairing/index.ts`) — query `pairingCodes` ที่ `uid == req.userId` แล้ว batch-delete ทุกแถวที่พบ ก่อนสร้างเอกสารรหัสใหม่เสมอ (`invalidateExistingCodesFor()`) | Account & Session Management |
+| **(ใหม่ 2026-09-25)** Pairing redeem rate limiting (หัวข้อ 3.20/4 ข้อ 11 — 5 ครั้งผิดภายใน 15 นาทีต่อ `client_ip_hash` → ล็อกจน window หมดอายุ, รีเซ็ตทันทีเมื่อสำเร็จ) | Top-level document `pairingRedeemAttempts/{sha256(ip)}` (ดูหัวข้อ 8.2) — Firestore ไม่มีกลไก rate-limit ในตัว | Express route `POST /api/pairing/redeem` เดียวกันข้างต้น — ตรวจ lock **ก่อน**อ่าน `pairingCodes/{code}` เสมอ (pre-check นอก transaction + re-check ซ้ำในธุรกรรมเดียวกับการอ่าน/ลบรหัส กันการ race), ตัดสินใจ lock/increment/reset ผ่านฟังก์ชันล้วน `apps/web/server/domain/pairingRateLimit.ts` (`isLocked`/`recordFailedAttempt`/`retryAfterSeconds`) ที่ไม่แตะ Firestore/Express โดยตรง (unit-testable) | Account & Session Management |
+| **(ใหม่ 2026-09-25)** Wearable reading retroactive correction (หัวข้อ 4 ข้อ 12 — session ที่ปิดจบไปแล้วต้องแก้ `daily_log` ของ `workout_session.log_date` ด้วยส่วนต่าง ไม่ใช่ค่าเต็ม) | `wearableReading`/`actualCalorieBurn` เป็น embedded map field ใน `workoutSessions/{sessionId}` (ดูหัวข้อ 8.2), `dailyLogs/{logDate}` เป็น document แยก — ไม่มี trigger ผูกให้ sync กันอัตโนมัติ | Express route `POST /api/integrations/wearable/readings` (`apps/web/server/routes/integration-gateway/index.ts`) — อ่าน `actualCalorieBurn.calculatedKcal` เดิม (ถ้ามี), คำนวณ `calorieDeltaKcal = calorieValueKcal - previousSessionKcal`, เขียน `wearableReading`/`actualCalorieBurn` ใหม่ + ปรับ `dailyLogs/{session.logDate}.accumulatedKcal`/`completionStatus` ในธุรกรรมเดียวกัน แล้วเรียก `recomputeStreak(userId)` หลัง commit | Integration Gateway (เขียนค่า/คำนวณ delta) ร่วมกับ Logging & Streak (เจ้าของ completion/streak logic ที่ถูกเรียกใช้) |
 | **(ใหม่ 2026-08-31 รอบ 9)** Today's recommendation cache ต้อง recompute เมื่อ `computed_for_date` ไม่ตรงกับวันนี้ หรือถูกเรียกจาก swap (REC-3) (`today_recommendation_snapshot`/`today_recommendation_rejected_video`, 1:1 ต่อผู้ใช้, overwrite ทับของเดิมทุกครั้ง) | Embedded map field `todaysRecommendation` ภายใน `users/{userId}` (ดูหัวข้อ 8.2) — ไม่มี TTL/trigger อัตโนมัติที่เปรียบเทียบวันที่ให้ฟรี | Express route `GET /api/workouts/today/recommendation` (`apps/web/server/routes/content-recommendation/index.ts`) เปรียบเทียบ `todaysRecommendation.computedFor` กับวันนี้เอง ก่อนตัดสินใจ recompute (เรียก YouTube Data API v3 + Gemini ใหม่) หรือคืนค่าที่แคชไว้; `POST /api/workouts/today/recommendation/swap` บังคับ recompute เสมอ โดยส่ง `rejectedVideoIds` สะสม + วิดีโอปัจจุบันเข้า exclude list ก่อนค้นหาใหม่ (ดูหัวข้อ 3.18/3.19/5) | Content Recommendation |
 | **(ใหม่ 2026-09-07, แก้ไข 2026-09-07)** Account deletion cascade (ต้องลบทุกตารางที่ผูกกับผู้ใช้ตามลำดับก่อนลบ `user_account` เอง — ดูหัวข้อ 4 ข้อ 9) | ไม่มี cascade delete อัตโนมัติของ Firestore ระหว่าง subcollection/collection แยกกับ parent document เลย (ลบ parent document ไม่ได้ลบ subcollection ที่อยู่ใต้มันอัตโนมัติ หรือลบ document ใน top-level collection อื่นที่แค่มี field อ้างถึง uid — ต้องลบเองทีละเอกสาร) | Express route `DELETE /api/account` (`apps/web/server/routes/account-session/deleteAccount.ts`, ผ่าน `authenticate` middleware) วนลบทุก document ใน 5 subcollection (`dailyLogs`/`dayStatus`/`weeklyPlanEntries`/`weightRecords`/`workoutSessions`) เป็น batch ก่อน แล้ว query top-level collection `pairingCodes` ที่ `uid == userId` ลบทุกแถวที่พบ (ถ้ามี, แก้ไข 2026-09-07 — เดิมไม่ลบ) แล้วจึงลบ document `users/{userId}` เอง (รวม embedded field ทั้งหมดไปพร้อมกันในการลบครั้งเดียว) แล้วเรียก `auth.deleteUser(userId)` เป็นลำดับสุดท้ายภายใน try/catch ที่ treat `auth/user-not-found` เป็นความสำเร็จ (idempotent ต่อการเรียกซ้ำ, แก้ไข 2026-09-07) | Account & Session Management |
 

@@ -243,6 +243,43 @@ Spec: [01-spec/20260823-01-onboarding-personalization.md](01-spec/20260823-01-on
 > กรณี optional-skip ของ AC-ONB-3-05 ที่ journey ระบุผลลัพธ์ไว้ชัดเจนว่า INT-1 จะใช้งานไม่ได้) — เป็น gap ที่
 > รายงานไว้แทนการเดา (ดูรายงานผลของ `test-suite-builder`)
 
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: AC-ONB-3-07/08 ด้านล่างครอบคลุมกลไก "server เป็นผู้คำนวณเป้าหมายแคลอรี่
+> เป็นทางการเอง ไม่เชื่อค่าจาก client" และ "409 เมื่อยังไม่ผ่าน ONB-1" ที่ resolve แล้วเมื่อ 2026-09-25 (ดู
+> [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+> และ [user-journeys.md § ONB-3](../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02)
+> step 6) — coverage gap ที่พบระหว่าง self-freshness audit ของ `test-suite-builder` (feature-list-journey
+> ยืนยันว่า decision นี้บันทึกอยู่ใน spec/journey แล้ว แต่ยังไม่เคยมี AC/test case รองรับ) AC-ONB-3-08
+> (409 เมื่อยังไม่ผ่าน ONB-1) ไม่ได้มาจาก Alt/Edge Case ที่ระบุไว้ตรง ๆ ใน user-journeys.md (journey ระบุแค่
+> Precondition "ผ่าน ONB-1 (มี TDEE)" โดยไม่ได้อธิบาย behavior เมื่อฝ่าฝืน) แต่เป็นผลโดยตรงของกติกา
+> "server คำนวณจากข้อมูลที่บันทึกไว้แล้วเท่านั้น" ที่ resolve ไว้ชัดเจน ยืนยันจากโค้ดจริง
+> `apps/web/server/routes/personalization-profile/index.ts` (`PUT /profile/goal` ตรวจสอบ
+> `profile?.weightKg`/`profile?.tdeeKcal` ก่อนคำนวณเสมอ)
+
+#### AC-ONB-3-07 — Server คำนวณเป้าหมายแคลอรี่เป็นทางการเอง ไม่เชื่อค่าตัวเลขที่ client ส่งมา (authoritative, เพิ่ม 2026-09-25, REQ-02)
+- **Given**: ผู้ใช้มีน้ำหนักตัวและ TDEE บันทึกไว้แล้วในโปรไฟล์จาก ONB-1
+- **When**: Client เรียก `PUT /profile/goal` พร้อมเลือกประเภทเป้าหมาย และส่งค่า `dailyCalorieTargetKcal`/
+  `dailyIntakeTargetKcal` ที่คำนวณผิดพลาด/ไม่ตรงกับสูตรมาด้วย (เช่น legacy client ที่ยังคำนวณเองฝั่ง client)
+- **Then**: Server รับค่าที่ client ส่งมาได้ (เพื่อ backward compatibility) แต่**เพิกเฉยค่าตัวเลขเหล่านั้น
+  ทั้งหมด** แล้วคำนวณ `dailyCalorieTargetKcal`/`dailyIntakeTargetKcal`/`isSafetyFloorApplied` ใหม่เอง
+  ทั้งหมดจากน้ำหนักตัว/TDEE ที่บันทึกไว้แล้วในโปรไฟล์ (ไม่ใช่จาก request body) ค่าที่บันทึกจริงตรงกับสูตร
+  เสมอ ไม่ใช่ค่าที่ client ส่งมา
+- Prototype: ไม่มี — เป็น server-side authoritative computation ที่ไม่มี UI mockup เฉพาะใน `v1/`
+  (`GoalConfirmScreen.tsx` ยังคงคำนวณฝั่ง client เพื่อแสดง preview ระหว่าง onboarding เท่านั้น)
+- ต้นทาง decision: [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  · [user-journeys.md § ONB-3](../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02)
+  (step 6) · ยืนยันจากโค้ดจริง `apps/web/server/domain/goalTargets.ts`,
+  `apps/web/server/routes/personalization-profile/index.ts`
+
+#### AC-ONB-3-08 — เรียกตั้งเป้าหมายก่อนผ่าน ONB-1 (ยังไม่มีน้ำหนัก/TDEE) ระบบปฏิเสธ (409, เพิ่ม 2026-09-25, REQ-02)
+- **Given**: ผู้ใช้ยังไม่เคยกรอกข้อมูลส่วนตัว (ONB-1) มาก่อนเลย โปรไฟล์จึงยังไม่มีน้ำหนักตัว/TDEE บันทึกไว้
+- **When**: Client เรียก `PUT /profile/goal` เพื่อตั้งเป้าหมายหลัก
+- **Then**: ระบบปฏิเสธคำขอด้วย `409 Conflict` (ต้องผ่าน ONB-1 ก่อนจึงตั้งเป้าหมายได้) ไม่สร้าง/บันทึก
+  `goalSelection` ใด ๆ และ**ไม่ตกกลับไปเชื่อค่าตัวเลขที่ client ส่งมาแทน**แต่อย่างใด
+- Prototype: ไม่มี — เป็น server-side precondition guard ที่ไม่มี UI mockup เฉพาะใน `v1/`
+- ต้นทาง decision: [Onboarding spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  · [user-journeys.md § ONB-3 Preconditions](../02-design/01-prototypes/user-journeys.md#onb-3--ตั้งเป้าหมายหลัก-req-02)
+  · ยืนยันจากโค้ดจริง `apps/web/server/routes/personalization-profile/index.ts`
+
 ---
 
 ## Epic 2: Daily YouTube Recommendation
@@ -564,6 +601,62 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
   [user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
   (Alt/Edge Case ที่สอง)
 
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: AC-INT-0-05 ถึง AC-INT-0-08 ด้านล่างครอบคลุมกติกา rate limit และ "1
+> บัญชี 1 รหัสที่ใช้งานได้" ที่ resolve แล้วเมื่อ 2026-09-25 (ดู [user-journeys.md § INT-0 Alt/Edge
+> Cases](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+> ข้อ 4–5 และ [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
+> — ก่อนหน้านี้ยังไม่มี AC/test case รองรับเลยแม้ journey จะ resolve ไปแล้ว (coverage gap ที่พบระหว่าง
+> self-freshness audit ของ `test-suite-builder`) AC-INT-0-08 ไม่ได้มาจาก Alt/Edge Case ของ journey
+> โดยตรง (journey ไม่ได้ลงรายละเอียดระดับ concurrency) แต่มาจากรายละเอียด implementation ที่ระบุตรงใน
+> Smart Integrations spec ("ภายใต้ transaction เดียวกันกับการตรวจ/ลบรหัส เพื่อกันการ race แข่งผ่าน
+> threshold พร้อมกัน") และยืนยันจากโค้ดจริง `apps/web/server/routes/pairing/index.ts`
+> (`db.runTransaction` ครอบทั้งการตรวจสอบ rate limit และการตรวจ/ลบรหัสไว้ในธุรกรรมเดียวกัน — ความเป็น
+> atomic ของ single-use เป็นผลลัพธ์โดยตรงจากดีไซน์นี้ ไม่ใช่การเดา edge case ใหม่)
+
+#### AC-INT-0-05 — กรอกรหัสผิดซ้ำเกิน rate limit ถูกล็อกชั่วคราว ปฏิเสธก่อนแม้แต่จะตรวจรหัส (429, REQ-18)
+- **Given**: Client เดียวกัน (นับตาม hash ของ IP) เรียก `POST /api/pairing/redeem` ด้วยรหัสที่ไม่ถูกต้อง
+  ติดต่อกัน 5 ครั้งภายในหน้าต่างเวลา 15 นาที
+- **When**: Client เดียวกันเรียก `redeem` อีกครั้ง (ครั้งที่ 6) ภายในหน้าต่างเวลาเดียวกัน แม้จะส่งรหัสที่
+  ถูกต้องและยังไม่หมดอายุจริงมาด้วยก็ตาม
+- **Then**: ระบบปฏิเสธคำขอด้วย `429 Too Many Requests` พร้อม header `Retry-After` โดยปฏิเสธจากการตรวจ
+  rate limit **ก่อน**แม้แต่จะไปตรวจสอบว่ารหัสที่ส่งมาถูกหรือผิด (ไม่แตะ `pairingCodes` collection เลย)
+  จนกว่าหน้าต่างเวลา 15 นาทีนับจากครั้งแรกที่กรอกผิดจะหมดอายุ
+- Prototype: ไม่มี — เป็น server-side rate limiting ที่ไม่มี UI mockup เฉพาะใน `v1/`
+- ต้นทาง: [user-journeys.md § INT-0 Alt/Edge Cases](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 4 · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+
+#### AC-INT-0-06 — Redeem สำเร็จ รีเซ็ตตัวนับ rate limit ของ client นั้นทันที (REQ-18)
+- **Given**: Client กรอกรหัสผิดไปแล้วบางจำนวนครั้ง (น้อยกว่า 5 ครั้ง) ภายในหน้าต่างเวลา 15 นาที ยังไม่ถูกล็อก
+- **When**: Client เดียวกัน redeem สำเร็จด้วยรหัสที่ถูกต้อง ยังไม่หมดอายุ และยังไม่ถูกใช้
+- **Then**: ระบบลบสถานะตัวนับจำนวนครั้งที่กรอกผิดของ client นั้นทิ้งทันทีในธุรกรรมเดียวกับการ redeem
+  (`pairingRedeemAttempts/{key}` ถูกลบ) — ถ้ากรอกผิดใหม่ในภายหลัง (แม้ภายในหน้าต่างเวลาเดิม) นับเริ่มต้นใหม่
+  จาก 0 ไม่สะสมต่อจากก่อนหน้า
+- Prototype: ไม่มี — เป็น server-side rate limiting ที่ไม่มี UI mockup เฉพาะใน `v1/`
+- ต้นทาง: [user-journeys.md § INT-0 Alt/Edge Cases](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 4 · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+
+#### AC-INT-0-07 — ขอรหัสใหม่ยกเลิกรหัสเก่าที่ยังไม่หมดอายุของบัญชีเดียวกันทั้งหมด (one live code per account, REQ-18)
+- **Given**: บัญชีผู้ใช้มีรหัสจับคู่ที่ยัง valid (ไม่หมดอายุ ไม่ถูกใช้) อยู่แล้ว 1 รหัสจากการขอครั้งก่อน
+- **When**: ผู้ใช้กดขอรหัสจับคู่ใหม่จากหน้าโปรไฟล์อีกครั้ง (`POST /api/pairing/create-code`)
+- **Then**: ระบบลบรหัสเก่าที่ยัง valid ของบัญชีเดียวกันทิ้งจริงทั้งหมดก่อน แล้วจึงสร้างรหัสใหม่แทน — รหัสเก่า
+  ใช้ redeem ไม่ได้อีกต่อไปนับจากนี้ (ตกไปอยู่ในกรณีเดียวกับรหัสไม่ถูกต้อง/หมดอายุ ตาม AC-INT-0-03) เหลือ
+  เฉพาะรหัสใหม่ล่าสุดที่ redeem ได้จริง
+- Prototype: [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+  (ปุ่ม "ขอรหัสจับคู่อุปกรณ์" ใหม่)
+- ต้นทาง: [user-journeys.md § INT-0 Alt/Edge Cases](../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 5 · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+
+#### AC-INT-0-08 — Redeem รหัสเดียวกันพร้อมกัน (concurrent) มีเพียงคำขอเดียวที่สำเร็จ (atomic single-use, REQ-18)
+- **Given**: มีรหัสจับคู่ที่ยัง valid อยู่ 1 รหัส (ไม่หมดอายุ ยังไม่ถูกใช้)
+- **When**: มี 2 คำขอ `POST /api/pairing/redeem` ด้วยรหัสเดียวกันมาถึง server พร้อมกัน (concurrent)
+- **Then**: มีเพียง 1 คำขอเท่านั้นที่ redeem สำเร็จ (ได้ custom token กลับไป) อีกคำขอหนึ่งได้รับการปฏิเสธ
+  เสมือนรหัสถูกใช้ไปแล้ว (`410`, ตาม AC-INT-0-03) — ไม่มีทางที่ทั้ง 2 คำขอจะสำเร็จพร้อมกันได้เลย เพราะการ
+  ตรวจสอบและลบรหัสอยู่ในธุรกรรม (transaction) เดียวกัน
+- Prototype: ไม่มี — เป็น server-side concurrency guarantee ที่ไม่มี UI mockup เฉพาะใน `v1/`
+- ต้นทาง: [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+  (implementation ที่ระบุตรง) — ยืนยันจากโค้ดจริง `apps/web/server/routes/pairing/index.ts`
+  (`db.runTransaction` ครอบทั้งการตรวจสอบและการลบเอกสาร `pairingCodes/{code}` ไว้ในธุรกรรมเดียวกัน)
+
 ---
 
 ### INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก
@@ -707,6 +800,76 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 > [INT-0 section](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code) ด้านบน) เพราะกลไกรหัส
 > จับคู่อุปกรณ์เป็นกลไกเดียวกันทุกประการไม่ว่าปลายทางจะเป็นตาชั่งอัจฉริยะ (INT-2) หรือ wearable (INT-3) —
 > ตอนนี้มี Feature ID/REQ-18 ของตัวเองแล้ว ไม่ใช่ technical precondition ที่ไม่มี REQ number แยกอีกต่อไป
+> ID **AC-INT-3-04** ที่ว่างลงจากการย้ายนี้ ถูกนำกลับมาใช้ใหม่ด้านล่าง (ไม่ใช่ scenario เดิม) สำหรับกลไก
+> pull-sync ที่ resolve แล้ว 2026-09-25
+
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: AC-INT-3-01/02 เดิม (ด้านบน) อธิบายผลลัพธ์ระดับแนวคิดว่า "มี/ไม่มีข้อมูล
+> wearable แล้วใช้ค่าไหนแทน MET" เท่านั้น — ยังไม่ได้ลงรายละเอียดกลไกจริงที่ resolve แล้วว่า companion
+> mobile app ไม่มีหน้าจอบันทึกการออกกำลังกายเอง ต้องรอผู้ใช้จบ session ที่หน้าเว็บ (PLN-3) ก่อนเสมอ แล้วกด
+> ปุ่ม sync บนมือถือแยกต่างหาก (asynchronous pull, ไม่ใช่ real-time push ระหว่างออกกำลังกาย) พร้อม
+> การแก้ไข daily log ด้วยส่วนต่าง (delta) เพื่อไม่นับซ้ำ — **AC-INT-3-04 ถึง AC-INT-3-08** ด้านล่างเพิ่มเข้า
+> มาครอบคลุมรายละเอียดกลไกนี้โดยเฉพาะ (ดู [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+> และ [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+> ที่ resolve เมื่อ 2026-09-25) — coverage gap ที่พบระหว่าง self-freshness audit ของ `test-suite-builder`
+> AC-INT-3-01/02 ยังคงถูกต้องในระดับผลลัพธ์ (wearable ชนะ MET เสมอเมื่อมีข้อมูล) จึงไม่ถูกลบ/แก้ไข เพียงแค่
+> ไม่ครบถ้วนพอจะทดสอบกลไกจริงทั้งหมดได้อีกต่อไป
+
+#### AC-INT-3-04 — Sync แคลอรี่จาก session ที่จบแล้วบนเว็บ แทนที่ MET ด้วยส่วนต่าง (delta) และคำนวณ completion/streak ใหม่ (pull-sync happy path, เพิ่ม 2026-09-25, REQ-13)
+- **Given**: ผู้ใช้จบการออกกำลังกาย (workout session) ที่หน้าเว็บ Planner เรียบร้อยแล้ว (สถานะ "completed")
+  ภายใน 24 ชั่วโมงที่ผ่านมา และผ่าน [INT-0](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
+  พร้อมเชื่อมต่อ wearable สำเร็จแล้ว
+- **When**: ผู้ใช้เปิด companion app กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด" — แอปเรียก
+  `GET /integrations/wearable/latest-session` ได้ session ที่ completed นั้นกลับมา แล้วอ่านค่า Active
+  Calories จาก HealthKit/Health Connect เฉพาะช่วงเวลาของ session นั้น (`[startedAt, startedAt +
+  ระยะเวลาที่ใช้จริง]`) แล้วส่งไปที่ `POST /integrations/wearable/readings`
+- **Then**: Server แทนที่ค่าประมาณจากสูตร MET เดิมของ session นั้นด้วยค่าจาก wearable เสมอ แก้ไข daily log
+  ของวันที่ session นั้นถูกบันทึกไว้ด้วย**ส่วนต่าง (delta)** ระหว่างค่าใหม่กับค่าเดิมที่ session นั้นเคยมี
+  ส่วนสมทบไว้แล้วเท่านั้น แล้วคำนวณสถานะ "ครบเป้าหมาย" (PLN-3) และ streak (PLN-4) ของวันนั้นใหม่ทันทีให้ตรง
+  กับค่าที่แก้ไขแล้ว ก่อนแจ้งผู้ใช้ว่าซิงค์สำเร็จ
+- Prototype: [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html) ·
+  [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+- ต้นทาง: [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (steps 1–11) · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว)
+
+#### AC-INT-3-05 — Session ยังกำลังดำเนินอยู่ (ยังไม่จบที่เว็บ) แจ้งให้ไปจบก่อน ไม่อ่าน/ส่งค่าใดๆ (เพิ่ม 2026-09-25, REQ-13)
+- **Given**: ผู้ใช้มี workout session ที่เริ่มไว้ภายใน 24 ชั่วโมงที่ผ่านมา แต่ยังไม่ได้กดจบที่หน้าเว็บ Planner
+  (สถานะยัง "กำลังดำเนินอยู่ / in progress")
+- **When**: ผู้ใช้กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด" บนมือถือ
+- **Then**: แอปแจ้งให้ผู้ใช้ไปจบการออกกำลังกายที่หน้าเว็บให้เสร็จก่อน **ยังไม่อ่านค่าจาก HealthKit/Health
+  Connect หรือส่งค่าใดๆ ไปที่ server เลย** ค่าประมาณ MET เดิมของ session นั้นยังไม่ถูกแทนที่
+- Prototype: [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html)
+- ต้นทาง: [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (step 6, Alt/Edge Case ที่สาม)
+
+#### AC-INT-3-06 — ไม่พบ session ใดภายใน 24 ชั่วโมงที่ผ่านมา แจ้งผู้ใช้ (เพิ่ม 2026-09-25, REQ-13)
+- **Given**: ผู้ใช้ไม่มี workout session ใดที่เริ่มภายใน 24 ชั่วโมงที่ผ่านมาเลย
+- **When**: ผู้ใช้กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด" บนมือถือ (เรียก
+  `GET /integrations/wearable/latest-session`)
+- **Then**: Server ตอบกลับว่าไม่พบ session ใด แอปแจ้งผู้ใช้ทันทีว่ายังไม่พบการออกกำลังกายในช่วง 24 ชม.
+  ที่ผ่านมา ให้ไปออกกำลังกายที่เว็บก่อน
+- Prototype: [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html)
+- ต้นทาง: [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (step 5, Alt/Edge Case ที่สอง)
+
+#### AC-INT-3-07 — Re-sync session เดิมซ้ำ ไม่นับแคลอรี่ซ้ำ (idempotent delta, เพิ่ม 2026-09-25, REQ-13)
+- **Given**: Session หนึ่งเคยถูก sync สำเร็จไปแล้วครั้งหนึ่ง (มีค่า wearable reading เดิมของ session นั้น
+  บันทึกไว้แล้ว และ daily log ถูกแก้ไขไปแล้วครั้งหนึ่งตาม AC-INT-3-04)
+- **When**: ผู้ใช้กดปุ่มซิงค์ซ้ำสำหรับ session เดิมอีกครั้ง
+- **Then**: ระบบไม่ถือเป็น error เขียนทับค่า wearable reading เดิมของ session นั้น และคำนวณส่วนต่าง (delta)
+  ระหว่างค่าใหม่กับค่าที่ session นั้นเคยมีส่วนสมทบไว้ก่อนหน้าใหม่อีกครั้ง (ไม่ใช่บวกค่าเต็มจำนวนซ้ำ) เพื่อ
+  ไม่ให้ daily log ของวันนั้นนับแคลอรี่ของ session นี้ซ้ำสองรอบ
+- Prototype: [12-device-pairing.html](../02-design/01-prototypes/v1/12-device-pairing.html)
+- ต้นทาง: [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (Alt/Edge Case ที่สี่)
+
+#### AC-INT-3-08 — สถานะเชื่อมต่อ wearable ยังคงอยู่หลังปิดแล้วเปิดแอปมือถือใหม่ (เพิ่ม 2026-09-25, REQ-13)
+- **Given**: ผู้ใช้เคยเชื่อมต่อ wearable (Apple Health/Google Health Connect) สำเร็จไว้แล้วก่อนหน้านี้
+- **When**: ผู้ใช้ปิดแล้วเปิด companion app ขึ้นมาใหม่ (relaunch)
+- **Then**: สถานะ "เชื่อมต่อแล้ว" ของ wearable ถูกโหลดจากโปรไฟล์บน server ทันทีที่เปิดแอป ไม่รีเซ็ตกลับเป็น
+  "ยังไม่เชื่อมต่อ"
+- Prototype: [11-device-integrations.html](../02-design/01-prototypes/v1/11-device-integrations.html)
+- ต้นทาง: [user-journeys.md § INT-3](../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (Alt/Edge Case สุดท้าย, ยืนยันจากโค้ดจริง 2026-09-25)
 
 ---
 
@@ -717,7 +880,7 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | ONB-0 | 7 |
 | ONB-1 | 3 |
 | ONB-2 | 3 |
-| ONB-3 | 6 |
+| ONB-3 | 8 (เพิ่ม AC-ONB-3-07/08 เมื่อ 2026-09-25) |
 | REC-1 | 4 |
 | REC-2 | 4 |
 | REC-3 | 2 |
@@ -726,11 +889,11 @@ Spec: [01-spec/20260823-04-smart-integrations.md](01-spec/20260823-04-smart-inte
 | PLN-2 | 4 |
 | PLN-3 | 3 |
 | PLN-4 | 3 |
-| INT-0 | 4 |
+| INT-0 | 8 (เพิ่ม AC-INT-0-05 ถึง 08 เมื่อ 2026-09-25) |
 | INT-1 | 7 |
 | INT-2 | 2 |
-| INT-3 | 3 |
-| **รวม** | **61** |
+| INT-3 | 8 (เพิ่ม AC-INT-3-04 ถึง 08 เมื่อ 2026-09-25) |
+| **รวม** | **72** |
 
 > อัปเดต 2026-08-29: +3 scenario จาก NFR-12/NFR-13 ที่เพิ่มใหม่ (AC-REC-2-04, AC-INT-3-03 จาก NFR-12;
 > AC-INT-1-04 จาก NFR-13) — ดูหมายเหตุข้อยกเว้นที่ต้นไฟล์

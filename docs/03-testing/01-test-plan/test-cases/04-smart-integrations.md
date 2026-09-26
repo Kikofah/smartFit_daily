@@ -10,7 +10,9 @@ INT-3**) สร้างจาก [acceptance-criteria.md](../../../01-requireme
 — AC-INT-0-01 ถึง AC-INT-3-03, อัปเดต 2026-08-29 ด้วย AC-INT-1-04/AC-INT-3-03 จาก NFR-13/NFR-12, อัปเดต
 2026-08-30 ด้วยการย้าย AC-INT-2-03–06/AC-INT-3-04 เดิมมาเป็น AC-INT-0-01–04 หลัง `feature-list-journey`
 ตั้ง Feature ID **INT-0**/REQ-18 ให้กลไกรหัสจับคู่อุปกรณ์เป็นของตัวเอง, อัปเดต 2026-08-31 ด้วย
-AC-INT-1-05 ถึง AC-INT-1-07 ใหม่ ครอบคลุม operation `GET /insights/weight-records`) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
+AC-INT-1-05 ถึง AC-INT-1-07 ใหม่ ครอบคลุม operation `GET /insights/weight-records`, **อัปเดต 2026-09-25**
+ด้วย **AC-INT-0-05 ถึง 08** (rate limit/one-code-per-account/atomic single-use ของกลไกรหัสจับคู่) และ
+**AC-INT-3-04 ถึง 08** (กลไก pull-sync/delta/completion-streak-recompute ของมือถือที่ resolve แล้ว)) ร่วมกับ [backlog.md](../../../01-requirements/backlog.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-pairing-code)
 (คำอธิบาย feature), [01-spec/20260823-04-smart-integrations.md](../../../01-requirements/01-spec/20260823-04-smart-integrations.md)
 (REQ-18/11/12/13 และค่าคงที่ 7,700 kcal ≈ 1 กก.), และ
 [user-journeys.md](../../../02-design/01-prototypes/user-journeys.md#epic-4-smart-integrations) (flow/Alt-Edge
@@ -19,11 +21,15 @@ Case) — ตาม methodology ของ `test-suite-builder` เอกสา�
 > **หมายเหตุขอบเขต**: ตาม [test-plan.md §1](../test-plan.md#1-ขอบเขต-scope) Epic 4 ทั้งหมดเป็น MoSCoW
 > **Could** และ**อยู่นอกขอบเขตการ execute ของรอบทดสอบปัจจุบัน** (ยังไม่ถูก implement จริง) — ไฟล์นี้เตรียม
 > test case ไว้ล่วงหน้าตามที่ scope ของ `test-suite-builder` กำหนด (default = full backlog coverage)
-> เพื่อให้พร้อมใช้ execute ทันทีเมื่อ Epic 4 ถูกหยิบขึ้นมา implement จริง — **ข้อยกเว้น (เพิ่ม 2026-08-30)**:
-> TC-INT-0-001 ถึง TC-INT-0-005 และ TC-INT-3-004 (กลไกรหัสจับคู่อุปกรณ์ pairing-code — ย้ายจาก
-> TC-INT-2-003 ถึง TC-INT-2-007 เดิม หลัง INT-0/REQ-18 เป็น Feature ID ทางการ) **execute ได้จริงแล้ว
-> ในรอบนี้** แม้ INT-2/INT-3 เองยังเป็น Could/นอกขอบเขต เพราะ backend จริงของกลไกนี้ implement แล้วที่
-> `apps/web/server/routes/pairing/index.ts` — ดู [test-plan.md §4 R14](../test-plan.md#4-risk-management)
+> เพื่อให้พร้อมใช้ execute ทันทีเมื่อ Epic 4 ถูกหยิบขึ้นมา implement จริง — **ข้อยกเว้น (เพิ่ม 2026-08-30,
+> ขยาย 2026-09-25)**: TC-INT-0-001 ถึง TC-INT-0-009 (กลไกรหัสจับคู่อุปกรณ์ pairing-code รวม rate limit/
+> one-code-per-account/concurrency ใหม่ — TC-INT-0-001 ถึง 005 ย้ายจาก TC-INT-2-003 ถึง TC-INT-2-007 เดิม
+> หลัง INT-0/REQ-18 เป็น Feature ID ทางการ, TC-INT-0-006 ถึง 009 เพิ่ม 2026-09-25) และ TC-INT-3-004 ถึง
+> TC-INT-3-009 (precondition guard เดิม + กลไก pull-sync/delta/streak-recompute ใหม่ที่เพิ่ม 2026-09-25)
+> **execute ได้จริงแล้วในรอบนี้** แม้ INT-2/INT-3 เองยังเป็น Could/นอกขอบเขต เพราะ backend จริงของกลไก
+> เหล่านี้ implement แล้วที่ `apps/web/server/routes/pairing/index.ts` และ
+> `apps/web/server/routes/integration-gateway/index.ts` (`GET /integrations/wearable/latest-session`,
+> `POST /integrations/wearable/readings`) — ดู [test-plan.md §4 R14](../test-plan.md#4-risk-management)
 
 **ตัวอย่างหน้าจอที่เกี่ยวข้อง** (prototype `v1`):
 [10-progress-insights.html](../../../02-design/01-prototypes/v1/10-progress-insights.html) (INT-1),
@@ -46,13 +52,15 @@ Activity Factor 1.55 (ตัวอย่างระดับกิจกรร�
 ## สารบัญ
 
 - [INT-0 — ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
-  — TC-INT-0-001 ถึง 005 (renumbering 2026-08-30 จาก TC-INT-2-003 ถึง 007 เดิม)
+  — TC-INT-0-001 ถึง 009 (001–005 renumbering 2026-08-30 จาก TC-INT-2-003 ถึง 007 เดิม; **006–009 เพิ่ม
+  2026-09-25** — rate limit/one-code-per-account/concurrent redeem)
 - [INT-1 — พยากรณ์วันถึงเป้าหมายน้ำหนัก](#int-1--พยากรณ์วันถึงเป้าหมายน้ำหนัก) — TC-INT-1-001 ถึง 008
   (006–008 เพิ่ม 2026-08-31, `GET /insights/weight-records`)
 - [INT-2 — ซิงค์ตาชั่งอัจฉริยะ](#int-2--ซิงค์ตาชั่งอัจฉริยะ) — TC-INT-2-001 ถึง 002 (003–007 เดิมย้ายไป
   INT-0 แล้วเมื่อ 2026-08-30)
-- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 004 (004 เพิ่ม 2026-08-30,
-  cross-reference ไปยัง TC-INT-0-005 อัปเดต 2026-08-30 รอบ renumbering)
+- [INT-3 — ซิงค์ข้อมูล Wearable](#int-3--ซิงค์ข้อมูล-wearable) — TC-INT-3-001 ถึง 009 (004 เพิ่ม 2026-08-30,
+  cross-reference ไปยัง TC-INT-0-005; **005–009 เพิ่ม 2026-09-25** — กลไก pull-sync/delta/streak-recompute/
+  no-session-24h/re-sync/relaunch ของมือถือ)
 
 ---
 
@@ -187,6 +195,88 @@ Journey: [user-journeys.md#int-0--ยืนยันตัวตนก่อน�
   [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) (ปลายทางเป็นหน้า
   จับคู่ตาชั่งหรือหน้าเชื่อมต่อ wearable แล้วแต่ผู้ใช้เลือก — ดู TC-INT-3-004 สำหรับ cross-reference
   ปลายทาง wearable โดยเฉพาะ)
+
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: TC-INT-0-006 ถึง 009 ด้านล่างครอบคลุม **AC-INT-0-05 ถึง 08** ใหม่
+> (rate limit เมื่อกรอกรหัสผิดซ้ำ, reset ตัวนับเมื่อสำเร็จ, "1 บัญชี 1 รหัส", และ atomic single-use ภายใต้
+> concurrent redeem) — coverage gap ที่พบระหว่าง self-freshness audit ของ `test-suite-builder` ยืนยันตรง
+> กับโค้ดจริง `apps/web/server/routes/pairing/index.ts` และ
+> `apps/web/server/domain/pairingRateLimit.ts`
+
+### TC-INT-0-006 — กรอกรหัสผิดซ้ำเกิน rate limit ถูกล็อกชั่วคราว ปฏิเสธก่อนแม้แต่จะตรวจรหัส (429)
+
+- **Pre-condition**: Client `uid_test_002`'s IP (นับตาม hash ของ IP) เรียก `POST /api/pairing/redeem`
+  ด้วยรหัสที่ไม่ถูกต้อง (`"000001"` ถึง `"000005"`) ติดต่อกัน 5 ครั้งภายในหน้าต่างเวลา 15 นาที (เช่น เวลา
+  `10:00:00` ถึง `10:01:00`) — ทุกครั้งได้ `410` ตามปกติ (ยังไม่ถูกล็อก)
+- **Test Steps**:
+  1. เรียก `POST /api/pairing/redeem` ครั้งที่ 6 ภายในหน้าต่างเวลาเดียวกัน (เช่น เวลา `10:01:30`) คราวนี้ส่ง
+     รหัสที่**ถูกต้องจริง**และยังไม่หมดอายุมาด้วย (`"482913"`)
+  2. สังเกต response และ header ที่ได้กลับมา
+  3. ตรวจสอบว่าเอกสาร `pairingCodes/482913` ยังอยู่ใน Firestore หรือไม่หลังเรียกเสร็จ (ควรยังอยู่ ไม่ถูกลบ)
+- **Expected Result**: ระบบปฏิเสธคำขอด้วย **`429 Too Many Requests`** พร้อม header `Retry-After` (ค่าเท่ากับ
+  เวลาที่เหลือจนกว่าหน้าต่าง 15 นาทีนับจากความพยายามที่ผิดครั้งแรกจะหมดอายุ) โดยปฏิเสธจากการตรวจ rate limit
+  ก่อนแม้แต่จะไปตรวจสอบรหัสที่ส่งมา — เอกสาร `pairingCodes/482913` ยังคงอยู่ใน Firestore ไม่ถูกลบ (รหัสยัง
+  ใช้ redeem ได้จริงหลังหน้าต่างเวลาหมดอายุ)
+- **Test Data**: 5 ครั้งแรกกรอกผิด (`"000001"`–`"000005"`) ที่เวลา `10:00:00`–`10:01:00`, ครั้งที่ 6 ที่เวลา
+  `10:01:30` ส่งรหัสถูกต้อง `"482913"` (ยังไม่หมดอายุ) → คาดว่า response = `429` พร้อม `Retry-After`
+- **References**: REQ-18 · AC-INT-0-05 · [user-journeys.md § INT-0 Alt/Edge Cases](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 4 · โค้ดจริง `apps/web/server/routes/pairing/index.ts` (`isLocked`/`retryAfterSeconds`)
+
+### TC-INT-0-007 — Redeem สำเร็จ รีเซ็ตตัวนับ rate limit ของ client นั้นทันที
+
+- **Pre-condition**: Client `uid_test_002`'s IP กรอกรหัสผิดไปแล้ว 3 ครั้ง (น้อยกว่า 5 ครั้ง) ภายในหน้าต่าง
+  เวลา 15 นาที ยังไม่ถูกล็อก
+- **Test Steps**:
+  1. เรียก `POST /api/pairing/redeem` ด้วยรหัสที่ถูกต้อง ยังไม่หมดอายุ ยังไม่ถูกใช้ (`"777888"`) — คาดว่า
+     สำเร็จ
+  2. ทันทีหลังจากนั้น เรียก `redeem` ผิดอีก 2 ครั้งติดกัน (`"111111"`, `"222222"`) ภายในหน้าต่างเวลาเดิม
+  3. สังเกตว่า client ถูกล็อกหรือไม่หลังความพยายามผิดครั้งที่ 2 ของขั้นตอนที่ 2
+- **Expected Result**: ขั้นตอนที่ 1 สำเร็จ (`200` พร้อม custom token) และลบเอกสาร `pairingRedeemAttempts/{key}`
+  ของ client นี้ทิ้งในธุรกรรมเดียวกัน (ตัวนับรีเซ็ตเป็น 0) — ขั้นตอนที่ 2 ทั้ง 2 ครั้งยังคงได้ `410` ตามปกติ
+  (ไม่ใช่ `429`) เพราะนับความพยายามผิดใหม่จาก 0 (รวมเป็นแค่ 2 ครั้งหลัง reset ไม่ใช่ 3+2=5 ครั้งสะสมจากก่อน
+  redeem สำเร็จ) — ยังไม่ถึงเกณฑ์ล็อก 5 ครั้ง
+- **Test Data**: กรอกผิด 3 ครั้งแรก (ก่อนหน้า, ไม่ถูกล็อก) → redeem สำเร็จด้วย `"777888"` → กรอกผิดอีก 2 ครั้ง
+  (`"111111"`, `"222222"`) → คาดว่ายังไม่ถูกล็อก (`410` ทั้งคู่ ไม่ใช่ `429`)
+- **References**: REQ-18 · AC-INT-0-06 · [user-journeys.md § INT-0 Alt/Edge Cases](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 4 · โค้ดจริง `apps/web/server/routes/pairing/index.ts` (`tx.delete(rateLimitRef)` เมื่อ redeem สำเร็จ)
+
+### TC-INT-0-008 — ขอรหัสใหม่ยกเลิกรหัสเก่าที่ยังไม่หมดอายุของบัญชีเดียวกันทั้งหมด (one live code per account)
+
+- **Pre-condition**: บัญชี `uid_test_003` มีรหัสจับคู่ที่ยัง valid อยู่แล้ว 1 รหัส (`"111222"`, ไม่หมดอายุ
+  ไม่ถูกใช้) จากการขอครั้งก่อน
+- **Test Steps**:
+  1. ผู้ใช้ (`uid_test_003`, ยังล็อกอินอยู่บนเว็บ) กดขอรหัสจับคู่ใหม่อีกครั้ง — client เรียก
+     `POST /api/pairing/create-code`
+  2. สังเกตรหัสใหม่ที่ได้กลับมา (เช่น `"333444"`)
+  3. เรียก `POST /api/pairing/redeem` ด้วยรหัสเก่า (`"111222"`)
+  4. เรียก `POST /api/pairing/redeem` ด้วยรหัสใหม่ (`"333444"`)
+- **Expected Result**: ขั้นตอนที่ 1 ลบเอกสาร `pairingCodes/111222` (รหัสเก่า) ทิ้งจริงก่อน แล้วจึงสร้าง
+  `pairingCodes/333444` (รหัสใหม่) ผูกกับ `uid_test_003` เดิม — ขั้นตอนที่ 3 (รหัสเก่า) ได้ `410 Gone`
+  เหมือนรหัสไม่ถูกต้อง/หมดอายุ (ตาม AC-INT-0-03) — ขั้นตอนที่ 4 (รหัสใหม่) สำเร็จ `200` พร้อม custom token
+  ที่ผูกกับ `uid_test_003`
+- **Test Data**: รหัสเก่า = `"111222"` (ถูกลบ, redeem ไม่ได้อีก) → รหัสใหม่ = `"333444"` (redeem ได้จริง)
+  `uid = "uid_test_003"`
+- **References**: REQ-18 · AC-INT-0-07 · [user-journeys.md § INT-0 Alt/Edge Cases](../../../02-design/01-prototypes/user-journeys.md#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  ข้อ 5 · [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html) ·
+  โค้ดจริง `apps/web/server/routes/pairing/index.ts` (`invalidateExistingCodesFor`)
+
+### TC-INT-0-009 — Redeem รหัสเดียวกันพร้อมกัน (concurrent) มีเพียงคำขอเดียวที่สำเร็จ (atomic single-use)
+
+- **Pre-condition**: มีรหัสจับคู่ที่ยัง valid อยู่ 1 รหัส (`"555666"`, ไม่หมดอายุ ยังไม่ถูกใช้) ผูกกับ
+  `uid_test_004`
+- **Test Steps**:
+  1. ยิง 2 คำขอ `POST /api/pairing/redeem` ด้วย `code = "555666"` พร้อมกัน (concurrent, เช่นผ่าน
+     `Promise.all`)
+  2. สังเกต response ของทั้ง 2 คำขอ
+- **Expected Result**: มีเพียง**คำขอเดียว**ที่ redeem สำเร็จ (`200` พร้อม custom token ที่ decode แล้วมี
+  `uid = "uid_test_004"`) อีกคำขอหนึ่งได้ `410 Gone` (เสมือนรหัสถูกใช้ไปแล้ว) — ไม่มีทางที่ทั้ง 2 คำขอจะได้
+  `200` พร้อมกัน หรือทั้งคู่ได้ `410` พร้อมกัน เพราะการตรวจสอบและลบเอกสาร `pairingCodes/555666` อยู่ในธุรกรรม
+  (`db.runTransaction`) เดียวกัน
+- **Test Data**: `code = "555666"`, `uid = "uid_test_004"`, 2 คำขอพร้อมกัน → คาดว่า 1 คำขอได้ `200`, อีก
+  1 คำขอได้ `410`
+- **References**: REQ-18 · AC-INT-0-08 · [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../../../01-requirements/01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว) ·
+  โค้ดจริง `apps/web/server/routes/pairing/index.ts` (`db.runTransaction` ครอบการตรวจ/ลบรหัสไว้ในธุรกรรม
+  เดียวกัน) — ไม่มีลิงก์ user-journeys.md เพราะเป็น concurrency guarantee ระดับ implementation ไม่ใช่
+  Alt/Edge Case ของ journey โดยตรง
 
 ---
 
@@ -441,10 +531,14 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 
 ### TC-INT-3-003 — ส่ง sessionId ที่ไม่มีอยู่จริงมากับ wearable reading ระบบต้อง reject ก่อนเขียนข้อมูล (NFR-12)
 
-> **หมายเหตุ testability**: เช่นเดียวกับ TC-REC-2-005 — ตาม [test-plan.md §4 Risk
-> R12](../test-plan.md#4-risk-management) test case นี้ **ยัง execute ไม่ได้ในรอบนี้** เพราะต้องการ
-> backend/Cloud Function จริงที่ยังไม่มีในโปรเจกต์ (นอกจากนี้ INT-3 เองก็อยู่นอกขอบเขต execution อยู่แล้ว
-> เพราะเป็น Epic 4/Could) — เตรียมไว้ล่วงหน้าตามหลักฐานใน database-schema.md §8.3
+> **หมายเหตุ testability (อัปเดต 2026-09-25)**: เดิม test case นี้ถูก mark ว่า "ยัง execute ไม่ได้ในรอบนี้"
+> เพราะสมมติว่าต้องรอ backend/Cloud Function จริงเหมือน TC-REC-2-005 (ดู [test-plan.md §4 Risk
+> R12](../test-plan.md#4-risk-management)) — **ข้อนี้ล้าหลังแล้ว**: backend จริงของ
+> `POST /integrations/wearable/readings` implement แล้วที่
+> `apps/web/server/routes/integration-gateway/index.ts` (ใช้ `assertDocExists` ตรวจ referential
+> existence ของ `sessionId` ก่อนเขียนข้อมูลเสมอ ตรงกับ Expected Result ด้านล่างทุกประการ) เช่นเดียวกับกลไก
+> pairing-code ของ INT-0 (R14) — **test case นี้ execute ได้จริงแล้วในรอบนี้** แม้ INT-3 เองยังเป็น
+> Could/นอกขอบเขตตาม MoSCoW (ดู [test-plan.md §4 R12](../test-plan.md#4-risk-management) ที่ปรับปรุงแล้ว)
 
 - **Pre-condition**: ผู้ใช้เชื่อมต่อ wearable สำเร็จแล้ว (INT-3) แต่ wearable device ส่งค่าแคลอรี่มาพร้อม
   `sessionId` ที่ไม่ตรงกับ Workout Session ใดของผู้ใช้ในระบบ เช่น session ถูกลบไปแล้วหรือหมดอายุ
@@ -494,6 +588,113 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
   [13-companion-pairing-code.html](../../../02-design/01-prototypes/v1/13-companion-pairing-code.html) →
   [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html)
 
+> **หมายเหตุ (เพิ่ม 2026-09-25)**: TC-INT-3-001/002 (ด้านบน) ครอบคลุมผลลัพธ์ระดับแนวคิดของ REC-2/AC-REC-2-03
+> เท่านั้น (มี/ไม่มีข้อมูล wearable แล้วใช้ค่าไหนแทน MET) — ไม่ได้ลงรายละเอียดกลไก pull-sync จริงที่ resolve
+> แล้ว 2026-09-25 (companion app ไม่มีหน้าจอบันทึกการออกกำลังกายเอง ต้องรอจบ session ที่เว็บก่อนเสมอ แล้วกด
+> sync แยกต่างหากบนมือถือ) **TC-INT-3-005 ถึง 009** ด้านล่างเพิ่มเข้ามาครอบคลุม **AC-INT-3-04 ถึง 08** ใหม่
+> โดยเฉพาะ — coverage gap ที่พบระหว่าง self-freshness audit ของ `test-suite-builder` ยืนยันตรงกับโค้ดจริง
+> `apps/web/server/routes/integration-gateway/index.ts` (`GET /integrations/wearable/latest-session`,
+> `POST /integrations/wearable/readings`) และ `apps/web/server/domain/dailyLog.ts`
+> (`applyCalorieDeltaToDailyLog`)
+
+### TC-INT-3-005 — Sync แคลอรี่จาก session ที่จบแล้วบนเว็บ แทนที่ MET ด้วยส่วนต่าง (delta) และคำนวณ completion/streak ใหม่ (pull-sync happy path, เพิ่ม 2026-09-25)
+
+- **Pre-condition**: ผู้ใช้ (persona ด้านบน, น้ำหนักหลังซิงค์จาก TC-INT-2-001 = 79.2 กก. → `dailyCalorieTargetKcal`
+  = 79.2 × 4.5 = **356.4 kcal/วัน**) จบการออกกำลังกาย (workout session) ที่หน้าเว็บ Planner เรียบร้อยแล้ว
+  เมื่อ `2026-09-24T19:00:00Z` ใช้เวลาจริง 45 นาที (จบ `19:45:00Z`) — สถานะ "completed" บันทึก log ของ
+  วันที่ `2026-09-24` ด้วยค่าประมาณ MET เดิม = **300 kcal** (ยังไม่ถึงเป้าหมาย 356.4 kcal ของวันนั้น
+  สมมติว่าเป็น session เดียวของวันนั้น) ผู้ใช้ผ่าน [INT-0](#int-0--ยืนยันตัวตนก่อนจับคู่อุปกรณ์ผ่านรหัสจับคู่-req-18)
+  และเชื่อมต่อ wearable สำเร็จแล้ว
+- **Test Steps**:
+  1. เปิด companion app ที่เวลา `2026-09-25T08:00:00Z` (ภายใน 24 ชม.นับจาก session เริ่ม) กดปุ่ม
+     "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด"
+  2. แอปเรียก `GET /api/integrations/wearable/latest-session` — สังเกต response
+  3. แอปอ่านค่า Active Calories จาก HealthKit เฉพาะช่วง `19:00:00Z`–`19:45:00Z` ของวันที่ `2026-09-24`
+     ได้ค่า **520 kcal**
+  4. แอปส่งค่านั้นไปที่ `POST /api/integrations/wearable/readings` พร้อม `sessionId` ของ session นั้น
+  5. ตรวจสอบค่าที่บันทึกใน daily log ของวันที่ `2026-09-24`, สถานะ "ครบเป้าหมาย" (PLN-3), และ streak
+     (PLN-4) หลังเรียกเสร็จ
+- **Expected Result**: Response ของขั้นตอนที่ 2 คืน session ที่ `status = "completed"` พร้อม
+  `actualDurationMinutes = 45` — Server (ขั้นตอนที่ 4) แทนที่ค่าประมาณ MET เดิม (300 kcal) ด้วยค่าจาก
+  wearable (520 kcal) แก้ไข daily log ของวันที่ `2026-09-24` ด้วยส่วนต่าง (delta) = 520 − 300 = **+220
+  kcal** เท่านั้น (ไม่ใช่บวก 520 kcal เต็มจำนวน) ทำให้ยอดสะสมของวันนั้นเปลี่ยนจาก 300 เป็น **520 kcal** ซึ่ง
+  **เกินเป้าหมาย 356.4 kcal ของวันนั้นแล้ว** — สถานะ "ครบเป้าหมาย" ของวันที่ `2026-09-24` เปลี่ยนจาก
+  "ไม่ครบ" เป็น "ครบเป้าหมาย" ทันที และ streak (PLN-4) ถูกคำนวณใหม่ให้นับวันนั้นรวมด้วย
+- **Test Data**: MET เดิม = 300 kcal, wearable actual = 520 kcal → delta = +220 kcal, ยอดสะสมวันนั้น
+  300 → 520 kcal, `dailyCalorieTargetKcal` = 356.4 kcal (300 < 356.4 = ไม่ครบ → 520 ≥ 356.4 = ครบ)
+- **References**: REQ-13 · AC-INT-3-04 · [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13](../../../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (steps 1–11) · [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) ·
+  โค้ดจริง `apps/web/server/routes/integration-gateway/index.ts`,
+  `apps/web/server/domain/dailyLog.ts` (`applyCalorieDeltaToDailyLog`)
+
+### TC-INT-3-006 — Session ยังกำลังดำเนินอยู่ (ยังไม่จบที่เว็บ) แจ้งให้ไปจบก่อน ไม่อ่าน/ส่งค่าใดๆ (เพิ่ม 2026-09-25)
+
+- **Pre-condition**: ผู้ใช้เริ่ม workout session ที่หน้าเว็บเมื่อ `2026-09-25T07:00:00Z` แต่ยังไม่ได้กดจบ
+  (สถานะยัง `"in_progress"`) — ยังอยู่ภายใน 24 ชม.
+- **Test Steps**:
+  1. เปิด companion app ที่เวลา `2026-09-25T07:30:00Z` กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด"
+  2. แอปเรียก `GET /api/integrations/wearable/latest-session` — สังเกต response
+  3. สังเกตว่าแอปเรียก HealthKit หรือ `POST /api/integrations/wearable/readings` หรือไม่
+- **Expected Result**: Response ของขั้นตอนที่ 2 คืน session เดียวกันแต่ `status = "in_progress"` —
+  แอปแจ้งผู้ใช้ให้ไปจบการออกกำลังกายที่หน้าเว็บให้เสร็จก่อนทันที **ไม่อ่านค่าจาก HealthKit และไม่เรียก
+  `POST /integrations/wearable/readings` เลย** ค่าประมาณ MET เดิมของ session นั้น (ถ้ามี) ไม่ถูกแตะต้อง
+- **Test Data**: session สถานะ `"in_progress"`, เริ่ม `2026-09-25T07:00:00Z` → คาดว่าไม่มีการเรียก
+  HealthKit/`POST readings` เลย
+- **References**: REQ-13 · AC-INT-3-05 · [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13](../../../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (step 6, Alt/Edge Case ที่สาม) · [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) ·
+  โค้ดจริง `apps/web/server/routes/integration-gateway/index.ts` (`GET /integrations/wearable/latest-session`
+  คืน `status` ให้ client ตัดสินใจ)
+
+### TC-INT-3-007 — ไม่พบ session ใดภายใน 24 ชั่วโมงที่ผ่านมา แจ้งผู้ใช้ (เพิ่ม 2026-09-25)
+
+- **Pre-condition**: ผู้ใช้ไม่มี workout session ใดที่เริ่มภายใน 24 ชั่วโมงที่ผ่านมาเลย (session ล่าสุดของ
+  ผู้ใช้เริ่มเมื่อ 3 วันก่อน)
+- **Test Steps**:
+  1. เปิด companion app กดปุ่ม "ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด"
+  2. แอปเรียก `GET /api/integrations/wearable/latest-session` — สังเกต response
+- **Expected Result**: Server ตอบกลับ **`404`** (ไม่พบ session ใดในช่วง 24 ชม.) — แอปแจ้งผู้ใช้ทันทีว่ายังไม่
+  พบการออกกำลังกายในช่วง 24 ชั่วโมงที่ผ่านมา ให้ไปออกกำลังกายที่เว็บก่อน
+- **Test Data**: session ล่าสุดของผู้ใช้เริ่มเมื่อ 3 วันก่อน (นอกช่วง 24 ชม.) → คาดว่า response = `404`
+- **References**: REQ-13 · AC-INT-3-06 · [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13](../../../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (step 5, Alt/Edge Case ที่สอง) · [12-device-pairing.html](../../../02-design/01-prototypes/v1/12-device-pairing.html) ·
+  โค้ดจริง `apps/web/server/routes/integration-gateway/index.ts`
+  (`GET /integrations/wearable/latest-session` — `since = now - 24h`)
+
+### TC-INT-3-008 — Re-sync session เดิมซ้ำ ไม่นับแคลอรี่ซ้ำ (idempotent delta, เพิ่ม 2026-09-25)
+
+- **Pre-condition**: Session เดียวกับ TC-INT-3-005 ถูก sync สำเร็จไปแล้วครั้งหนึ่ง (ค่าที่บันทึกอยู่ตอนนี้
+  ในโปรไฟล์ session = wearable reading 520 kcal, daily log ของ `2026-09-24` มียอดสะสม 520 kcal)
+- **Test Steps**:
+  1. ผู้ใช้กดปุ่มซิงค์ซ้ำสำหรับ session เดิมอีกครั้ง — คราวนี้ HealthKit รายงานค่าที่ปรับปรุงแล้ว = **540
+     kcal** (ค่าประมวลผลใหม่ที่แม่นยำขึ้นของ Apple Health)
+  2. แอปส่งค่าใหม่ไปที่ `POST /api/integrations/wearable/readings` พร้อม `sessionId` เดิม
+  3. ตรวจสอบยอดสะสมของ daily log วันที่ `2026-09-24` หลังเรียกเสร็จ
+- **Expected Result**: ระบบไม่ถือเป็น error เขียนทับค่า wearable reading เดิมของ session นั้น (520 → 540)
+  และคำนวณส่วนต่าง (delta) จากค่าที่ session นั้นเคยมีส่วนสมทบไว้ล่าสุด (520, ไม่ใช่ 300 เดิม) = 540 − 520 =
+  **+20 kcal** เท่านั้น — ยอดสะสมของวันนั้นเปลี่ยนจาก 520 เป็น **540 kcal** (ไม่ใช่ 300+540=840 ซึ่งจะเป็น
+  การนับซ้ำ)
+- **Test Data**: ค่าเดิมที่ session เคยมีส่วนสมทบ = 520 kcal, ค่าใหม่จาก re-sync = 540 kcal → delta = +20
+  kcal, ยอดสะสมวันนั้น 520 → 540 kcal (ไม่ใช่ 840)
+- **References**: REQ-13 · AC-INT-3-07 · [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13](../../../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (Alt/Edge Case ที่สี่) · โค้ดจริง `apps/web/server/routes/integration-gateway/index.ts`
+  (`calorieDeltaKcal = calorieValueKcal - previousSessionKcal`, ใช้ `actualCalorieBurn.calculatedKcal`
+  ล่าสุดเป็นฐาน ไม่ใช่ MET เดิมเสมอไป)
+
+### TC-INT-3-009 — สถานะเชื่อมต่อ wearable ยังคงอยู่หลังปิดแล้วเปิดแอปมือถือใหม่ (เพิ่ม 2026-09-25)
+
+- **Pre-condition**: ผู้ใช้เคยเชื่อมต่อ wearable (Apple Health/Google Health Connect) สำเร็จไว้แล้วก่อนหน้านี้
+  (`integrationConnections.wearable.connectionStatus = "connected"` บันทึกไว้ในโปรไฟล์บน server)
+- **Test Steps**:
+  1. บังคับปิด (force-close) companion app
+  2. เปิด companion app ขึ้นมาใหม่
+  3. ไปที่หน้ารายการอุปกรณ์ (device integrations) สังเกตสถานะการเชื่อมต่อของ wearable
+- **Expected Result**: สถานะ "เชื่อมต่อแล้ว" ของ wearable ถูกโหลดจากโปรไฟล์บน server ทันทีที่เปิดแอป **ไม่
+  รีเซ็ตกลับเป็น "ยังไม่เชื่อมต่อ"** แม้จะเพิ่งเปิดแอปใหม่ก็ตาม
+- **Test Data**: `integrationConnections.wearable.connectionStatus = "connected"` (ก่อนปิดแอป) → คาดว่า
+  หลัง relaunch ยังคงเป็น `"connected"` เหมือนเดิม
+- **References**: REQ-13 · AC-INT-3-08 · [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13](../../../02-design/01-prototypes/user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req-13)
+  (Alt/Edge Case สุดท้าย) · [11-device-integrations.html](../../../02-design/01-prototypes/v1/11-device-integrations.html)
+
 ---
 
 ## หมายเหตุ: Gap ที่ยังไม่มี test case (Open Question ที่ยังไม่ resolve)
@@ -521,6 +722,10 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 | INT-0 | AC-INT-0-02 (เดิม AC-INT-2-04) | TC-INT-0-002 | 1:1 — execute ได้จริง |
 | INT-0 | AC-INT-0-03 (เดิม AC-INT-2-05) | TC-INT-0-003, TC-INT-0-004 | 1 AC → 2 TC (TC-003: 3 สถานการณ์ consolidated เป็น 410 เดียว; TC-004: boundary timing ของ TTL) — execute ได้จริง |
 | INT-0 | AC-INT-0-04 (เดิม AC-INT-2-06 + AC-INT-3-04 รวมกัน) | TC-INT-0-005 | 1:1 — execute ได้จริง (ครอบคลุมทั้ง 2 ปลายทาง ตาชั่ง/wearable ในตัว) |
+| INT-0 | AC-INT-0-05 (ใหม่, เพิ่ม 2026-09-25) | TC-INT-0-006 | 1:1 — execute ได้จริง |
+| INT-0 | AC-INT-0-06 (ใหม่, เพิ่ม 2026-09-25) | TC-INT-0-007 | 1:1 — execute ได้จริง |
+| INT-0 | AC-INT-0-07 (ใหม่, เพิ่ม 2026-09-25) | TC-INT-0-008 | 1:1 — execute ได้จริง |
+| INT-0 | AC-INT-0-08 (ใหม่, เพิ่ม 2026-09-25) | TC-INT-0-009 | 1:1 — execute ได้จริง |
 | INT-1 | AC-INT-1-01 | TC-INT-1-001 | 1:1 |
 | INT-1 | AC-INT-1-02 | TC-INT-1-002 | 1:1 |
 | INT-1 | AC-INT-1-03 | TC-INT-1-003, TC-INT-1-004 | 1 AC → 2 TC (variation: ขาดดุล = 0 / ขาดดุลสวนทางเป้าหมาย) |
@@ -532,9 +737,23 @@ Journey: [user-journeys.md#int-3--ซิงค์ข้อมูล-wearable-req
 | INT-2 | AC-INT-2-02 | TC-INT-2-002 | 1:1 |
 | INT-3 | AC-INT-3-01 | TC-INT-3-001 | 1:1 |
 | INT-3 | AC-INT-3-02 | TC-INT-3-002 | 1:1 |
-| INT-3 | AC-INT-3-03 (ใหม่, NFR-12, เพิ่ม 2026-08-29) | TC-INT-3-003 | 1:1 — "not testable in this round" (ดู test-plan.md R12) |
+| INT-3 | AC-INT-3-03 (ใหม่, NFR-12, เพิ่ม 2026-08-29) | TC-INT-3-003 | 1:1 — execute ได้จริงแล้ว (อัปเดต 2026-09-25 — backend `POST /integrations/wearable/readings` มีอยู่แล้ว, ดู test-plan.md R12 ที่ปรับปรุงแล้ว) |
 | INT-3 | AC-INT-0-04 (cross-ref, เดิม AC-INT-3-04) | TC-INT-3-004 | 1:1 — execute ได้จริง (cross-reference ยืนยันเฉพาะฝั่ง wearable ของ TC-INT-0-005) |
-| **รวม** | **16 AC scenario ไม่ซ้ำ** (ครบทุก AC ของ INT-0/1/2/3 ใน acceptance-criteria.md — TC-INT-3-004 map ซ้ำกับ AC-INT-0-04) | **19 test case** | |
+| INT-3 | AC-INT-3-04 (ใหม่, เพิ่ม 2026-09-25, pull-sync happy path) | TC-INT-3-005 | 1:1 — execute ได้จริง |
+| INT-3 | AC-INT-3-05 (ใหม่, เพิ่ม 2026-09-25, in-progress session) | TC-INT-3-006 | 1:1 — execute ได้จริง |
+| INT-3 | AC-INT-3-06 (ใหม่, เพิ่ม 2026-09-25, ไม่พบ session ใน 24h) | TC-INT-3-007 | 1:1 — execute ได้จริง |
+| INT-3 | AC-INT-3-07 (ใหม่, เพิ่ม 2026-09-25, re-sync ไม่นับซ้ำ) | TC-INT-3-008 | 1:1 — execute ได้จริง |
+| INT-3 | AC-INT-3-08 (ใหม่, เพิ่ม 2026-09-25, relaunch persist) | TC-INT-3-009 | 1:1 — execute ได้จริง |
+| **รวม** | **27 AC scenario ไม่ซ้ำ** (ครบทุก AC ของ INT-0/1/2/3 ใน acceptance-criteria.md — TC-INT-3-004 map ซ้ำกับ AC-INT-0-04) | **32 test case** | |
+
+> อัปเดต 2026-09-25 (`test-suite-builder`, coverage gap พบระหว่าง self-freshness audit): เพิ่ม
+> **TC-INT-0-006 ถึง 009** ครอบคลุม **AC-INT-0-05 ถึง 08** ใหม่ (rate limit, reset ตัวนับ, one-code-per-
+> account, atomic single-use ภายใต้ concurrent redeem) และเพิ่ม **TC-INT-3-005 ถึง 009** ครอบคลุม
+> **AC-INT-3-04 ถึง 08** ใหม่ (กลไก pull-sync/delta/completion-streak-recompute/no-session-24h/re-sync/
+> relaunch-persist ของมือถือที่ resolve แล้ว 2026-09-25) — ทั้งหมด execute ได้จริงในรอบนี้เหมือน TC-INT-0-001
+> ถึง 005 เพราะ backend จริงมีอยู่แล้ว นอกจากนี้ยังอัปเดต **TC-INT-3-003** จาก "not testable" เป็น
+> "execute ได้จริง" หลังพบว่า backend ของ `POST /integrations/wearable/readings` (NFR-12 validation) ก็
+> implement แล้วเช่นกัน — AC ไม่ซ้ำจาก 16 เป็น **27**, test case จาก 19 เป็น **32**
 
 > อัปเดต 2026-08-31 (`test-suite-builder`, coverage gap): เพิ่ม **TC-INT-1-006 ถึง TC-INT-1-008** ครอบคลุม
 > **AC-INT-1-05 ถึง AC-INT-1-07** ใหม่ (operation `GET /insights/weight-records` ที่เพิ่มเข้า

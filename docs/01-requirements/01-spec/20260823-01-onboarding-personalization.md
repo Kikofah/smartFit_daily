@@ -108,6 +108,24 @@ flow เดียวกัน — ผลลัพธ์จาก Authentication 
      ปัจจุบัน
   3. ทั้งสองฟิลด์ถูกส่งไปพร้อมกันใน request เดียวกัน (`PUT /api/profile/goal`) และบันทึกอยู่ใน
      `goalSelection` object เดียวกัน — ไม่ใช่คนละ entity/คนละ endpoint
+
+  **เพิ่มเติม 2026-09-25 (ยืนยันกับผู้ใช้งานแล้ว — audit พบว่า `01-spec/` ยังไม่เคยระบุ 2 จุดนี้ชัดเจน แม้
+  `acceptance-criteria.md`/`test-cases/01-onboarding-personalization.md` จะยึดพฤติกรรมนี้อยู่แล้วก่อนหน้านี้)**:
+  1. **เก็บเป็นค่าที่แม่นยำ ไม่ปัดเศษ (exact value)**: ทั้ง `dailyCalorieTargetKcal` และ
+     `dailyIntakeTargetKcal` ถูกคำนวณ/บันทึก/ส่งกลับเป็นค่าที่แม่นยำเสมอ (เช่น น้ำหนัก 75 กก. × 4.5 =
+     **337.5**, ไม่ใช่ 338) การปัดเศษเป็นเรื่องของการ**แสดงผล (display-only)** ที่ทำ ณ จุดที่ render แต่ละ
+     หน้าจอเท่านั้น (เช่นหน้า Goal Confirm แสดง "338 kcal") — การคำนวณ/เปรียบเทียบอื่นที่ใช้ค่านี้ต่อ (เช่น
+     PLN-3 all-or-nothing completion, REC-1 คำนวณแคลอรี่ที่เหลือ) ต้องใช้ค่าที่แม่นยำเสมอ ไม่ใช่ค่าที่ปัดแล้ว
+  2. **Safety floor มีผลเฉพาะเมื่อค่าดิบ "ต่ำกว่า" 1,200 kcal อย่างเคร่งครัด (strictly less than)**: ถ้าค่า
+     `dailyIntakeTargetKcal` ดิบเท่ากับ 1,200 kcal พอดี ถือว่า**ไม่ต่ำกว่า** floor จึง**ไม่ถูกปรับ**
+     (`isSafetyFloorApplied = false`) — สอดคล้องกับถ้อยคำเดิม "ห้ามต่ำกว่า 1,200 kcal" ที่ resolve ไว้แล้ว
+     ข้างต้น (ไม่ใช่การเปลี่ยนกติกาใหม่ เป็นการระบุขอบเขตให้ชัดเจนของกติกาเดิม)
+  3. **Server เป็นผู้คำนวณค่าทั้งสองอย่างเป็นทางการ (authoritative) จากข้อมูลโปรไฟล์ที่บันทึกไว้แล้ว
+     (น้ำหนักตัว/TDEE) เอง ไม่เชื่อค่าตัวเลขที่ client ส่งมาโดยตรง**: `PUT /api/profile/goal` recompute
+     `dailyCalorieTargetKcal`/`dailyIntakeTargetKcal`/`isSafetyFloorApplied` ใหม่ฝั่ง server เองทั้งหมดจาก
+     น้ำหนักตัว/TDEE ที่มีอยู่ในโปรไฟล์ ไม่ใช่แค่ตรวจสอบซ้ำ (validate) ค่าที่ client คำนวณมาส่งเหมือนที่เคย
+     อธิบายไว้ก่อนหน้านี้ — ค่าที่ client คำนวณ (`GoalConfirmScreen.tsx`) ยังคงมีไว้เพื่อแสดงตัวอย่าง
+     (preview) ระหว่าง onboarding เท่านั้น
 - **การเลือกอุปกรณ์แบบ multi-select (REQ-03)**: backfill เข้าเอกสารนี้จาก full consistency audit ของ skill
   `feature-list-journey` วันที่ 2026-08-27 — ไม่ใช่ ask-user round ใหม่ แต่เป็นการยืนยัน "spec ตามหลัง"
   (reverse-drift ที่ไม่ขัดแย้งกับสิ่งใด): `user-journeys.md#onb-2` ระบุอยู่แล้วว่า "เลือกได้มากกว่า 1

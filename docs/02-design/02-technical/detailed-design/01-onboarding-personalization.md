@@ -3,7 +3,31 @@
 - **ประเภทเอกสาร:** Detailed Design — Conceptual (ไม่ผูก technical stack)
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 6) — `feature-journey-writer`/`api-db-spec-writer` formalize การแยก
+- **อัปเดตล่าสุด:** 2026-09-25 (รอบ 7) — `feature-list-journey`/`api-db-spec-writer` เพิ่งยืนยันว่า `PUT
+  /profile/goal` (ONB-3/REQ-02) เป็น **server-authoritative** แล้ว (คำนวณ `dailyCalorieTargetKcal`/
+  `dailyIntakeTargetKcal`/`isSafetyFloorApplied` เองทั้งหมดจากน้ำหนักตัว/TDEE ที่บันทึกไว้แล้วในโปรไฟล์ ไม่
+  เชื่อค่าตัวเลขที่ client ส่งมาโดยตรงอีกต่อไป — ค่าที่ client เคยคำนวณส่งมากลายเป็น legacy field ที่ยอมรับได้
+  เพื่อ backward compatibility แต่ถูกละเว้นเสมอ) แทนที่โมเดลเดิม "client คำนวณแล้วส่งมาให้ server ตรวจสอบซ้ำ
+  (validate)" — audit พบว่าเนื้อหาหลักของ ONB-3 ในไฟล์นี้ล้าหลังจาก upstream ทั้ง 3 ชั้นจริง (ไม่ใช่ข้อขัดแย้ง)
+  แก้ไขดังนี้: (1) **sequence diagram เขียนใหม่**: ตัด `par` block เดิมที่ client คำนวณทั้งสองค่าแล้วส่งมา
+  ให้ server ตรวจสอบซ้ำออก — client เหลือแค่คำนวณตัวอย่าง (preview) เพื่อแสดงผลระหว่าง onboarding เท่านั้น
+  (ค่านี้ไม่ถูกส่งไปเป็น input ที่เชื่อถือได้อีกต่อไป), request เหลือแค่ประเภทเป้าหมาย+น้ำหนักเป้าหมาย, เพิ่ม
+  `alt` ใหม่ `409 Conflict` เมื่อยังไม่เคยทำ ONB-1 (ไม่มีน้ำหนักตัว/TDEE ให้คำนวณ), server อ่าน
+  น้ำหนักตัว/TDEE จากโปรไฟล์เองแล้วคำนวณทั้งสองค่า+safety floor เองทั้งหมด, response เปลี่ยนจาก Goal
+  Selection object เป็น `204 No Content` (ต้องเรียก `GET /profile` แยกต่างหากถึงจะอ่านค่าที่คำนวณจริงได้)
+  (2) **อัลกอริทึมเขียนใหม่**: ย้ายจากมุมมอง "client คำนวณ + server re-derive ซ้ำ" เป็น "server คำนวณเป็น
+  ทางการทั้งหมด" พร้อมย้ำกติกา **exact value ไม่ปัดเศษ** และ **safety floor เข้มงวดที่ค่าดิบต่ำกว่า 1,200
+  kcal อย่างเคร่งครัด (strictly less than) เท่านั้น** — เท่ากับ 1,200 พอดี**ไม่ถูกปรับ** (สอง decision นี้
+  ยืนยันกับผู้ใช้งานแล้ว 2026-09-25 ในเอกสาร spec แม้ `acceptance-criteria.md`/test case จะยึดพฤติกรรมนี้
+  อยู่แล้วก่อนหน้านี้) (3) sync "จุดที่ยังไม่ได้ระบุ" ข้อ safety floor ให้ระบุว่า boundary rule (≥1,200 ไม่ถูก
+  ปรับ) resolve แล้ว — ตัวเลขที่แน่นอนภายในช่วง 1,200–1,500 เองยังคงเป็น open point เดิม (4) **ภาคผนวก Stack
+  Mapping**: `tech-stack.md` §6.1 (อัปเดตล่าสุด 2026-08-31) ยังพูดถึงโมเดลเดิม "client คำนวณแล้ว server
+  re-derive `isSafetyFloorApplied` ซ้ำเป็นชั้นตรวจสอบที่สอง" — ยังไม่ sync กับการเปลี่ยนเป็น
+  server-authoritative นี้เลย — เพิ่มหมายเหตุ flag ว่า `tech-stack.md` ล้าหลังจากจุดนี้ (ไม่ใช่ blocker)
+  แนะนำให้รัน `tech-stack-builder` ต่อ ไม่ได้แก้ตาราง mapping เอง เพราะยังคง mirror เนื้อหาปัจจุบันของ
+  `tech-stack.md` ตรงตัวอยู่ — audit ส่วนที่เหลือของไฟล์ (ONB-0, ONB-1, ONB-2, State Diagram) แล้วไม่พบ
+  drift อื่น (ดู [log 2026-09-25](../../../05-log/20260925-log.md))
+- **อัปเดตก่อนหน้า:** 2026-08-31 (รอบ 6) — `feature-journey-writer`/`api-db-spec-writer` formalize การแยก
   เป้าหมายแคลอรี่ของ **ONB-3/REQ-02 เป็น 2 ค่าคู่ขนาน** (ยืนยันจากโค้ดจริงที่ deploy แล้ว —
   `GoalConfirmScreen.tsx`): เดิม sequence diagram/algorithm ของ ONB-3 มีค่าเดียว (TDEE ± ค่าคงที่ + safety
   floor) ผิดพลาดและอ้างว่าเป็น input ของ REC-1/PLN-3/INT-1 — แก้เป็น **2 การคำนวณคู่ขนาน**:
@@ -248,7 +272,18 @@ sequenceDiagram
 
 ## ONB-3 — ตั้งเป้าหมายหลัก (REQ-02)
 
-> **หมายเหตุ (แก้ 2026-08-31)**: `feature-journey-writer`/`api-db-spec-writer` formalize การแยกเป้าหมาย
+> **หมายเหตุ (แก้ 2026-09-25)**: `PUT /profile/goal` เปลี่ยนจาก "client คำนวณแล้ว server ตรวจสอบซ้ำ
+> (validate)" เป็น **server-authoritative เต็มรูปแบบ** — server เป็นผู้คำนวณ `dailyCalorieTargetKcal`/
+> `dailyIntakeTargetKcal`/`isSafetyFloorApplied` เองทั้งหมดจากน้ำหนักตัว/TDEE ที่บันทึกไว้แล้วในโปรไฟล์
+> (ไม่เชื่อค่าตัวเลขที่ client ส่งมาโดยตรงอีกต่อไป — legacy field ที่ยอมรับได้เพื่อ backward compatibility
+> แต่ถูกละเว้นเสมอ), คืน `409` ถ้ายังไม่เคยทำ ONB-1 (ไม่มีน้ำหนักตัว/TDEE ให้คำนวณ — ไม่ fallback ไปใช้
+> legacy field), และตอบกลับ `204 No Content` แทน Goal Selection object เดิม — client ยังคงคำนวณตัวอย่าง
+> (preview) ไว้แสดงผลระหว่าง onboarding เท่านั้น ไม่ใช่ input ที่เชื่อถือได้อีกต่อไป — สองกติกาเพิ่มเติมที่
+> formalize พร้อมกัน: (1) ทั้งสองค่าเป็น**ค่าที่แม่นยำ ไม่ปัดเศษ** (การปัดเศษเป็นเรื่องการแสดงผลเท่านั้น) (2)
+> safety floor มีผลเฉพาะเมื่อค่าดิบ**ต่ำกว่า** 1,200 kcal **อย่างเคร่งครัด** — เท่ากับ 1,200 พอดีไม่ถูกปรับ
+> (ดู [decision ของ Onboarding spec](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
+
+> **หมายเหตุก่อนหน้า (แก้ 2026-08-31)**: `feature-journey-writer`/`api-db-spec-writer` formalize การแยกเป้าหมาย
 > แคลอรี่ของ REQ-02 เป็น **2 ค่าคำนวณคู่ขนานกัน** (ยืนยันจากโค้ดจริงที่ deploy แล้ว) — เดิมหัวข้อนี้เคย
 > อธิบายเป็นค่าเดียว (TDEE ± ค่าคงที่ + safety floor) ผิดพลาด ตอนนี้แก้ให้ตรงกับ `database-schema.md` §3.3
 > (`goal_selection.daily_calorie_target_kcal` / `.daily_intake_target_kcal`) และ `api-spec.md` §3.2
@@ -265,64 +300,76 @@ sequenceDiagram
 sequenceDiagram
     actor U as ผู้ใช้
     participant PP as Personalization & Profile
-    U->>PP: PUT /profile/goal (ประเภทเป้าหมาย, น้ำหนักเป้าหมาย, dailyCalorieTargetKcal, dailyIntakeTargetKcal — คำนวณฝั่งผู้ใช้แล้วทั้งคู่)
+    Note over U,PP: Client คำนวณตัวอย่าง (preview) ทั้งสองค่าจากข้อมูลโปรไฟล์ที่โหลดไว้แล้ว เพื่อแสดงผลระหว่าง onboarding เท่านั้น (ความไว ตาม NFR-01/03) — ไม่ใช่ค่าที่ระบบเก็บเป็นทางการอีกต่อไป (แก้ 2026-09-25)
+    U->>U: คำนวณตัวอย่าง dailyCalorieTargetKcal/dailyIntakeTargetKcal ฝั่งผู้ใช้ (preview เท่านั้น)
+    U->>PP: PUT /profile/goal (ประเภทเป้าหมาย, น้ำหนักเป้าหมาย — บังคับเมื่อ "ลดน้ำหนัก")
     alt เลือก "ลดน้ำหนัก" แต่ไม่กรอกน้ำหนักเป้าหมาย
         PP-->>U: 400 Bad Request (target weight required)
+    else ยังไม่เคยทำ ONB-1 ให้เสร็จ (ไม่มีน้ำหนักตัว/TDEE ในโปรไฟล์)
+        PP-->>U: 409 Conflict (ต้องกรอกข้อมูลส่วนตัวก่อน — ไม่ fallback ไปใช้ legacy field ใดๆ)
     else ข้อมูลครบถ้วน
-        par คำนวณเป้าหมายเผาผลาญ (ฝั่งผู้ใช้ ก่อนส่งคำขอ)
-            U->>U: dailyCalorieTargetKcal = น้ำหนักตัว × ค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ไม่มี safety floor)
-        and คำนวณเป้าหมายรับพลังงาน (ฝั่งผู้ใช้ ก่อนส่งคำขอ)
-            U->>U: อ่าน tdee_kcal จาก User Profile ที่โหลดไว้แล้ว
-            U->>U: dailyIntakeTargetKcal = TDEE ± ค่าส่วนต่างตามประเภทเป้าหมาย
-            alt dailyIntakeTargetKcal ต่ำกว่า Safety Floor (1,200 kcal)
-                U->>U: ปรับ dailyIntakeTargetKcal = Safety Floor, ตั้ง isSafetyFloorApplied = true
-            end
+        PP->>PP: อ่านน้ำหนักตัว/TDEE ปัจจุบันจาก user_profile ที่บันทึกไว้แล้ว (แหล่งเดียวที่เชื่อถือได้ — ไม่เชื่อค่าตัวเลขที่ client ส่งมา)
+        PP->>PP: คำนวณ dailyCalorieTargetKcal = น้ำหนักตัว × ค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ไม่มี safety floor, ค่าที่แม่นยำ ไม่ปัดเศษ)
+        PP->>PP: คำนวณ dailyIntakeTargetKcal ดิบ = TDEE ± ค่าส่วนต่างตามประเภทเป้าหมาย (ค่าที่แม่นยำ ไม่ปัดเศษ)
+        alt dailyIntakeTargetKcal ดิบ ต่ำกว่า Safety Floor (1,200 kcal) อย่างเคร่งครัด (strictly less than)
+            PP->>PP: ปรับ dailyIntakeTargetKcal = Safety Floor (1,200), ตั้ง isSafetyFloorApplied = true
+        else เท่ากับหรือสูงกว่า 1,200 kcal (รวมกรณีเท่ากับ 1,200 พอดี — ไม่ถือว่าต่ำกว่า floor)
+            PP->>PP: ใช้ค่าดิบ, ตั้ง isSafetyFloorApplied = false
         end
-        PP->>PP: re-derive safety floor ซ้ำจาก dailyIntakeTargetKcal ที่ส่งมา (ชั้นตรวจสอบที่สอง — ไม่เชื่อค่าจาก client อย่างเดียว)
         PP->>PP: บันทึกลงตาราง goal_selection (daily_calorie_target_kcal, daily_intake_target_kcal, is_safety_floor_applied, target_weight_kg ถ้ามี)
-        PP-->>U: 200 OK (Goal Selection พร้อมเป้าหมายแคลอรี่ทั้งสองค่า + isSafetyFloorApplied)
+        PP-->>U: 204 No Content
+        U->>PP: GET /profile (แยกต่างหาก — เพื่ออ่านค่าที่ server คำนวณจริง)
+        PP-->>U: 200 OK (Goal Selection พร้อมเป้าหมายแคลอรี่ทั้งสองค่าที่แม่นยำ + isSafetyFloorApplied)
     end
 ```
 
-### อัลกอริทึม — คำนวณเป้าหมายแคลอรี่รายวัน (2 ค่าคู่ขนาน) + Safety Floor
+Edge case ที่แสดง: `400` ขาดน้ำหนักเป้าหมายตอนเลือก "ลดน้ำหนัก" (ตรงกับ `user-journeys.md#onb-3`) และ `409`
+ใหม่ (เพิ่ม 2026-09-25) เมื่อยังไม่เคยทำ ONB-1 — ทั้งคู่ตรงกับ `api-spec.md` §3.2 ฉบับล่าสุด
 
-รับ input ร่วม: ประเภทเป้าหมาย (ลดน้ำหนัก/กระชับสัดส่วน/เพิ่มความอึด), น้ำหนักเป้าหมาย (บังคับเมื่อเลือก
-"ลดน้ำหนัก" ตาม decision ที่ resolve แล้ว 2026-08-28) — ตรวจสอบก่อน: ถ้าเลือก "ลดน้ำหนัก" แต่ไม่มีน้ำหนัก
-เป้าหมาย → คืน error (`400`) และหยุดกระบวนการ จากนั้นคำนวณ 2 ค่าคู่ขนานกันดังนี้
+### อัลกอริทึม — คำนวณเป้าหมายแคลอรี่รายวัน (2 ค่าคู่ขนาน) + Safety Floor (Server-Authoritative, แก้ 2026-09-25)
+
+> **แก้ไข 2026-09-25**: เดิม client เป็นผู้คำนวณทั้งสองค่าแล้วส่งมาให้ server ตรวจสอบซ้ำ (validate) เท่านั้น
+> — ตอนนี้ server เป็นผู้คำนวณทั้งสองค่าเองทั้งหมด (authoritative) จากข้อมูลโปรไฟล์ (น้ำหนักตัว/TDEE) ที่
+> บันทึกไว้แล้วเท่านั้น ไม่เชื่อค่าตัวเลขที่ client ส่งมาโดยตรงอีกต่อไป (ค่าที่ client เคยคำนวณส่งมา กลายเป็น
+> legacy field ที่ระบบรับได้เพื่อ backward compatibility แต่ละเว้นเสมอ) — ค่าที่ client คำนวณเอง
+> (`GoalConfirmScreen.tsx`) ยังมีไว้เพื่อแสดงตัวอย่าง (preview) ระหว่าง onboarding เท่านั้น
+
+รับ input: ประเภทเป้าหมาย (ลดน้ำหนัก/กระชับสัดส่วน/เพิ่มความอึด), น้ำหนักเป้าหมาย (บังคับเมื่อเลือก
+"ลดน้ำหนัก" ตาม decision ที่ resolve แล้ว 2026-08-28)
+
+1. ถ้าเลือก "ลดน้ำหนัก" แต่ไม่มีน้ำหนักเป้าหมาย → คืน error (`400`) และหยุดกระบวนการ
+2. ถ้าผู้ใช้ยังไม่เคยทำ ONB-1 ให้เสร็จ (ไม่มีน้ำหนักตัว/TDEE ในโปรไฟล์) → คืน error (`409`) และหยุดกระบวนการ
+   (ไม่ fallback ไปใช้ legacy field ที่ client อาจส่งมา)
+3. อ่านน้ำหนักตัว (kg) และ TDEE ปัจจุบันจาก `user_profile` ที่บันทึกไว้แล้ว (แหล่งเดียวที่เชื่อถือได้)
+
+จากนั้นคำนวณ 2 ค่าคู่ขนานกัน (ทั้งคู่เป็น**ค่าที่แม่นยำ ไม่ปัดเศษ** — การปัดเศษเป็นเรื่องของการแสดงผล
+(display-only) ที่แต่ละหน้าจอทำเองเท่านั้น การคำนวณ/เปรียบเทียบอื่นที่ใช้ค่านี้ต่อ เช่น PLN-3 all-or-nothing
+completion หรือ REC-1 คำนวณแคลอรี่ที่เหลือ ต้องใช้ค่าที่แม่นยำเสมอ):
 
 **(ก) เป้าหมายเผาผลาญจากการออกกำลังกาย — `dailyCalorieTargetKcal` (ไม่มี safety floor)**
 
-1. อ่านน้ำหนักตัวปัจจุบัน (kg) จาก `user_profile.weight_kg`
-2. คูณด้วยค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
-   - ลดน้ำหนัก: `dailyCalorieTargetKcal = น้ำหนักตัว × 4.5`
-   - กระชับสัดส่วน: `dailyCalorieTargetKcal = น้ำหนักตัว × 3.0`
-   - เพิ่มความอึด: `dailyCalorieTargetKcal = น้ำหนักตัว × 5.5`
-3. ไม่มีขั้นตอน safety floor สำหรับค่านี้ (ไม่ใช่ตัวเลขเชิง diet)
-4. ค่านี้คือ input จริงของ REC-1 (จับคู่วิดีโอ), PLN-3 (ประเมิน all-or-nothing), และ INT-1 (พยากรณ์วันที่
-   ถึงเป้าหมาย) ในแอปวันนี้
+4. `dailyCalorieTargetKcal` = น้ำหนักตัว × ค่าคงที่ kcal/กก. ตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
+   - ลดน้ำหนัก: `น้ำหนักตัว × 4.5`
+   - กระชับสัดส่วน: `น้ำหนักตัว × 3.0`
+   - เพิ่มความอึด: `น้ำหนักตัว × 5.5`
+5. ไม่มีขั้นตอน safety floor สำหรับค่านี้ (ไม่ใช่ตัวเลขเชิง diet) — ค่านี้คือ input จริงของ REC-1 (จับคู่
+   วิดีโอ), PLN-3 (ประเมิน all-or-nothing), และ INT-1 (พยากรณ์วันที่ถึงเป้าหมาย) ในแอปวันนี้
 
 **(ข) เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน — `dailyIntakeTargetKcal` (มี safety floor, forward-looking)**
 
-1. อ่าน TDEE ปัจจุบันจาก `user_profile.tdee_kcal`
-2. คำนวณค่าดิบตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02):
-   - ลดน้ำหนัก: `Target = TDEE − 500`
-   - กระชับสัดส่วน: `Target = TDEE + 0` (maintenance)
-   - เพิ่มความอึด: `Target = TDEE + 300`
-3. ตรวจสอบ safety floor: ถ้า `Target < SAFETY_FLOOR_MIN_KCAL` (implement เป็น **1,200 kcal**) → ปรับ
-   `dailyIntakeTargetKcal = SAFETY_FLOOR_MIN_KCAL` และตั้ง `isSafetyFloorApplied = true` มิฉะนั้นใช้ค่าดิบ
-   และตั้ง `isSafetyFloorApplied = false`
-4. ค่านี้**ยังไม่มี component ใดใช้คำนวณจริง ณ ปัจจุบัน** — เก็บไว้เตรียมสำหรับฟีเจอร์บันทึกอาหารในอนาคต
+6. คำนวณค่าดิบตามประเภทเป้าหมาย (ค่าคงที่ตาม REQ-02): ลดน้ำหนัก = `TDEE − 500`, กระชับสัดส่วน =
+   `TDEE + 0` (maintenance), เพิ่มความอึด = `TDEE + 300`
+7. ตรวจสอบ safety floor: ถ้าค่าดิบ**ต่ำกว่า** `SAFETY_FLOOR_MIN_KCAL` (implement เป็น **1,200 kcal**)
+   **อย่างเคร่งครัด (strictly less than)** → ปรับ `dailyIntakeTargetKcal = SAFETY_FLOOR_MIN_KCAL` และตั้ง
+   `isSafetyFloorApplied = true`; มิฉะนั้น (รวมกรณีค่าดิบเท่ากับ 1,200 kcal พอดี — **ไม่ถือว่าต่ำกว่า floor**
+   จึงไม่ถูกปรับ, ยืนยันกับผู้ใช้งานแล้ว 2026-09-25) ใช้ค่าดิบ และตั้ง `isSafetyFloorApplied = false`
+8. ค่านี้**ยังไม่มี component ใดใช้คำนวณจริง ณ ปัจจุบัน** — เก็บไว้เตรียมสำหรับฟีเจอร์บันทึกอาหารในอนาคต
 
-**(ค) รวมผลลัพธ์และส่งคำขอ**
+**(ค) บันทึกและตอบกลับ**
 
-1. ส่งทั้งสองค่า (`dailyCalorieTargetKcal`, `dailyIntakeTargetKcal`) พร้อมประเภทเป้าหมาย/น้ำหนักเป้าหมาย
-   ไปในคำขอเดียวกัน (`PUT /profile/goal`) — คำนวณทั้งคู่เสร็จแล้วก่อนส่ง (client-side, NFR-01/03)
-2. ฝั่งรับคำขอ re-derive safety floor ซ้ำจาก `dailyIntakeTargetKcal` ที่ส่งมาเทียบ
-   `SAFETY_FLOOR_MIN_KCAL` เป็นชั้นตรวจสอบที่สอง (ไม่เชื่อค่า `isSafetyFloorApplied` จาก client อย่างเดียว
-   — ใช้กับ `dailyIntakeTargetKcal` เท่านั้น ไม่เกี่ยวกับ `dailyCalorieTargetKcal`)
-3. บันทึกผลลัพธ์สุดท้ายลง `goal_selection` (`daily_calorie_target_kcal`, `daily_intake_target_kcal`,
-   `is_safety_floor_applied`, `target_weight_kg` ถ้ามี)
-4. ส่งคืนผลลัพธ์ทั้งสองค่าพร้อม `isSafetyFloorApplied` ให้ผู้ใช้
+9. บันทึกทั้งสองค่า + `isSafetyFloorApplied` + `target_weight_kg` (ถ้ามี) ลง `goal_selection`
+10. ตอบกลับ `204 No Content` (ไม่แนบผลลัพธ์ในการตอบกลับนี้อีกต่อไป — แก้ 2026-09-25) — client ต้องเรียก
+    `GET /profile` แยกต่างหากถ้าต้องการอ่านค่าที่ server คำนวณจริง
 
 ## จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
@@ -332,7 +379,10 @@ sequenceDiagram
    open point เดิม — ยังไม่มีการตัดสินใจใหม่) — โค้ดจริงปัจจุบัน implement `SAFETY_FLOOR_MIN_KCAL` เป็นค่าคงที่
    **1,200 kcal** เดียว (ไม่แยกตามเพศ/อายุ) แต่ comment ในโค้ดเอง (`// exact value tied to sex/age band`)
    ระบุชัดว่านี่เป็นเพียงค่า placeholder ระหว่างรอ decision จริง ไม่ใช่การ resolve อย่างเป็นทางการ — ใช้กับ
-   `dailyIntakeTargetKcal` เท่านั้น (เปลี่ยนจากเดิมที่เคยผูกกับ field เดียวที่ถูกลบไปแล้ว)
+   `dailyIntakeTargetKcal` เท่านั้น (เปลี่ยนจากเดิมที่เคยผูกกับ field เดียวที่ถูกลบไปแล้ว) — **สิ่งที่ resolve
+   แล้ว 2026-09-25 คือกติกาที่ขอบเขต (boundary) ของค่า 1,200 นี้เท่านั้น**: floor มีผลเฉพาะเมื่อค่าดิบต่ำกว่า
+   1,200 kcal อย่างเคร่งครัด (strictly less than) — เท่ากับ 1,200 พอดีไม่ถูกปรับ — ไม่ใช่การปักหมุดตัวเลข
+   สุดท้ายภายในช่วง 1,200–1,500 ที่ open point นี้พูดถึง
 3. **ONB-3**: กรณีผู้ใช้เลือก "กระชับสัดส่วน"/"เพิ่มความอึด" แล้วข้ามช่องน้ำหนักเป้าหมาย (ไม่บังคับ) — ช่อง
    ทางแจ้งเตือนให้กรอกภายหลังยังไม่ระบุ (ผูกกับ INT-1 ที่ต้องใช้ค่านี้)
 4. **ONB-0**: ยังไม่ระบุว่าต้องมีขั้นตอนยืนยันอีเมล (email verification) ก่อนใช้งานได้จริงหรือไม่ — กระทบว่า
@@ -362,7 +412,7 @@ sequenceDiagram
 - [API Spec](../api-spec.md) — section 3.1 Account & Session Management (ONB-0 — 8 operation แรก;
   operation ที่ 9-10 ของหัวข้อเดียวกัน `POST /auth/pairing-codes`/`.../redeem` แสดง sequence diagram อยู่ที่
   `04-smart-integrations.md` แทน), section 3.2 Personalization & Profile (ONB-1/2/3 — เดิม 3.1 ก่อน
-  renumber)
+  renumber — `PUT /profile/goal` แก้เป็น server-authoritative + `409`/`204` ใหม่ 2026-09-25)
 - [Database Schema](../database-schema.md) — ตาราง `user_account` (ONB-0), `user_profile`,
   `goal_selection`, `equipment_selection`
 - [Product Backlog](../../../01-requirements/backlog.md), [Requirement](../../../01-requirements/01-spec/20260823-01-onboarding-personalization.md) —
@@ -435,3 +485,14 @@ client เอง) เพื่อให้ route นั้น validate/บัง
 `dailyIntakeTargetKcal` ซ้ำ, equipment mutual exclusion) เป็นเกราะป้องกันชั้นที่สองฝั่ง server เช่นเดิม —
 **ONB-0 ไม่มี algorithm section จึงไม่มี client-side/server-side split ให้ระบุเพิ่ม** (REQ-14–17 ไม่ใช่
 feature เชิงคำนวณ)
+
+> **อัปเดต 2026-09-25 — audit freshness เทียบกับ `tech-stack.md` §6.1 ปัจจุบัน (ยังเป็นฉบับ 2026-08-31)**:
+> เนื้อหาหลักของ ONB-3 เพิ่งเปลี่ยนจาก "client คำนวณแล้ว server ตรวจสอบซ้ำ (re-derive safety floor)" เป็น
+> **server-authoritative เต็มรูปแบบ** (server คำนวณทั้ง `dailyCalorieTargetKcal`/`dailyIntakeTargetKcal`/
+> `isSafetyFloorApplied` เองจากโปรไฟล์ที่บันทึกไว้ ไม่เชื่อค่าที่ client ส่งมาอีกต่อไป, เพิ่ม `409`/เปลี่ยน
+> response เป็น `204`) — แถว "Personalization & Profile" และย่อหน้า "Execution ของ algorithm section"
+> ด้านบนยังคงอธิบายโมเดลเดิม (client คำนวณ + server re-derive ซ้ำ) เพราะเป็นการ mirror เนื้อหาปัจจุบันของ
+> `tech-stack.md` §6.1 ตรงตัว (ซึ่งยังไม่ได้ sync กับการเปลี่ยนนี้เลย) — **ไม่ได้แก้ตาราง/ย่อหน้าข้างต้นเอง**
+> เพราะไม่ใช่มิเรอร์ที่ผิดพลาด เป็นข้อเท็จจริงที่ยังไม่เคยถูกบันทึกไว้ที่ `tech-stack.md` เท่านั้น — แนะนำให้
+> รัน `tech-stack-builder` ต่อเพื่ออัปเดตแหล่งที่มาจริงให้ตรงกับ server-authoritative model ใหม่นี้ (ดู
+> [log 2026-09-25](../../../05-log/20260925-log.md))

@@ -1,4 +1,7 @@
-<!-- Feature: INT-2, INT-3 | REQ: REQ-12, REQ-13 -->
+<!-- Feature: INT-0, INT-2, INT-3 | REQ: REQ-18, REQ-12, REQ-13 -->
+<!-- 2026-09-25: added INT-0/REQ-18 to this tag -- this screen is entirely the INT-0 pairing-code
+     redeem step (AC-INT-0-02/03/05-08 all reference this file), which only got its own Feature
+     ID/REQ number on 2026-08-30, after this screen was first built tagged as INT-2/INT-3 only. -->
 <!-- New screen added 2026-08-30 by prototype-builder's consistency audit against user-journeys.md's
      INT-2/INT-3 P1-P6 (added 2026-08-30 alongside the pairing-code identity-handoff mechanism in
      01-spec/20260823-04-smart-integrations.md, backlog.md, high-level-architecture.md §4.5/§5,
@@ -9,6 +12,28 @@
      silently (no password ever typed on this device) before reaching 12-device-pairing.html.
      No bottom tab nav here: the mobile companion app is scoped to INT-2/INT-3 only (device pairing),
      not the full 4-tab product -- matches 12-device-pairing.html's own precedent of omitting it. -->
+<!-- 2026-09-25 consistency audit (prototype-builder, INT-0 rate limit + one-code-per-account, resolve
+     per Smart Integrations spec 2026-09-25 decision / user-journeys.md INT-0 Alt/Edge Cases items
+     4-5 / AC-INT-0-05..08 / TC-INT-0-006..009): added a third demo state, "locked out" (429), missing
+     until now even though the underlying rule (5 wrong codes within 15 min per client IP -> HTTP 429
+     + Retry-After, input rejected before the code is even checked) was already resolved and
+     documented upstream -- this was a stale-prototype gap (upstream had the rule, screen didn't),
+     not a contradiction. Shows a calm (--color-warning, not --color-danger -- this isn't a form
+     validation error, it's a temporary system-side throttle) lockout message with a live mm:ss
+     countdown of the remaining wait time, and disables the code input + submit button for the
+     duration, per DESIGN.md 4.2's "no guilt/alarm language" rule (no exclamation marks, neutral
+     factual copy). Note: AC-INT-0-05/06/08 (rate-limit reject, counter-reset-on-success, atomic
+     concurrent-redeem) explicitly say "Prototype: none -- server-side only, no UI mockup in v1/" --
+     this screen's new lockout state doesn't contradict that (the AC's "Then" is about server
+     response shape, not UI), it just adds a UI representation of AC-INT-0-05's user-visible effect
+     that wasn't mocked before. Recommended follow-up: have test-suite-builder add this screen to
+     AC-INT-0-05's Prototype reference next time it runs (not done here -- this skill doesn't edit
+     acceptance-criteria.md).
+     Also relabeled the existing "invalid/expired" demo button to note it also covers AC-INT-0-07's
+     "requesting a new code invalidates the old one" case -- the old code becomes indistinguishable
+     from invalid/expired per AC-INT-0-03's deliberate single generic-message design ("ไม่แยกแยะให้
+     ผู้ใช้ทราบว่าเป็นกรณีไหน"), so the user-facing error copy is intentionally unchanged; only the
+     demo-toggle label (dev-facing only, not real UI) was updated to document the coverage. -->
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -67,7 +92,7 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 
   /* Demo state toggle (not part of real UI, for prototype review only -- same pattern as
      12-device-pairing.html's demo-toggle) */
-  .demo-toggle { display:flex; gap: var(--space-2); margin-bottom: var(--space-8); background: var(--color-paper-sunken); border-radius: var(--radius-md); padding: var(--space-1); }
+  .demo-toggle { display:flex; flex-wrap:wrap; gap: var(--space-2); margin-bottom: var(--space-8); background: var(--color-paper-sunken); border-radius: var(--radius-md); padding: var(--space-1); }
   .demo-toggle button { flex:1; min-height:40px; border:none; border-radius: var(--radius-sm); background:transparent; font-family:inherit; font-size:11px; font-weight:500; color: var(--color-ink-muted); cursor:pointer; padding: 0 var(--space-1); }
   .demo-toggle button.active { background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-float); }
 
@@ -81,6 +106,21 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
      "ไม่ครบเป้าหมาย" case in DESIGN.md 4.2 -- --color-danger is the correct token here. */
   .field-error { color: var(--color-danger); }
 
+  /* Lockout (429 rate limit, added 2026-09-25): a temporary system-side throttle, not a form
+     validation error and not the user's "failed to reach a goal" -- --color-warning per DESIGN.md
+     2.1 semantic table ("สิ่งที่ต้องระวังแต่ไม่ใช่ข้อผิดพลาด"), same framing 12-device-pairing.html
+     already uses for its own recoverable/warning states. */
+  .lockout-banner { display:flex; gap: var(--space-3); align-items:flex-start; background: rgba(190,154,77,0.12); border-radius: var(--radius-md); padding: var(--space-3); margin-bottom: var(--space-4); }
+  .lockout-banner svg { flex-shrink:0; color: var(--color-warning); margin-top: 2px; }
+  .lockout-countdown { font-weight:500; color: var(--color-ink); }
+
+  /* Disabled input/button (reuses existing tokens only -- no new DESIGN.md token needed): faint
+     ink + sunken/alt fill signal non-interactive, matching --color-ink-faint's documented use for
+     "placeholder, ตัวอักษร disabled" in DESIGN.md 2.1. */
+  .code-input:disabled { color: var(--color-ink-faint); cursor:not-allowed; }
+  .btn:disabled { background: var(--color-paper-alt); color: var(--color-ink-faint); border: var(--border-width) solid var(--color-border); cursor:not-allowed; }
+  .btn:disabled:active { background: var(--color-paper-alt); }
+
   .hidden { display:none !important; }
 </style>
 </head>
@@ -91,17 +131,31 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     <!-- Demo state toggle -->
     <div class="demo-toggle">
       <button type="button" class="active" id="btnDemoValid" onclick="setDemoMode('valid')">ตัวอย่าง: รหัสถูกต้อง</button>
-      <button type="button" id="btnDemoInvalid" onclick="setDemoMode('invalid')">ตัวอย่าง: รหัสผิด/หมดอายุ</button>
+      <button type="button" id="btnDemoInvalid" onclick="setDemoMode('invalid')">ตัวอย่าง: รหัสผิด/หมดอายุ/ถูกแทนที่</button>
+      <!-- Added 2026-09-25 (AC-INT-0-05/TC-INT-0-006): 5 wrong codes within 15 min per client IP -> 429 -->
+      <button type="button" id="btnDemoLocked" onclick="setDemoMode('locked')">ตัวอย่าง: ถูกล็อกชั่วคราว (429)</button>
     </div>
 
     <div class="center-panel">
       <h1 class="text-h1">เชื่อมต่อกับบัญชีของคุณ</h1>
       <p class="text-body-sm">ไปที่หน้าโปรไฟล์ในเว็บแอป smartFit daily แล้วกด "ขอรหัสจับคู่อุปกรณ์" เพื่อรับรหัส 6 หลัก จากนั้นกรอกรหัสนั้นที่นี่</p>
 
+      <!-- Lockout banner (429, added 2026-09-25): shown only in the locked demo state. Neutral/factual
+           copy, no exclamation marks, per DESIGN.md 4.2's guilt/alarm-free rule -- this is a system
+           throttle, not something the user did "wrong" in a punishable sense. -->
+      <div class="lockout-banner hidden" id="lockoutBanner">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 9v4"></path><circle cx="12" cy="12" r="9"></circle><path d="M12 16.5v.01"></path></svg>
+        <p class="text-body-sm" style="margin:0;">กรอกรหัสผิดหลายครั้งเกินไป ระบบพักการกรอกรหัสไว้ชั่วคราว ลองใหม่ได้อีกครั้งใน <span class="lockout-countdown" id="lockoutCountdown">09:47</span> นาที</p>
+      </div>
+
       <input type="text" class="code-input" id="codeInput" placeholder="000000" inputmode="numeric" maxlength="6" autocomplete="one-time-code">
+      <!-- Invalid/expired/replaced-by-new-code (AC-INT-0-03/07): one deliberately generic message
+           covering all 3 causes -- the system never tells the user which one it was (ยืนยันแล้วใน
+           AC-INT-0-03 ว่า "ไม่แยกแยะให้ผู้ใช้ทราบว่าเป็นกรณีไหน"), so the copy itself is unchanged from
+           before; only the demo-toggle label above was updated to document that coverage. -->
       <p class="text-body-sm field-error hidden" id="codeError">รหัสนี้ไม่ถูกต้องหรือหมดอายุแล้ว ขอรหัสใหม่จากหน้าโปรไฟล์บนเว็บแล้วลองอีกครั้ง</p>
 
-      <button type="button" class="btn btn-primary" onclick="handleSubmit()">เชื่อมต่อ</button>
+      <button type="button" class="btn btn-primary" onclick="handleSubmit()" id="submitBtn">เชื่อมต่อ</button>
     </div>
 
   </div>
@@ -110,14 +164,60 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
 <script>
   // Demo-only: which outcome pressing "เชื่อมต่อ" simulates (real app calls
   // POST /pairing/redeem -- see apps/web/server/routes/pairing/index.ts -- which returns a
-  // custom token on success or 410 "invalid or expired" otherwise).
+  // custom token on success, 410 "invalid/expired/replaced" otherwise, or -- added 2026-09-25 --
+  // 429 + Retry-After when the client IP is temporarily locked out from 5 wrong codes in 15 min).
   var demoMode = 'valid';
+  var lockoutTimer = null;
 
   function setDemoMode(mode) {
     demoMode = mode;
     document.getElementById('btnDemoValid').classList.toggle('active', mode === 'valid');
     document.getElementById('btnDemoInvalid').classList.toggle('active', mode === 'invalid');
+    document.getElementById('btnDemoLocked').classList.toggle('active', mode === 'locked');
     document.getElementById('codeError').classList.add('hidden');
+
+    var input = document.getElementById('codeInput');
+    var submitBtn = document.getElementById('submitBtn');
+    var banner = document.getElementById('lockoutBanner');
+    if (lockoutTimer) { clearInterval(lockoutTimer); lockoutTimer = null; }
+
+    if (mode === 'locked') {
+      // AC-INT-0-05/TC-INT-0-006: input rejected before the code is even checked -- disable entry
+      // entirely for the remaining wait time, matching the server rejecting at the rate-limit
+      // check before ever touching the pairingCodes collection.
+      banner.classList.remove('hidden');
+      input.disabled = true;
+      submitBtn.disabled = true;
+      input.value = '';
+      startLockoutCountdown(9 * 60 + 47); // demo remaining wait time, well within the 15-min window
+    } else {
+      banner.classList.add('hidden');
+      input.disabled = false;
+      submitBtn.disabled = false;
+    }
+  }
+
+  function startLockoutCountdown(seconds) {
+    var remaining = seconds;
+    var el = document.getElementById('lockoutCountdown');
+    function render() {
+      var m = Math.floor(remaining / 60);
+      var s = remaining % 60;
+      el.textContent = (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+    }
+    render();
+    lockoutTimer = setInterval(function () {
+      remaining -= 1;
+      if (remaining <= 0) {
+        // 15-min window from the first wrong attempt has elapsed -> unlock automatically, same as
+        // the server accepting requests again once Retry-After has passed.
+        clearInterval(lockoutTimer);
+        lockoutTimer = null;
+        setDemoMode('valid');
+        return;
+      }
+      render();
+    }, 1000);
   }
 
   function handleSubmit() {
@@ -125,10 +225,12 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
       // P5-P6: code correct, not expired, not yet used -> server mints token, silent sign-in,
       // land on the device-pairing screen (12).
       window.location.href = '12-device-pairing.html';
-    } else {
+    } else if (demoMode === 'invalid') {
       // P5 "ไม่": loop back to re-entering the code, per the journey's flowchart edge P5 -- ไม่ --> P4.
       document.getElementById('codeError').classList.remove('hidden');
     }
+    // demoMode === 'locked': submit button is disabled, so this branch is unreachable in the demo --
+    // mirrors the real server rejecting the request at the rate-limit check before it can submit.
   }
 </script>
 </body>
