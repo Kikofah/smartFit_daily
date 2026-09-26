@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 
 // Vite exposes only VITE_-prefixed env vars to client code (see .env.example).
 const firebaseConfig = {
@@ -17,3 +17,9 @@ const firebaseConfig = {
 // SDK relationship (see services/authService.ts).
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+
+// Local E2E only (playwright.local.config.ts): point Auth at the Firebase
+// Auth emulator instead of the real project. Unset in every real build.
+if (import.meta.env.VITE_AUTH_EMULATOR_URL) {
+  connectAuthEmulator(auth, import.meta.env.VITE_AUTH_EMULATOR_URL, { disableWarnings: true });
+}

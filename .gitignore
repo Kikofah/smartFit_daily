@@ -16,6 +16,7 @@ npm-debug.log*
 
 # Playwright (smartfit_daily_app/apps/web e2e) — generated per run
 playwright-report/
+playwright-report-local/
 test-results/
 blob-report/
 # Playwright MCP server output (screenshots/snapshots taken while browsing)

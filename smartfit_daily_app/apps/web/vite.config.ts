@@ -22,7 +22,8 @@ export default defineConfig({
   server: {
     port: Number(process.env.PORT) || 5173,
     proxy: {
-      '/api': 'http://localhost:8080',
+      // API_PROXY_TARGET: local E2E runs the API on its own port (playwright.local.config.ts).
+      '/api': process.env.API_PROXY_TARGET || 'http://localhost:8080',
     },
   },
 });
