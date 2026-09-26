@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { db } from '../../firebaseAdmin';
 import { asyncHandler } from '../../asyncHandler';
-import { deriveIsSafetyFloorApplied } from '../../domain/goalTargets';
+import { computeDailyCalorieTargetKcal, computeDailyIntakeTarget } from '../../domain/goalTargets';
 import type { ActivityLevel, EquipmentType, GoalType, Sex } from '@smartfit/shared-types';
 
 export const router = Router();
@@ -63,19 +63,31 @@ router.put(
 interface UpdateGoalRequest {
   goalType: GoalType;
   targetWeightKg?: number;
-  dailyCalorieTargetKcal: number;
-  dailyIntakeTargetKcal: number;
+  // Legacy fields from older clients (pre-2026-09-25) that computed these
+  // themselves and sent them along — no longer trusted, see below. Accepted
+  // but ignored for backward compatibility; a current client doesn't need
+  // to send them at all.
+  dailyCalorieTargetKcal?: number;
+  dailyIntakeTargetKcal?: number;
 }
 
 /**
  * PUT /api/profile/goal — ONB-3 / REQ-02
- * Both `dailyCalorieTargetKcal` (exercise-burn target, weightKg × a
- * per-goalType kcal/kg multiplier) and `dailyIntakeTargetKcal` (TDEE ±
- * per-goalType delta) are computed client-side (NFR-01/03) — see
- * GoalConfirmScreen.tsx. `isSafetyFloorApplied` is re-derived here as a
- * second-layer check against `dailyIntakeTargetKcal` (the only one of the
- * two a safety floor applies to — it's a food-intake concept, and the
- * burn target isn't).
+ * `dailyCalorieTargetKcal` (exercise-burn target) and `dailyIntakeTargetKcal`
+ * + `isSafetyFloorApplied` (TDEE ± per-goalType delta, floored at
+ * SAFETY_FLOOR_MIN_KCAL) are now computed authoritatively here, server-side,
+ * from the user's already-stored `weightKg`/`tdeeKcal` (ONB-1) — NOT trusted
+ * from the request body. Fixed 2026-09-25 (round 3): re-deriving
+ * `isSafetyFloorApplied` from only the client's already-floored
+ * `dailyIntakeTargetKcal` number (the old `deriveIsSafetyFloorApplied`) could
+ * never tell a genuinely-floored value apart from a raw-exactly-1,200 value —
+ * both arrive as exactly 1,200 — so it could never actually persist `true`.
+ * Recomputing from the raw `tdeeKcal` here removes that ambiguity entirely.
+ *
+ * If ONB-1 hasn't been completed yet (`weightKg`/`tdeeKcal` not stored), this
+ * rejects with 409 rather than falling back to the client-sent legacy
+ * fields — trusting client-sent numbers is exactly the bug being fixed, so
+ * silently falling back to them for this one edge case would reintroduce it.
  */
 router.put(
   '/profile/goal',
@@ -85,11 +97,28 @@ router.put(
       return res.status(400).json({ error: 'targetWeightKg is required for goalType "lose_weight".' });
     }
 
-    const isSafetyFloorApplied = deriveIsSafetyFloorApplied(body.dailyIntakeTargetKcal);
-    await db.doc(`users/${req.userId}`).set(
-      { goalSelection: { ...body, isSafetyFloorApplied } },
-      { merge: true },
-    );
+    const profile = (await db.doc(`users/${req.userId}`).get()).data();
+    if (profile?.weightKg === undefined || profile?.tdeeKcal === undefined) {
+      return res.status(409).json({ error: 'ONB-1 (personal info / TDEE) must be completed before setting a goal.' });
+    }
+
+    const dailyCalorieTargetKcal = computeDailyCalorieTargetKcal(profile.weightKg, body.goalType);
+    const { dailyIntakeTargetKcal, isSafetyFloorApplied } = computeDailyIntakeTarget(profile.tdeeKcal, body.goalType);
+
+    const goalSelection: {
+      goalType: GoalType;
+      dailyCalorieTargetKcal: number;
+      dailyIntakeTargetKcal: number;
+      isSafetyFloorApplied: boolean;
+      targetWeightKg?: number;
+    } = { goalType: body.goalType, dailyCalorieTargetKcal, dailyIntakeTargetKcal, isSafetyFloorApplied };
+    // Only set when provided — an explicit `undefined` field value throws in
+    // the Firestore Admin SDK (ignoreUndefinedProperties isn't enabled).
+    if (body.targetWeightKg !== undefined) {
+      goalSelection.targetWeightKg = body.targetWeightKg;
+    }
+
+    await db.doc(`users/${req.userId}`).set({ goalSelection }, { merge: true });
     return res.status(204).send();
   }),
 );

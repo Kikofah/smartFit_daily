@@ -6,32 +6,20 @@ import { computeWeightForecast, MIN_LOG_DAYS_FOR_FORECAST } from './weightForeca
 const REFERENCE_DATE = new Date(Date.UTC(2026, 7, 27, 12)); // 27 ส.ค. 2569 (Aug 27, 2026)
 
 describe('computeWeightForecast (INT-1 / REQ-11)', () => {
-  // TC-INT-1-001 expects daysToGoal = 5 / (500/7700) = exactly 77 (→
-  // 2026-11-12), but `5 / (500 / 7700)` evaluates to 77.00000000000001 in
-  // IEEE-754 floating point, so Math.ceil(...) in the actual code (preserved
-  // as-is from the pre-refactor route) bumps it to 78 days → 2026-11-13.
-  // Not "fixed" either direction per the refactor's behavior-preserving
-  // rule — see the extraction report.
-  it.fails(
-    'TC-INT-1-001 — 80kg → 75kg target, average deficit 500 kcal/day → doc expects 77 days/2026-11-12, code computes 78 days/2026-11-13 (floating-point ceil)',
-    () => {
-      const accumulatedKcalValues = [500, 500, 500]; // average = 500 kcal/day
-      const outcome = computeWeightForecast(accumulatedKcalValues, 80, 75, REFERENCE_DATE);
+  // Fixed 2026-09-25: daysToGoal is now computed as
+  // ((current - target) * KCAL_PER_KG) / averageDailyDeficitKcal instead of
+  // dividing by an intermediate weightChangePerDayKg, which avoids the
+  // floating-point rounding (5 / (500/7700) used to evaluate to
+  // 77.00000000000001, bumped to 78 by Math.ceil) that previously made this
+  // land on 2026-11-13 instead of the documented 2026-11-12.
+  it('TC-INT-1-001 — 80kg → 75kg target, average deficit 500 kcal/day → 77 days out, 12 พ.ย. 2569 (2026-11-12)', () => {
+    const accumulatedKcalValues = [500, 500, 500]; // average = 500 kcal/day
+    const outcome = computeWeightForecast(accumulatedKcalValues, 80, 75, REFERENCE_DATE);
 
-      expect('result' in outcome).toBe(true);
-      if ('result' in outcome) {
-        expect(outcome.result.averageDailyDeficitKcal).toBe(500);
-        expect(outcome.result.forecastedGoalDate).toBe('2026-11-12');
-      }
-    },
-  );
-
-  it('TC-INT-1-001 (actual computed behavior) — averageDailyDeficitKcal is correct; forecastedGoalDate lands on 2026-11-13 due to the floating-point quirk above', () => {
-    const outcome = computeWeightForecast([500, 500, 500], 80, 75, REFERENCE_DATE);
     expect('result' in outcome).toBe(true);
     if ('result' in outcome) {
       expect(outcome.result.averageDailyDeficitKcal).toBe(500);
-      expect(outcome.result.forecastedGoalDate).toBe('2026-11-13');
+      expect(outcome.result.forecastedGoalDate).toBe('2026-11-12');
     }
   });
 

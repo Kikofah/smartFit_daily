@@ -1,17 +1,23 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, FlatList, Modal, Pressable, Text, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../src/components/ScreenContainer';
 import { Button } from '../src/components/Button';
 import { ConsentModal } from '../src/components/ConsentModal';
 import { logout } from '../src/services/authService';
+import { getIntegrationConnections } from '../src/services/profile';
 import {
   disconnectSmartScale,
   pairAndSyncSmartScale,
   scanForScales,
   type ScannedScale,
 } from '../src/services/smartScale';
-import { connectWearable, disconnectWearable, requestWearablePermission } from '../src/services/wearable';
+import {
+  connectWearable,
+  disconnectWearable,
+  requestWearablePermission,
+  syncLatestSessionWearableReading,
+} from '../src/services/wearable';
 import { colors, radius, spacing, typography } from '../src/constants/theme';
 
 type DeviceStatus = 'not_connected' | 'connecting' | 'connected' | 'error';
@@ -23,11 +29,11 @@ type DeviceStatus = 'not_connected' | 'connecting' | 'connected' | 'error';
  * explicit consent step before connecting either device (NFR-05) — no
  * auto-connect — and lets the user disconnect afterward.
  *
- * There is no GET endpoint to fetch existing connection status (only
- * connect/disconnect/sync routes exist — see
+ * There is no dedicated status endpoint for either integration (only
+ * connect/disconnect/sync/readings routes exist — see
  * apps/web/server/routes/integration-gateway/index.ts), so `scaleStatus`/
- * `wearableStatus` only reflect this app session, not a server-confirmed
- * state on a fresh launch. Flagged as an assumption in the task report.
+ * `wearableStatus` are seeded on mount from GET /api/profile's
+ * `integrationConnections` field instead (see src/services/profile.ts).
  *
  * The manual weight-entry fallback (when Bluetooth fails) lives in
  * apps/web/client/src/pages/ProfileScreen.tsx instead, not here — it needs
@@ -48,6 +54,20 @@ export default function DevicePairingScreen() {
   const [wearableStatus, setWearableStatus] = useState<DeviceStatus>('not_connected');
   const [wearableError, setWearableError] = useState<string | null>(null);
   const [wearableConsentVisible, setWearableConsentVisible] = useState(false);
+
+  const [isSyncingSession, setIsSyncingSession] = useState(false);
+  const [sessionSyncMessage, setSessionSyncMessage] = useState<string | null>(null);
+  const [sessionSyncError, setSessionSyncError] = useState<string | null>(null);
+
+  // Seed both cards' connected state from the profile doc on launch — see
+  // this component's doc comment above for why there's no dedicated status
+  // endpoint to call instead.
+  useEffect(() => {
+    getIntegrationConnections().then((connections) => {
+      if (connections?.smartScale.connectionStatus === 'connected') setScaleStatus('connected');
+      if (connections?.wearable.connectionStatus === 'connected') setWearableStatus('connected');
+    });
+  }, []);
 
   async function handleSignOut() {
     stopScanRef.current?.();
@@ -124,6 +144,25 @@ export default function DevicePairingScreen() {
     }
   }
 
+  async function handleSyncLatestSession() {
+    setIsSyncingSession(true);
+    setSessionSyncMessage(null);
+    setSessionSyncError(null);
+    try {
+      const { calorieValueKcal, wasAlreadySynced, appliedToLog } = await syncLatestSessionWearableReading();
+      const syncedLabel = wasAlreadySynced ? `ซิงค์ใหม่ทับค่าที่มีอยู่แล้ว: ${calorieValueKcal} kcal` : `ซิงค์แคลอรี่สำเร็จ: ${calorieValueKcal} kcal`;
+      // appliedToLog is only true once the session is completed on the web
+      // app — the server retroactively corrects that day's log/streak in
+      // that case (see wearable.ts's postWearableReading comment); otherwise
+      // the reading is just stored for session-complete to use later.
+      setSessionSyncMessage(appliedToLog ? `${syncedLabel} — อัปเดตแคลอรี่ของวันนี้แล้ว` : syncedLabel);
+    } catch (e) {
+      setSessionSyncError(e instanceof Error ? e.message : 'ซิงค์แคลอรี่ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      setIsSyncingSession(false);
+    }
+  }
+
   return (
     <ScreenContainer style={{ justifyContent: 'center', gap: spacing[6] }}>
       <Text style={typography.h1}>เชื่อมต่ออุปกรณ์</Text>
@@ -154,7 +193,17 @@ export default function DevicePairingScreen() {
           onPress={() => setWearableConsentVisible(true)}
         />
         {wearableStatus === 'connected' && (
-          <Button label="ยกเลิกการเชื่อมต่อ Wearable" variant="ghost" onPress={handleDisconnectWearable} />
+          <>
+            <Button
+              label={isSyncingSession ? 'กำลังซิงค์...' : 'ซิงค์แคลอรี่จากการออกกำลังกายครั้งล่าสุด'}
+              variant="secondary"
+              disabled={isSyncingSession}
+              onPress={handleSyncLatestSession}
+            />
+            {sessionSyncMessage && <Text style={[typography.bodySm, { color: colors.sageStrong }]}>{sessionSyncMessage}</Text>}
+            {sessionSyncError && <Text style={styles.errorText}>{sessionSyncError}</Text>}
+            <Button label="ยกเลิกการเชื่อมต่อ Wearable" variant="ghost" onPress={handleDisconnectWearable} />
+          </>
         )}
         {wearableStatus === 'error' && wearableError && <Text style={styles.errorText}>{wearableError}</Text>}
       </View>

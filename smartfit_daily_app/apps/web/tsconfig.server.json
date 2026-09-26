@@ -8,5 +8,10 @@
     "rootDir": "server",
     "types": ["node"]
   },
-  "include": ["server"]
+  "include": ["server"],
+  // Test files are typechecked separately (tsconfig.server-tests.json) and
+  // run by Vitest — keeping them out of this config means `build:server`
+  // (tsc -p tsconfig.server.json, no --noEmit) never emits *.test.js into
+  // dist-server.
+  "exclude": ["**/*.test.ts"]
 }

@@ -10,49 +10,23 @@ import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { goalConfirmScreenStyles as styles } from './styles';
+import {
+  computeDailyCalorieTargetKcal,
+  computeDailyIntakeTarget,
+  GOAL_INTAKE_DELTA_KCAL,
+  GOAL_KCAL_PER_KG,
+} from '../../../../server/domain/goalTargets';
 import type { GoalType } from '@smartfit/shared-types';
 
-/**
- * kcal to burn via exercise per kg of current body weight per day —
- * confirmed 2026-08-31. This app tracks exercise burn only (no food-intake
- * logging yet), so this is the number REC-1/PLN-3/INT-1 actually consume —
- * lands in the same range as a single real workout session already
- * estimates elsewhere in the app (~150–350 kcal for a typical 20–30 min
- * session), scaled by weight the same way MET-based calorie burn already is.
- *
- * Client can't import from server/ (see 2026-09-25 test-suite refactor
- * report) — kcalPerKg here is kept in sync by hand with
- * server/domain/goalTargets.ts's GOAL_KCAL_PER_KG, which is the one covered
- * by unit tests.
- */
-const GOAL_META: Record<GoalType, { label: string; kcalPerKg: number }> = {
-  lose_weight: { label: 'ลดน้ำหนัก', kcalPerKg: 4.5 },
-  tone_up: { label: 'กระชับสัดส่วน', kcalPerKg: 3.0 },
-  build_endurance: { label: 'เพิ่มความอึด', kcalPerKg: 5.5 },
+// Thai display labels only — the actual kcal/kg and TDEE-delta constants
+// (and the safety-floor logic) live in server/domain/goalTargets.ts, shared
+// by both this screen and the server (see 2026-09-25 dedupe report) so they
+// can't drift out of sync again.
+const GOAL_LABELS: Record<GoalType, string> = {
+  lose_weight: 'ลดน้ำหนัก',
+  tone_up: 'กระชับสัดส่วน',
+  build_endurance: 'เพิ่มความอึด',
 };
-
-/**
- * TDEE ± per-goalType delta — the original diet-style net energy-balance
- * target (REQ-02), reinstated 2026-08-31 alongside the exercise-burn target
- * above so a future food-intake logging feature has something to build on.
- * Not consumed by anything today (REC-1/PLN-3/INT-1 all use
- * dailyCalorieTargetKcal instead) — shown here purely as forward-looking
- * context, with its safety floor protection kept intact.
- */
-const GOAL_INTAKE_DELTA_KCAL: Record<GoalType, number> = {
-  lose_weight: -500,
-  tone_up: 0,
-  build_endurance: 300,
-};
-// exact value tied to sex/age band — see log 2026-08-27. NOTE: this screen
-// floors (and sets isSafetyFloorApplied) using `rawIntakeKcal <
-// SAFETY_FLOOR_MIN_KCAL` (strictly less than) below, while
-// server/domain/goalTargets.ts's deriveIsSafetyFloorApplied re-derives the
-// same flag server-side using `<=` — a known discrepancy at the exact
-// boundary (dailyIntakeTargetKcal === 1200), preserved as-is by the
-// 2026-09-25 test-suite refactor rather than picked one way. See that
-// module's own comment and the refactor report for details.
-const SAFETY_FLOOR_MIN_KCAL = 1200;
 
 /**
  * ONB-3 (part b) · REQ-02 — mirrors v1/04-onboarding-goal-confirm.html (step 4 of 4, final).
@@ -88,14 +62,18 @@ export default function GoalConfirmScreen() {
 
   const computed = useMemo(() => {
     if (!goalType || weightKg === undefined || tdeeKcal === undefined) return null;
-    const goal = GOAL_META[goalType];
-    const dailyCalorieTargetKcal = Math.round(weightKg * goal.kcalPerKg);
+    // Exact/unrounded per TC-ONB-3-001/003 (confirmed 2026-09-25) — stored
+    // as-is; only rendering below rounds it for display.
+    const dailyCalorieTargetKcal = computeDailyCalorieTargetKcal(weightKg, goalType);
+    const { dailyIntakeTargetKcal, isSafetyFloorApplied } = computeDailyIntakeTarget(tdeeKcal, goalType);
 
-    const rawIntakeKcal = tdeeKcal + GOAL_INTAKE_DELTA_KCAL[goalType];
-    const isSafetyFloorApplied = rawIntakeKcal < SAFETY_FLOOR_MIN_KCAL;
-    const dailyIntakeTargetKcal = isSafetyFloorApplied ? SAFETY_FLOOR_MIN_KCAL : rawIntakeKcal;
-
-    return { goal, dailyCalorieTargetKcal, dailyIntakeTargetKcal, isSafetyFloorApplied };
+    return {
+      label: GOAL_LABELS[goalType],
+      kcalPerKg: GOAL_KCAL_PER_KG[goalType],
+      dailyCalorieTargetKcal,
+      dailyIntakeTargetKcal,
+      isSafetyFloorApplied,
+    };
   }, [goalType, weightKg, tdeeKcal]);
 
   if (!goalType || weightKg === undefined || tdeeKcal === undefined || !computed) return null;
@@ -123,6 +101,10 @@ export default function GoalConfirmScreen() {
   }
 
   const fmt = (n: number) => n.toLocaleString('th-TH');
+  // dailyCalorieTargetKcal/dailyIntakeTargetKcal are stored/compared as exact
+  // values (see server/domain/goalTargets.ts) — this screen only rounds them
+  // for display, per the 2026-09-25 rounding decision.
+  const fmtKcal = (n: number) => fmt(Math.round(n));
 
   return (
     <ScreenContainer style={{ paddingTop: 0, gap: 0 }}>
@@ -140,8 +122,8 @@ export default function GoalConfirmScreen() {
       </Text>
 
       <View style={[styles.summaryCard, { marginTop: spacing[8] }]}>
-        <Text style={typography.caption}>เป้าหมาย: {computed.goal.label}</Text>
-        <Text style={styles.targetNumber}>{fmt(computed.dailyCalorieTargetKcal)}</Text>
+        <Text style={typography.caption}>เป้าหมาย: {computed.label}</Text>
+        <Text style={styles.targetNumber}>{fmtKcal(computed.dailyCalorieTargetKcal)}</Text>
         <Text style={typography.bodySm}>kcal / วัน</Text>
       </View>
 
@@ -152,15 +134,15 @@ export default function GoalConfirmScreen() {
         </View>
         <View style={[styles.breakdownRow, { borderBottomWidth: 0 }]}>
           <Text style={typography.bodySm}>สูตรตามเป้าหมาย</Text>
-          <Text style={typography.body}>{computed.goal.kcalPerKg} kcal/กก.</Text>
+          <Text style={typography.body}>{computed.kcalPerKg} kcal/กก.</Text>
         </View>
       </View>
 
       <View style={[styles.secondaryCard, { marginTop: spacing[6] }]}>
         <Text style={typography.bodySm}>เป้าหมายแคลอรี่ที่ควรได้รับต่อวัน (สำหรับวางแผนอาหารในอนาคต)</Text>
-        <Text style={[typography.h2, { marginTop: spacing[1] }]}>{fmt(computed.dailyIntakeTargetKcal)} kcal/วัน</Text>
+        <Text style={[typography.h2, { marginTop: spacing[1] }]}>{fmtKcal(computed.dailyIntakeTargetKcal)} kcal/วัน</Text>
         <Text style={[typography.caption, { color: colors.inkMuted, marginTop: spacing[1] }]}>
-          คำนวณจาก TDEE ({fmt(tdeeKcal)} kcal){' '}
+          คำนวณจาก TDEE ({fmtKcal(tdeeKcal)} kcal){' '}
           {GOAL_INTAKE_DELTA_KCAL[goalType] === 0
             ? '(ไม่บวก/ลบ — คงระดับพลังงาน)'
             : `${GOAL_INTAKE_DELTA_KCAL[goalType] > 0 ? '+' : '−'}${Math.abs(GOAL_INTAKE_DELTA_KCAL[goalType])} kcal`}

@@ -20,6 +20,8 @@ export interface WorkoutSession {
   /** Set on complete; whether it includes warmup/cooldown time is an open point (api-spec.md §4). */
   actualDurationMinutes?: number;
   status: WorkoutSessionStatus;
+  /** `dailyLogs/{logDate}` this session's kcal was added to — set on complete, so a later INT-3 wearable reading corrects the same day. */
+  logDate?: string; // ISO-8601 date
   /** Embedded array (1-3 items: main + optional warmup/cooldown), written by POST /workouts/sessions. */
   sessionVideos?: SessionVideo[];
   /** Embedded array, each item written on a REC-3 swap within the same session. */

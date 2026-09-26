@@ -1,10 +1,14 @@
 import { Router } from 'express';
+import type { DocumentReference } from 'firebase-admin/firestore';
 import { db } from '../../firebaseAdmin';
 import { assertDocExists, NotFoundError } from '../../assertDocExists';
 import { asyncHandler } from '../../asyncHandler';
 import { computeTdeeKcal } from '../../domain/tdee';
 import { computeDailyCalorieTargetKcal } from '../../domain/goalTargets';
-import type { GoalType, WearablePlatform, WeightRecordSource } from '@smartfit/shared-types';
+import { selectActualCalorieBurn } from '../../domain/metCalorieBurn';
+import { applyCalorieDeltaToDailyLog } from '../../domain/dailyLog';
+import { recomputeStreak } from '../logging-streak/recomputeStreak';
+import type { GoalType, WearablePlatform, WeightRecordSource, WorkoutSession } from '@smartfit/shared-types';
 
 export const router = Router();
 
@@ -117,10 +121,63 @@ router.delete(
 );
 
 /**
+ * GET /api/integrations/wearable/latest-session — INT-3 / REQ-13
+ * Lets the mobile companion app (which has no workout-logging UI of its
+ * own — that lives entirely in apps/web's Planner) find which session to
+ * attach a wearable reading to: the user's most recent workoutSessions doc
+ * from the last 24h, ordered by startedAt desc. 404 if none in that window.
+ * `actualDurationMinutes` is only set once the session is completed (see
+ * POST /workouts/sessions/:sessionId/complete below) — the caller should
+ * treat a missing/zero value (or status still "in_progress") as "finish the
+ * workout on the web first," not compute a zero-length window.
+ */
+router.get(
+  '/integrations/wearable/latest-session',
+  asyncHandler(async (req, res) => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const snapshot = await db
+      .collection(`users/${req.userId}/workoutSessions`)
+      .where('startedAt', '>=', since)
+      .orderBy('startedAt', 'desc')
+      .limit(1)
+      .get();
+
+    const doc = snapshot.docs[0];
+    if (!doc) {
+      return res.status(404).json({ error: 'No workout session in the last 24h.' });
+    }
+
+    const data = doc.data() as WorkoutSession;
+    return res.json({
+      sessionId: doc.id,
+      startedAt: data.startedAt,
+      actualDurationMinutes: data.actualDurationMinutes,
+      status: data.status,
+      hasWearableReading: Boolean(data.wearableReading),
+    });
+  }),
+);
+
+/**
  * POST /api/integrations/wearable/readings — INT-3 / REQ-13
- * If this arrives before session-complete, session-complete will prefer it
- * over the MET estimate. If it never arrives, the MET estimate is used as-is
- * (not an error).
+ * Always stores `wearableReading`. If the session hasn't been completed yet
+ * (no `actualCalorieBurn`), that's all this does — session-complete will
+ * read `wearableReading` itself and prefer it over the MET estimate
+ * (selectActualCalorieBurn). But a reading that arrives (or is re-synced)
+ * *after* session-complete would otherwise sit unused — session-complete
+ * only looks at `wearableReading` once, at completion time — so if the
+ * session is already completed, this retroactively swaps its
+ * `actualCalorieBurn` to the wearable value and corrects that day's already-
+ * accumulated `dailyLogs` entry by the delta (not the full kcal — a day can
+ * have several sessions, and a repeated sync for the same session must not
+ * double-count what it already contributed), all in one transaction so the
+ * session/log pair never observes a half-applied state. `recomputeStreak`
+ * runs after the transaction commits, same as session-complete does.
+ *
+ * The log corrected is the one session-complete fed (`session.logDate`, set
+ * there), not today's — the mobile app may sync up to 24h later, e.g. after
+ * midnight. Sessions completed before `logDate` existed fall back to the
+ * date of `startedAt`.
  */
 router.post(
   '/integrations/wearable/readings',
@@ -140,10 +197,50 @@ router.post(
       throw e;
     }
 
-    await sessionRef.set(
-      { wearableReading: { platform, calorieValueKcal, recordedAt: new Date().toISOString() } },
-      { merge: true },
-    );
-    return res.status(204).send();
+    const recordedAt = new Date().toISOString();
+    const profileRef = db.doc(`users/${req.userId}`);
+
+    const appliedToLog = await db.runTransaction(async (transaction) => {
+      // All reads first — Firestore transactions require every get() before any write.
+      const sessionSnap = await transaction.get(sessionRef);
+      const session = sessionSnap.data() as WorkoutSession | undefined;
+      const isCompleted = Boolean(session?.actualCalorieBurn);
+
+      let previousSessionKcal = 0;
+      let goalKcal = 0;
+      let existingAccumulatedKcal: number | undefined;
+      let logRef: DocumentReference | undefined;
+      if (isCompleted) {
+        const logDate = session!.logDate ?? session!.startedAt.slice(0, 10);
+        logRef = db.doc(`users/${req.userId}/dailyLogs/${logDate}`);
+        const [logSnap, profileSnap] = await Promise.all([transaction.get(logRef), transaction.get(profileRef)]);
+        previousSessionKcal = session!.actualCalorieBurn!.calculatedKcal;
+        goalKcal = profileSnap.data()?.goalSelection?.dailyCalorieTargetKcal ?? 0;
+        existingAccumulatedKcal = logSnap.data()?.accumulatedKcal;
+      }
+
+      // Now the writes.
+      const sessionUpdate: Record<string, unknown> = { wearableReading: { platform, calorieValueKcal, recordedAt } };
+      if (isCompleted) {
+        // Second arg is unreachable here (selectActualCalorieBurn always
+        // takes the wearable branch when its first arg is defined) — passed
+        // for type-fit only, same rule as session-complete's own call.
+        sessionUpdate.actualCalorieBurn = selectActualCalorieBurn(calorieValueKcal, previousSessionKcal);
+      }
+      transaction.set(sessionRef, sessionUpdate, { merge: true });
+
+      if (!isCompleted || !logRef) return false;
+
+      const calorieDeltaKcal = calorieValueKcal - previousSessionKcal;
+      const { accumulatedKcal, completionStatus } = applyCalorieDeltaToDailyLog(existingAccumulatedKcal, calorieDeltaKcal, goalKcal);
+      transaction.set(logRef, { accumulatedKcal, completionStatus }, { merge: true });
+      return true;
+    });
+
+    if (appliedToLog) {
+      await recomputeStreak(req.userId!);
+    }
+
+    return res.status(200).json({ appliedToLog, calculatedKcal: calorieValueKcal });
   }),
 );

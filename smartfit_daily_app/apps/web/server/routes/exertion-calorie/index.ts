@@ -4,7 +4,7 @@ import { assertDocExists, NotFoundError } from '../../assertDocExists';
 import { asyncHandler } from '../../asyncHandler';
 import { recomputeStreak } from '../logging-streak/recomputeStreak';
 import { selectActualCalorieBurn } from '../../domain/metCalorieBurn';
-import { accumulateDailyLog, determineLogCompletionStatus } from '../../domain/dailyLog';
+import { accumulateDailyLog, applyCalorieDeltaToDailyLog } from '../../domain/dailyLog';
 
 export const router = Router();
 
@@ -38,9 +38,13 @@ router.post(
     const actualCalorieBurn = selectActualCalorieBurn(wearableReading?.calorieValueKcal, calculatedKcal);
     const sessionKcal = actualCalorieBurn.calculatedKcal;
 
+    // Recorded on the session so a later wearable reading (INT-3, possibly
+    // synced after midnight) corrects the same day's log this session fed.
+    const today = new Date().toISOString().slice(0, 10);
     await sessionRef.set(
       {
         status: 'completed',
+        logDate: today,
         actualDurationMinutes,
         actualCalorieBurn: actualCalorieBurn.source === 'wearable' ? actualCalorieBurn : { ...actualCalorieBurn, metValue },
       },
@@ -51,10 +55,12 @@ router.post(
     // today's daily_log (a second session the same day adds on top, it
     // doesn't overwrite), then compare against the daily target — no
     // partial credit even 1% under (detailed-design/03-planner-logging.md).
-    const today = new Date().toISOString().slice(0, 10);
     const logRef = db.doc(`users/${req.userId}/dailyLogs/${today}`);
     const existingLog = (await logRef.get()).data();
-    const { minutesExercised, accumulatedKcal } = accumulateDailyLog(
+    // minutesExercised still accumulates in full here — only the kcal/
+    // completionStatus step is shared with the wearable-readings route's
+    // retroactive correction (see applyCalorieDeltaToDailyLog's doc comment).
+    const { minutesExercised } = accumulateDailyLog(
       existingLog?.minutesExercised,
       existingLog?.accumulatedKcal,
       actualDurationMinutes,
@@ -63,7 +69,7 @@ router.post(
 
     const profile = (await db.doc(`users/${req.userId}`).get()).data();
     const goalKcal = profile?.goalSelection?.dailyCalorieTargetKcal ?? 0;
-    const completionStatus = determineLogCompletionStatus(accumulatedKcal, goalKcal);
+    const { accumulatedKcal, completionStatus } = applyCalorieDeltaToDailyLog(existingLog?.accumulatedKcal, sessionKcal, goalKcal);
 
     await logRef.set(
       { minutesExercised, accumulatedKcal, completionStatus, source: 'workout_session' },

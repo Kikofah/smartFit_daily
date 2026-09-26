@@ -8,7 +8,8 @@ import { api } from '../../services/api';
 import { workoutDraft } from '../../store/workoutDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { workoutSessionScreenStyles as styles } from './styles';
-import type { ActivityType, Intensity } from '@smartfit/shared-types';
+import { computeMetCalorieBurnKcal, MET_TABLE } from '../../../../server/domain/metCalorieBurn';
+import type { Intensity } from '@smartfit/shared-types';
 
 declare global {
   interface Window {
@@ -42,18 +43,9 @@ const INTENSITY_LABEL: Record<Intensity, string> = {
   high: 'ความเข้มข้นสูง',
 };
 
-/**
- * kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05. Illustrative MET table
- * pending the real REC-2 reference. Client can't import from server/ (see
- * 2026-09-25 test-suite refactor report) — kept in sync by hand with
- * server/domain/metCalorieBurn.ts's MET_TABLE/computeMetCalorieBurnKcal,
- * which is the one covered by unit tests.
- */
-const MET_TABLE: Record<ActivityType, Record<Intensity, number>> = {
-  cardio: { low: 4, medium: 6, high: 8 },
-  strength: { low: 3, medium: 4.5, high: 6 },
-  hiit: { low: 6, medium: 8, high: 10 },
-};
+// kcal = MET × น้ำหนักตัว(kg) × เวลา(ชม.) per REQ-05 — MET_TABLE/
+// computeMetCalorieBurnKcal now live in server/domain/metCalorieBurn.ts,
+// shared by both this screen and the server (see 2026-09-25 dedupe report).
 
 type Stage = 'warmup' | 'main' | 'cooldown';
 const STAGE_ORDER: Stage[] = ['warmup', 'main', 'cooldown'];
@@ -142,8 +134,8 @@ export default function WorkoutSessionScreen() {
 
   function handleFinish() {
     const actualDurationMinutes = Math.max(1, Math.round(effectiveElapsedSec / 60));
-    const metValue = MET_TABLE[video!.activityType][video!.intensity]!;
-    const calculatedKcal = Math.round(metValue * (workoutDraft.weightKg ?? 60) * (actualDurationMinutes / 60));
+    const metValue = MET_TABLE[video!.activityType][video!.intensity];
+    const calculatedKcal = computeMetCalorieBurnKcal(metValue, workoutDraft.weightKg ?? 60, actualDurationMinutes);
 
     if (workoutDraft.sessionId) {
       // Optimistic: feedback within 250ms (NFR-02) — don't block navigation on this round trip.

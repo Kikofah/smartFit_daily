@@ -11,6 +11,7 @@ import type { OnboardingContext } from '../../layouts/OnboardingLayout';
 import { onboardingDraft } from '../../store/onboardingDraft';
 import { colors, spacing, typography } from '../../constants/theme';
 import { personalInfoScreenRowStyles as rowStyles, personalInfoScreenStyles as styles } from './styles';
+import { computeTdeeKcal } from '../../../../server/domain/tdee';
 import type { ActivityLevel, Sex } from '@smartfit/shared-types';
 
 const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string }[] = [
@@ -20,23 +21,6 @@ const ACTIVITY_OPTIONS: { value: ActivityLevel; label: string }[] = [
   { value: 'active', label: 'มาก — ออกกำลังกาย 6–7 วัน/สัปดาห์' },
   { value: 'very_active', label: 'มากที่สุด — ออกกำลังกายหนัก หรืองานใช้แรงกายมาก' },
 ];
-
-// Client can't import from server/ (see 2026-09-25 test-suite refactor
-// report) — kept in sync by hand with server/domain/tdee.ts's
-// ACTIVITY_FACTOR/computeTdeeKcal, which is the one covered by unit tests.
-const ACTIVITY_FACTOR: Record<ActivityLevel, number> = {
-  sedentary: 1.2,
-  light: 1.375,
-  moderate: 1.55,
-  active: 1.725,
-  very_active: 1.9,
-};
-
-/** Mifflin-St Jeor BMR, then × activity factor — computed client-side per NFR-01/03. */
-function computeTdeeKcal(sex: Sex, weightKg: number, heightCm: number, age: number, activityLevel: ActivityLevel) {
-  const bmr = 10 * weightKg + 6.25 * heightCm - 5 * age + (sex === 'male' ? 5 : -161);
-  return Math.round(bmr * ACTIVITY_FACTOR[activityLevel]);
-}
 
 /**
  * ONB-1 · REQ-01 — mirrors v1/01-onboarding-personal-info.html (step 1 of 4).

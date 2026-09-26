@@ -185,7 +185,10 @@ export default function PlannerScreen() {
               {day.status === 'completed' && <IconCheck size={16} color={colors.sage} />}
               {day.status === 'cheatrest' && <IconDashedCircle size={16} color={colors.sand} />}
             </View>
-            {goalKcal !== undefined && <Text style={styles.dayKcal}>{goalKcal}{'\n'}kcal</Text>}
+            {/* goalKcal (dailyCalorieTargetKcal) may be a non-integer exact
+                value (e.g. 337.5, see server/domain/goalTargets.ts) —
+                rounded here for display only. */}
+            {goalKcal !== undefined && <Text style={styles.dayKcal}>{Math.round(goalKcal)}{'\n'}kcal</Text>}
           </Pressable>
         ))}
       </View>

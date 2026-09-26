@@ -44,8 +44,15 @@ export function computeWeightForecast(
     return { error: 'already_at_or_below_target' };
   }
 
-  const weightChangePerDayKg = averageDailyDeficitKcal / KCAL_PER_KG;
-  const daysToGoal = Math.ceil((currentWeightKg - targetWeightKg) / weightChangePerDayKg);
+  // Computed as (kg to lose × KCAL_PER_KG) / averageDailyDeficitKcal rather
+  // than dividing by an intermediate `weightChangePerDayKg` — the latter
+  // (averageDailyDeficitKcal / KCAL_PER_KG, then dividing kg-to-lose by that)
+  // is mathematically equivalent but round-trips through an extra floating-
+  // point division, e.g. 5 / (500 / 7700) evaluates to 77.00000000000001
+  // instead of 77 in IEEE-754, which then got bumped to 78 by Math.ceil —
+  // a real bug (TC-INT-1-001 expects 77 days/2026-11-12, not 78/2026-11-13),
+  // fixed 2026-09-25 by multiplying before dividing instead.
+  const daysToGoal = Math.ceil(((currentWeightKg - targetWeightKg) * KCAL_PER_KG) / averageDailyDeficitKcal);
   const forecastedGoalDate = new Date(today);
   forecastedGoalDate.setDate(forecastedGoalDate.getDate() + daysToGoal);
 

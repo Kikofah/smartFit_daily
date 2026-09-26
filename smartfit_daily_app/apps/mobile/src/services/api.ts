@@ -8,6 +8,16 @@ import { auth } from './firebase';
  */
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
+/** Thrown by `request()` on a non-2xx response — carries `status` so callers can branch on it (e.g. treat 404 as "not found" rather than a generic failure) without parsing the message text. */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
+    super(message);
+  }
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!API_BASE_URL) {
     throw new Error('EXPO_PUBLIC_API_BASE_URL is not set — see apps/mobile/.env.example.');
@@ -25,7 +35,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(body.error ?? `Request to ${path} failed (${res.status})`);
+    throw new ApiError(body.error ?? `Request to ${path} failed (${res.status})`, res.status);
   }
 
   if (res.status === 204) return undefined as T;

@@ -42,8 +42,11 @@ export function CalorieRing({ valueKcal, goalKcal, caption, size = 160 }: Calori
         />
       </svg>
       <View style={styles.labelOverlay} pointerEvents="none">
-        <Text style={typography.display}>{valueKcal}</Text>
-        <Text style={styles.ringLabel}>/ {goalKcal} kcal</Text>
+        <Text style={typography.display}>{Math.round(valueKcal)}</Text>
+        {/* goalKcal (dailyCalorieTargetKcal) may be a non-integer exact value
+            (e.g. 337.5, see server/domain/goalTargets.ts) — round for display
+            only; `ratio`/`isComplete` above compare the exact value. */}
+        <Text style={styles.ringLabel}>/ {Math.round(goalKcal)} kcal</Text>
       </View>
       {caption && <Text style={styles.caption}>{caption}</Text>}
     </View>
