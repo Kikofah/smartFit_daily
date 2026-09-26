@@ -18,6 +18,8 @@ npm-debug.log*
 playwright-report/
 test-results/
 blob-report/
+# Playwright MCP server output (screenshots/snapshots taken while browsing)
+.playwright-mcp/
 
 # Expo (smartfit_daily_app/apps/mobile — companion app, INT-2/INT-3 only)
 smartfit_daily_app/apps/mobile/.expo/
