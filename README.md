@@ -1,7 +1,7 @@
 # smartFit_daily
 
 - **Live web app:** https://smartfit-daily.web.app
-- **Latest test results:** [`docs/03-testing/02-test-result/test-results.md`](docs/03-testing/02-test-result/test-results.md)
+- **Latest test results:** [`smartfit_daily_app/test-results.md`](smartfit_daily_app/test-results.md)
 
 A daily fitness app: personalized calorie targets, YouTube workout recommendations,
 weekly planning with streak tracking, and optional wearable/smart-scale integrations.
