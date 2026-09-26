@@ -14,7 +14,7 @@ const FORECAST_ERROR_MESSAGES = {
 /**
  * GET /api/insights/forecast — INT-1 / REQ-11
  * Requires a target weight (set in ONB-3) and enough accumulated daily_log
- * history — minimum day count is an open point (api-spec.md §4, item 3).
+ * history — at least MIN_LOG_DAYS_FOR_FORECAST (7) days, resolved 2026-09-26.
  * Calculation itself lives in server/domain/weightForecast.ts (see that
  * module's own comment on the average-daily-deficit interpretation).
  */

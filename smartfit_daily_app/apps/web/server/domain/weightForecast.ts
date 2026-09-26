@@ -1,7 +1,7 @@
-// Minimum accumulated daily_log day count before forecasting — NOT resolved
-// in detailed-design/04-smart-integrations.md's "จุดที่ยังไม่ได้ระบุ" §1; picked
-// pragmatically until that's formally decided.
-export const MIN_LOG_DAYS_FOR_FORECAST = 3;
+// Minimum accumulated daily_log day count before forecasting — resolved
+// 2026-09-26 as one full week (INT-1 spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว),
+// so the average spans PLN-1's Mon–Sun week including Rest/Cheat Days.
+export const MIN_LOG_DAYS_FOR_FORECAST = 7;
 
 // ONB-3/REQ-02's resolved constant.
 export const KCAL_PER_KG = 7700;

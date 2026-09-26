@@ -5,7 +5,8 @@
 - **วันที่สร้าง:** 2026-08-28
 - **อัปเดตล่าสุด:** 2026-09-26 — เพิ่ม `TASK-INT-0` (Pairing Code — REQ-18) ที่ขาดไปตั้งแต่ `backlog.md` เพิ่ม
   Feature ID INT-0 เมื่อ 2026-08-30 — Status ทุก task = กำลังทำ ตามการยืนยันของผู้ใช้ (มีโค้ดจริงแล้ว แต่ยัง
-  ไม่ผ่าน Exit Criteria ของ [Release Plan §3.3](../02-plan/release-plan.md#33-future-phase))
+  ไม่ผ่าน Exit Criteria ของ [Release Plan §3.3](../02-plan/release-plan.md#33-future-phase)) — และ (รอบเดียวกัน)
+  ปิดจุดที่ยังไม่ได้ระบุเรื่องจำนวนวัน log ขั้นต่ำของ INT-1 = 7 วัน ตามที่ spec บันทึกการตัดสินใจไว้
 - **สร้างโดย:** skill `plan-task-builder`
 - **อ้างอิงจาก:** [Release Plan](../02-plan/release-plan.md), [Product Backlog](../backlog.md)
 
@@ -27,11 +28,11 @@ Could) ต้องมี [MVP Phase](phase-1-mvp-core-loop.md) และ [Next 
 
 ## 3. จุดที่ยังไม่ได้ระบุ / ควรยืนยันเพิ่มเติม
 
-- INT-1's จำนวนวัน log ขั้นต่ำก่อนเริ่มพยากรณ์ได้ ยังไม่ระบุใน `01-spec/` (โค้ดใช้ 3 วันไปก่อน — ดู
-  `test-cases/04-smart-integrations.md` § INT-1)
+- ~~INT-1's จำนวนวัน log ขั้นต่ำก่อนเริ่มพยากรณ์ได้ ยังไม่ระบุใน `01-spec/`~~ — **resolve แล้ว 2026-09-26: 7 วัน**
+  (ดู [Smart Integrations spec § ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว](../01-spec/20260823-04-smart-integrations.md#ข้อสมมติฐานการตัดสินใจที่ยืนยันแล้ว))
 - INT-2/INT-3's ลำดับความสำคัญเมื่อข้อมูลจากหลายแหล่งขัดกัน (ชั่งน้ำหนักหลายครั้งต่อวัน, wearable ต่างจาก
   MET มาก) ยังไม่ระบุ
-- ทั้งสามข้อนี้ไม่กระทบการมีอยู่ของ task แต่ต้อง resolve ก่อน implement จริงตามที่ระบุไว้แล้วใน
+- ข้อที่ยังค้างไม่กระทบการมีอยู่ของ task แต่ต้อง resolve ก่อน implement จริงตามที่ระบุไว้แล้วใน
   [test-plan.md §4 (R4, R5)](../../03-testing/01-test-plan/test-plan.md)
 
 ## 4. ความสัมพันธ์กับเอกสารอื่น

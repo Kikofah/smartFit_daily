@@ -108,16 +108,16 @@ html, body { margin:0; padding:0; background:#DCD5C8; font-family:var(--font-fam
     </div>
 
     <!-- Insufficient-data state (DESIGN.md 3.8 Empty & Neutral State, --color-info per explicit example).
-         REQ-11 open question: minimum log-days threshold before forecasting is NOT specified in the spec
-         (see 20260823-04-smart-integrations.md "จุดที่ยังไม่ได้ระบุ"), so copy is intentionally generic
-         ("ยังต้องบันทึกผลอีกสักระยะ") and does not invent a specific day count. -->
+         REQ-11 minimum log-days threshold resolved 2026-09-26 (20260823-04-smart-integrations.md
+         "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว"): at least 7 logged days required — fewer than 7 → this empty
+         state; exactly 7 → forecast shown. Copy matches AC-INT-1-02 ("ประวัติยังไม่พอสำหรับพยากรณ์"). -->
     <div id="insufficientState">
       <div class="empty-state">
         <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 20V10M11 20V4M18 20v-7"></path>
         </svg>
-        <h2 class="text-h3">ยังต้องบันทึกผลอีกสักระยะก่อนเริ่มพยากรณ์ได้</h2>
-        <p class="text-body-sm">ระบบต้องมีประวัติการบันทึกผลรายวันสะสมพอสมควรก่อนจึงจะคำนวณวันที่คาดว่าจะถึงเป้าหมายได้แม่นยำ</p>
+        <h2 class="text-h3">ประวัติยังไม่พอสำหรับพยากรณ์</h2>
+        <p class="text-body-sm">ต้องบันทึกผลอย่างน้อย 7 วันก่อนเริ่มพยากรณ์ได้ ระบบจึงจะคำนวณวันที่คาดว่าจะถึงเป้าหมายจากอัตราขาดดุลที่บันทึกจริง</p>
         <button type="button" class="btn btn-secondary" onclick="location.href='08-weekly-planner.html'">ไปบันทึกผลวันนี้</button>
       </div>
     </div>

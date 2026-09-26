@@ -3,7 +3,17 @@
 - **ประเภทเอกสาร:** Tech Stack — Concrete/Stack-Specific
 - **สถานะเอกสาร:** Draft
 - **วันที่สร้าง:** 2026-08-28
-- **อัปเดตล่าสุด:** 2026-08-31 (รอบ 4, factual correction) — `detailed-design-writer` audit
+- **อัปเดตล่าสุด:** 2026-09-26 — บันทึก region ที่ provision จริงเป็นทางการ (ผู้ใช้ยืนยันผ่าน ask-user
+  protocol เลือก "record as official"): **`asia-southeast1` (สิงคโปร์)** ทั้ง Firestore `(default)`
+  (`FIRESTORE_NATIVE`, project `smartfit-daily`) และ Cloud Run service `smartfit-daily-web` — ปิดหัวข้อ 7
+  ข้อ 3 เป็น RESOLVED และแก้ย่อหน้า PDPA ในหัวข้อ 4 ให้ระบุ region จริง ไม่ใช่การเปลี่ยนตัวเลือก stack
+  จุดใด (บันทึกข้อเท็จจริงของ infra ที่มีอยู่แล้ว) จึงไม่รัน Discovery Questionnaire — **และ (รอบเดียวกัน)**
+  sync ค่า INT-1/REQ-11 จำนวนวัน log ขั้นต่ำก่อนพยากรณ์ = **7 วัน** (ผู้ใช้ยืนยัน 2026-09-26 บันทึกใน
+  `01-spec/20260823-04-smart-integrations.md`, โค้ด `MIN_LOG_DAYS_FOR_FORECAST = 7`): แก้หัวข้อ 6.1 แถว
+  Insights & Forecast จาก placeholder 3 วันเป็น 7 วัน และปิดส่วน INT-1 ของหัวข้อ 7 ข้อ 10 — แก้ถ้อยคำเท่านั้น
+  ไม่กระทบตัวเลือก stack — ดู log
+  [2026-09-26](../../05-log/20260926-log.md)
+- **อัปเดตก่อนหน้า (รอบ 4):** 2026-08-31 (รอบ 4, factual correction) — `detailed-design-writer` audit
   `detailed-design/03-planner-logging.md`'s PLN-4 section พบว่าหัวข้อ 4 (Rationale) ของไฟล์นี้ระบุผิดว่า
   **streak walk-back (PLN-4)** อยู่ในกลุ่ม "Client-side calculation ตาม NFR-01/NFR-03" เหมือน TDEE/safety
   floor/MET — เดียวกับที่เคยพบและแก้แล้วสำหรับ forecast (INT-1) ก่อนหน้านี้ในวันเดียวกัน (ดูรายการ
@@ -281,8 +291,9 @@ Authentication) **ไม่เปลี่ยน** เพราะยังค�
   `dailyLogs` เอง (server-side ล้วนดังที่แก้ข้างต้น) เพราะ Express ไม่มี event-driven infrastructure แบบ
   Firestore trigger ให้ใช้ฟรีเหมือน Cloud Functions (ดูหัวข้อ 6.1 แถว Logging & Streak)
 - **PDPA มาตรฐาน (ไม่มี residency เฉพาะ)**: Firebase/Google Cloud รองรับการเลือก region ของ Cloud Run และ
-  Firestore ได้ (เช่น `asia-southeast1` — สิงคโปร์ ใกล้ไทยที่สุดในบรรดา region หลักที่ Firebase/Google
-  Cloud มี) และมี **Firestore Security Rules** ทดแทน Row Level Security (RLS) ของ Supabase เดิม เพื่อ
+  Firestore ได้ — **region ที่ provision จริงคือ `asia-southeast1` (สิงคโปร์) ทั้ง Firestore และ Cloud Run**
+  (ใกล้ไทยที่สุดในบรรดา region หลักที่ Firebase/Google Cloud มี, ยืนยันเป็นทางการ 2026-09-26 ดูหัวข้อ 7
+  ข้อ 3 — location ของ Firestore เปลี่ยนไม่ได้หลังสร้าง) และมี **Firestore Security Rules** ทดแทน Row Level Security (RLS) ของ Supabase เดิม เพื่อ
   บังคับใช้ NFR-04 (แยกสิทธิ์การเข้าถึงข้อมูลต่อผู้ใช้) — ต้องออกแบบ rule set ใหม่ให้เทียบเท่า RLS เดิม
   (ยังไม่ได้เขียนจริง ดูหัวข้อ 7 ข้อ 2) — **หมายเหตุ 2026-08-30**: การยืนยันตัวตนระดับ route ปัจจุบัน enforce
   เองใน `authenticate` middleware ของ Express (`server/middleware/authenticate.ts` เรียก
@@ -475,7 +486,7 @@ implement และ ship ไปแล้วจริงใน `apps/web/server/s
 | Exertion & Calorie Calculation | คำนวณ MET ที่ client (React+Vite) ตาม NFR-01/03 → **Express route** `POST /api/workouts/sessions/:sessionId/complete` (แทนที่ Cloud Function `sessionComplete` เดิม — `apps/web/server/routes/exertion-calorie/index.ts`) validate แล้วเขียน embedded map field `actualCalorieBurn` ลงใน document `workoutSessions/{sessionId}` เดียวกัน; ค่าจาก wearable (INT-3) เขียนผ่าน **Express route** `POST /api/integrations/wearable/readings` (ดูแถว Integration Gateway) เป็น embedded map field `wearableReading` ใน document เดียวกัน — ถ้ามาถึงก่อน complete route จะอ่านมาใช้แทนค่าประมาณ MET; referential existence validation (**NFR-12**, Firestore ไม่มี FK) ทำผ่าน helper function ที่แยกเป็นไฟล์กลาง `apps/web/server/assertDocExists.ts` (throw `NotFoundError` ที่ error-handling middleware กลางของ Express แปลงเป็น `404` ให้อัตโนมัติ) เรียกใช้ซ้ำจากทั้ง route นี้และ `POST /api/integrations/wearable/readings` — แทนที่แนวคิดเดิมที่ให้แต่ละ Cloud Function `get()` เองแยกกัน |
 | Planner & Day-Status | Subcollection `users/{userId}/weeklyPlanEntries/{date}` และ `users/{userId}/dayStatus/{date}` (document ID = ISO date — unbounded) — **Express route** `GET /api/planner/week`, `PUT /api/planner/days/:date`, `POST /api/planner/days/:date/cheat-rest`, `DELETE /api/planner/days/:date/cheat-rest` (แทนที่ Cloud Function `cheatRest`/read-only-flag Cloud Function เดิม — `apps/web/server/routes/planner-day-status/index.ts`) อ่าน `dailyLogs/{date}` ก่อนเสมอเพื่อคำนวณ read-only flag/enforce กติกา "วันนี้เท่านั้น" เหมือนตรรกะเดิม |
 | Logging & Streak | Subcollection `users/{userId}/dailyLogs/{date}` (document ID = ISO date) + embedded map field `streakSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/logs`, `GET /api/logs/:date`, `GET /api/streak` (`apps/web/server/routes/logging-streak/index.ts`); all-or-nothing enforce ที่ route ที่เขียน `dailyLogs/{date}` (planner-day-status/exertion-calorie) เหมือนเดิม — **เปลี่ยนสำคัญ (2026-08-30)**: เดิม Cloud Functions มี Firestore `onWrite` trigger recompute `streakSnapshot` อัตโนมัติ แต่ **Express ไม่มี event-driven infrastructure แบบนั้นให้ใช้ฟรี** จึงเปลี่ยนเป็นฟังก์ชันธรรมดา `recomputeStreak(userId)` (`apps/web/server/routes/logging-streak/recomputeStreak.ts`) ที่ทุก route ซึ่งเขียน `dailyLogs`/`dayStatus` (`exertion-calorie` และ `planner-day-status`) ต้อง `import` แล้วเรียกเองโดยตรงหลังเขียนเสร็จ — เป็นการเปลี่ยนแปลงสถาปัตยกรรมที่มีนัยสำคัญ (explicit call แทน implicit trigger) ต้องระวังเวลาเพิ่ม route ใหม่ที่เขียน `dailyLogs` ในอนาคตไม่ให้ลืมเรียก |
-| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast`, `GET /api/insights/weight-records` (ตัวหลังเพิ่มใหม่ `api-spec.md` §3.7, 2026-08-31 — แทนที่ Cloud Function `forecast` เดิม, ทั้งคู่อยู่ใน `apps/web/server/routes/insights-forecast/index.ts`) — **แก้ 2026-08-31: implement จริงแล้วเต็มรูปแบบ ไม่ใช่รอคำนวณจริงอีกต่อไป**: `GET .../forecast` เป็น bodyless GET ที่ **server คำนวณเองทั้งหมด** อ่าน `goalSelection.targetWeightKg`, ต้องมี `dailyLogs` สะสมอย่างน้อย `MIN_LOG_DAYS_FOR_FORECAST = 3` วัน (ค่า placeholder เชิงปฏิบัติ ยังไม่ resolve เป็นทางการ ดูหัวข้อ 7 ข้อ 10), คำนวณ**ค่าเฉลี่ยแคลอรี่ที่เผาผลาญจริงต่อวัน**จาก `accumulatedKcal` ของทุก `dailyLogs` (ไม่ใช่ผลต่างจากเป้าหมาย — สูตรที่ `detailed-design/04-smart-integrations.md` แก้ไปแล้ว 2026-08-31) หารด้วย `KCAL_PER_KG = 7700` ได้อัตราการเปลี่ยนแปลงน้ำหนักต่อวัน แล้วเขียนทับ `weightForecastSnapshot`; `GET .../weight-records` คืนรายการ `weightRecords` เรียงเก่าสุดก่อน (`recordedAt` ascending, รองรับ `fromDate`/`toDate` optional) ใช้แสดงกราฟแนวโน้มบน Progress screen แทนที่ mock data เดิม |
+| Insights & Forecast | Subcollection `users/{userId}/weightRecords/{recordId}` + embedded map field `weightForecastSnapshot` ภายใน `users/{userId}` — **Express route** `GET /api/insights/forecast`, `GET /api/insights/weight-records` (ตัวหลังเพิ่มใหม่ `api-spec.md` §3.7, 2026-08-31 — แทนที่ Cloud Function `forecast` เดิม, ทั้งคู่อยู่ใน `apps/web/server/routes/insights-forecast/index.ts`) — **แก้ 2026-08-31: implement จริงแล้วเต็มรูปแบบ ไม่ใช่รอคำนวณจริงอีกต่อไป**: `GET .../forecast` เป็น bodyless GET ที่ **server คำนวณเองทั้งหมด** อ่าน `goalSelection.targetWeightKg`, ต้องมี `dailyLogs` สะสมอย่างน้อย `MIN_LOG_DAYS_FOR_FORECAST = 7` วัน (resolve เป็นทางการแล้ว 2026-09-26 ตาม [`01-spec/20260823-04-smart-integrations.md`](../../01-requirements/01-spec/20260823-04-smart-integrations.md) "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" — เดิมเป็นค่า placeholder 3 วัน ดูหัวข้อ 7 ข้อ 10), คำนวณ**ค่าเฉลี่ยแคลอรี่ที่เผาผลาญจริงต่อวัน**จาก `accumulatedKcal` ของทุก `dailyLogs` (ไม่ใช่ผลต่างจากเป้าหมาย — สูตรที่ `detailed-design/04-smart-integrations.md` แก้ไปแล้ว 2026-08-31) หารด้วย `KCAL_PER_KG = 7700` ได้อัตราการเปลี่ยนแปลงน้ำหนักต่อวัน แล้วเขียนทับ `weightForecastSnapshot`; `GET .../weight-records` คืนรายการ `weightRecords` เรียงเก่าสุดก่อน (`recordedAt` ascending, รองรับ `fromDate`/`toDate` optional) ใช้แสดงกราฟแนวโน้มบน Progress screen แทนที่ mock data เดิม |
 | Integration Gateway | Embedded map field `integrationConnections: { smartScale: {...}, wearable: {...} }` ภายใน `users/{userId}` — **Express route** `POST /api/integrations/smart-scale/connect`, `DELETE /api/integrations/smart-scale`, `POST /api/integrations/smart-scale/sync`, `POST /api/integrations/wearable/connect`, `DELETE /api/integrations/wearable`, `POST /api/integrations/wearable/readings` (แทนที่ Cloud Function `integrations` เดิม — `apps/web/server/routes/integration-gateway/index.ts`) + native module ฝั่ง `apps/mobile` เท่านั้น (`react-native-health`, `react-native-health-connect`, `react-native-ble-plx`) — รับ identity handoff จากกลไก pairing-code (แถว Account & Session Management ด้านบน) ก่อนเริ่มกระบวนการจับคู่จริงตาม HLA §3.8/§4.5 |
 
 ⚠️ **Referential existence validation เป็นกติกา cross-cutting** ไม่ได้ผูกกับ Component เดียว — ทุก Express
@@ -574,9 +585,14 @@ operation เพราะ Firestore ไม่มี auto-generated API — **Fir
    "อัปเดต 2026-08-29 (รอบ sync ล่าสุด)" เหนือหัวข้อ 6.1 ด้านบน) — ไม่มีงานค้างส่วนนี้อีก
 2. **Firestore Security Rules (ใหม่ 2026-08-29)**: ยังไม่ได้ออกแบบ rule set จริงที่เทียบเท่า Row Level
    Security (RLS) เดิมของ Supabase สำหรับ NFR-04/06 — ต้องทำก่อน provision จริง
-3. **Firebase project region (แทนที่ point เดิมเรื่อง Supabase region, 2026-08-29)**: ยังไม่ได้เลือก
-   region ที่แน่นอน (เช่น `asia-southeast1` — สิงคโปร์) — ควรยืนยันก่อนเริ่ม provision จริง โดยเฉพาะถ้ามี
-   ข้อกำหนด PDPA ที่ชัดเจนขึ้นภายหลัง
+3. **Firebase project region — RESOLVED (2026-09-26)**: เดิมข้อนี้ (แทนที่ point เรื่อง Supabase region,
+   2026-08-29) ระบุว่ายังไม่ได้เลือก region ที่แน่นอน — **ผู้ใช้ยืนยัน 2026-09-26 ให้บันทึก region ที่
+   provision จริงเป็นทางการ**: **`asia-southeast1` (สิงคโปร์)** ทั้งสองส่วน ตรวจสอบแล้ววันเดียวกัน —
+   Firestore database `(default)` ของ Firebase project `smartfit-daily`: Location = `asia-southeast1`,
+   type `FIRESTORE_NATIVE`; Cloud Run service `smartfit-daily-web`: region `asia-southeast1` (ตาม hosting
+   rewrite ใน `smartfit_daily_app/firebase.json`) — **ข้อควรระวัง**: location ของ Firestore เปลี่ยนไม่ได้
+   หลังสร้าง database แล้ว ถ้าภายหลังมีข้อกำหนด PDPA/residency ที่เข้มขึ้นจนต้องย้าย region จะต้องสร้าง
+   database ใหม่และ migrate ข้อมูล ไม่ใช่แค่เปลี่ยนค่า config
 4. **HealthKit/Health Connect library ที่แน่นอน**: `react-native-health`/`react-native-health-connect`
    เป็นตัวเลือกที่นิยม แต่ยังไม่ได้ประเมิน maintenance status ล่าสุดหรือเทียบกับการเขียน custom native
    module เอง — ไม่เปลี่ยนจากการสลับ backend/database
@@ -613,8 +629,11 @@ operation เพราะ Firestore ไม่มี auto-generated API — **Fir
    tier — ยังไม่มีการประเมิน cost projection ที่ scale การใช้งานจริง (เช่น จำนวน daily active user ที่
    คาดหวัง) ควรทำก่อน launch เพื่อไม่ให้งบ MVP เกินคาด
 10. **สอดคล้องกับ Open Points เดิมของ conceptual docs**: ค่า Activity Factor/MET lookup table จริง,
-    ตัวเลข tolerance ของ REC-1, จำนวนวัน log ขั้นต่ำของ INT-1 ฯลฯ ยังไม่ resolve — ต้องแก้ที่ต้นทาง
-    (`01-spec/`) ก่อน ไม่ใช่ตัดสินใจในเอกสารนี้
+    ตัวเลข tolerance ของ REC-1 ฯลฯ ยังไม่ resolve — ต้องแก้ที่ต้นทาง (`01-spec/`) ก่อน ไม่ใช่ตัดสินใจใน
+    เอกสารนี้ — ~~จำนวนวัน log ขั้นต่ำของ INT-1~~ **RESOLVED (2026-09-26)**: 7 วัน ผู้ใช้ยืนยันแล้ว บันทึกใน
+    [`01-spec/20260823-04-smart-integrations.md`](../../01-requirements/01-spec/20260823-04-smart-integrations.md)
+    "ข้อสมมติฐาน/การตัดสินใจที่ยืนยันแล้ว" และโค้ดใช้ `MIN_LOG_DAYS_FOR_FORECAST = 7` แล้ว (ดูหัวข้อ 6.1 แถว
+    Insights & Forecast)
 11. **Firebase project OAuth client setup สำหรับ Google/Apple Sign-In (ใหม่ 2026-08-29, ONB-0)**: ยังไม่ได้
     ทำ configuration จริงใน Firebase Console/Google Cloud Console (SHA-1/SHA-256 fingerprint สำหรับ Android
     Google Sign-In, OAuth client ID ของ iOS/Android/Web แยกกัน) และใน Apple Developer portal (Services ID +

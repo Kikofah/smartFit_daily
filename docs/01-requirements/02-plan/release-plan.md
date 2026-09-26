@@ -202,7 +202,7 @@ flowchart TD
   ฟันธงว่าต้องพัฒนาทีละ feature เรียงตามนี้เป๊ะๆ — ทีมพัฒนาจริงอาจขนาน (parallelize) งานบางส่วนได้ตาม
   ทรัพยากรที่มี
 - **จุดที่ยังไม่ได้ระบุเดิมของ conceptual docs** (REC-1 tolerance, REC-4 warmup/cooldown นับ target หรือไม่,
-  INT-1 min log days, INT-2/INT-3 conflict resolution, **ONB-0**: email verification ก่อนใช้งานจริงหรือไม่,
+  ~~INT-1 min log days~~ (resolve แล้ว 2026-09-26: 7 วัน), INT-2/INT-3 conflict resolution, **ONB-0**: email verification ก่อนใช้งานจริงหรือไม่,
   password policy, session timeout ที่แน่นอน, ขอบเขต NFR-05 ต่อผู้ให้บริการยืนยันตัวตนภายนอก ฯลฯ) ยังไม่
   resolve — ไม่กระทบการแบ่ง phase/task ระดับนี้ แต่กระทบรายละเอียดการ implement จริงเมื่อถึง phase นั้น
 

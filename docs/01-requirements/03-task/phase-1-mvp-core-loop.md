@@ -33,7 +33,7 @@ Feature ID: ONB-0, ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 (ท�
 
 | Task ID | ชื่อ Task | Feature ID/REQ | Status | คำอธิบาย | References |
 |---|---|---|---|---|---|
-| TASK-INFRA-01 | ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง | (Infrastructure — ไม่มี Feature ID) | เสร็จแล้ว | Provision Firebase project จริง (Authentication + Firestore + Security Rules) และ Express.js server บน Google Cloud Run + Firebase Hosting (แทน Cloud Functions เดิม ตาม `tech-stack.md` ฉบับ 2026-08-30) ตาม [tech-stack.md](../../02-design/02-technical/tech-stack.md) — ทำให้ NFR-04/NFR-06/NFR-08/NFR-11 ตรวจสอบได้จริง (ปัจจุบัน mark "not testable in this round" ใน test-plan.md เพราะยังไม่มี backend จริง) — เป็น prerequisite ของ `TASK-ONB-0` (ต้อง provision Firebase Auth ก่อนจึง implement business logic ของ ONB-0 ได้) | NFR-04, NFR-06, NFR-08, NFR-11, [tech-stack.md §7](../../02-design/02-technical/tech-stack.md#7-จุดที่ยังไม่ได้ตัดสินใจ--ควรยืนยันเพิ่มเติม) (Firebase project region ยังไม่เลือก) |
+| TASK-INFRA-01 | ติดตั้ง backend/ระบบบัญชีผู้ใช้จริง | (Infrastructure — ไม่มี Feature ID) | เสร็จแล้ว | Provision Firebase project จริง (Authentication + Firestore + Security Rules) และ Express.js server บน Google Cloud Run + Firebase Hosting (แทน Cloud Functions เดิม ตาม `tech-stack.md` ฉบับ 2026-08-30) ตาม [tech-stack.md](../../02-design/02-technical/tech-stack.md) — ทำให้ NFR-04/NFR-06/NFR-08/NFR-11 ตรวจสอบได้จริง (ปัจจุบัน mark "not testable in this round" ใน test-plan.md เพราะยังไม่มี backend จริง) — เป็น prerequisite ของ `TASK-ONB-0` (ต้อง provision Firebase Auth ก่อนจึง implement business logic ของ ONB-0 ได้) | NFR-04, NFR-06, NFR-08, NFR-11, [tech-stack.md §7](../../02-design/02-technical/tech-stack.md#7-จุดที่ยังไม่ได้ตัดสินใจ--ควรยืนยันเพิ่มเติม) (region: `asia-southeast1` ทั้ง Firestore และ Cloud Run — บันทึก 2026-09-26) |
 | TASK-ONB-0 | สมัครสมาชิก / เข้าสู่ระบบ / ลืมรหัสผ่าน / ออกจากระบบ (Authentication) | ONB-0 / REQ-14, REQ-15, REQ-16, REQ-17 | กำลังทำ | Implement สมัครสมาชิก 3 วิธี (email/password, Google OAuth, Sign in with Apple) สร้าง `userId` ก่อนเข้าสู่ ONB-1 เสมอ, เข้าสู่ระบบด้วยวิธีเดียวกับที่สมัครพร้อม session persistence, รีเซ็ตรหัสผ่านผ่านอีเมล (เฉพาะบัญชี email/password), และออกจากระบบล้าง session ทันที — ขึ้นกับ `TASK-INFRA-01` เสร็จก่อน | AC-ONB-0-01–06, [detailed-design/01-onboarding-personalization.md § ONB-0](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
 | TASK-ONB-1 | กรอกข้อมูลส่วนตัวเพื่อคำนวณเป้าหมายแคลอรี่ | ONB-1 / REQ-01 | กำลังทำ | รับอายุ เพศ น้ำหนัก ส่วนสูง ระดับกิจกรรม คำนวณ BMR/TDEE ด้วยสูตร Mifflin-St Jeor (Precondition: ผ่าน ONB-0 แล้ว — มีบัญชีผู้ใช้จริง) | AC-ONB-1-01–03, [detailed-design/01-onboarding-personalization.md](../../02-design/02-technical/detailed-design/01-onboarding-personalization.md) |
 | TASK-ONB-2 | เลือกอุปกรณ์ที่มี | ONB-2 / REQ-03 | กำลังทำ | เลือกอุปกรณ์ (ไม่มี/ดัมเบล/ยิมครบชุด แบบ multi-select) บันทึกเป็น filter ของวิดีโอ | AC-ONB-2-01–03 |
@@ -52,9 +52,8 @@ Feature ID: ONB-0, ONB-1, ONB-2, ONB-3, REC-1, REC-2, PLN-1, PLN-2, PLN-3 (ท�
   ตัวเลขแน่นอน, **TASK-ONB-0**: email verification ก่อนใช้งานจริงหรือไม่, password policy, session
   timeout ที่แน่นอน, ขอบเขต NFR-05 ต่อผู้ให้บริการยืนยันตัวตนภายนอก) ยังไม่ resolve ใน `01-spec/` — ไม่กระทบ
   การมีอยู่ของ task นี้ แต่กระทบรายละเอียดตอน implement
-- **TASK-INFRA-01** (เสร็จแล้ว): `tech-stack.md` § 7 ยังระบุว่า Firebase project region ยังไม่เลือก ทั้งที่
-  provision จริงไปแล้ว — ควรให้ `tech-stack-builder` บันทึก region ที่ใช้จริง (open point ของ `tech-stack.md`
-  ไม่ใช่ของไฟล์นี้)
+- ~~**TASK-INFRA-01**: Firebase project region ยังไม่เลือก~~ — resolve แล้ว 2026-09-26: `tech-stack.md` § 7
+  บันทึก `asia-southeast1` (สิงคโปร์) ที่ provision จริงแล้ว
 - **Status "กำลังทำ"**: ทุก task ของ Feature ID จะเปลี่ยนเป็น "เสร็จแล้ว" เมื่อผ่าน Exit Criteria ของ phase
   (execute test case ครบ ไม่มี defect Critical/High ค้าง) — ไม่ใช่แค่มีโค้ดแล้ว
 

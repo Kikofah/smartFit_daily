@@ -12,6 +12,7 @@
   // Test files are typechecked separately (tsconfig.server-tests.json) and
   // run by Vitest — keeping them out of this config means `build:server`
   // (tsc -p tsconfig.server.json, no --noEmit) never emits *.test.js into
-  // dist-server.
-  "exclude": ["**/*.test.ts"]
+  // dist-server. server/test/ holds shared test-only helpers (fake
+  // Firebase, test app harness) for the same reason.
+  "exclude": ["**/*.test.ts", "server/test"]
 }

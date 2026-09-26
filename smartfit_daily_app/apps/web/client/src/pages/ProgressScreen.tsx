@@ -71,8 +71,8 @@ export default function ProgressScreen() {
       });
 
     // Real endpoint per api-spec.md; returns 422 when there's no target weight yet or not
-    // enough accumulated daily_log history (minimum day count is an open point — see
-    // api-spec.md §4, item 3). Either case is treated as the "insufficient data" state below.
+    // enough accumulated daily_log history (at least 7 days — INT-1 decision 2026-09-26).
+    // Either case is treated as the "insufficient data" state below.
     api
       .get<WeightForecastSnapshot | null>('/insights/forecast')
       .then((snapshot) => {
