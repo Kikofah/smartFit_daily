@@ -30,3 +30,25 @@ export function loginWithGoogle() {
 export function logout() {
   return signOut(auth);
 }
+
+// Firebase's own messages ("Firebase: Error (auth/invalid-credential).") are
+// English and technical — map the codes a login can hit to Thai for the UI.
+// Email enumeration protection makes wrong password and unknown email both
+// arrive as auth/invalid-credential, so they share one message on purpose.
+const LOGIN_ERROR_MESSAGES: Record<string, string> = {
+  'auth/invalid-credential': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  'auth/wrong-password': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  'auth/user-not-found': 'อีเมลหรือรหัสผ่านไม่ถูกต้อง',
+  'auth/invalid-email': 'รูปแบบอีเมลไม่ถูกต้อง',
+  'auth/user-disabled': 'บัญชีนี้ถูกระงับการใช้งาน',
+  'auth/too-many-requests': 'ลองเข้าสู่ระบบผิดหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่',
+  'auth/network-request-failed': 'เชื่อมต่ออินเทอร์เน็ตไม่ได้ กรุณาตรวจสอบการเชื่อมต่อแล้วลองใหม่',
+  'auth/popup-closed-by-user': 'ปิดหน้าต่างเข้าสู่ระบบด้วย Google ก่อนเสร็จสิ้น กรุณาลองใหม่',
+  'auth/cancelled-popup-request': 'ปิดหน้าต่างเข้าสู่ระบบด้วย Google ก่อนเสร็จสิ้น กรุณาลองใหม่',
+  'auth/popup-blocked': 'เบราว์เซอร์บล็อกหน้าต่างเข้าสู่ระบบด้วย Google กรุณาอนุญาต pop-up แล้วลองใหม่',
+};
+
+export function loginErrorMessage(error: unknown): string {
+  const code = (error as { code?: string } | null)?.code;
+  return (code && LOGIN_ERROR_MESSAGES[code]) ?? 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+}

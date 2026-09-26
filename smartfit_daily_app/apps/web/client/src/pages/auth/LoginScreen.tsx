@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ScreenContainer } from '../../components/ScreenContainer';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
-import { loginWithEmail, loginWithGoogle } from '../../services/authService';
+import { loginErrorMessage, loginWithEmail, loginWithGoogle } from '../../services/authService';
 import { api } from '../../services/api';
 import { nextOnboardingStep } from '../../hooks/onboardingStep';
 import { colors, spacing, typography } from '../../constants/theme';
@@ -42,7 +42,7 @@ export default function LoginScreen() {
       await loginWithEmail(email, password);
       await routeAfterLogin();
     } catch (e) {
-      setError((e as Error).message);
+      setError(loginErrorMessage(e));
     }
   }
 
@@ -52,7 +52,7 @@ export default function LoginScreen() {
       await loginWithGoogle();
       await routeAfterLogin();
     } catch (e) {
-      setError((e as Error).message);
+      setError(loginErrorMessage(e));
     }
   }
 
