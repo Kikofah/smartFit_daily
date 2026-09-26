@@ -1,34 +1,41 @@
 # ผลการรันเทสต์ — smartFit_daily
 
-**อัปเดตล่าสุด:** 2026-09-26 21:25 (เวลาไทย, UTC+7) — รอบที่ 3 รันใหม่ทั้งหมดที่ commit `cd7a5aa` (หลังแก้เทสต์
-flaky) กับเว็บจริง Cloud Run revision `smartfit-daily-web-00005-vtr`
+**อัปเดตล่าสุด:** 2026-09-26 22:03 (เวลาไทย, UTC+7) — รอบที่ 4 รันใหม่ทั้งหมดที่ commit `ce03139` หลังเพิ่ม E2E ชุด
+ในเครื่อง (onboarding / planner / บันทึกผล) และแก้ bug planner แล้ว deploy ขึ้น Cloud Run revision
+`smartfit-daily-web-00006-ncw`
 
 | ชุดเทสต์ | เครื่องมือ | เวลาที่รัน | ผล |
 |---|---|---|---|
-| Unit / API route tests (`apps/web/server/**/*.test.ts`) | Vitest | 21:25:08 (ใช้เวลา 0.8 วินาที) | ✅ ผ่าน 110/110 (15 ไฟล์) |
-| E2E tests (`apps/web/e2e/*.spec.ts`) กับเว็บจริง `https://smartfit-daily.web.app` | Playwright | 21:25:16 (ใช้เวลา 11.3 วินาที) | ✅ ผ่าน 14/14 (smoke 3 + login 4 เทสต์ × 2 หน้าจอ: desktop + mobile) |
+| Unit / API route tests (`apps/web/server/**/*.test.ts`) | Vitest | 22:02:46 (ใช้เวลา 0.8 วินาที) | ✅ ผ่าน 111/111 (15 ไฟล์) |
+| E2E ในเครื่อง + Firebase Emulator (`apps/web/e2e-local/*.spec.ts`) | Playwright | 22:02:48 (ใช้เวลา 19.4 วินาที) | ✅ ผ่าน 12/12 (onboarding 2 + planner 2 + บันทึกผล 2 เทสต์ × desktop/mobile) |
+| E2E production อ่านอย่างเดียว (`apps/web/e2e/*.spec.ts`) กับ `https://smartfit-daily.web.app` | Playwright | 22:03:08 (ใช้เวลา 11.3 วินาที) | ✅ ผ่าน 14/14 (smoke 3 + login 4 เทสต์ × desktop/mobile) |
 | `apps/mobile` | — | — | ไม่มีเทสต์ (สคริปต์ `test` แค่พิมพ์ว่า "no tests yet") |
 
-**รวม: ผ่าน 124 จาก 124** (unit 110 + E2E 14) — **ไม่มีข้อที่ไม่ผ่านในรอบนี้**
+**รวม: ผ่าน 137 จาก 137** (unit/API 111 + E2E ในเครื่อง 12 + E2E production 14) — **ไม่มีข้อที่ไม่ผ่านในรอบนี้**
 
 ### ประวัติการรันวันนี้
 
 | รอบ | เวลา | ผล |
 |---|---|---|
 | 1 | 20:36 | unit 110/110, E2E smoke 6/6 (ยังไม่มี E2E ชุด login) |
-| 2 | 21:13–21:19 | E2E 14/14 (ผู้ใช้รันเองหลัง deploy `00005-vtr`), unit ⚠️ flaky 1 ข้อ ไม่ผ่าน 2 จาก 16 รอบ — แก้แล้ว รันซ้ำ 50 รอบ (21:20–21:21) ผ่านครบ ดู [ข้อที่เคยไม่ผ่าน](#ข้อที่เคยไม่ผ่าน-flaky--แก้แล้ว) |
-| 3 | 21:25 | unit 110/110, E2E 14/14 |
+| 2 | 21:13–21:19 | E2E production 14/14 (ผู้ใช้รันเองหลัง deploy `00005-vtr`), unit ⚠️ flaky 1 ข้อ ไม่ผ่าน 2 จาก 16 รอบ — แก้แล้ว รันซ้ำ 50 รอบ (21:20–21:21) ผ่านครบ ดู [ข้อที่เคยไม่ผ่าน](#ข้อที่เคยไม่ผ่าน) |
+| 3 | 21:25 | unit 110/110, E2E production 14/14 |
+| — | ระหว่างรอบ 3 และ 4 | สร้าง E2E ในเครื่อง: รันครั้งแรกไม่ผ่าน 1 ข้อเพราะเจอ **bug จริงใน planner** (ดู [ข้อที่เคยไม่ผ่าน](#ข้อที่เคยไม่ผ่าน)) — แก้แล้ว ผ่าน 12/12 ติดกัน 4 รอบ, unit 111/111 |
+| 4 | 22:02–22:03 | unit 111/111, E2E ในเครื่อง 12/12, E2E production 14/14 (หลัง deploy `00006-ncw`) |
 
 คำสั่งที่ใช้ (รันจาก `smartfit_daily_app/apps/web/`):
 
 ```bash
 npx vitest run          # unit + API route tests
 npx playwright test     # E2E บนเว็บที่ deploy แล้ว (อ่านอย่างเดียว ไม่สร้างข้อมูลจริง)
+npm run test:e2e:local  # E2E ในเครื่อง: เปิด Firebase Emulator + API + Vite เอง (ต้องมี Java 11+)
 ```
 
 ---
 
-## ข้อที่เคยไม่ผ่าน (flaky — แก้แล้ว)
+## ข้อที่เคยไม่ผ่าน
+
+### 1. API route test flaky (รอบ 2 — แก้แล้ว)
 
 | เทสต์ | ไฟล์ | ผล |
 |---|---|---|
@@ -49,9 +56,27 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 **ยืนยันผล:** รันทั้งชุด 50 รอบติดกัน ผ่าน 110/110 ทุกรอบ (ถ้ายังพังในอัตราเดิม 2/16 โอกาสที่จะผ่าน 50 รอบติดโดย
 บังเอิญต่ำกว่า 0.2%) — ยังไม่ได้พิสูจน์สาเหตุแยกต่างหาก แต่การหายไปหลังแก้จุดนี้สอดคล้องกับสาเหตุข้างบน
 
+### 2. E2E planner Cheat/Rest ไม่ผ่านเพราะ bug จริงในแอป (ตอนสร้าง E2E ในเครื่อง — แก้แล้ว)
+
+| เทสต์ | ไฟล์ | ผล |
+|---|---|---|
+| set today as Cheat/Rest Day → day counts as completed, streak 1 | `e2e-local/planner.spec.ts` | ครั้งแรกไม่ผ่าน (desktop) · **หลังแก้แอป ผ่านทุกรอบ ✅** |
+
+**ติดตรงไหน:** เปิดสวิตช์ Cheat/Rest ของวันนี้แล้วกด "บันทึก" แต่ค่า `isCheatRest` ของวันนี้ไม่เปลี่ยนเป็น `true` —
+log ของ server แสดงว่า `PUT /api/planner/days/:date` ตอบ 500 ด้วย `Cannot use "undefined" as a Firestore value
+(found in field "plannedActivityType")` หน้า planner จึงหยุดก่อนจะส่งคำขอตั้ง Cheat/Rest
+
+**สาเหตุ:** เมื่อไม่ได้เลือกประเภทกิจกรรม ("ปล่อยว่าง (แนะนำอัตโนมัติ)" หรือบันทึกแค่ Cheat/Rest) server เขียน
+`plannedActivityType: undefined` ลง Firestore ซึ่ง Firestore จริงไม่รับ — **เป็น bug ของเว็บจริงด้วย** ไม่ใช่แค่ของเทสต์
+API test เดิมจับไม่ได้เพราะไม่มีข้อไหนส่งคำขอที่ไม่มีค่านี้
+
+**แก้แล้ว:** `server/routes/planner-day-status/index.ts` เขียน `{ isDefaultAuto: true }` แทน (commit `d1c5e62`)
+เพิ่ม API test กรณีนี้ (unit/API จาก 110 เป็น 111 ข้อ) และ TC-PLN-1-005 ในเอกสาร test case — deploy แล้วใน
+revision `00006-ncw`
+
 ---
 
-## 1. E2E tests (Playwright) — รัน 21:25:16 กับ revision `00005-vtr`
+## 1. E2E production (Playwright, อ่านอย่างเดียว) — รัน 22:03:08 กับ revision `00006-ncw`
 
 เทสต์แต่ละข้อรัน 2 รอบ คือบน Desktop Chrome และบนมือถือ (Pixel 7)
 
@@ -74,12 +99,30 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 
 ---
 
-## 2. Unit & API route tests (Vitest) — รัน 21:25:08
+## 2. E2E ในเครื่อง + Firebase Emulator (Playwright) — รัน 22:02:48
 
-ผ่านครบ 110/110 (ก่อนแก้เทสต์ flaky ในรอบที่ 2 `forgotPassword.test.ts` › missing email → 400 เคยไม่ผ่าน
-2 จาก 16 รอบ ดู [ข้อที่เคยไม่ผ่าน](#ข้อที่เคยไม่ผ่าน-flaky--แก้แล้ว))
+รันกับ Auth/Firestore emulator (project `demo-smartfit` ต่อ project จริงไม่ได้) + Express API + Vite ที่ Playwright
+เปิดเอง ข้อมูลอยู่ในหน่วยความจำและหายหลังรันจบ จึงทดสอบ flow ที่เขียนข้อมูลได้ วิดีโอแนะนำถูก stub ที่เบราว์เซอร์
+(ไม่เรียก YouTube/Gemini) ผู้ใช้ทดสอบ: หญิง 25 ปี 60 กก. 165 ซม. ปานกลาง, ไม่มีอุปกรณ์, "กระชับสัดส่วน" →
+เป้าเผาผลาญ 180 kcal/วัน
 
-### 2.1 Domain logic (สูตรคำนวณและกฎทางธุรกิจ)
+| เทสต์ | ทดสอบอะไร | Desktop | Mobile |
+|---|---|---|---|
+| `onboarding.spec.ts` › new user signs up and completes onboarding to the dashboard | สมัครสมาชิก → กรอกข้อมูลส่วนตัว → เลือก "ไม่มีอุปกรณ์" → "กระชับสัดส่วน" → หน้ายืนยันแสดง 180 → เข้า Dashboard แล้วเช็กผ่าน API ว่า TDEE 2,085 และเป้า 180 kcal ถูกบันทึก (ONB-0 → ONB-3) | ✅ | ✅ |
+| `onboarding.spec.ts` › personal info with missing fields shows errors and does not advance | กด "ถัดไป" โดยไม่เลือกเพศและระดับกิจกรรม → ขึ้น error ทั้งสองข้อ และยังอยู่หน้าเดิม (AC-ONB-1-02) | ✅ | ✅ |
+| `planner.spec.ts` › plan today's activity type | วันที่ยังไม่วางแผนเป็นแนะนำอัตโนมัติ แล้วตั้งวันนี้เป็น HIIT → server บันทึก `hiit` (TC-PLN-1-001, TC-PLN-1-003) | ✅ | ✅ |
+| `planner.spec.ts` › set today as Cheat/Rest Day | เปิดสวิตช์ Cheat/Rest วันนี้แล้วบันทึก → วันนี้นับว่าครบเป้า streak 1 (TC-PLN-2-001) — ข้อนี้เจอ bug ด้านบน | ✅ | ✅ |
+| `logging.spec.ts` › 31-minute session reaches the 180 kcal target | เริ่มออกกำลังกาย เร่งเวลา 31 นาที กด "จบเซสชัน" → เห็น "ครบเป้าหมายวันนี้แล้ว" 186 kcal, server บันทึก log `completed` 186 kcal, streak 1 (REC-2 → PLN-3 → PLN-4) | ✅ | ✅ |
+| `logging.spec.ts` › 10-minute session stays under the target | แบบเดียวกันแต่ 10 นาที → "วันนี้ยังไม่ครบเป้า" 60 kcal, log `incomplete`, streak 0 (TC-PLN-3-004) | ✅ | ✅ |
+
+---
+
+## 3. Unit & API route tests (Vitest) — รัน 22:02:46
+
+ผ่านครบ 111/111 (ก่อนแก้เทสต์ flaky ในรอบที่ 2 `forgotPassword.test.ts` › missing email → 400 เคยไม่ผ่าน
+2 จาก 16 รอบ ดู [ข้อที่เคยไม่ผ่าน](#ข้อที่เคยไม่ผ่าน))
+
+### 3.1 Domain logic (สูตรคำนวณและกฎทางธุรกิจ)
 
 #### `server/domain/tdee.test.ts` — คำนวณ TDEE (ONB-1 / REQ-01)
 
@@ -178,7 +221,7 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 | ผิดหลังหมดช่วงเวลา | เริ่มนับรอบใหม่ ไม่ต่อจากรอบเก่า | ✅ |
 | จับคู่สำเร็จ | ล้างสถานะแล้ว → ไม่ล็อก | ✅ |
 
-### 2.2 Middleware
+### 3.2 Middleware
 
 #### `server/middleware/authenticate.test.ts` — ต้องล็อกอินก่อนเข้าถึงข้อมูล (ONB-0 / REQ-15)
 
@@ -188,7 +231,7 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 | token ผิดหรือหมดอายุ | ตอบ 401 | ✅ |
 | token ถูกต้อง | ผ่านได้ และตั้ง `req.userId` จาก token | ✅ |
 
-### 2.3 API routes (จำลอง Firestore, YouTube และ AI — ไม่แตะระบบจริง)
+### 3.3 API routes (จำลอง Firestore, YouTube และ AI — ไม่แตะระบบจริง)
 
 #### `server/routes/account-session/forgotPassword.test.ts` — `POST /api/forgot-password` (ONB-0 / REQ-16)
 
@@ -252,6 +295,7 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 | TC-PLN-1-004 (GET) | วันในอดีตที่มี log แก้ไม่ได้ ส่วนวันในอดีตที่ไม่มี log และวันนี้แก้ได้ | ✅ |
 | TC-PLN-1-001 | ตั้งประเภทกิจกรรมของวันนี้ (ยังไม่มี log) ได้ | ✅ |
 | TC-PLN-1-002 | วางแผนวันในอนาคตล่วงหน้าได้ | ✅ |
+| ไม่เลือกประเภทกิจกรรม (ใหม่) | "ปล่อยว่าง" หรือบันทึกแค่ Cheat/Rest → กลับเป็นแนะนำอัตโนมัติ และล้างแผนเดิม (TC-PLN-1-005 — กรณีที่เคยได้ 500) | ✅ |
 | TC-PLN-1-004 (PUT) | แก้วันในอดีตที่มี log → ตอบ 409 แผนไม่เปลี่ยน | ✅ |
 | TC-PLN-2-001 | ตั้ง Rest Day วันนี้ (ไม่มี log) → วันนั้นนับว่าสำเร็จ และคำนวณ streak ใหม่ | ✅ |
 | TC-PLN-2-004 | ตั้ง Cheat Day ทับวันที่ "ไม่สำเร็จ" → นับว่าสำเร็จ และแคลอรี่เดิมยังอยู่ | ✅ |
@@ -266,6 +310,7 @@ connection ทั้งหมดก่อนปิด server — แก้เฉ
 
 - เทสต์ flaky 1 ข้อ (`forgotPassword.test.ts` › missing email → 400) ปัญหาอยู่ที่ตัวช่วยทดสอบ `testApp.ts` ไม่ใช่ route — แก้แล้ว รันซ้ำ 50 รอบผ่านครบ
 - Unit/API tests จำลอง Firestore, YouTube และ AI ไว้ทั้งหมด จึงไม่ได้ทดสอบการเชื่อมต่อกับระบบจริง
-- E2E tests รันกับเว็บ production จริง แต่ตั้งใจให้อ่านอย่างเดียว (ไม่สมัครหรือเขียนข้อมูล) — ตอนนี้ครอบคลุมหน้าที่ไม่ต้องล็อกอินและการ login แล้ว แต่ flow หลัง login (onboarding, planner, การบันทึกผล) ยังไม่มี E2E test
+- E2E production อ่านอย่างเดียว (ไม่สมัครหรือเขียนข้อมูล) จึงครอบคลุมแค่หน้าที่ไม่ต้องล็อกอินและการ login — flow ที่เขียนข้อมูล (onboarding, planner, บันทึกผล) ทดสอบด้วย E2E ในเครื่องแทน การแก้ bug planner บนเว็บจริงจึงยังไม่ได้ยืนยันด้วย E2E
+- E2E ยังไม่ครอบคลุม REC-1/REC-3/REC-4 (การเลือกวิดีโอเรียก YouTube/Gemini จริงซึ่ง E2E stub ไว้) และ INT-0 ถึง INT-3
 - `apps/mobile` (INT-2/INT-3) ยังไม่มีเทสต์เลย
 - รอบนี้ไม่ได้รัน `npm run typecheck` และ `npm run lint` เพราะไม่ใช่เทสต์
